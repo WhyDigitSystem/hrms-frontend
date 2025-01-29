@@ -1,13 +1,12 @@
 import PropTypes from 'prop-types';
 import { useState } from 'react';
-import { Avatar, Box, Grid, Menu, MenuItem, Typography, Button } from '@mui/material';
+import { Avatar, Box, Grid, Typography, List, ListItem, Divider, Button } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import EarningIcon from 'assets/images/icons/earning.svg';
 import { motion } from 'framer-motion';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import TaskIcon from '@mui/icons-material/Assignment';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.dark,
@@ -55,6 +54,22 @@ const EarningCard = ({ isLoading }) => {
     setAnchorEl(null);
   };
 
+  // Get current month, date, year, and time dynamically
+  const currentDate = new Date();
+  const month = currentDate.toLocaleString('default', { month: 'long' }); // e.g., January
+  const date = currentDate.getDate(); // e.g., 29
+  const year = currentDate.getFullYear(); // e.g., 2025
+  const time = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // e.g., 09:30 AM
+
+  // Handle Check-In and Check-Out button clicks
+  const handleCheckIn = () => {
+    alert("Check-In button clicked");
+  };
+
+  const handleCheckOut = () => {
+    alert("Check-Out button clicked");
+  };
+
   return (
     <>
       {isLoading ? (
@@ -64,28 +79,73 @@ const EarningCard = ({ isLoading }) => {
           <CardWrapper border={false} content={false}>
             <Box sx={{ p: 2.25 }}>
               <Grid container direction="column">
-                <Grid item>
-                  <Grid container justifyContent="space-between">
-                  </Grid>
-                </Grid>
+                {/* Profile Section */}
                 <div className='d-flex justify-content-between align-items-center'>
+                  <div className='d-flex'>
+                    <Grid item>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Avatar alt="John Doe" src="/path/to/avatar.jpg" sx={{ width: 60, height: 60, mr: 2 }} />
+                        <Box>
+                          <Typography sx={{ fontSize: '1.5rem', fontWeight: 500 }}>John Doe</Typography>
+                          <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Software Engineer</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    <Grid item>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }} className="ps-5">
+                        <Box>
+                          <Typography sx={{ fontSize: '1.5rem', fontWeight: 500 }}>{time}</Typography> {/* Display Time */}
+                          <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{`${month} ${date}, ${year}`}</Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </div>
                   <Grid item>
-                    <Typography sx={{ fontSize: '1.5rem', fontWeight: 500, mt: 1 }}>Name : John Doe</Typography>
-                    <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Employee No : 123456</Typography>
-                    <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Role: Software Engineer</Typography>
-                    <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Date: January 29th 2025</Typography>
-                    <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Time: 11:55:49 AM</Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      {/* Check-In and Check-Out Buttons */}
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ mr: 2, width: '120px' }}
+                        onClick={handleCheckIn}
+                      >
+                        Check-In
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        className='bg-danger'
+                        sx={{ width: '120px', zIndex: 1 }}
+                        onClick={handleCheckOut}
+                      >
+                        Check-Out
+                      </Button>
+                    </Box>
                   </Grid>
 
-                  <Grid item sx={{ mt: 2, mb: 1 }} className='d-flex'>
-                    <motion.div whileHover={{ scale: 1.1 }}>
-                      <Button variant="contained" color="primary" sx={{ mr: 1 }}>Check-In</Button>
-                    </motion.div>
-                    <motion.div whileHover={{ scale: 1.1 }}>
-                      <Button variant="contained" color="secondary" className='bg-danger' sx={{ zIndex: 1 }}>Check-Out</Button>
-                    </motion.div>
-                  </Grid>
                 </div>
+
+                {/* Recent Activity Section */}
+                <Grid item sx={{ mt: 2 }}>
+                  <Typography sx={{ fontSize: '1.2rem', fontWeight: 600, color: theme.palette.secondary[200] }}>
+                    Recent Activity
+                  </Typography>
+                  <List>
+                    <ListItem>
+                      <AccessTimeIcon sx={{ mr: 2 }} color="white" />
+                      <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>
+                        Logged in for work at 9:00 AM
+                      </Typography>
+                    </ListItem>
+                    <ListItem>
+                      <AccessTimeIcon sx={{ mr: 2 }} color="white" />
+                      <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>
+                        Logged out for work at 12:30 PM
+                      </Typography>
+                    </ListItem>
+                  </List>
+                </Grid>
               </Grid>
             </Box>
           </CardWrapper>
