@@ -4,10 +4,10 @@ import { useRoutes } from 'react-router-dom';
 import AdminRoute from './AdminRoute';
 import AuthenticationRoutes from './AuthenticationRoutes';
 import MainRoutes from './MainRoutes';
-import FinanceRoute from './FinanceRoute';
+import HrmsRoute from './HrmsRoute';
 
 // ==============================|| ROUTING RENDER ||============================== //
 
 export default function ThemeRoutes() {
-  return useRoutes([MainRoutes, AuthenticationRoutes, FinanceRoute, AdminRoute]);
+  return useRoutes([MainRoutes, AuthenticationRoutes, HrmsRoute, AdminRoute]);
 }

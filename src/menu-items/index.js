@@ -1,5 +1,6 @@
 import admin from './admin';
 import dashboard from './dashboard';
+import basicMaster from './basicMaster';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
@@ -7,18 +8,18 @@ const getMenuItems = () => {
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, admin]
+    items: [dashboard, admin,basicMaster]
   };
 
   // Define menu items based on localStorage value
   switch (localStorageValue) {
     case 'ROLE_SUPER_ADMIN':
       return {
-        items: [dashboard, ]
+        items: [dashboard,basicMaster ]
       };
     case 'admin': // Correctly match the value
       return {
-        items: [dashboard,admin]
+        items: [dashboard,admin,basicMaster]
       };
     // Add more cases as needed
     default:
