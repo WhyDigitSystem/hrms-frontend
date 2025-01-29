@@ -80,34 +80,42 @@ const EarningCard = ({ isLoading }) => {
             <Box sx={{ p: 2.25 }}>
               <Grid container direction="column">
                 {/* Profile Section */}
-                <div className='d-flex justify-content-between align-items-center'>
-                  <div className='d-flex'>
+                <div className='d-lg-flex justify-content-lg-between align-items-lg-center'>
+                  <div className='d-lg-flex'>
                     <Grid item>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar alt="John Doe" src="/path/to/avatar.jpg" sx={{ width: 60, height: 60, mr: 2 }} />
+                        <Avatar alt="Dineshkumar" src="/path/to/avatar.jpg" sx={{ width: 60, height: 60, mr: 2 }} />
                         <Box>
-                          <Typography sx={{ fontSize: '1.5rem', fontWeight: 500 }}>John Doe</Typography>
+                          <Typography sx={{ fontSize: '1.5rem', fontWeight: 500 }}>Dineshkumar P</Typography>
                           <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>Software Engineer</Typography>
                         </Box>
                       </Box>
                     </Grid>
 
                     <Grid item>
-                      <Box sx={{ display: 'flex', alignItems: 'center' }} className="ps-5">
+                      <Box className="d-lg-flex align-items-center ps-5 ms-4 ps-lg-5 ms-lg-0 pb-3 pb-lg-0 pt-0 pt-lg-2">
                         <Box>
-                          <Typography sx={{ fontSize: '1.5rem', fontWeight: 500 }}>{time}</Typography> {/* Display Time */}
                           <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{`${month} ${date}, ${year}`}</Typography>
+                          <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{time}</Typography> {/* Display Time */}
                         </Box>
                       </Box>
                     </Grid>
                   </div>
                   <Grid item>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box className="d-flex justify-content-start justify-content-lg-between align-items-center">
                       {/* Check-In and Check-Out Buttons */}
                       <Button
                         variant="contained"
                         color="primary"
-                        sx={{ mr: 2, width: '120px' }}
+                        sx={{
+                          mr: 2,
+                          width: '120px',
+                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)', // Slightly enlarges the button
+                            boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.15)', // Adds a shadow effect on hover
+                          },
+                        }}
                         onClick={handleCheckIn}
                       >
                         Check-In
@@ -115,13 +123,22 @@ const EarningCard = ({ isLoading }) => {
                       <Button
                         variant="contained"
                         color="secondary"
-                        className='bg-danger'
-                        sx={{ width: '120px', zIndex: 1 }}
+                        className="bg-danger"
+                        sx={{
+                          width: '120px',
+                          zIndex: 1,
+                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          '&:hover': {
+                            transform: 'scale(1.05)', // Slightly enlarges the button
+                            boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.15)', // Adds a shadow effect on hover
+                          },
+                        }}
                         onClick={handleCheckOut}
                       >
                         Check-Out
                       </Button>
                     </Box>
+
                   </Grid>
 
                 </div>
