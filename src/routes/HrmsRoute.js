@@ -14,6 +14,8 @@ const Department = Loadable(lazy(() => import('views/basicMaster/department')));
 const Designation = Loadable(lazy(() => import('views/basicMaster/designation')));
 const Region = Loadable(lazy(() => import('views/basicMaster/RegionMaster')));
 const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
+
+const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
@@ -55,6 +57,10 @@ const HrmsRoute = {
     {
       path: '/basicMaster/Employee',
       element: <Employee />
+    },
+    {
+      path: '/employeeMaster/EmployeeDetails',
+      element: <EmployeeDetails />
     },
   ]
 };
