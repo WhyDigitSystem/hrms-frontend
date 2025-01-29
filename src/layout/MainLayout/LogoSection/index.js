@@ -6,7 +6,7 @@ import { ButtonBase } from '@mui/material';
 
 // project imports
 import { MENU_OPEN } from 'store/actions';
-import LogoImage from '../../../../src/assets/images/BIN_BEE.png';
+import LogoImage from '../../../../src/assets/images/Why-Digit-Systems-Pvt-Ltd.png';
 
 // ==============================|| MAIN LOGO ||============================== //
 
@@ -20,8 +20,8 @@ const LogoSection = () => {
         src={LogoImage}
         alt="logo"
         style={{
-          width: '150px',
-          height: '58px'
+          width: '130px',
+          height: '75px'
         }}
       ></img>
     </ButtonBase>

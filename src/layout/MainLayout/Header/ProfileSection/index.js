@@ -279,7 +279,7 @@ const ProfileSection = () => {
                           </ListItemIcon>
                           <ListItemText
                             primary={
-                              <Typography variant="body2" component={Link} to="/pages/login/login3">
+                              <Typography variant="body2" className='text-decoration-none' component={Link} to="/pages/login/login3">
                                 Logout
                               </Typography>
                             }

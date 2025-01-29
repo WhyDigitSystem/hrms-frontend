@@ -63,7 +63,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
       {/* <Box sx={{ flexGrow: 1 }} /> */}
 
       {/* notification & profile */}
-      <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
+      {/* <div className="mt-2" style={{ display: 'flex', alignItems: 'center' }}>
         <span
           style={{
             height: '11px',
@@ -76,7 +76,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
           }}
         ></span>
         <h6>E - Books</h6>
-      </div>
+      </div> */}
       <NotificationSection />
       <GlobalSection />
       {/* <SiteMapSection /> */}

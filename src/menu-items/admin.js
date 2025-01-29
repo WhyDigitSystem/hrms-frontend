@@ -16,25 +16,18 @@ const icons2 = {
 
 const admin = {
   id: 'admin',
-  title: 'User Management',
-  type: 'group',
-  children: [
-    {
-      id: 'admin',
-      title: 'User Creation',
-      type: 'item',
-      url: '/admin/user-creation/userCreation',
-      icon: icons.IconUser,
-      breadcrumbs: true
-    },
-    {
-      id: 'rolesAndResponsibilities',
-      title: 'Roles And Responsibilities',
-      type: 'item',
-      url: '/basicMaster/roles',
-      icon: icons1.IconPasswordUser
-    }
-  ]
+  // title: 'User Management',
+  // type: 'group',
+  // children: [
+  //   {
+  //     id: 'admin',
+  //     title: 'User Creation',
+  //     type: 'item',
+  //     url: '/admin/user-creation/userCreation',
+  //     icon: icons.IconUser,
+  //     breadcrumbs: true
+  //   }
+  // ]
 };
 
 export default admin;

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 // material-ui
-import { Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
+import { Chip,Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // project imports
@@ -9,11 +9,19 @@ import AuthCardWrapper from '../AuthCardWrapper';
 import AuthWrapper1 from '../AuthWrapper1';
 import AuthRegister from '../auth-forms/AuthRegister';
 
-import LogoImage from '../../../../assets/images/BIN_BEE.png';
+import LogoImage from '../../../../assets/images/Why-Digit-Systems-Pvt-Ltd.png';
 
 // assets
 
 // ===============================|| AUTH3 - REGISTER ||=============================== //
+
+const bevanRegularStyle = {
+  fontFamily: "'Bevan', serif",
+  fontWeight: 300,
+  fontStyle: 'normal',
+  fontSize: 25,
+  color: '#673ab7',
+};
 
 const Register = () => {
   const theme = useTheme();
@@ -44,7 +52,7 @@ const Register = () => {
                     <Grid container direction={matchDownSM ? 'column-reverse' : 'row'} alignItems="center" justifyContent="center">
                       <Grid item>
                         <Stack alignItems="center" justifyContent="center" spacing={1}>
-                          <Typography color={theme.palette.secondary.main} gutterBottom variant={matchDownSM ? 'h3' : 'h2'}>
+                          <Typography style={bevanRegularStyle} color={theme.palette.secondary.main} gutterBottom variant={matchDownSM ? 'h3' : 'h2'}>
                             Create Account
                           </Typography>
                           {/* <Typography variant="caption" fontSize="16px" textAlign={matchDownSM ? 'center' : 'inherit'}>
@@ -55,13 +63,13 @@ const Register = () => {
                     </Grid>
                   </Grid>
                   <Grid item xs={12} sx={{ mt: 1 }}>
-                    <Divider />
+                    <Divider sx={{ display: 'none' }} />
                   </Grid>
                   <Grid item xs={12}>
                     <AuthRegister />
                   </Grid>
                   <Grid item xs={12}>
-                    <Divider />
+                    <Divider sx={{ display: 'none' }} />
                   </Grid>
                   <Grid item xs={12}>
                     <Grid item container direction="column" alignItems="center" xs={12}>
@@ -70,6 +78,15 @@ const Register = () => {
                       </Typography>
                     </Grid>
                   </Grid>
+                  <Stack direction="row" justifyContent="center" sx={{ mb: 1, mt: 1 }}>
+                    <Chip
+                      label="©  2025 Why Digit System Private Limited." // Updated version content
+                      disabled
+                      chipcolor="secondary"
+                      size="small"
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  </Stack>
                 </Grid>
               </AuthCardWrapper>
             </Grid>

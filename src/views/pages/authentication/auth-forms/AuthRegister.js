@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { encryptPassword } from 'views/utilities/passwordEnc';
 
+
 // material-ui
 import {
   Box,
@@ -229,87 +230,101 @@ const FirebaseRegister = ({ ...others }) => {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit} {...others}>
-            <Grid container spacing={matchDownSM ? 0 : 2}>
+            <Grid container spacing={2}> {/* Adjust spacing between fields */}
+              {/* First Name */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="First Name"
-                  margin="normal"
                   name="fname"
                   type="text"
-                  value={values.fname}
-                  error={touched.fname && Boolean(errors.fname)} // Add error prop
-                  helperText={touched.fname && errors.fname} // Add helperText prop
-                  // onChange={(e) => setFirstName(e.target.value)}
+                  value={values.fname} // Connect to Formik values
+                  onBlur={handleBlur}
                   onChange={handleChange}
-                  sx={{ ...theme.typography.customInput }}
+                  error={Boolean(touched.fname && errors.fname)}
+                  helperText={touched.fname && errors.fname}
+                  margin="normal" // Add consistent spacing
                 />
               </Grid>
+
+              {/* Last Name */}
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
                   label="Last Name"
-                  margin="normal"
                   name="lname"
                   type="text"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  sx={{ ...theme.typography.customInput }}
+                  value={values.lname} // Bind to Formik values
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  error={Boolean(touched.lname && errors.lname)} // Check error for lname
+                  helperText={touched.lname && errors.lname} // Display error for lname
+                  margin="normal" // Add consistent spacing
                 />
               </Grid>
             </Grid>
-            <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ ...theme.typography.customInput }}>
-              <InputLabel htmlFor="outlined-adornment-email-register">Email Address / Username</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-email-register"
-                type="email"
-                value={values.email}
-                name="email"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                inputProps={{}}
-              />
-              {touched.email && errors.email && (
-                <FormHelperText error id="standard-weight-helper-text--register">
-                  {errors.email}
-                </FormHelperText>
-              )}
-            </FormControl>
 
-            <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ ...theme.typography.customInput }}>
-              <InputLabel htmlFor="outlined-adornment-password-register">Password</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-password-register"
-                type={showPassword ? 'text' : 'password'}
-                value={values.password}
-                name="password"
-                label="Password"
-                onBlur={handleBlur}
-                onChange={(e) => {
-                  handleChange(e);
-                  changePassword(e.target.value);
-                }}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                      size="large"
-                    >
-                      {showPassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-                inputProps={{}}
-              />
-              {touched.password && errors.password && (
-                <FormHelperText error id="standard-weight-helper-text-password-register">
-                  {errors.password}
-                </FormHelperText>
-              )}
-            </FormControl>
+
+            <Grid container spacing={2} sx={{ paddingTop: '15px' }}>
+              {/* Email Field */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  id="outlined-email"
+                  label="Email Address"
+                  name="email"
+                  type="email"
+                  variant="outlined"
+                  value={values.email}
+                  onBlur={handleBlur}
+                  onChange={handleChange}
+                  error={Boolean(touched.email && errors.email)}
+                  helperText={touched.email && errors.email ? errors.email : ''}
+                  sx={{ mb: 1 }} // Reduce bottom margin
+                  InputProps={{
+                    sx: { padding: '3px 12px' } // Adjust padding inside the field
+                  }}
+                />
+              </Grid>
+
+              {/* Password Field */}
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  id="outlined-password"
+                  label="Password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  variant="outlined"
+                  value={values.password}
+                  onBlur={handleBlur}
+                  onChange={(e) => {
+                    handleChange(e);
+                    changePassword(e.target.value); // Password strength logic
+                  }}
+                  error={Boolean(touched.password && errors.password)}
+                  helperText={touched.password && errors.password ? errors.password : ''}
+                  sx={{ mb: 1 }} // Reduce bottom margin
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={handleClickShowPassword}
+                          onMouseDown={handleMouseDownPassword}
+                          edge="end"
+                        >
+                          {showPassword ? <Visibility /> : <VisibilityOff />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                    sx: { padding: '3px 12px' } // Adjust padding inside the field
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+
 
             {strength !== 0 && (
               <FormControl fullWidth>

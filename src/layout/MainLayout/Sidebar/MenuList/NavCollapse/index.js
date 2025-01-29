@@ -31,13 +31,9 @@ const NavCollapse = ({ menu, level }) => {
       // menu?.id !== 'authentication' &&
       // menu?.id !== 'icons' &&
       // menu?.id !== 'rolesAndResponsibilities' &&
-      menu?.id !== 'companySetup' &&
-      menu?.id !== 'rolesAndResponsibilities' &&
-      menu?.id !== 'basicMasters' &&
-      menu?.id !== 'finance' &&
-      menu?.id !== 'transaction' &&
-      menu?.id !== 'ar' &&
-      menu?.id !== 'ap'
+      // menu?.id !== 'companySetup' &&
+      menu?.id !== 'rolesAndResponsibilities'
+      // menu?.id !== 'basicMasters' 
     ) {
       navigate(menu.children[0]?.url);
     }
