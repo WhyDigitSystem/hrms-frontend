@@ -15,6 +15,7 @@ import TotalIncomeLightCard from './TotalIncomeLightCard';
 import TotalOrderLineChartCard from './TotalOrderLineChartCard';
 import CurrencyExchangeRates from './ExRateDash';
 import UpcomingHolidayCard from './UpcomingHolidayCard';
+import LeaveBalance from './LeaveBalance';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
 
@@ -53,12 +54,12 @@ const Dashboard = () => {
           <Grid item lg={12} md={12} sm={12} xs={12} >
             <EarningCard isLoading={isLoading} />
           </Grid>
-          <Grid item sm={6} xs={6} md={6} lg={6}>
+          <Grid item sm={12} xs={12} md={12} lg={6}>
             <UpcomingHolidayCard isLoading={isLoading} />
           </Grid>
-          {/* <Grid item lg={6} md={6} sm={6} xs={12}>
-            <TotalOrderLineChartCard isLoading={isLoading} />
-          </Grid> */}
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            <LeaveBalance isLoading={isLoading} />
+          </Grid>
           {/* <Grid item lg={4} md={12} sm={12} xs={12}>
             <Grid container spacing={gridSpacing}>
               <Grid item sm={6} xs={12} md={6} lg={12}>

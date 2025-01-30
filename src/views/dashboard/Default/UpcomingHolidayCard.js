@@ -1,47 +1,75 @@
 import React from 'react';
+import holidayImage from '../../../assets/images/vecteezy_abstract-white-luxury-style-background_25374760.jpg'; // Ensure the correct path
 
 const UpcomingHolidayCard = () => {
   const holiday = {
-    name: 'Valentine\'s Day',
-    date: 'February 14, 2025',
-    backgroundImage: 'url(../images/upcomming_holiday.webp)' // This will work if it's in the public folder.
-
+    name: "Valentine's Day",
+    date: "February 14, 2025",
   };
 
   const cardStyles = {
     position: 'relative',
     width: '100%',
-    height: '300px',  // Adjust height as needed
-    backgroundImage: `url(${holiday.backgroundImage})`,
+    height: '275px',
+    backgroundImage: `url(${holidayImage})`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     borderRadius: '8px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-  };
-
-  const contentStyles = {
-    position: 'absolute',
-    bottom: '20px',
-    left: '20px',
-    color: 'black',  // Changed text color to black
+    alignItems: 'flex-end',
+    padding: '20px',
+    color: 'black',
     fontFamily: 'Arial, sans-serif',
   };
 
-  const headingStyles = {
-    fontSize: '36px',
-    margin: 0,
-  };
-
-  const textStyles = {
-    fontSize: '20px',
+  const uh = {
+    fontSize: '32px',  // Slightly larger header
+    fontWeight: '700',  // Bolder header text
+    fontFamily: "'Lora', serif",  // Lora for elegant header
   };
 
   return (
-    <div style={cardStyles}>
-      <div style={contentStyles}>
-        <h1 style={headingStyles}>{holiday.name}</h1>
-        <p style={textStyles}>{holiday.date}</p>
+    <div>
+      <div style={cardStyles} className="upcoming-holiday-card p-5">
+        <div className="text-center p-5" style={uh}>Upcoming Holiday</div>
       </div>
+
+      <style jsx>
+        {`
+          /* Default styling */
+          .upcoming-holiday-card {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            align-items: flex-end;
+            padding: 20px;
+            color: black;
+            font-family: 'Arial', sans-serif;
+          }
+
+          /* Mobile view styling */
+          @media (max-width: 768px) {
+            .upcoming-holiday-card {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              z-index: 1000;
+              width: 100%;
+              height: 100px;  /* Adjusted height for mobile */
+              box-shadow: none; /* Remove shadow on mobile */
+            }
+            .text-center {
+              font-size: 16px; /* Adjust font size for mobile */
+              padding: 10px;   /* Adjust padding for mobile */
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
