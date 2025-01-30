@@ -1,16 +1,8 @@
 // assets
-import { IconAppWindow, IconPasswordUser, IconUser } from '@tabler/icons-react';
+import { IconUser } from '@tabler/icons-react';
 
 // constant
 const icons = { IconUser };
-
-const icons1 = {
-  IconPasswordUser
-};
-
-const icons2 = {
-  IconAppWindow
-};
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 

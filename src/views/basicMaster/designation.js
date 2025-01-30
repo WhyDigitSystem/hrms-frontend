@@ -199,22 +199,9 @@ export const Designation = () => {
         ) : (
           <>
             <div className="row">
-              <div className="col-md-3 mb-3">
+            <div className="col-md-3 mb-3">
                 <TextField
                   label="Designation"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="designationCode"
-                  value={formData.designationCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.designationCode}
-                  helperText={fieldErrors.designationCode}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Designation Code"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -223,6 +210,19 @@ export const Designation = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.designationName}
                   helperText={fieldErrors.designationName}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Designation Code"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="designationCode"
+                  value={formData.designationCode}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.designationCode}
+                  helperText={fieldErrors.designationCode}
                 />
               </div>
               <div className="col-md-3 mb-3">

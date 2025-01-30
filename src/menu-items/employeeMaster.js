@@ -25,61 +25,42 @@ const employeeMaster = {
           type: 'item',
           url: '/employeeMaster/employeeDetails'
         },
-        // {
-        //   id: 'group',
-        //   title: 'COA',
-        //   type: 'item',
-        //   url: '/employeeMaster/Group'
-        // },
-        // {
-        //   id: 'chargeTypeRequest',
-        //   title: 'Charge Code',
-        //   type: 'item',
-        //   url: '/employeeMaster/ChargeTypeRequest'
-        // },
-        // {
-        //   id: 'tdsMaster',
-        //   title: 'TDS',
-        //   type: 'item',
-        //   url: '/employeeMaster/tdsMaster/TdsMaster'
-        // },
-        // {
-        //   id: 'hsnSacCode',
-        //   title: 'HSN SAC Code',
-        //   type: 'item',
-        //   url: '/employeeMaster/HsnSacCode'
-        // },
-
-        // {
-        //   id: 'costCenter',
-        //   title: 'Cost Center Values',
-        //   type: 'item',
-        //   url: '/employeeMaster/costcenter/CostCentre'
-        // },
-        // {
-        //   id: 'partyMaster',
-        //   title: 'Party',
-        //   type: 'item',
-        //   url: '/employeeMaster/partyMaster'
-        // },
-        // {
-        //   id: 'customer',
-        //   title: 'Customer',
-        //   type: 'item',
-        //   url: '/employeeMaster/customer'
-        // },
-        // {
-        //   id: 'vendor',
-        //   title: 'Vendor',
-        //   type: 'item',
-        //   url: '/employeeMaster/vendor'
-        // },
-        // {
-        //   id: 'taxMaster',
-        //   title: 'Tax Master',
-        //   type: 'item',
-        //   url: '/employeeMaster/taxMaster'
-        // }
+        {
+          id: 'leaveType',
+          title: 'Leave Type',
+          type: 'item',
+          url: '/employeeMaster/LeaveType'
+        },
+        {
+          id: 'holidays',
+          title: 'Holidays',
+          type: 'item',
+          url: '/employeeMaster/Holidays'
+        },
+        {
+          id: 'leaveProcess',
+          title: 'Leave Process',
+          type: 'item',
+          url: '/employeeMaster/LeaveProcess'
+        },
+        {
+          id: 'leaveCreditControl',
+          title: 'Leave Credit Control',
+          type: 'item',
+          url: '/employeeMaster/LeaveCreditControl'
+        },
+        {
+          id: 'salaryHeads',
+          title: 'Salary Heads',
+          type: 'item',
+          url: '/employeeMaster/salaryHeads'
+        },
+        {
+          id: 'salaryStructure',
+          title: 'Salary Structure',
+          type: 'item',
+          url: '/employeeMaster/SalaryStructure'
+        }
       ] 
     }
   ]

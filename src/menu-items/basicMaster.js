@@ -1,34 +1,35 @@
 // assets
-import { IconCashBanknote, IconDatabaseStar, IconKey, IconWorldPin,IconUserPlus, IconBuildingFactory2, IconIdBadge2,IconMapQuestion   } from '@tabler/icons-react';
+import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2,IconMapQuestion, IconUsersGroup, IconWorld ,IconMap ,IconBuildingSkyscraper } from '@tabler/icons-react';
 
 // constant
 const icons = {
-  IconKey
+  IconWorld
 };
 
 const icons1 = {
-  IconWorldPin
+  IconMap
 };
 
-const icons2 = {
+const icons0 = {
   IconDatabaseStar
 };
-
+const icons2 = {
+  IconBuildingSkyscraper
+};
 const icons3 = {
   IconCashBanknote
 };
-
 const icons4 = {
   IconBuildingFactory2 
-};
-const icons5 = {
-  IconUserPlus
 };
 const icons6 = {
   IconIdBadge2
 };
 const icons7 = {
   IconMapQuestion 
+};
+const icons8 = {
+  IconUsersGroup 
 };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
@@ -43,7 +44,7 @@ const basicMaster = {
       id: 'ar',
       title: 'Basic Master',
       type: 'collapse',
-      icon: icons2.IconDatabaseStar,
+      icon: icons0.IconDatabaseStar,
 
       children: [
         {
@@ -51,21 +52,21 @@ const basicMaster = {
           title: 'Country',
           type: 'item',
           url: '/basicMaster/country',
-          icon: icons1.IconWorldPin
+          icon: icons.IconWorld
         },
         {
           id: 'state',
           title: 'State',
           type: 'item',
           url: '/basicMaster/state',
-          icon: icons1.IconWorldPin
+          icon: icons1.IconMap
         },
         {
           id: 'city',
           title: 'City',
           type: 'item',
           url: '/basicMaster/city',
-          icon: icons1.IconWorldPin
+          icon: icons2.IconBuildingSkyscraper
         },
         {
           id: 'currency',
@@ -96,12 +97,19 @@ const basicMaster = {
           icon: icons6.IconIdBadge2
         },
         {
-          id: 'employee',
-          title: 'Employee',
+          id: 'role',
+          title: 'Role',
           type: 'item',
-          url: '/basicMaster/employee',
-          icon: icons5.IconUserPlus
-        }
+          url: '/basicMaster/Role',
+          icon: icons8.IconUsersGroup
+        },
+        // {
+        //   id: 'employee',
+        //   title: 'Employee',
+        //   type: 'item',
+        //   url: '/basicMaster/employee',
+        //   icon: icons5.IconUserPlus
+        // }
       ]
     }
   ]

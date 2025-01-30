@@ -3,9 +3,16 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
-
+// import Roles from 'views/basicMaster/roles';
 
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
+
+
+const CreateCompany = Loadable(lazy(() => import('views/companySetup/CreateCompany')));
+const CompanySetup = Loadable(lazy(() => import('views/companySetup/CompanySetup')));
+const FinYear = Loadable(lazy(() => import('views/basicMaster/finYear')));
+
+
 const Country = Loadable(lazy(() => import('views/basicMaster/country')));
 const State = Loadable(lazy(() => import('views/basicMaster/state')));
 const City = Loadable(lazy(() => import('views/basicMaster/city')));
@@ -13,9 +20,16 @@ const Currency = Loadable(lazy(() => import('views/basicMaster/currency')));
 const Department = Loadable(lazy(() => import('views/basicMaster/department')));
 const Designation = Loadable(lazy(() => import('views/basicMaster/designation')));
 const Region = Loadable(lazy(() => import('views/basicMaster/RegionMaster')));
-const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
+const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
+// const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
 
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
+const LeaveType = Loadable(lazy(() => import('views/employeeMaster/LeaveType')));
+const Holidays = Loadable(lazy(() => import('views/employeeMaster/Holidays')));
+const LeaveProcess = Loadable(lazy(() => import('views/employeeMaster/LeaveProcess')));
+const LeaveCreditControl = Loadable(lazy(() => import('views/employeeMaster/LeaveCreditControl')));
+const SalaryHeads = Loadable(lazy(() => import('views/employeeMaster/SalaryHeads')));
+const SalaryStructure = Loadable(lazy(() => import('views/employeeMaster/SalaryStructure')));
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
@@ -25,6 +39,18 @@ const HrmsRoute = {
     {
       path: '/',
       element: <DashboardDefault />
+    },
+    {
+      path: '/companysetup/createcompany',
+      element: <CreateCompany />
+    },
+    {
+      path: '/companysetup/companysetup',
+      element: <CompanySetup />
+    },
+    {
+      path: '/basicMaster/finYear',
+      element: <FinYear />
     },
     {
       path: '/basicMaster/country',
@@ -55,13 +81,41 @@ const HrmsRoute = {
       element: <Designation />
     },
     {
-      path: '/basicMaster/Employee',
-      element: <Employee />
+      path: '/basicMaster/Role',
+      element: <Roles />
     },
+    // {
+    //   path: '/basicMaster/Employee',
+    //   element: <Employee />
+    // },
     {
       path: '/employeeMaster/EmployeeDetails',
       element: <EmployeeDetails />
     },
+    {
+      path: '/employeeMaster/LeaveType',
+      element: <LeaveType />
+    },
+    {
+      path: '/employeeMaster/Holidays',
+      element: <Holidays />
+    },
+    {
+      path: '/employeeMaster/LeaveProcess',
+      element: <LeaveProcess />
+    },
+    {
+      path: '/employeeMaster/LeaveCreditControl',
+      element: <LeaveCreditControl />
+    },
+    {
+      path: '/employeeMaster/SalaryHeads',
+      element: <SalaryHeads />
+    },
+    {
+      path: '/employeeMaster/SalaryStructure',
+      element: <SalaryStructure />
+    }
   ]
 };
 
