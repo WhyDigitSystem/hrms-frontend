@@ -47,7 +47,7 @@ const Company = () => {
     state: '',
     city: '',
     pincode: '',
-    gst: '',
+    taxNo: '',
     website: '',
     active: true
   });
@@ -60,7 +60,7 @@ const Company = () => {
     state: '',
     city: '',
     pincode: '',
-    gst: '',
+    taxNo: '',
     website: '',
     active: ''
   });
@@ -135,7 +135,7 @@ const Company = () => {
   //     } else {
   //       setFieldErrors({ ...fieldErrors, [name]: '' });
   //     }
-  //   } else if (name === 'gst') {
+  //   } else if (name === 'taxNo') {
   //     if (!alphanumericRegex.test(value)) {
   //       setFieldErrors({ ...fieldErrors, [name]: 'Special characters are not allowed' });
   //     } else if (value.length > 15) {
@@ -186,7 +186,7 @@ const Company = () => {
       } else if (value.length > 6) {
         error = 'Only 6 digits are allowed';
       }
-    } else if (name === 'gst') {
+    } else if (name === 'taxNo') {
       if (!alphanumericRegex.test(value)) {
         error = 'Special characters are not allowed';
       } else if (value.length > 15) {
@@ -257,7 +257,7 @@ const Company = () => {
           state: particularCompany.state,
           city: particularCompany.city,
           pincode: particularCompany.zip,
-          gst: particularCompany.gst,
+          taxNo: particularCompany.taxNo,
           website: particularCompany.webSite
         });
       } else {
@@ -295,7 +295,7 @@ const Company = () => {
       state: '',
       city: '',
       pincode: '',
-      gst: '',
+      taxNo: '',
       website: '',
       active: true
     });
@@ -307,7 +307,7 @@ const Company = () => {
       state: '',
       city: '',
       pincode: '',
-      gst: '',
+      taxNo: '',
       website: ''
     });
     setEditId('');
@@ -330,10 +330,10 @@ const Company = () => {
     if (!formData.city) {
       errors.city = 'City is required';
     }
-    if (!formData.gst) {
-      errors.gst = 'GST is required';
-    } else if (formData.gst.length < 15) {
-      errors.gst = 'Invalid GST No';
+    if (!formData.taxNo) {
+      errors.taxNo = 'Tax No is required';
+    } else if (formData.taxNo.length < 15) {
+      errors.taxNo = 'Invalid taxNo No';
     }
     if (formData.pincode.length < 6 && formData.pincode.length >= 1) {
       errors.pincode = 'Invalid Pincode';
@@ -351,7 +351,7 @@ const Company = () => {
         state: formData.state,
         city: formData.city,
         zip: formData.pincode,
-        gst: formData.gst,
+        taxNo: formData.taxNo,
         webSite: formData.website,
         active: formData.active,
         updatedBy: loginUserName
@@ -519,15 +519,15 @@ const Company = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="GST"
+                  label="Tax No"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="gst"
-                  value={formData.gst}
+                  name="taxNo"
+                  value={formData.taxNo}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.gst}
-                  helperText={fieldErrors.gst}
+                  error={!!fieldErrors.taxNo}
+                  helperText={fieldErrors.taxNo}
                 />
               </div>
               <div className="col-md-3 mb-3">
