@@ -60,6 +60,12 @@ const employeeMaster = {
           title: 'Salary Structure',
           type: 'item',
           url: '/employeeMaster/SalaryStructure'
+        },
+        {
+          id: 'attendenceProcess',
+          title: 'Attendence Process',
+          type: 'item',
+          url: '/employeeMaster/AttendenceProcess'
         }
       ] 
     }
