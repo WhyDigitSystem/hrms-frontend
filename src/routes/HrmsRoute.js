@@ -30,6 +30,7 @@ const LeaveProcess = Loadable(lazy(() => import('views/employeeMaster/LeaveProce
 const LeaveCreditControl = Loadable(lazy(() => import('views/employeeMaster/LeaveCreditControl')));
 const SalaryHeads = Loadable(lazy(() => import('views/employeeMaster/SalaryHeads')));
 const SalaryStructure = Loadable(lazy(() => import('views/employeeMaster/SalaryStructure')));
+const AttendenceProcess = Loadable(lazy(() => import('views/employeeMaster/AttendenceProcess')));
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
@@ -115,6 +116,10 @@ const HrmsRoute = {
     {
       path: '/employeeMaster/SalaryStructure',
       element: <SalaryStructure />
+    },
+    {
+      path: '/employeeMaster/AttendenceProcess',
+      element: <AttendenceProcess />
     }
   ]
 };
