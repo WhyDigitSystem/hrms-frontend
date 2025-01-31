@@ -6,6 +6,7 @@ import Loadable from 'ui-component/Loadable';
 // import Roles from 'views/basicMaster/roles';
 
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
+const Calendar = Loadable(lazy(() => import('views/Calendar/Calendar')));
 
 
 const CreateCompany = Loadable(lazy(() => import('views/companySetup/CreateCompany')));
@@ -40,6 +41,10 @@ const HrmsRoute = {
     {
       path: '/',
       element: <DashboardDefault />
+    },
+    {
+      path: '/calendar',
+      element: <Calendar />
     },
     {
       path: '/companysetup/createcompany',

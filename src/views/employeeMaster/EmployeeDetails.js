@@ -266,7 +266,7 @@ const EmployeeDetails = () => {
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           leaveCode: !table[table.length - 1].leaveCode ? 'Leave Code is required' : '',
-          noOfDays: !table[table.length - 1].noOfDays ? 'No Of Days Desc is required' : '',
+          noOfDays: !table[table.length - 1].noOfDays ? 'No Of Days is required' : '',
           effective: !table[table.length - 1].effective ? 'Effective is required' : '',
           carryforward: !table[table.length - 1].carryforward ? 'Carry Forward is required' : '',
         };
