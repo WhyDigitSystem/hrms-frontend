@@ -37,7 +37,7 @@ const me = {
         },
         {
           id: 'holidayReport',
-          title: 'HolidayReport',
+          title: 'Holiday Report',
           type: 'item',
           url: '/me/HolidayReport',
           icon: icons.BeachAccessIcon  

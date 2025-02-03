@@ -10,6 +10,7 @@ import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from '../basicMaster/CommonListViewTable';
 import dayjs from 'dayjs';
+import duration from 'dayjs/plugin/duration';
 import FormControl from '@mui/material/FormControl';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -18,6 +19,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { DemoItem } from '@mui/x-date-pickers/internals/demo';
 
 const today = dayjs();
+dayjs.extend(duration);
 const todayEndOfTheDay = today.endOf('day');
 
 const CustomTimePicker = ({ label, value, onChange }) => (
@@ -57,6 +59,27 @@ const PermissionRequest = () => {
     notes: '',
     notify: ''
   });
+
+const handleTimeChange = (field, newValue) => {
+  const updatedFormData = { ...formData, [field]: newValue };
+
+  if (updatedFormData.fromTime && updatedFormData.toTime) {
+    const from = dayjs(updatedFormData.fromTime);
+    const to = dayjs(updatedFormData.toTime);
+
+    if (to.isAfter(from)) {
+      const diff = dayjs.duration(to.diff(from)); // Difference in duration format
+      const totalHours = `${diff.hours()}h ${diff.minutes()}m`; // Format as "Xh Ym"
+
+      updatedFormData.totalHours = totalHours;
+    } else {
+      updatedFormData.totalHours = ''; // Clear if invalid range
+    }
+  }
+
+  setFormData(updatedFormData);
+};
+
   const [listView, setListView] = useState(false);
   const listViewColumns = [
     { accessorKey: 'fromTime', header: 'From Time', size: 140 },
@@ -269,59 +292,29 @@ const PermissionRequest = () => {
                       label="From Time"
                       value={formData.fromTime ? dayjs(formData.fromTime) : null}
                       size="small"
-                      onChange={(newValue) => setFormData({ ...formData, fromTime: newValue })}
+                      onChange={(newValue) => handleTimeChange('fromTime', newValue)}
                       disableFuture
                       sx={{
-                        '& .MuiInputBase-root': {
-                          height: '40px', // Adjust height to match other fields
-                        },
+                        '& .MuiInputBase-root': { height: '40px' },
                       }}
                     />
                   </LocalizationProvider>
                 </div>
-              {/* <div className="col-md-3 mb-3">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <TimePicker
-                    label="From Time"
-                    value={formData.fromTime ? dayjs(formData.fromTime) : null}
-                    size="small"  
-                    onChange={(newValue) => setFormData({ ...formData, fromTime: newValue })}
-                    disableFuture
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        height: '40px', // Adjust height to match other fields
-                      },
-                    }}
-                  />
-                </LocalizationProvider>
-              </div> */}
-              {/* <div className="col-md-3 mb-3">
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <TimePicker
-                    label="To Time"
-                    value={formData.fromTime ? dayjs(formData.fromTime) : null}
-                    size="small"  
-                    onChange={(newValue) => setFormData({ ...formData, fromTime: newValue })}
-                    disableFuture
-                  />
-                </LocalizationProvider>
-              </div> */}
-                              <div className="col-md-3 mb-3">
+
+                <div className="col-md-3 mb-3">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="To Time"
-                      value={formData.fromTime ? dayjs(formData.toTime) : null}
+                      value={formData.toTime ? dayjs(formData.toTime) : null}
                       size="small"
-                      onChange={(newValue) => setFormData({ ...formData, toTime: newValue })}
+                      onChange={(newValue) => handleTimeChange('toTime', newValue)}
                       disableFuture
                       sx={{
-                        '& .MuiInputBase-root': {
-                          height: '40px', 
-                        },
+                        '& .MuiInputBase-root': { height: '40px' },
                       }}
                     />
                   </LocalizationProvider>
-                </div>
+                </div>  
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Total Hours"
