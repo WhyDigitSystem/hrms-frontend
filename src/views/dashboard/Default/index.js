@@ -16,6 +16,7 @@ import TotalOrderLineChartCard from './TotalOrderLineChartCard';
 import CurrencyExchangeRates from './ExRateDash';
 import UpcomingHolidayCard from './UpcomingHolidayCard';
 import LeaveBalance from './LeaveBalance';
+import CheckinDetails from './CheckinDetails';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
 
@@ -47,12 +48,12 @@ const Dashboard = () => {
   return (
     <Grid container spacing={gridSpacing}>
       {/* <div>
-        <ToastContainer />
+        <ToastContainer /> 
       </div> */}
       <Grid item xs={12}>
         <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
           <Grid item lg={12} md={12} sm={12} xs={12} >
-            <EarningCard isLoading={isLoading} />
+            <CheckinDetails isLoading={isLoading} />
           </Grid>
           <Grid item sm={12} xs={12} md={12} lg={6}>
             <UpcomingHolidayCard isLoading={isLoading} />
