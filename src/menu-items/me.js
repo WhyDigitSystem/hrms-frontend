@@ -1,10 +1,11 @@
 // assets
 import { IconUsers } from '@tabler/icons-react';
 import { FaPersonWalkingLuggage,FaUserClock  } from "react-icons/fa6";
-
+import BeachAccessIcon from '@mui/icons-material/BeachAccess';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 // constant
 const icons = {
-  IconUsers, FaPersonWalkingLuggage ,FaUserClock    
+  IconUsers, FaPersonWalkingLuggage ,FaUserClock, BeachAccessIcon, AccessTimeIcon   
 };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
@@ -38,13 +39,15 @@ const me = {
           id: 'holidayReport',
           title: 'HolidayReport',
           type: 'item',
-          url: '/me/HolidayReport'
+          url: '/me/HolidayReport',
+          icon: icons.BeachAccessIcon  
         },
         {
           id: 'swipeInSwipeOut',
           title: 'SwipeIn & SwipeOut ',
           type: 'item',
-          url: '/me/SwipeInSwipeOut'
+          url: '/me/SwipeInSwipeOut',
+          icon: icons.AccessTimeIcon 
         },
         // {
         //   id: 'leaveCreditControl',
