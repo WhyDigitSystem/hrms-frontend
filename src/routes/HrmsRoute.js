@@ -32,6 +32,11 @@ const LeaveCreditControl = Loadable(lazy(() => import('views/employeeMaster/Leav
 const SalaryHeads = Loadable(lazy(() => import('views/employeeMaster/SalaryHeads')));
 const SalaryStructure = Loadable(lazy(() => import('views/employeeMaster/SalaryStructure')));
 const AttendenceProcess = Loadable(lazy(() => import('views/employeeMaster/AttendenceProcess')));
+
+const PermissionRequest = Loadable(lazy(() => import('views/me/PermissionRequest')));
+const LeaveRequest = Loadable(lazy(() => import('views/me/LeaveRequest')));
+const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')));
+const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
@@ -125,6 +130,22 @@ const HrmsRoute = {
     {
       path: '/employeeMaster/AttendenceProcess',
       element: <AttendenceProcess />
+    },
+    {
+      path: '/me/PermissionRequest',
+      element: <PermissionRequest />
+    },
+    {
+      path: '/me/LeaveRequest',
+      element: <LeaveRequest />
+    },
+    {
+      path: '/me/HolidayReport',
+      element: <HolidayReport />
+    },
+    {
+      path: '/me/SwipeInSwipeOut',
+      element: <SwipeInSwipeOut />
     }
   ]
 };

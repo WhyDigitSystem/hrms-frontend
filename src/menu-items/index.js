@@ -4,6 +4,7 @@ import companySetup from './companySetup';
 import basicMaster from './basicMaster';
 import employeeMaster from './employeeMaster';
 import calendar from './calendar';
+import me from './me';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
@@ -11,7 +12,7 @@ const getMenuItems = () => {
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, admin, companySetup, basicMaster,employeeMaster, calendar]
+    items: [dashboard, admin, companySetup, basicMaster,employeeMaster, calendar, me]
   };
 
   // Define menu items based on localStorage value
