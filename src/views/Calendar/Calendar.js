@@ -12,10 +12,10 @@ const Calendar = () => {
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   const eventTypes = {
-    meeting: '#6b8e23', // Olive Green
-    birthday: '#ff6347', // Tomato
-    reminder: '#1e90ff', // Dodger Blue
-    task: '#ffa500', // Orange
+    meeting: '#6b8e23',
+    birthday: '#ff6347',
+    reminder: '#1e90ff',
+    task: '#ffa500',
   };
 
   const monthNames = [
@@ -45,7 +45,7 @@ const Calendar = () => {
           } else {
             week.push({
               day: dayCount,
-              events: [], // You can add logic to populate events
+              events: [],
             });
             dayCount++;
           }
@@ -114,52 +114,52 @@ const Calendar = () => {
     <div style={{ margin: '0 auto', padding: isMobile ? '8px' : '16px', maxWidth: '100%' }}>
       {/* Calendar Header */}
       <div style={{ margin: '0 auto', padding: '0px' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        marginBottom: '16px', 
-        flexDirection: isMobile ? 'column' : 'row', 
-        alignItems: 'center' 
-      }}>
-        <h1  style={{ 
-          fontSize: isMobile ? '20px' : '24px', 
-          fontWeight: 'bold', 
-          color: '#4a4a4a', 
-          textAlign: 'center', 
-          display:'flex',
-          alignItems:'center',
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: 'center'
         }}>
-          {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-          <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center', marginTop: '8px' }} className='ps-3'>
-            <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time: </label>
-            <div style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a', marginLeft: '8px' }}>{currentTime}</div>
-          </div>
-        </h1>
+          <h1 style={{
+            fontSize: isMobile ? '20px' : '24px',
+            fontWeight: 'bold',
+            color: '#4a4a4a',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+          }}>
+            {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+            <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center', marginTop: '8px' }} className='ps-3'>
+              <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time: </label>
+              <div style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a', marginLeft: '8px' }}>{currentTime}</div>
+            </div>
+          </h1>
 
-        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '4px', justifyContent: 'center' }}>
-            <button onClick={handlePrevMonth} style={{
-              padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
-              transition: 'transform 0.3s ease'
-            }}>
-              ←
-            </button>
-            <button onClick={handleNextMonth} style={{
-              padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
-              transition: 'transform 0.3s ease'
-            }}>
-              →
-            </button>
-            <button onClick={handleAddEvent} className='border' style={{
-              padding: '8px 16px', backgroundColor: '#1d4ed8', color: 'white', borderRadius: '8px', cursor: 'pointer',
-              transition: 'background-color 0.2s, transform 0.2s'
-            }}>
-              Add New Event
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', justifyContent: 'center' }}>
+              <button onClick={handlePrevMonth} style={{
+                padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
+                transition: 'transform 0.3s ease'
+              }}>
+                ←
+              </button>
+              <button onClick={handleNextMonth} style={{
+                padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
+                transition: 'transform 0.3s ease'
+              }}>
+                →
+              </button>
+              <button onClick={handleAddEvent} className='border' style={{
+                padding: '8px 16px', backgroundColor: '#1d4ed8', color: 'white', borderRadius: '8px', cursor: 'pointer',
+                transition: 'background-color 0.2s, transform 0.2s'
+              }}>
+                Add New Event
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
       {/* Success Message */}
       {successMessage && (
