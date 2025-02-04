@@ -79,11 +79,11 @@ const SalaryMaster = () => {
     }
   ]);
 
-  const [detectionDetailsData, setDetectionDetailsData] = useState([{ id: 1, heading: '', amount: '' }]);
+  const [detectionDetailsData, setDetectionDetailsData] = useState([{ id: 1, detectionHeading: '', detectionAmount: '' }]);
   const [earningDetailsDataErrors, setDetectionDetailsDataErrors] = useState([
     {
-      heading: '',
-      amount: '',
+      detectionHeading: '',
+      detectionAmount: '',
     }
   ]);
 
@@ -186,8 +186,8 @@ const SalaryMaster = () => {
         setDetectionDetailsData(
           particularUser.roleAccessVO.map((role) => ({
             id: role.id,
-            heading: role.heading,
-            amount: role.amount,
+            detectionHeading: role.detectionHeading,
+            detectionAmount: role.detectionAmount,
           }))
         );
 
@@ -330,7 +330,7 @@ const SalaryMaster = () => {
     });
     setEarningDetailsData([{ id: 1, heading: '', amount: '' }]);
     setEarningDetailsDataErrors('');
-    setDetectionDetailsData([{ id: 1, heading: '', amount: '' }]);
+    setDetectionDetailsData([{ id: 1, detectionHeading: '', detectionAmount: '' }]);
     setDetectionDetailsDataErrors('');
     setEditId('');
   };
@@ -357,7 +357,7 @@ const SalaryMaster = () => {
     setEarningDetailsData([...earningDetailsData, newRow]);
     setEarningDetailsDataErrors([...earningDetailsDataErrors, { heading: '', amount: '' }]);
     setDetectionDetailsData([...detectionDetailsData, newRow]);
-    setDetectionDetailsDataErrors([...detectionDetailsDataErrors, { heading: '', amount: '' }]);
+    setDetectionDetailsDataErrors([...detectionDetailsDataErrors, { detectionHeading: '', detectionAmount: '' }]);
   };
 
 
@@ -369,7 +369,7 @@ const SalaryMaster = () => {
       return !lastRow.heading || !lastRow.amount;
     }
     if (table === detectionDetailsData) {
-      return !lastRow.heading || !lastRow.amount;
+      return !lastRow.detectionHeading || !lastRow.detectionAmount;
     }
     return false;
   };
@@ -391,8 +391,8 @@ const SalaryMaster = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          heading: !table[table.length - 1].heading ? 'Heading is required' : '',
-          amount: !table[table.length - 1].amount ? 'Amount is required' : ''
+          detectionHeading: !table[table.length - 1].detectionHeading ? 'Heading is required' : '',
+          detectionAmount: !table[table.length - 1].detectionAmount ? 'Amount is required' : ''
         };
         return newErrors;
       });
@@ -762,52 +762,51 @@ const SalaryMaster = () => {
                                       </td>
                                       <td className="border px-2 py-2">
                                         <select
-                                          value={row.heading}
+                                          value={row.detectionHeading}
                                           onChange={(e) => handleRoleChange(row, index, e)}
-                                          className={detectionDetailsDataErrors[index]?.heading ? 'error form-control' : 'form-control'}
+                                          className={detectionDetailsDataErrors[index]?.detectionHeading ? 'error form-control' : 'form-control'}
                                         >
                                           <option value="">Select Option</option>
                                           {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={heading.id} value={heading.role}>
-                                              {role.heading}
+                                            <option key={detectionHeading.id} value={detectionHeading.role}>
+                                              {role.detectionHeading}
                                             </option>
                                           ))} */}
                                         </select>
-                                        {detectionDetailsDataErrors[index]?.heading && (
+                                        {detectionDetailsDataErrors[index]?.detectionHeading && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detectionDetailsDataErrors[index].heading}
+                                            {detectionDetailsDataErrors[index].detectionHeading}
                                           </div>
                                         )}
                                       </td>
                                       <td>
                                         <input
                                           type="text"
-                                          value={row.startDate}
+                                          value={row.detectionAmount}
                                           onChange={(e) => {
-                                            const date = e.target.value;
+                                            const amount = e.target.value;
 
-                                            setDetectionDetailsData((prev) =>
+                                            setEarningDetailsData((prev) =>
                                               prev.map((r) =>
-                                                r.id === row.id ? { ...r, startDate: date, endDate: date > r.endDate ? '' : r.endDate } : r
+                                                r.id === row.id ? { ...r, amount } : r
                                               )
                                             );
 
-                                            setDetectionDetailsDataErrors((prev) => {
+                                            setEarningDetailsDataErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                startDate: !date ? 'Start Date is required' : '',
-                                                endDate: date && row.endDate && date > row.endDate ? '' : newErrors[index]?.endDate
+                                                detectionAmount: !amount ? 'Amount is required' : '',
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detectionDetailsDataErrors[index]?.startDate ? 'error form-control' : 'form-control'}
-                                          onKeyDown={(e) => handleKeyDown(e, row, detectionDetailsData)}
+                                          className={earningDetailsDataErrors[index]?.detectionAmount ? 'error form-control' : 'form-control'}
+                                          onKeyDown={(e) => handleKeyDown(e, row, earningDetailsData)}
                                         />
-                                        {detectionDetailsDataErrors[index]?.startDate && (
+                                        {earningDetailsDataErrors[index]?.detectionAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detectionDetailsDataErrors[index].startDate}
+                                            {earningDetailsDataErrors[index].detectionAmount}
                                           </div>
                                         )}
                                       </td>
