@@ -6,7 +6,8 @@ import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import { motion } from 'framer-motion';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import TaskIcon from '@mui/icons-material/Assignment';
+import ToastComponent, { showToast } from 'utils/toast-component';
+import apiCalls from 'apicall';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   backgroundColor: theme.palette.secondary.dark,
@@ -44,15 +45,15 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
 
 const CheckinDetails = ({ isLoading }) => {
   const theme = useTheme();
-  const [anchorEl, setAnchorEl] = useState(null);
+  // const [anchorEl, setAnchorEl] = useState(null);
 
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  // const handleClick = (event) => {
+  //   setAnchorEl(event.currentTarget);
+  // };
 
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  // const handleClose = () => {
+  //   setAnchorEl(null);
+  // };
 
   // Get current month, date, year, and time dynamically
   const currentDate = new Date();
@@ -61,13 +62,64 @@ const CheckinDetails = ({ isLoading }) => {
   const year = currentDate.getFullYear(); // e.g., 2025
   const time = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // e.g., 09:30 AM
 
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [branchId, setBranchId] = useState(localStorage.getItem('branchId'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [empcode, setEmpCode] = useState(localStorage.getItem('empcode'));
+  // const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  // const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   // Handle Check-In and Check-Out button clicks
-  const handleCheckIn = () => {
-    alert("Check-In button clicked");
+  const handleCheckIn = async () => {
+    const saveCheckIN = {
+      status: true,
+      orgId: orgId,
+      branch: branch,
+      // companycode: loginUserName,
+      branchId: branchId,
+      empcode: empcode,
+    };
+
+    console.log('DATA TO SAVE IS:', saveCheckIN);
+    try {
+      const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
+
+      if (result.status === true) {
+        console.log('Response:', result);
+        showToast('success', 'Check-In Success');
+      } else {
+        showToast('error', result.paramObjectsMap.errorMessage || 'Check-In Failed');
+      }
+    } 
+    catch (err) {
+      console.log('error', err);
+      showToast('error', 'Check-In Failed');
+    }
   };
 
-  const handleCheckOut = () => {
-    alert("Check-Out button clicked");
+  const handleCheckOut = async () => {
+    const saveCheckIN = {
+      status: false,
+      orgId: orgId,
+      branch: branch,
+      // companycode: loginUserName,
+      branchId: branchId,
+      empcode: empcode,
+    };
+    console.log('DATA TO SAVE IS:', saveCheckIN);
+    try {
+      const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
+
+      if (result.status === true) {
+        console.log('Response:', result);
+        showToast('success', 'Check-Out Success');
+      } else {
+        showToast('error', result.paramObjectsMap.errorMessage || 'Check-Out Failed');
+      }
+    } 
+    catch (err) {
+      console.log('error', err);
+      showToast('error', 'Check-Out Failed');
+    }
   };
 
   return (

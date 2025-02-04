@@ -295,12 +295,12 @@ const handleTimeChange = (field, newValue) => {
                       onChange={(newValue) => handleTimeChange('fromTime', newValue)}
                       disableFuture
                       sx={{
-                        '& .MuiInputBase-root': { height: '40px' },
+                        '& .MuiInputBase-root': { height: '40px'},
+                        '& .MuiInputBase-input': { height: '0px'},
                       }}
                     />
                   </LocalizationProvider>
                 </div>
-
                 <div className="col-md-3 mb-3">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
@@ -311,6 +311,7 @@ const handleTimeChange = (field, newValue) => {
                       disableFuture
                       sx={{
                         '& .MuiInputBase-root': { height: '40px' },
+                        '& .MuiInputBase-input': { height: '0px', display:'flex', alignItems:'center'},
                       }}
                     />
                   </LocalizationProvider>
