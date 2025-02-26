@@ -85,6 +85,8 @@ const FirebaseLogin = ({ ...others }) => {
         headers: { 'Content-Type': 'application/json' }
       });
 
+      console.log("wer", response)
+
       if (response.data.status) {
         dispatch(setUser({ orgId: response.data.paramObjectsMap.userVO.orgId }));
         localStorage.setItem('orgId', response.data.paramObjectsMap.userVO.orgId);

@@ -7,7 +7,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -17,7 +17,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { FormHelperText } from '@mui/material';
+import { FormHelperText, MenuItem } from '@mui/material';
 
 const SalaryHeads = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -50,25 +50,44 @@ const SalaryHeads = () => {
 
   const [listViewData, setListViewData] = useState([]);
 
+  useEffect(() => {
+    getAllSalaryHeads();
+  }, []);
 
-  const getCompanyById = async (row) => {
+  const getAllSalaryHeads = async () => {
+    try {
+      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.salaryHeadsVO);
+
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getSalaryHeadsById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `employeemaster/getSalaryHeadsById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
+        const particularSalaryHeads = response.paramObjectsMap.salaryHeadsVO;
+        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularSalaryHeads);
 
         setFormData({
-          type: particularCompany.type,
-          heading: particularCompany.heading,
-          code: particularCompany.code,
-          category: particularCompany.category,
-          active: particularCompany.active === 'Active' ? true : false
+          type: particularSalaryHeads.type,
+          heading: particularSalaryHeads.heading,
+          code: particularSalaryHeads.code,
+          category: particularSalaryHeads.category,
+          active: particularSalaryHeads.active === 'Active' ? true : false
         });
       } else {
         console.error('API Error:', response);
@@ -85,7 +104,7 @@ const SalaryHeads = () => {
 
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: updatedValue,
+      [name]: updatedValue
     }));
 
     if (type === 'checkbox') {
@@ -149,7 +168,6 @@ const SalaryHeads = () => {
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-
       const saveData = {
         ...(editId && { id: editId }),
         active: formData.active,
@@ -163,18 +181,17 @@ const SalaryHeads = () => {
       console.log('DATA TO SAVE IS:', saveData);
 
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
+        const response = await apiCalls('put', '/employeemaster/createUpdateSalaryHeads', saveData);
 
-        const response = await apiCalls(method, url, saveData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
+          showToast('success', editId ? ' Salary Heads Updated Successfully' : 'Salary Heads created successfully');
 
           handleClear();
+          getAllSalaryHeads();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Salary Heads creation failed');
           setIsLoading(false);
         }
       } catch (error) {
@@ -210,7 +227,7 @@ const SalaryHeads = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getSalaryHeadsById}
             />
           </div>
         ) : (
@@ -258,13 +275,12 @@ const SalaryHeads = () => {
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.type}>
                   <InputLabel id="type-label">Type</InputLabel>
-                  <Select labelId="type-label" label="Employe Name" value={formData.type} onChange={handleInputChange} name="type">
-                    {/* {Array.isArray(typeList) &&
-                      typeList?.map((row) => (
-                        <MenuItem key={row.id} value={row.type}>
-                          {row.type}
-                        </MenuItem>
-                      ))} */}
+                  <Select labelId="type-label" label="Type" value={formData.type} onChange={handleInputChange} name="type">
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    <MenuItem value="DEDUCTION">DEDUCTION</MenuItem>
+                    <MenuItem value="EARNING">EARNING</MenuItem>
                   </Select>
                   {fieldErrors.type && <FormHelperText>{fieldErrors.type}</FormHelperText>}
                 </FormControl>

@@ -2,14 +2,14 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField } from '@mui/material';
+import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField, Autocomplete } from '@mui/material';
 import apiCalls from 'apicall';
 import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllActiveBranches } from 'utils/CommonFunctions';
 import ActionButton from 'utils/ActionButton';
-import CommonTable from 'views/basicMaster/CommonTable';
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -34,6 +34,8 @@ const EmployeeDetails = () => {
   const [departmentList, setDepartmentList] = useState([]);
   const [designationList, setDesignationList] = useState([]);
   const [roleList, setRoleList] = useState([]);
+  const [allleaveType, setAllLeaveType] = useState([]);
+  const [allReportingPerson, setAllReportingPerson] = useState([]);
   const theme = useTheme();
   const anchorRef = useRef(null);
   const [listViewData, setListViewData] = useState([]);
@@ -41,6 +43,7 @@ const EmployeeDetails = () => {
   const [formData, setFormData] = useState({
     employeeName: '',
     employeeCode: '',
+    employeeAddress: '',
     branch: '',
     gender: '',
     email: '',
@@ -58,17 +61,17 @@ const EmployeeDetails = () => {
     grade: '',
     team: '',
     reportingPerson: '',
-    reportingName: '',
     reportingRole: '',
     department: '',
     designation: '',
     role: '',
     active: true,
-    branchCode: '',
+    branchCode: ''
   });
   const [fieldErrors, setFieldErrors] = useState({
     employeeName: '',
     employeeCode: '',
+    employeeAddress: '',
     branch: '',
     gender: '',
     email: '',
@@ -86,36 +89,47 @@ const EmployeeDetails = () => {
     grade: '',
     team: '',
     reportingPerson: '',
-    reportingName: '',
     reportingRole: '',
     department: '',
     designation: '',
     role: '',
     active: true,
-    branchCode: '',
+    branchCode: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [leaveTypeTable, setLeaveTypeTable] = useState([
     {
       id: 1,
+      leaveType: '',
       leaveCode: '',
-      noOfDays: '',
+      leaveApplicable: '',
+      totalLeave: '',
       effective: '',
-      carryforward: '',
+      carryforward: ''
     }
   ]);
   const [leaveTypeErrors, setLeaveTypeErrors] = useState([
     {
+      leaveType: '',
       leaveCode: '',
-      noOfDays: '',
+      leaveApplicable: '',
+      totalLeave: '',
       effective: '',
-      carryforward: '',
+      carryforward: ''
     }
   ]);
   const columns = [
-    { accessorKey: 'listCode', header: 'List Code', size: 140 },
-    { accessorKey: 'listDescription', header: 'Description', size: 140 },
+    { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
+    { accessorKey: 'branch', header: 'Branch', size: 140 },
+    { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
+    { accessorKey: 'grade', header: 'Grade', size: 140 },
+    { accessorKey: 'team', header: 'Team', size: 140 },
+    { accessorKey: 'department', header: 'Department', size: 140 },
+    { accessorKey: 'designation', header: 'Designation', size: 140 },
+    { accessorKey: 'role', header: 'Role', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
+    
   ];
 
   useEffect(() => {
@@ -126,7 +140,10 @@ const EmployeeDetails = () => {
     getAllEmployees();
     getAllDesignation();
     getAllDepartment();
-  }, []); 
+    getAllRole();
+    getAllLeaveType();
+    getAllReportingPerson();
+  }, []);
   const getAllBranches = async () => {
     try {
       const branchData = await getAllActiveBranches(orgId);
@@ -137,12 +154,11 @@ const EmployeeDetails = () => {
   };
   const getAllDesignation = async () => {
     try {
-      const response = await apiCalls('get', `master/getDesignationNameForEmployee?orgId=${orgId}`);
+      const response = await apiCalls('get', `commonmaster/getDesignationByOrgId?orgid=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setDesignationList(response.paramObjectsMap.designationName);
-        console.log('fin', response.paramObjectsMap.designationName);
+        setDesignationList(response.paramObjectsMap.designationVO);
       } else {
         console.error('API Error:', response);
       }
@@ -152,12 +168,11 @@ const EmployeeDetails = () => {
   };
   const getAllDepartment = async () => {
     try {
-      const response = await apiCalls('get', `master/getDepartmentNameForEmployee?orgId=${orgId}`);
+      const response = await apiCalls('get', `commonmaster/getDepartmentByOrgId?orgid=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setDepartmentList(response.paramObjectsMap.departmentName);
-        console.log('fin', response.paramObjectsMap.departmentName);
+        setDepartmentList(response.paramObjectsMap.departmentVO);
       } else {
         console.error('API Error:', response);
       }
@@ -165,13 +180,55 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-   const getAllEmployees = async () => {
+  const getAllRole = async () => {
+    try {
+      const response = await apiCalls('get', `commonmaster/getRolesByOrgId?OrgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setRoleList(response.paramObjectsMap.rolesVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  const getAllEmployees = async () => {
     try {
       const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setListViewData(response.paramObjectsMap.employeeVO.reverse());
+        setListViewData(response.paramObjectsMap.employeeVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  const getAllLeaveType = async () => {
+    try {
+      const response = await apiCalls('get', `commonmaster/getLeaveTypeByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  const getAllReportingPerson = async () => {
+    try {
+      const response = await apiCalls('get', `master/getReportingNameForEmployee?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setAllReportingPerson(response.paramObjectsMap.employeeVO);
       } else {
         console.error('API Error:', response);
       }
@@ -183,20 +240,20 @@ const EmployeeDetails = () => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
     const nameRegex = /^[A-Za-z ]*$/;
     const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-  
+
     let errorMessage = '';
-  
+
     if (name === 'employeeName' && !codeRegex.test(value)) {
       errorMessage = 'Invalid Format';
-    } else if (name === 'employeeCode' && !nameRegex.test(value)) {
+    } else if (name === 'employeeCode' && !codeRegex.test(value)) {
       errorMessage = 'Invalid Format';
     }
-  
+
     if (errorMessage) {
       setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     } else {
       setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
-  
+
       if (name === 'branch') {
         const selectedBranch = branchList.find((br) => br.branch === value);
         setFormData((prevData) => ({
@@ -208,15 +265,25 @@ const EmployeeDetails = () => {
         setFormData((prevData) => ({ ...prevData, [name]: checked }));
       } else {
         let inputValue = value;
-  
+
         if (name === 'email') {
           inputValue = value.toLowerCase();
         } else if (type === 'text' || type === 'textarea') {
           inputValue = value.toUpperCase();
         }
-  
+
         setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
-  
+
+        // If reportingPerson is selected, map its role automatically.
+        if (name === 'reportingPerson') {
+          const selectedEmployee = allReportingPerson.find((emp) => emp.employeeName === value);
+          setFormData((prevData) => ({
+            ...prevData,
+            reportingPerson: value,
+            reportingRole: selectedEmployee ? selectedEmployee.role : ''
+          }));
+        }
+
         // Check if input type is text or textarea before calling setSelectionRange
         if (type === 'text' || type === 'textarea') {
           setTimeout(() => {
@@ -229,7 +296,6 @@ const EmployeeDetails = () => {
       }
     }
   };
-  
 
   const handleAddRow = () => {
     if (isLastRowEmpty(leaveTypeTable)) {
@@ -238,13 +304,15 @@ const EmployeeDetails = () => {
     }
     const newRow = {
       id: Date.now(),
+      leaveType: '',
       leaveCode: '',
-      noOfDays: '',
+      leaveApplicable: '',
+      totalLeave: '',
       effective: '',
-      carryforward: '',
+      carryforward: ''
     };
     setLeaveTypeTable([...leaveTypeTable, newRow]);
-    setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', noOfDays: '', effective: '', carryforward: '', }]);
+    setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', totalLeave: '', effective: '', carryforward: '' }]);
   };
   const isLastRowEmpty = (table) => {
     if (!table || table.length === 0) return false;
@@ -253,11 +321,10 @@ const EmployeeDetails = () => {
     if (!lastRow) return false;
 
     if (table === leaveTypeTable) {
-      return !lastRow.leaveCode || !lastRow.noOfDays || !lastRow.effective || !lastRow.carryforward;
+      return !lastRow.leaveCode || !lastRow.totalLeave || !lastRow.effective || !lastRow.carryforward;
     }
     return false;
   };
-
 
   const displayRowError = (table) => {
     if (table === leaveTypeTable) {
@@ -265,10 +332,12 @@ const EmployeeDetails = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
+          leaveType: !table[table.length - 1].leaveType ? 'Leave Type is required' : '',
           leaveCode: !table[table.length - 1].leaveCode ? 'Leave Code is required' : '',
-          noOfDays: !table[table.length - 1].noOfDays ? 'No Of Days is required' : '',
+          leaveApplicable: !table[table.length - 1].leaveApplicable ? 'Leave Applicable is required' : '',
+          totalLeave: !table[table.length - 1].totalLeave ? 'Total Leave is required' : '',
           effective: !table[table.length - 1].effective ? 'Effective is required' : '',
-          carryforward: !table[table.length - 1].carryforward ? 'Carry Forward is required' : '',
+          carryforward: !table[table.length - 1].carryforward ? 'Carry Forward is required' : ''
         };
         return newErrors;
       });
@@ -289,6 +358,7 @@ const EmployeeDetails = () => {
     setFormData({
       employeeName: '',
       employeeCode: '',
+      employeeAddress: '',
       branch: '',
       gender: '',
       email: '',
@@ -306,22 +376,23 @@ const EmployeeDetails = () => {
       grade: '',
       team: '',
       reportingPerson: '',
-      reportingName: '',
-      reportingRole: '',
+        reportingRole: '',
       department: '',
       designation: '',
       role: '',
       active: true,
-      branchCode: '',
+      branchCode: ''
     });
     setFieldErrors({});
     setLeaveTypeTable([
       {
         id: 1,
+        leaveType: '',
         leaveCode: '',
-        noOfDays: '',
+        leaveApplicable: '',
+        totalLeave: '',
         effective: '',
-        carryforward: '',
+        carryforward: ''
       }
     ]);
     setLeaveTypeErrors('');
@@ -332,13 +403,12 @@ const EmployeeDetails = () => {
     setFormData((prevData) => ({ ...prevData, [field]: formattedDate }));
   };
 
-  
   const handleSave = async () => {
     console.log('THE HANDLE SAVE IS WORKING');
-  
+
     const errors = {};
     let detailsTableDataValid = true;
-  
+
     if (!formData.employeeName) errors.employeeName = 'Employee Name is required';
     if (!formData.branch) errors.branch = 'Branch is required';
     if (!formData.gender) errors.gender = 'Gender is required';
@@ -351,27 +421,33 @@ const EmployeeDetails = () => {
     if (!formData.accountholderName) errors.accountholderName = 'Accountholder Name is required';
     if (!formData.ifscCode) errors.ifscCode = 'IFSC Code is required';
     if (!formData.doj) errors.doj = 'Date of Join is required';
-    if (!formData.resignationDate) errors.resignationDate = 'Resignation Date is required';
     if (!formData.grade) errors.grade = 'Grade is required';
     if (!formData.team) errors.team = 'Team is required';
     if (!formData.reportingPerson) errors.reportingPerson = 'Reporting Person is required';
-    if (!formData.reportingName) errors.reportingName = 'Reporting Name is required';
     if (!formData.reportingRole) errors.reportingRole = 'Reporting Role is required';
     if (!formData.department) errors.department = 'Department is required';
     if (!formData.designation) errors.designation = 'Designation is required';
-  
+
     if (!leaveTypeTable || !Array.isArray(leaveTypeTable) || leaveTypeTable.length === 0) {
       detailsTableDataValid = false;
-      setLeaveTypeErrors([{ general: 'Lr Table Data is required' }]);
+      setLeaveTypeErrors([{ general: 'Leave Type Table Data is required' }]);
     } else {
       const newTableErrors = leaveTypeTable.map((row, index) => {
         const rowErrors = {};
+        if (!row.leaveType) {
+          rowErrors.leaveType = 'Leave Type is required';
+          detailsTableDataValid = false;
+        }
         if (!row.leaveCode) {
           rowErrors.leaveCode = 'Leave Code is required';
           detailsTableDataValid = false;
         }
-        if (!row.noOfDays) {
-          rowErrors.noOfDays = 'No. of Days is required';
+        if (!row.leaveApplicable) {
+          rowErrors.leaveApplicable = 'Leave Applicable is required';
+          detailsTableDataValid = false;
+        }
+        if (!row.totalLeave) {
+          rowErrors.totalLeave = 'Total Leave is required';
           detailsTableDataValid = false;
         }
         if (!row.effective) {
@@ -382,62 +458,87 @@ const EmployeeDetails = () => {
           rowErrors.carryforward = 'Carry Forward is required';
           detailsTableDataValid = false;
         }
-        if (row.active === undefined || row.active === null) {
-          rowErrors.active = 'Active is required';
-          detailsTableDataValid = false;
-        }
         return rowErrors;
       });
       setLeaveTypeErrors(newTableErrors);
     }
-  
+
     setFieldErrors(errors);
-  
+
     if (Object.keys(errors).length === 0 && detailsTableDataValid) {
       setIsLoading(true);
-  
+
       const detailsVo = leaveTypeTable.map((row) => ({
         ...(editId && { id: row.id }),
-        leaveCode: row.leaveCode,
-        noOfDays: row.noOfDays,
+        carryForward: row.carryforward,
         effective: row.effective,
-        carryforward: row.carryforward,
+        leaveApplicable: row.leaveApplicable,
+        leaveCode: row.leaveCode,
+        leaveType: row.leaveType,
+        totalLeave: parseInt(row.totalLeave)
       }));
-  
+
+      const selectedBranch = branchList.find((br) => br.branch === formData.branch);
+      const branchCode = selectedBranch ? selectedBranch.branchCode : '';
+
       const saveFormData = {
         ...(editId && { id: editId }),
+        aadharNo: parseInt(formData.aadhaarNo),
+        accountHolderName: formData.accountholderName,
+        accountNo: parseInt(formData.accountNo),
         active: formData.active,
-        listCode: formData.listCode,
-        listDescription: formData.listDescription,
-        listOfValues1DTO: detailsVo,
+        alternativeMobileNo: parseInt(formData.alternativeMobile),
+        bloodGroup: formData.bloodGroup,
+        branch: formData.branch,
+        branchCode: branchCode,
+        cancel: true,
+        cancelRemark: null,
         createdBy: loginUserName,
-        orgId: orgId
+        dateOfBirth: formData.dob,
+        department: formData.department,
+        designation: formData.designation,
+        email: formData.email,
+        employeeAddress: formData.employeeAddress,
+        employeeCode: formData.employeeCode,
+        employeeLeaveDTO: detailsVo,
+        employeeName: formData.employeeName,
+        gender: formData.gender,
+        grade: formData.grade,
+        ifscCode: formData.ifscCode,
+        joiningDate: formData.doj,
+        mobileNo: parseInt(formData.mobileNo),
+        orgId: orgId,
+        panNo: formData.panNo,
+        reportingPerson: formData.reportingPerson,
+        reportingRole: formData.reportingRole,
+        resignDate: formData.resignationDate,
+        role: formData.role,
+        team: formData.team,
+        updatedBy: loginUserName
       };
-  
+
       console.log('DATA TO SAVE IS:', saveFormData);
-  
       try {
-        const response = await apiCalls('put', '/master/updateCreateListOfValues', saveFormData);
+        const response = await apiCalls('put', '/master/createUpdateEmployee', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'List of values created successfully');
+          showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           getAllListOfValuesByOrgId();
           handleClear();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'List of value creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'List of value creation failed');
+        showToast('error', 'Employee Details creation failed');
         setIsLoading(false);
       }
     } else {
       setFieldErrors(errors);
     }
   };
-  
 
   const getAllListOfValuesByOrgId = async () => {
     try {
@@ -450,33 +551,57 @@ const EmployeeDetails = () => {
     }
   };
 
-  const getListOfValueById = async (row) => {
+  const getEmployeeDetailsById = async (row) => {
     console.log('first', row);
     setShowForm(true);
     try {
-      const result = await apiCalls('get', `/master/getListOfValuesById?id=${row.original.id}`);
+      const result = await apiCalls('get', `/master/employee/${row.original.id}`);
 
       if (result) {
-        const listValueVO = result.paramObjectsMap.listOfValuesVO[0];
+        const employeeDetailsVO = result.paramObjectsMap.Employee;
         setEditId(row.original.id);
 
         setFormData({
-          listCode: listValueVO.listCode || '',
-          listDescription: listValueVO.listDescription || '',
-          active: listValueVO.active || false,
-          id: listValueVO.id || 0
+          employeeName: employeeDetailsVO.employeeName || '',
+          employeeCode: employeeDetailsVO.employeeCode || '',
+          employeeAddress: employeeDetailsVO.employeeAddress || '',
+          branch: employeeDetailsVO.branch || '',
+          gender: employeeDetailsVO.gender || '',
+          email: employeeDetailsVO.email || '',
+          doj: employeeDetailsVO.joiningDate || '',
+          resignationDate: employeeDetailsVO.resignDate || '',
+          grade: employeeDetailsVO.grade || '',
+          team: employeeDetailsVO.team || '',
+          department: employeeDetailsVO.department || '',
+          designation: employeeDetailsVO.designation || '',
+          role: employeeDetailsVO.role || '',
+          reportingPerson: employeeDetailsVO.reportnigPerson || '',
+          reportingRole: employeeDetailsVO.reportingRole || '',
+          dob: employeeDetailsVO.dateOfBirth || '',
+          bloodGroup: employeeDetailsVO.bloodGroup || '',
+          mobileNo: employeeDetailsVO.mobileNo || '',
+          alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
+          aadhaarNo: employeeDetailsVO.aadharNo || '',
+          panNo: employeeDetailsVO.panNo || '',
+          accountNo: employeeDetailsVO.accountNo || '',
+          accountholderName: employeeDetailsVO.accountHolderName || '',
+          ifscCode: employeeDetailsVO.ifscCode || '',
+          active: employeeDetailsVO.active === 'Active' ? true : false,
+          id: employeeDetailsVO.id || 0
         });
         setLeaveTypeTable(
-          listValueVO.listOfValues1VO.map((cl) => ({
+          employeeDetailsVO.employeeLeaveVO.map((cl) => ({
             id: cl.id,
+            leaveType: cl.leaveType,
             leaveCode: cl.leaveCode,
-            noOfDays: cl.valueDescription,
+            leaveApplicable: cl.leaveApplicable,
+            totalLeave: cl.totalLeave,
             effective: cl.effective,
-            carryforward: cl.carryforward,
+            carryforward: cl.carryForward
           }))
         );
 
-        console.log('DataToEdit', listValueVO);
+        console.log('DataToEdit', employeeDetailsVO);
       } else {
       }
     } catch (error) {
@@ -504,6 +629,7 @@ const EmployeeDetails = () => {
         {showForm ? (
           <>
             <div className="row">
+              <h5 className="mb-4">Employee Details</h5>
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Employee Name"
@@ -530,7 +656,19 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.employeeCode}
                 />
               </div>
-
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Employee Address"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="employeeAddress"
+                  value={formData.employeeAddress}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.employeeAddress}
+                  helperText={fieldErrors.employeeAddress}
+                />
+              </div>
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.branch}>
                   <InputLabel id="branch-label">Branch</InputLabel>
@@ -572,6 +710,158 @@ const EmployeeDetails = () => {
                 <FormControl fullWidth variant="filled" size="small">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
+                      label="Date of Join"
+                      value={formData.doj ? dayjs(formData.doj, 'YYYY-MM-DD') : null}
+                      onChange={(date) => handleDateChange('doj', date)}
+                      slotProps={{
+                        textField: { size: 'small', clearable: true }
+                      }}
+                      format="DD-MM-YYYY"
+                      error={fieldErrors.doj}
+                      helperText={fieldErrors.doj && 'Required'}
+                    />
+                  </LocalizationProvider>
+                </FormControl>
+              </div>
+              {editId && (
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    label="Resignation Date"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="resignationDate"
+                    value={formData.resignationDate}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              )}
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.grade}>
+                  <InputLabel id="grade-label">Grade</InputLabel>
+                  <Select labelId="grade-label" label="Grade" value={formData.grade} onChange={handleInputChange} name="grade">
+                    <MenuItem value="A GRADE">A GRADE</MenuItem>
+                    <MenuItem value="B GRADE">B GRADE</MenuItem>
+                    <MenuItem value="C GRADE">C GRADE</MenuItem>
+                    <MenuItem value="D GRADE">D GRADE</MenuItem>
+                  </Select>
+                  {fieldErrors.grade && <FormHelperText>{fieldErrors.grade}</FormHelperText>}
+                </FormControl>
+              </div>
+
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Team"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="team"
+                  value={formData.team}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.team}
+                  helperText={fieldErrors.team}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
+                  <InputLabel id="department-label">Department</InputLabel>
+                  <Select
+                    labelId="department-label"
+                    id="department"
+                    label="department"
+                    value={formData.department}
+                    onChange={handleInputChange}
+                    name="department"
+                    // disabled={isEditMode}
+                  >
+                    {departmentList?.map((row) => (
+                      <MenuItem key={row.id} value={row.departmentName}>
+                        {row.departmentName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.designation}>
+                  <InputLabel id="designation-label">Designation</InputLabel>
+                  <Select
+                    labelId="designation-label"
+                    id="designation"
+                    label="designation"
+                    value={formData.designation}
+                    onChange={handleInputChange}
+                    name="designation"
+                    // disabled={isEditMode}
+                  >
+                    {designationList?.map((row) => (
+                      <MenuItem key={row.id} value={row.designationName}>
+                        {row.designationName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
+                  <InputLabel id="role-label">Role</InputLabel>
+                  <Select
+                    labelId="role-label"
+                    id="role"
+                    label="Role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    name="role"
+                    // disabled={isEditMode}
+                  >
+                    {roleList?.map((row) => (
+                      <MenuItem key={row.id} value={row.role}>
+                        {row.role}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingPerson}>
+                  <InputLabel id="reportingPerson-label">Reporting Person</InputLabel>
+                  <Select
+                    labelId="reportingPerson-label"
+                    label="Reporting Person"
+                    value={formData.reportingPerson}
+                    onChange={handleInputChange}
+                    name="reportingPerson"
+                  >
+                    {allReportingPerson?.map((row) => (
+                      <MenuItem key={row.id} value={row.employeeName}>
+                        {row.employeeName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.reportingPerson && <FormHelperText>{fieldErrors.reportingPerson}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Reporting Role"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="reportingRole"
+                  value={formData.reportingRole}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.reportingRole}
+                  helperText={fieldErrors.reportingRole}
+                />
+              </div>
+              <h5 className="mb-4 mt-2">Personal Details</h5>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth variant="filled" size="small">
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
                       label="Date of Birth"
                       value={formData.dob ? dayjs(formData.dob, 'YYYY-MM-DD') : null}
                       onChange={(date) => handleDateChange('dob', date)}
@@ -604,7 +894,7 @@ const EmployeeDetails = () => {
                   label="Mobile No"
                   variant="outlined"
                   size="small"
-                  type='number'
+                  type="number"
                   fullWidth
                   name="mobileNo"
                   value={formData.mobileNo}
@@ -618,7 +908,7 @@ const EmployeeDetails = () => {
                   label="Alternative Mobile No"
                   variant="outlined"
                   size="small"
-                  type='number'
+                  type="number"
                   fullWidth
                   name="alternativeMobile"
                   value={formData.alternativeMobile}
@@ -653,6 +943,7 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.panNo}
                 />
               </div>
+              <h5 className="mb-4 mt-2">Bank Details</h5>
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Account Number"
@@ -693,183 +984,6 @@ const EmployeeDetails = () => {
                 />
               </div>
               <div className="col-md-3 mb-3">
-                <FormControl fullWidth variant="filled" size="small">
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Date of Join"
-                      value={formData.doj ? dayjs(formData.doj, 'YYYY-MM-DD') : null}
-                      onChange={(date) => handleDateChange('doj', date)}
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      format="DD-MM-YYYY"
-                      error={fieldErrors.doj}
-                      helperText={fieldErrors.doj && 'Required'}
-                    />
-                  </LocalizationProvider>
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Resignation Date"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="resignationDate"
-                  value={formData.resignationDate}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.resignationDate}
-                  helperText={fieldErrors.resignationDate}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.grade}>
-                  <InputLabel id="grade-label">Grade</InputLabel>
-                  <Select
-                    labelId="grade-label"
-                    label="Grade"
-                    value={formData.grade}
-                    onChange={handleInputChange}
-                    name="grade"
-                  >
-                    <MenuItem value="A GRADE">A GRADE</MenuItem>
-                    <MenuItem value="B GRADE">B GRADE</MenuItem>
-                    <MenuItem value="C GRADE">C GRADE</MenuItem>
-                    <MenuItem value="D GRADE">D GRADE</MenuItem>
-                  </Select>
-                  {fieldErrors.grade && <FormHelperText>{fieldErrors.grade}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Team"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="team"
-                  value={formData.team}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.team}
-                  helperText={fieldErrors.team}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingPerson}>
-                  <InputLabel id="reportingPerson-label">Reporting Person</InputLabel>
-                  <Select
-                    labelId="reportingPerson-label"
-                    label="Reporting Person"
-                    value={formData.reportingPerson}
-                    onChange={handleInputChange}
-                    name="reportingPerson"
-                  >
-                    <MenuItem value="DINESH">DINESH</MenuItem>
-                    <MenuItem value="VIGNESH">VIGNESH</MenuItem>
-                    <MenuItem value="Praveen">Praveen</MenuItem>
-                  </Select>
-                  {fieldErrors.reportingPerson && <FormHelperText>{fieldErrors.reportingPerson}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingName}>
-                  <InputLabel id="reportingName-label">Reporting Name</InputLabel>
-                  <Select
-                    labelId="reportingName-label"
-                    label="Reporting Name"
-                    value={formData.reportingName}
-                    onChange={handleInputChange}
-                    name="reportingName"
-                  >
-                    <MenuItem value="DINESH">DINESH</MenuItem>
-                    <MenuItem value="VIGNESH">VIGNESH</MenuItem>
-                    <MenuItem value="Praveen">Praveen</MenuItem>
-                  </Select>
-                  {fieldErrors.reportingName && <FormHelperText>{fieldErrors.reportingName}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingRole}>
-                  <InputLabel id="reportingRole-label">Reporting Role</InputLabel>
-                  <Select
-                    labelId="reportingRole-label"
-                    label="Reporting Role"
-                    value={formData.reportingRole}
-                    onChange={handleInputChange}
-                    name="reportingRole"
-                  >
-                    <MenuItem value="Manager">Manager</MenuItem>
-                    <MenuItem value="Supervisor">Supervisor</MenuItem>
-                    <MenuItem value="Team Lead">Team Lead</MenuItem>
-                  </Select>
-                  {fieldErrors.reportingRole && <FormHelperText>{fieldErrors.reportingRole}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
-                  <InputLabel id="department-label">Department</InputLabel>
-                  <Select
-                    labelId="department-label"
-                    id='department'
-                    label="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    name="department"
-                  // disabled={isEditMode}
-                  >
-                    {departmentList?.map((row) => (
-                      <MenuItem key={row.id} value={row.departmentName}>
-                        {row.departmentName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.designation}>
-                  <InputLabel id="designation-label">Designation</InputLabel>
-                  <Select
-                    labelId="designation-label"
-                    id='designation'
-                    label="designation"
-                    value={formData.designation}
-                    onChange={handleInputChange}
-                    name="designation"
-                  // disabled={isEditMode}
-                  >
-                    {designationList?.map((row) => (
-                      <MenuItem key={row.id} value={row.designationName}>
-                        {row.designationName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
-                  <InputLabel id="role-label">Role</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    id='role'
-                    label="Role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    name="role"
-                  // disabled={isEditMode}
-                  >
-                    {roleList?.map((row) => (
-                      <MenuItem key={row.id} value={row.designationName}>
-                        {row.designationName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
                   label="Active"
@@ -902,17 +1016,27 @@ const EmployeeDetails = () => {
                             <table className="table table-bordered ">
                               <thead>
                                 <tr style={{ backgroundColor: '#673AB7' }}>
-                                  {!editId ? <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                    Action
-                                  </th> : ""}
+                                  {!editId ? (
+                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                      Action
+                                    </th>
+                                  ) : (
+                                    ''
+                                  )}
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                     S.No
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
+                                    Leave Type
+                                  </th>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
                                     Leave Code
                                   </th>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
+                                    Leave Applicable
+                                  </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                    No Of Days
+                                    Total Leave
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                     Effective
@@ -925,34 +1049,80 @@ const EmployeeDetails = () => {
                               <tbody>
                                 {leaveTypeTable.map((row, index) => (
                                   <tr key={row.id}>
-                                    {!editId ? <td className="border px-2 py-2 text-center">
-                                      <ActionButton
-
-                                        title="Delete"
-                                        icon={DeleteIcon}
-                                        onClick={() =>
-                                          handleDeleteRow(
-                                            row.id,
-                                            leaveTypeTable,
-                                            setLeaveTypeTable,
-                                            leaveTypeErrors,
-                                            setLeaveTypeErrors
-                                          )
-                                        }
-                                      />
-                                    </td> : ""}
+                                    {!editId ? (
+                                      <td className="border px-2 py-2 text-center">
+                                        <ActionButton
+                                          title="Delete"
+                                          icon={DeleteIcon}
+                                          onClick={() =>
+                                            handleDeleteRow(row.id, leaveTypeTable, setLeaveTypeTable, leaveTypeErrors, setLeaveTypeErrors)
+                                          }
+                                        />
+                                      </td>
+                                    ) : (
+                                      ''
+                                    )}
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
                                     </td>
+                                    <Autocomplete
+                                      options={allleaveType}
+                                      getOptionLabel={(option) => option.leaveType || ''}
+                                      groupBy={(option) => (option.leaveType ? option.leaveType : '')}
+                                      value={row.leaveType ? allleaveType.find((a) => a.leaveType === row.leaveType) : null}
+                                      onChange={(event, newValue) => {
+                                        setLeaveTypeTable((prev) =>
+                                          prev.map((r) =>
+                                            r.id === row.id
+                                              ? {
+                                                  ...r,
+                                                  leaveType: newValue ? newValue.leaveType : '',
+                                                  leaveCode: newValue ? newValue.leaveCode : '',
+                                                  leaveApplicable: newValue ? newValue.leaveApplicable : '',
+                                                  totalLeave: newValue ? newValue.totalLeave : '',
+                                                  effective: newValue ? newValue.effective : '',
+                                                  carryforward: newValue ? newValue.carryForward : ''
+                                                }
+                                              : r
+                                          )
+                                        );
+
+                                        setLeaveTypeErrors((prevErrors) =>
+                                          prevErrors.map((err, idx) =>
+                                            idx === index
+                                              ? {
+                                                  ...err,
+                                                  leaveType: '',
+                                                  leaveCode: '',
+                                                  leaveApplicable: '',
+                                                  totalLeave: '',
+                                                  effective: '',
+                                                  carryforward: ''
+                                                }
+                                              : err
+                                          )
+                                        );
+                                      }}
+                                      size="small"
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          label="Leave Type"
+                                          variant="outlined"
+                                          error={!!leaveTypeErrors[index]?.leaveType}
+                                          helperText={leaveTypeErrors[index]?.leaveType}
+                                        />
+                                      )}
+                                      sx={{ width: 250 }}
+                                    />
+
                                     <td className="border px-2 py-2">
                                       <input
                                         type="text"
                                         value={row.leaveCode}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setLeaveTypeTable((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, leaveCode: value } : r))
-                                          );
+                                          setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, leaveCode: value } : r)));
                                           setLeaveTypeErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
@@ -973,26 +1143,50 @@ const EmployeeDetails = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         type="text"
-                                        value={row.noOfDays}
+                                        value={row.leaveApplicable}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setLeaveTypeTable((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, noOfDays: value } : r))
+                                            prev.map((r) => (r.id === row.id ? { ...r, leaveApplicable: value } : r))
                                           );
                                           setLeaveTypeErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
                                               ...newErrors[index],
-                                              noOfDays: !value ? 'No Of Days is required' : ''
+                                              leaveApplicable: !value ? 'Leave Applicable is required' : ''
                                             };
                                             return newErrors;
                                           });
                                         }}
-                                        className={leaveTypeErrors[index]?.noOfDays ? 'error form-control' : 'form-control'}
+                                        className={leaveTypeErrors[index]?.leaveApplicable ? 'error form-control' : 'form-control'}
                                       />
-                                      {leaveTypeErrors[index]?.noOfDays && (
+                                      {leaveTypeErrors[index]?.leaveApplicable && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {leaveTypeErrors[index].noOfDays}
+                                          {leaveTypeErrors[index].leaveApplicable}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        type="text"
+                                        value={row.totalLeave}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, totalLeave: value } : r)));
+                                          setLeaveTypeErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              totalLeave: !value ? 'No Of Days is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={leaveTypeErrors[index]?.totalLeave ? 'error form-control' : 'form-control'}
+                                      />
+                                      {leaveTypeErrors[index]?.totalLeave && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {leaveTypeErrors[index].totalLeave}
                                         </div>
                                       )}
                                     </td>
@@ -1002,9 +1196,7 @@ const EmployeeDetails = () => {
                                         value={row.effective}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setLeaveTypeTable((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, effective: value } : r))
-                                          );
+                                          setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, effective: value } : r)));
                                           setLeaveTypeErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
@@ -1062,7 +1254,7 @@ const EmployeeDetails = () => {
             </div>
           </>
         ) : (
-          <CommonTable data={data && data} columns={columns} blockEdit={true} toEdit={getListOfValueById} />
+          <CommonListViewTable data={listViewData} columns={columns} blockEdit={true} toEdit={getEmployeeDetailsById} />
         )}
       </div>
     </div>

@@ -7,7 +7,7 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -19,7 +19,7 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { encryptPassword } from 'views/utilities/encryptPassword';
-import {Checkbox, FormHelperText, FormControlLabel, MenuItem } from '@mui/material';
+import { Checkbox, FormHelperText, FormControlLabel, MenuItem } from '@mui/material';
 
 const LeaveType = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +32,7 @@ const LeaveType = () => {
     leaveApplicable: '',
     totalLeave: '',
     effective: '',
+    carryForward: '',
     active: true
   });
 
@@ -41,30 +42,34 @@ const LeaveType = () => {
     leaveApplicable: '',
     totalLeave: '',
     effective: '',
+    carryForward: '',
     active: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'leaveType', header: 'Employe Name', size: 140 },
-    { accessorKey: 'leaveCode', header: 'Employe Code', size: 140 },
-    { accessorKey: 'noOfWorkingDaye', header: 'Leave Applicable', size: 140 },
-    { accessorKey: 'totalLeave', header: 'No of Leaves', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
+    { accessorKey: 'leaveType', header: 'Leave Type', size: 140 },
+    { accessorKey: 'leaveCode', header: 'Leave Code', size: 140 },
+    { accessorKey: 'leaveApplicable', header: 'Leave Applicable', size: 140 },
+    { accessorKey: 'totalLeave', header: 'Total Leaves', size: 140 },
+    { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
 
+  useEffect(() => {
+    getLeaveType();
+  }, []);
 
-  const getCompanyById = async (row) => {
+  const getLeaveTypeById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `commonmaster/getLeaveTypeById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
+        const particularCompany = response.paramObjectsMap.leaveTypeVO;
         console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
 
         setFormData({
@@ -73,6 +78,7 @@ const LeaveType = () => {
           leaveApplicable: particularCompany.leaveApplicable,
           totalLeave: particularCompany.totalLeave,
           effective: particularCompany.effective,
+          carryForward: particularCompany.carryForward,
           active: particularCompany.active === 'Active' ? true : false
         });
       } else {
@@ -83,17 +89,6 @@ const LeaveType = () => {
     }
   };
 
-  const handleDateChange = (name, date) => {
-    if (date && dayjs(date).isValid()) {
-      const dateString = dayjs(date).toISOString();
-      setFormData({ ...formData, [name]: dateString });
-      setFieldErrors({ ...fieldErrors, [name]: false });
-    } else {
-      setFormData({ ...formData, [name]: null });
-    }
-
-  };
-
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
 
@@ -101,12 +96,12 @@ const LeaveType = () => {
 
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [name]: updatedValue,
+      [name]: updatedValue
     }));
 
     setFieldErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: '',
+      [name]: ''
     }));
 
     if (type === 'text' || type === 'email' || type === 'textarea') {
@@ -119,14 +114,6 @@ const LeaveType = () => {
     }
   };
 
-  const handleCheckboxChange = (event) => {
-    setFormData({
-      ...formData,
-      active: event.target.checked
-    });
-  };
-
-
   const handleClear = () => {
     setFormData({
       leaveType: '',
@@ -134,6 +121,7 @@ const LeaveType = () => {
       leaveApplicable: '',
       totalLeave: '',
       effective: '',
+      carryForward: '',
       active: true
     });
     setFieldErrors({
@@ -141,14 +129,30 @@ const LeaveType = () => {
       leaveCode: '',
       leaveApplicable: '',
       totalLeave: '',
-      effective: ''
+      effective: '',
+      carryForward: ''
     });
     setEditId('');
   };
 
+  const getLeaveType = async () => {
+    try {
+      const response = await apiCalls('get', `commonmaster/getLeaveTypeByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.leaveTypeVO);
+
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const handleSave = async () => {
     const errors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!formData.leaveType) {
       errors.leaveType = 'Employe Code is required';
@@ -165,41 +169,47 @@ const LeaveType = () => {
     if (!formData.effective) {
       errors.effective = 'effective is required';
     }
+    if (!formData.carryForward) {
+      errors.carryForward = 'Carry Forward is required';
+    }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
-      const saveData = {
+      const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        leaveType: formData.leaveType,
-        leaveCode: formData.leaveCode,
+        branch: null,
+        branchCode: null,
+        carryForward: formData.carryForward,
         createdBy: loginUserName,
-        leaveApplicable: formData.leaveApplicable,
-        totalLeave: formData.totalLeave,
         effective: formData.effective,
-        orgId: orgId
+        finYear: "2025",
+        leaveApplicable: formData.leaveApplicable,
+        leaveCode: formData.leaveCode,
+        leaveType: formData.leaveType,
+        orgId: parseInt(orgId),
+        totalLeave: parseInt(formData.totalLeave),
+        updatedBy: loginUserName,
       };
-      console.log('DATA TO SAVE IS:', saveData);
+      console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
-
-        const response = await apiCalls(method, url, saveData);
+        const response = await apiCalls('put', '/commonmaster/createUpdateLeaveType', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
+          showToast('success', editId ? ' Leave Type Updated Successfully' : 'Leave Type created successfully');
 
           handleClear();
+          getLeaveType();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Leave Type creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'Company creation failed');
+        showToast('error', 'Leave Type creation failed');
 
         setIsLoading(false);
       }
@@ -230,25 +240,24 @@ const LeaveType = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getLeaveTypeById}
             />
           </div>
         ) : (
           <>
             <div className="row">
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.leaveType}>
-                  <InputLabel id="leaveType-label">Leave Type</InputLabel>
-                  <Select labelId="leaveType-label" label="Employe Name" value={formData.leaveType} onChange={handleInputChange} name="leaveType">
-                    {/* {Array.isArray(leaveTypeList) &&
-                      leaveTypeList?.map((row) => (
-                        <MenuItem key={row.id} value={row.leaveType}>
-                          {row.leaveType}
-                        </MenuItem>
-                      ))} */}
-                  </Select>
-                  {fieldErrors.leaveType && <FormHelperText>{fieldErrors.leaveType}</FormHelperText>}
-                </FormControl>
+                <TextField
+                  label="Leave Type"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="leaveType"
+                  value={formData.leaveType || ''}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.leaveType}
+                  helperText={fieldErrors.leaveType}
+                />
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
@@ -265,18 +274,18 @@ const LeaveType = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.leaveApplicable}>
-                  <InputLabel id="working-days-label">Leave Applicable</InputLabel>
+                  <InputLabel id="leaveApplicable">Leave Applicable</InputLabel>
                   <Select
-                    labelId="working-days-label"
-                    id="working-days"
+                    labelId="leaveApplicable"
+                    id="leaveApplicable"
                     name="leaveApplicable"
                     value={formData.leaveApplicable || ''}
                     onChange={handleInputChange}
-                    label="Leave Applicable"  // Add this line
+                    label="Leave Applicable" // Add this line
                   >
-                    <MenuItem value="SICK">All</MenuItem>
-                    <MenuItem value="CASUAL">Male</MenuItem>
-                    <MenuItem value="EARNED">Female</MenuItem>
+                    <MenuItem value="All">All</MenuItem>
+                    <MenuItem value="Male">Male</MenuItem>
+                    <MenuItem value="Female">Female</MenuItem>
                   </Select>
                   {fieldErrors.leaveApplicable && <FormHelperText>{fieldErrors.leaveApplicable}</FormHelperText>}
                 </FormControl>
@@ -296,28 +305,44 @@ const LeaveType = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.effective}>
-                  <InputLabel id="working-days-label">Effective</InputLabel>
+                  <InputLabel id="effective">Effective</InputLabel>
                   <Select
-                    labelId="working-days-label"
-                    id="working-days"
+                    labelId="effective"
+                    id="effective"
                     name="effective"
                     value={formData.effective || ''}
                     onChange={handleInputChange}
-                    label="Leave Applicable"  // Add this line
+                    label="Effective" // Add this line
                   >
-                    <MenuItem value="SICK">Monthly</MenuItem>
-                    <MenuItem value="CASUAL">Quartely</MenuItem>
-                    <MenuItem value="EARNED">Halfly</MenuItem>
+                    <MenuItem value="Monthly">Monthly</MenuItem>
+                    <MenuItem value="Quarterly">Quarterly</MenuItem>
+                    <MenuItem value="Half Yearly">Half Yearly</MenuItem>
                     <MenuItem value="EARNED">Yearly</MenuItem>
                   </Select>
                   {fieldErrors.effective && <FormHelperText>{fieldErrors.effective}</FormHelperText>}
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
+                <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
+                  <InputLabel id="carryForward">Carry Forward</InputLabel>
+                  <Select
+                    labelId="carryForward"
+                    id="carryForward"
+                    name="carryForward"
+                    value={formData.carryForward || ''}
+                    onChange={handleInputChange}
+                    label="Carry Forward" // Add this line
+                  >
+                    <MenuItem value="Yes">Yes</MenuItem>
+                    <MenuItem value="No">No</MenuItem>
+                  </Select>
+                  {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
                 <FormControlLabel
-                  control={<Checkbox checked={formData.active} onChange={handleCheckboxChange} />}
+                  control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
                   label="Active"
-                  labelPlacement="end"
                 />
               </div>
             </div>

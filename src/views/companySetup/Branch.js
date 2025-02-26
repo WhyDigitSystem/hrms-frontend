@@ -40,8 +40,9 @@ const Branch = () => {
     companyName: '',
     branchCode: '',
     branchName: '',
-    mobile: '',
+    contactPerson: '',
     email: '',
+    mobile: '',
     address: '',
     country: '',
     state: '',
@@ -55,8 +56,9 @@ const Branch = () => {
     companyName: '',
     branchCode: '',
     branchName: '',
-    mobile: '',
+    contactPerson: '',
     email: '',
+    mobile: '',
     address: '',
     country: '',
     state: '',
@@ -101,7 +103,7 @@ const Branch = () => {
 
   const getCompanyDetails = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const response = await apiCalls('get', `commonmaster/company`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -275,8 +277,9 @@ const Branch = () => {
     setFormData({
       branchCode: '',
       branchName: '',
-      mobile: '',
+      contactPerson: '',
       email: '',
+      mobile: '',
       address: '',
       country: '',
       state: '',
@@ -289,9 +292,10 @@ const Branch = () => {
       // companyName: '',
       branchCode: '',
       branchName: '',
-      mobile: '',
+      contactPerson: '',
       email: '',
-      address: '',
+      mobile: '',
+        address: '',
       country: '',
       state: '',
       city: '',
@@ -309,6 +313,15 @@ const Branch = () => {
     if (!formData.branchName) {
       errors.branchName = 'Company is required';
     }
+    if (!formData.contactPerson) {
+      errors.contactPerson = 'Contact Person is required';
+    }
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    }
+    if (formData.mobile.length > 0 && formData.mobile.length < 10) {
+      errors.mobile = 'Invalid Mobile No';
+    }
     if (!formData.address) {
       errors.address = 'Address is required';
     }
@@ -321,41 +334,36 @@ const Branch = () => {
     if (!formData.city) {
       errors.city = 'City is required';
     }
+    if (formData.pincode.length > 0 && formData.pincode.length < 6) {
+      errors.pincode = 'Invalid Pincode';
+    }
     if (!formData.gst) {
       errors.gst = 'GST is required';
     } else if (formData.gst.length < 15) {
       errors.gst = 'Invalid GST No';
-    }
-    if (formData.mobile.length > 0 && formData.mobile.length < 10) {
-      errors.mobile = 'Invalid Mobile No';
-    }
-    if (formData.pincode.length > 0 && formData.pincode.length < 6) {
-      errors.pincode = 'Invalid Pincode';
     }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
         ...(editId && { id: editId }),
-        branchCode: formData.branchCode,
+        active: formData.active,
+        addressLine1: formData.address,
         branch: formData.branchName,
+        branchCode: formData.branchCode,
+        cancel: true,
+        cancelRemarks: null,
+        city: formData.city,
+        company: formData.companyName,
+        contactPerson: formData.contactPerson,
+        country: formData.country,
+        createdBy: loginUserName,
+        email: formData.email,
+        gstIn: formData.gst,
+        orgId: orgId,
         phone: formData.mobile,
         pinCode: formData.pincode,
-        // email: formData.email,
-        addressLine1: formData.address,
-        addressLine2: '',
-        country: formData.country,
         state: formData.state,
-        city: formData.city,
-        region: '',
-        active: formData.active,
-        orgId: orgId,
-        createdBy: loginUserName,
-        gstIn: formData.gst,
-        lccurrency: '',
-        pan: '',
-        stateCode: '',
-        stateNo: '',
         userid: loginUserId
       };
       try {
@@ -396,8 +404,11 @@ const Branch = () => {
       if (response.status === true) {
         const particularBranch = response.paramObjectsMap.Branch;
         setFormData({
+          companyName: particularBranch.company,
           branchCode: particularBranch.branchCode,
           branchName: particularBranch.branch,
+          contactPerson: particularBranch.contactPerson,
+          email: particularBranch.email,
           mobile: particularBranch.phone,
           address: particularBranch.addressLine1,
           gst: particularBranch.gstIn,
@@ -405,7 +416,6 @@ const Branch = () => {
           state: particularBranch.state,
           city: particularBranch.city,
           pincode: particularBranch.pinCode,
-          state: particularBranch.state,
           active: particularBranch.active === 'Active' ? true : false
         });
         setListView(false);
@@ -446,7 +456,7 @@ const Branch = () => {
             <div className="row">
               <div className="col-md-3 mb-3">
                 <TextField
-                  // label="Company"
+                  label="Company Name"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -483,18 +493,18 @@ const Branch = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Mobile"
+                  label="Contact Person"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="mobile"
-                  value={formData.mobile}
+                  name="contactPerson"
+                  value={formData.contactPerson}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.mobile}
-                  helperText={fieldErrors.mobile}
+                  error={!!fieldErrors.contactPerson}
+                  helperText={fieldErrors.contactPerson}
                 />
               </div>
-              {/* <div className="col-md-3 mb-3">
+              <div className="col-md-3 mb-3">
                 <TextField
                   label="Email ID"
                   variant="outlined"
@@ -506,7 +516,20 @@ const Branch = () => {
                   error={!!fieldErrors.email}
                   helperText={fieldErrors.email}
                 />
-              </div> */}
+              </div>
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Mobile"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.mobile}
+                  helperText={fieldErrors.mobile}
+                />
+              </div>
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Address"

@@ -41,7 +41,7 @@ const basicMaster = {
   type: 'group',
   children: [
     {
-      id: 'ar',
+      id: 'basicMaster',
       title: 'Basic Master',
       type: 'collapse',
       icon: icons0.IconDatabaseStar,

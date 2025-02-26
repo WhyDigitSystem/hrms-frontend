@@ -25,6 +25,7 @@ const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
 // const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
 
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
+const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
 const LeaveType = Loadable(lazy(() => import('views/employeeMaster/LeaveType')));
 const Holidays = Loadable(lazy(() => import('views/employeeMaster/Holidays')));
 const LeaveProcess = Loadable(lazy(() => import('views/employeeMaster/LeaveProcess')));
@@ -102,6 +103,10 @@ const HrmsRoute = {
     {
       path: '/employeeMaster/EmployeeDetails',
       element: <EmployeeDetails />
+    },
+    {
+      path: '/employeeMaster/EmployeeCodeGeneration',
+      element: <EmployeeCodeGeneration />
     },
     {
       path: '/employeeMaster/LeaveType',

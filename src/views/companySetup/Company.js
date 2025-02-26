@@ -26,7 +26,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
-import { getAllActiveCitiesByState, getAllActiveCountries, getAllActiveStatesByCountry } from 'utils/CommonFunctions';
+import { getAllActiveCitiesByState, getAllActiveCountries, getAllActiveStatesByCountry, getAllActiveCurrency } from 'utils/CommonFunctions';
 import apiCalls from 'apicall';
 
 const Company = () => {
@@ -36,6 +36,7 @@ const Company = () => {
   const [countryList, setCountryList] = useState([]);
   const [stateList, setStateList] = useState([]);
   const [cityList, setCityList] = useState([]);
+  const [currencyList, setCurrencyList] = useState([]);
   const [editId, setEditId] = useState('');
 
   const [formData, setFormData] = useState({
@@ -43,12 +44,15 @@ const Company = () => {
     companyName: '',
     ceo: '',
     address: '',
+    currency: '',
     country: '',
     state: '',
     city: '',
     pincode: '',
-    taxNo: '',
-    website: '',
+    mobileNo: '',
+    gstIn: '',
+    panNo: '',
+    gstRegistered: true,
     active: true
   });
 
@@ -56,13 +60,16 @@ const Company = () => {
     companyCode: '',
     ceo: '',
     address: '',
+    currency: '',
     country: '',
     state: '',
     city: '',
     pincode: '',
-    taxNo: '',
-    website: '',
-    active: ''
+    mobileNo: '',
+    gstIn: '',
+    panNo: '',
+    gstRegistered: true,
+    active: true
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -73,8 +80,13 @@ const Company = () => {
       size: 140
     },
     {
-      accessorKey: 'employeeName',
-      header: 'Admin',
+      accessorKey: 'ceo',
+      header: 'CEO',
+      size: 140
+    },
+    {
+      accessorKey: 'gstIn',
+      header: 'GST',
       size: 140
     },
     { accessorKey: 'active', header: 'Active', size: 140 }
@@ -83,6 +95,7 @@ const Company = () => {
   const [listViewData, setListViewData] = useState([]);
   useEffect(() => {
     getCompanyDetails();
+    getAllCurrency();
     // getCompany();
     getAllCountries();
     if (formData.country) {
@@ -93,6 +106,14 @@ const Company = () => {
     }
   }, [formData.country, formData.state]);
 
+  const getAllCurrency = async () => {
+    try {
+      const currencyData = await getAllActiveCurrency(orgId);
+      setCurrencyList(currencyData);
+    } catch (error) {
+      console.error('Error fetching country data:', error);
+    }
+  };
   const getAllCountries = async () => {
     try {
       const countryData = await getAllActiveCountries(orgId);
@@ -118,53 +139,6 @@ const Company = () => {
     }
   };
 
-  // const handleInputChange = (e) => {
-  //   const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-  //   const nameRegex = /^[A-Za-z ]*$/;
-  //   const branchNameRegex = /^[A-Za-z0-9@_\-*]*$/;
-  //   const numericRegex = /^[0-9]*$/;
-  //   const alphanumericRegex = /^[A-Za-z0-9]*$/;
-
-  //   if (name === 'ceo' && !nameRegex.test(value)) {
-  //     setFieldErrors({ ...fieldErrors, [name]: 'Only alphabetic characters are allowed' });
-  //   } else if (name === 'pincode') {
-  //     if (!numericRegex.test(value)) {
-  //       setFieldErrors({ ...fieldErrors, [name]: 'Only numeric characters are allowed' });
-  //     } else if (value.length > 6) {
-  //       setFieldErrors({ ...fieldErrors, [name]: 'Only 6 digits are allowed' });
-  //     } else {
-  //       setFieldErrors({ ...fieldErrors, [name]: '' });
-  //     }
-  //   } else if (name === 'taxNo') {
-  //     if (!alphanumericRegex.test(value)) {
-  //       setFieldErrors({ ...fieldErrors, [name]: 'Special characters are not allowed' });
-  //     } else if (value.length > 15) {
-  //       setFieldErrors({ ...fieldErrors, [name]: 'Only 15 characters are allowed' });
-  //     } else {
-  //       setFieldErrors({ ...fieldErrors, [name]: '' });
-  //     }
-  //   } else {
-  //     setFieldErrors({ ...fieldErrors, [name]: '' });
-  //   }
-
-  //   // Update the form data
-  //   if (name === 'active') {
-  //     setFormData({ ...formData, [name]: checked });
-  //   } else {
-  //     setFormData({ ...formData, [name]: value.toUpperCase() });
-  //   }
-
-  //   // Update the cursor position after the input change
-  //   if (type === 'text' || type === 'textarea' || type === 'email') {
-  //     setTimeout(() => {
-  //       const inputElement = document.getElementsByName(name)[0];
-  //       if (inputElement) {
-  //         inputElement.setSelectionRange(selectionStart, selectionEnd);
-  //       }
-  //     }, 0);
-  //   }
-  // };
-
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
 
@@ -186,11 +160,11 @@ const Company = () => {
       } else if (value.length > 6) {
         error = 'Only 6 digits are allowed';
       }
-    } else if (name === 'taxNo') {
+    } else if (name === 'mobileNo') {
       if (!alphanumericRegex.test(value)) {
         error = 'Special characters are not allowed';
-      } else if (value.length > 15) {
-        error = 'Only 15 characters are allowed';
+      } else if (value.length > 10) {
+        error = 'Only 10 characters are allowed';
       }
     }
 
@@ -239,6 +213,8 @@ const Company = () => {
   };
 
   const getCompanyById = async (row) => {
+    console.log('THE SELECTED BRANCH ID IS:', row.original.id);
+    setEditId(row.original.id);
     try {
       const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
       console.log('API Response:', response);
@@ -254,11 +230,15 @@ const Company = () => {
           ceo: particularCompany.ceo,
           address: particularCompany.address,
           country: particularCompany.country,
+          currency: particularCompany.currency,
           state: particularCompany.state,
           city: particularCompany.city,
           pincode: particularCompany.zip,
-          taxNo: particularCompany.taxNo,
-          website: particularCompany.webSite
+          mobileNo: particularCompany.phone,
+          gstIn: particularCompany.gstIn,
+          panNo: particularCompany.panNo,
+          gstRegistered: particularCompany.gstregistered === 'Active' ? true : false,
+          active: particularCompany.active === 'Active' ? true : false
         });
       } else {
         console.error('API Error:', response);
@@ -269,7 +249,7 @@ const Company = () => {
   };
   const getCompanyDetails = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const response = await apiCalls('get', `commonmaster/company`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -291,24 +271,29 @@ const Company = () => {
       // companyCode: '',
       ceo: '',
       address: '',
+      currency: '',
       country: '',
       state: '',
       city: '',
       pincode: '',
-      taxNo: '',
-      website: '',
+      mobileNo: '',
+      gstIn: '',
+      panNo: '',
+      gstRegistered: true,
       active: true
     });
     setFieldErrors({
       // companyCode: '',
       ceo: '',
       address: '',
+      currency: '',
       country: '',
       state: '',
       city: '',
       pincode: '',
-      taxNo: '',
-      website: ''
+      mobileNo: '',
+      gstIn: '',
+      panNo: ''
     });
     setEditId('');
   };
@@ -330,10 +315,10 @@ const Company = () => {
     if (!formData.city) {
       errors.city = 'City is required';
     }
-    if (!formData.taxNo) {
-      errors.taxNo = 'Tax No is required';
-    } else if (formData.taxNo.length < 15) {
-      errors.taxNo = 'Invalid taxNo No';
+    if (!formData.mobileNo) {
+      errors.mobileNo = 'Mobile No is required';
+    } else if (formData.mobileNo.length < 10) {
+      errors.mobileNo = 'Invalid mobileNo No';
     }
     if (formData.pincode.length < 6 && formData.pincode.length >= 1) {
       errors.pincode = 'Invalid Pincode';
@@ -342,28 +327,39 @@ const Company = () => {
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
-        id: orgId,
+        ...(editId && { id: editId }),
+        active: formData.active,
+        address: formData.address,
+        cancel: true,
+        ceo: formData.ceo,
+        city: formData.city,
         companyCode: formData.companyCode,
         companyName: formData.companyName,
-        ceo: formData.ceo,
-        address: formData.address,
         country: formData.country,
+        createdBy: loginUserName,
+        currency: formData.currency,
+        gstIn: formData.gstIn,
+        gstRegistered: formData.gstRegistered,
+        panNo: formData.panNo,
+        phone: formData.mobileNo,
         state: formData.state,
-        city: formData.city,
         zip: formData.pincode,
-        taxNo: formData.taxNo,
-        webSite: formData.website,
-        active: formData.active,
-        updatedBy: loginUserName
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
       try {
-        const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
+        let response;
+        if (editId) {
+          // PUT request (update)
+          response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
+        } else {
+          // POST request (create)
+          response = await apiCalls('post', `commonmaster/company`, saveFormData);
+        } 
+
         if (response.status === true) {
           console.log('Response:', response);
-
-          showToast('success', ' Company updated Successfully');
+          showToast('success', editId ? 'Company updated Successfully' : 'Company created Successfully');
           handleClear();
           setIsLoading(false);
         } else {
@@ -462,6 +458,21 @@ const Company = () => {
                   helperText={fieldErrors.address}
                 />
               </div>
+
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <InputLabel id="currency-label">currency</InputLabel>
+                  <Select labelId="currency-label" label="currency" value={formData.currency} onChange={handleInputChange} name="currency">
+                    {currencyList?.map((row) => (
+                      <MenuItem key={row.id} value={row.currency}>
+                        {row.currency}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.currency && <FormHelperText>{fieldErrors.currency}</FormHelperText>}
+                </FormControl>
+              </div>
+
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
@@ -519,28 +530,47 @@ const Company = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Tax No"
+                  label="Mobile No"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="taxNo"
-                  value={formData.taxNo}
+                  name="mobileNo"
+                  value={formData.mobileNo}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.taxNo}
-                  helperText={fieldErrors.taxNo}
+                  error={!!fieldErrors.mobileNo}
+                  helperText={fieldErrors.mobileNo}
                 />
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Official Website"
+                  label="Gst In"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="website"
-                  value={formData.website}
+                  name="gstIn"
+                  value={formData.gstIn}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.website}
-                  helperText={fieldErrors.website}
+                  error={!!fieldErrors.gstIn}
+                  helperText={fieldErrors.gstIn}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Pan No"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="panNo"
+                  value={formData.panNo}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.panNo}
+                  helperText={fieldErrors.panNo}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControlLabel
+                  control={<Checkbox checked={formData.gstRegistered} onChange={handleInputChange} name="gstRegistered" />}
+                  label="Gst Registered"
                 />
               </div>
               <div className="col-md-3 mb-3">

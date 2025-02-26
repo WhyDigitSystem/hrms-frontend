@@ -20,6 +20,12 @@ const employeeMaster = {
       icon: icons.IconKey,
       children: [
         {
+          id: 'employeeCodeGeneration',
+          title: 'Employee Code Generation',
+          type: 'item',
+          url: '/employeeMaster/employeeCodeGeneration'
+        },
+        {
           id: 'employeeDetails',
           title: 'Employee Details',
           type: 'item',

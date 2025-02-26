@@ -47,11 +47,11 @@ const CreateCompany = () => {
       header: 'Company',
       size: 140
     },
-    {
-      accessorKey: 'employeeName',
-      header: 'Admin',
-      size: 140
-    },
+    // {
+    //   accessorKey: 'employeeName',
+    //   header: 'Admin',
+    //   size: 140
+    // },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 

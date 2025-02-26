@@ -31,7 +31,7 @@ export const Roles = () => {
   const [listView, setListView] = useState(false);
   const listViewColumns = [
     {
-      accessorKey: 'roleName',
+      accessorKey: 'role',
       header: 'Role',
       size: 140
     },
@@ -45,8 +45,8 @@ export const Roles = () => {
 
   const getAllRoles = async () => {
     try {
-      const result = await apiCalls('get', `commonmaster/getDesignationByOrgId?orgid=${orgId}`);
-      setListViewData(result.paramObjectsMap.designationVO.reverse());
+      const result = await apiCalls('get', `commonmaster/getRolesByOrgId?OrgId=${orgId}`);
+      setListViewData(result.paramObjectsMap.rolesVO.reverse());
       console.log('Test', result);
     } catch (err) {
       console.log('error', err);
@@ -57,13 +57,13 @@ export const Roles = () => {
     console.log('THE SELECTED DESIGNATION ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/getRoleById?id=${row.original.id}`);
+      const response = await apiCalls('get', `commonmaster/getRolesById?id=${row.original.id}`);
 
       if (response.status === true) {
-        const particularCountry = response.paramObjectsMap.designationVO;
+        const particularRoles = response.paramObjectsMap.rolesVO;
         setFormData({
-          roleName: particularCountry.roleName,
-          active: particularCountry.active === 'Active' ? true : false
+          roleName: particularRoles.role,
+          active: particularRoles.active === 'Active' ? true : false
         });
         setListView(false);
       } else {
@@ -74,25 +74,14 @@ export const Roles = () => {
     }
   };
   const handleInputChange = (e) => {
-    const { name, value, selectionStart, selectionEnd, type } = e.target;
+    const { name, value } = e.target;
     const codeRegex = /^[a-zA-Z0-9#_\- \/\\]*$/;
-    // const nameRegex = /^[A-Za-z - ]*$/;
 
      if (name === 'roleName' && !codeRegex.test(value)) {
       setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
     } else {
       setFormData({ ...formData, [name]: value.toUpperCase() });
       setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Update the cursor position after the input change
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
     }
   };
 
@@ -118,7 +107,7 @@ export const Roles = () => {
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        roleName: formData.roleName,
+        role: formData.roleName,
         orgId: orgId,
         createdBy: loginUserName
       };
@@ -126,21 +115,21 @@ export const Roles = () => {
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const result = await apiCalls('post', `commonmaster/createUpdateDesignation`, saveFormData);
+        const result = await apiCalls('put', `commonmaster/createUpdateRoles`, saveFormData);
 
         if (result.status === true) {
           console.log('Response:', result);
-          showToast('success', editId ? ' Designation Updated Successfully' : 'Designation created successfully');
+          showToast('success', editId ? ' Roles Updated Successfully' : 'Roles created successfully');
           handleClear();
           getAllRoles();
           setIsLoading(false);
         } else {
-          showToast('error', result.paramObjectsMap.errorMessage || 'Designation creation failed');
+          showToast('error', result.paramObjectsMap.errorMessage || 'Roles creation failed');
           setIsLoading(false);
         }
       } catch (err) {
         console.log('error', err);
-        showToast('error', 'Designation creation failed');
+        showToast('error', 'Roles creation failed');
         setIsLoading(false);
       }
     } else {
