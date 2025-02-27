@@ -1,8 +1,12 @@
 // assets
-import { IconUser } from '@tabler/icons-react';
+import { IconUser, IconPasswordUser } from '@tabler/icons-react';
 
 // constant
 const icons = { IconUser };
+
+const icons1 = {
+  IconPasswordUser
+};
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
@@ -18,6 +22,14 @@ const admin = {
       url: '/admin/user-creation/userCreation',
       icon: icons.IconUser,
       breadcrumbs: true
+    },
+    {
+      id: 'rolesAndResponsibilities',
+      title: 'Roles And Responsibilities',
+      type: 'item',
+      url: '/basicMaster/roles',
+      icon: icons1.IconPasswordUser,
+
     }
   ]
 };

@@ -158,7 +158,7 @@ const Responsibilities = () => {
     try {
       const response = await apiCalls('get', `auth/allResponsibilityByOrgId?orgId=${orgId}`);
 
-      setListViewData(response.paramObjectsMap.responsibilityVO);
+      setListViewData(response.paramObjectsMap.responsibilityVO.reverse());
       console.log('Test', response);
     } catch (err) {
       console.log('error', err);
@@ -251,9 +251,9 @@ const Responsibilities = () => {
         <div>
           <Box sx={{ width: '100%', typography: 'body1' }}>
             <div className="d-flex flex-wrap justify-content-start mb-4">
-              <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
-              <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
+              {/* <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} /> */}
               <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
+              <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
               <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
             </div>
             {!listView ? (

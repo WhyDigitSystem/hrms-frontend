@@ -64,8 +64,15 @@ const companySetup = {
           id: 'finYear',
           title: 'FinYear',
           type: 'item',
-          url: '/basicMaster/finYear',
+          url: '/companysetup/finYear',
           icon: icons3.IconCalendarDollar
+        },
+        {
+          id: 'screenNames',
+          title: 'Screen Names',
+          type: 'item',
+          url: '/companysetup/ScreenNames',
+          icon: icons5.IconAppWindow
         }
       ]
     }

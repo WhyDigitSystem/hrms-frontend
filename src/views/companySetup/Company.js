@@ -52,6 +52,7 @@ const Company = () => {
     mobileNo: '',
     gstIn: '',
     panNo: '',
+    leaveCreditControl: '',
     gstRegistered: true,
     active: true
   });
@@ -68,6 +69,7 @@ const Company = () => {
     mobileNo: '',
     gstIn: '',
     panNo: '',
+    leaveCreditControl: '',
     gstRegistered: true,
     active: true
   });
@@ -279,6 +281,7 @@ const Company = () => {
       mobileNo: '',
       gstIn: '',
       panNo: '',
+      leaveCreditControl: '',
       gstRegistered: true,
       active: true
     });
@@ -293,7 +296,8 @@ const Company = () => {
       pincode: '',
       mobileNo: '',
       gstIn: '',
-      panNo: ''
+      panNo: '',
+      leaveCreditControl: ''
     });
     setEditId('');
   };
@@ -343,7 +347,7 @@ const Company = () => {
         panNo: formData.panNo,
         phone: formData.mobileNo,
         state: formData.state,
-        zip: formData.pincode,
+        zip: formData.pincode
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
@@ -355,7 +359,7 @@ const Company = () => {
         } else {
           // POST request (create)
           response = await apiCalls('post', `commonmaster/company`, saveFormData);
-        } 
+        }
 
         if (response.status === true) {
           console.log('Response:', response);
@@ -566,6 +570,25 @@ const Company = () => {
                   error={!!fieldErrors.panNo}
                   helperText={fieldErrors.panNo}
                 />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth size="small" error={!!fieldErrors.leaveCreditControl}>
+                  <InputLabel id="leaveCreditControl">Leave Credit Control</InputLabel>
+                  <Select
+                    labelId="leaveCreditControl"
+                    id="leaveCreditControl"
+                    name="leaveCreditControl"
+                    value={formData.leaveCreditControl || ''}
+                    onChange={handleInputChange}
+                    label="Leave Credit Control" // Add this line
+                  >
+                    <MenuItem value="Monthly">Monthly</MenuItem>
+                    <MenuItem value="Quarterly">Quarterly</MenuItem>
+                    <MenuItem value="Half Yearly">Half Yearly</MenuItem>
+                    <MenuItem value="EARNED">Yearly</MenuItem>
+                  </Select>
+                  {fieldErrors.leaveCreditControl && <FormHelperText>{fieldErrors.leaveCreditControl}</FormHelperText>}
+                </FormControl>
               </div>
               <div className="col-md-3 mb-3">
                 <FormControlLabel
