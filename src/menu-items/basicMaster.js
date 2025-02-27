@@ -96,13 +96,13 @@ const basicMaster = {
           url: '/basicMaster/Designation',
           icon: icons6.IconIdBadge2
         },
-        {
-          id: 'role',
-          title: 'Role',
-          type: 'item',
-          url: '/basicMaster/Role',
-          icon: icons8.IconUsersGroup
-        },
+        // {
+        //   id: 'role',
+        //   title: 'Role',
+        //   type: 'item',
+        //   url: '/basicMaster/Role',
+        //   icon: icons8.IconUsersGroup
+        // },
         // {
         //   id: 'employee',
         //   title: 'Employee',

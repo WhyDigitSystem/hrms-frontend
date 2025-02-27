@@ -129,21 +129,21 @@ export const ScreenNames = () => {
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const result = await apiCalls('put', `/commonmaster/updateFinScreen`, saveFormData);
+        const result = await apiCalls('put', `/commonmaster/createUpdateScreenNames`, saveFormData);
 
         if (result.status === true) {
           console.log('Response:', result);
-          showToast('success', editId ? ' Screen Updated Successfully' : 'Screen Added successfully');
+          showToast('success', editId ? ' Screen Updated Successfully' : 'Screen Created successfully');
           handleClear();
           getAllScreens();
           setIsLoading(false);
         } else {
-          showToast('error', result.paramObjectsMap.errorMessage || 'Screen Added failed');
+          showToast('error', result.paramObjectsMap.errorMessage || 'Screen Created failed');
           setIsLoading(false);
         }
       } catch (err) {
         console.log('error', err);
-        showToast('error', 'Screen Added failed');
+        showToast('error', 'Screen Creation failed');
         setIsLoading(false);
       }
     } else {
