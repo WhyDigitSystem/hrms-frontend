@@ -19,13 +19,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 const HolidayReport = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const listViewColumns = [
-    { accessorKey: 'date', header: 'Date', size: 140 },
-    { accessorKey: 'festival', header: 'Festival', size: 140 },
-    {
-      accessorKey: 'day',
-      header: 'Day',
-      size: 140
-    },
+    { accessorKey: 'Date', header: 'Date', size: 140 },
+    { accessorKey: 'Date', header: 'IN Time', size: 140 },
+    { accessorKey: 'Date', header: 'Out Time', size: 140 },
+    { accessorKey: 'Date', header: 'Worked Hours', size: 140 },
   ];
   const [listViewData, setListViewData] = useState([]);
 

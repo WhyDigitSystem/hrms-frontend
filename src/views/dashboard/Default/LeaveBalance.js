@@ -41,7 +41,7 @@ const LeaveBalance = () => {
       boxShadow: '0 2px 5px rgba(0, 0, 0, 0.05)',
     },
     th: {
-      backgroundColor: '#3498db',
+      backgroundColor: '#5e35b1',
       color: '#fff',
       padding: '15px',
       textAlign: 'left',

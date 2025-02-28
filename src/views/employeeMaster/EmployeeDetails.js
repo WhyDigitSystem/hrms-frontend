@@ -133,7 +133,7 @@ const EmployeeDetails = () => {
   ];
 
   useEffect(() => {
-    getAllListOfValuesByOrgId();
+    // getAllListOfValuesByOrgId();
   }, []);
   useEffect(() => {
     getAllBranches();
@@ -194,6 +194,7 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
+
   const getAllEmployees = async () => {
     try {
       const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
@@ -423,8 +424,8 @@ const EmployeeDetails = () => {
     if (!formData.doj) errors.doj = 'Date of Join is required';
     if (!formData.grade) errors.grade = 'Grade is required';
     if (!formData.team) errors.team = 'Team is required';
-    if (!formData.reportingPerson) errors.reportingPerson = 'Reporting Person is required';
-    if (!formData.reportingRole) errors.reportingRole = 'Reporting Role is required';
+    // if (!formData.reportingPerson) errors.reportingPerson = 'Reporting Person is required';
+    // if (!formData.reportingRole) errors.reportingRole = 'Reporting Role is required';
     if (!formData.department) errors.department = 'Department is required';
     if (!formData.designation) errors.designation = 'Designation is required';
 
@@ -523,7 +524,7 @@ const EmployeeDetails = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
-          getAllListOfValuesByOrgId();
+          // getAllListOfValuesByOrgId();
           handleClear();
           setIsLoading(false);
         } else {
@@ -540,16 +541,16 @@ const EmployeeDetails = () => {
     }
   };
 
-  const getAllListOfValuesByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.listOfValuesVO.reverse() || []);
-      showForm(true);
-      console.log('Test', result);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
+  // const getAllListOfValuesByOrgId = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
+  //     setData(result.paramObjectsMap.listOfValuesVO.reverse() || []);
+  //     showForm(true);
+  //     console.log('Test', result);
+  //   } catch (err) {
+  //     console.log('error', err);
+  //   }
+  // };
 
   const getEmployeeDetailsById = async (row) => {
     console.log('first', row);

@@ -8,12 +8,12 @@ import Loadable from 'ui-component/Loadable';
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
 const Calendar = Loadable(lazy(() => import('views/Calendar/Calendar')));
 
-
+// company Setup
 const CreateCompany = Loadable(lazy(() => import('views/companySetup/CreateCompany')));
 const CompanySetup = Loadable(lazy(() => import('views/companySetup/CompanySetup')));
+
+// basic Master
 const FinYear = Loadable(lazy(() => import('views/basicMaster/finYear')));
-
-
 const Country = Loadable(lazy(() => import('views/basicMaster/country')));
 const State = Loadable(lazy(() => import('views/basicMaster/state')));
 const City = Loadable(lazy(() => import('views/basicMaster/city')));
@@ -23,22 +23,32 @@ const Designation = Loadable(lazy(() => import('views/basicMaster/designation'))
 const Region = Loadable(lazy(() => import('views/basicMaster/RegionMaster')));
 const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
 const ScreenNames = Loadable(lazy(() => import('views/basicMaster/ScreenNames')));
-// const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
 
+// Employee Master
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
 const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
-const LeaveType = Loadable(lazy(() => import('views/employeeMaster/LeaveType')));
-const Holidays = Loadable(lazy(() => import('views/employeeMaster/Holidays')));
-const LeaveProcess = Loadable(lazy(() => import('views/employeeMaster/LeaveProcess')));
-const LeaveCreditControl = Loadable(lazy(() => import('views/employeeMaster/LeaveCreditControl')));
-const SalaryHeads = Loadable(lazy(() => import('views/employeeMaster/SalaryHeads')));
-const SalaryStructure = Loadable(lazy(() => import('views/employeeMaster/SalaryStructure')));
 const AttendenceProcess = Loadable(lazy(() => import('views/employeeMaster/AttendenceProcess')));
 
+// Leave master
+const LeaveType = Loadable(lazy(() => import('views/leaveMaster/LeaveType')));
+const LeaveProcess = Loadable(lazy(() => import('views/leaveMaster/LeaveProcess')));
+const LeaveCreditControl = Loadable(lazy(() => import('views/leaveMaster/LeaveCreditControl')));
+const Holidays = Loadable(lazy(() => import('views/leaveMaster/Holidays')));
+
+// salary master
+const SalaryHeads = Loadable(lazy(() => import('views/salaryMaster/SalaryHeads')));
+const SalaryStructure = Loadable(lazy(() => import('views/salaryMaster/SalaryStructure')));
+const SalaryProcess = Loadable(lazy(() => import('views/salaryMaster/SalaryProcess')));
+const SalaryReport = Loadable(lazy(() => import('views/salaryMaster/SalaryReport')));
+
+// me
 const PermissionRequest = Loadable(lazy(() => import('views/me/PermissionRequest')));
 const LeaveRequest = Loadable(lazy(() => import('views/me/LeaveRequest')));
 const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')));
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
+
+
+
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
@@ -110,32 +120,40 @@ const HrmsRoute = {
       element: <EmployeeCodeGeneration />
     },
     {
-      path: '/employeeMaster/LeaveType',
+      path: '/employeeMaster/AttendenceProcess',
+      element: <AttendenceProcess />
+    },
+    {
+      path: '/leaveMaster/LeaveType',
       element: <LeaveType />
     },
     {
-      path: '/employeeMaster/Holidays',
-      element: <Holidays />
-    },
-    {
-      path: '/employeeMaster/LeaveProcess',
+      path: '/leaveMaster/LeaveProcess',
       element: <LeaveProcess />
     },
     {
-      path: '/employeeMaster/LeaveCreditControl',
+      path: '/leaveMaster/LeaveCreditControl',
       element: <LeaveCreditControl />
     },
     {
-      path: '/employeeMaster/SalaryHeads',
+      path: '/leaveMaster/Holidays',
+      element: <Holidays />
+    },
+    {
+      path: '/salaryMaster/SalaryHeads',
       element: <SalaryHeads />
     },
     {
-      path: '/employeeMaster/SalaryStructure',
+      path: '/salaryMaster/SalaryStructure',
       element: <SalaryStructure />
     },
     {
-      path: '/employeeMaster/AttendenceProcess',
-      element: <AttendenceProcess />
+      path: '/salaryMaster/SalaryProcess',
+      element: <SalaryProcess />
+    },
+    {
+      path: '/salaryMaster/SalaryReport',
+      element: <SalaryReport />
     },
     {
       path: '/me/PermissionRequest',

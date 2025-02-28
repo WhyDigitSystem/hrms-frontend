@@ -3,6 +3,7 @@ import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBullete
 import SaveIcon from '@mui/icons-material/Save';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
+import Autocomplete from '@mui/material/Autocomplete';
 import { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -15,88 +16,54 @@ import FormControl from '@mui/material/FormControl';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { TimePicker } from '@mui/x-date-pickers/TimePicker';
-import { DemoItem } from '@mui/x-date-pickers/internals/demo';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker'; // Import TimePicker
+import AccessTimeIcon from '@mui/icons-material/AccessTime'; // Import Time icon
 
-const today = dayjs();
-dayjs.extend(duration);
-const todayEndOfTheDay = today.endOf('day');
-
-const CustomTimePicker = ({ label, value, onChange }) => (
-  <TimePicker
-    label={label}
-    value={value}
-    size="small"
-    onChange={onChange}
-    sx={{
-      '& .MuiInputBase-root': {
-        height: '40px', // Match other fields
-      },
-    }}
-  />
-);
 
 const PermissionRequest = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
-    date: dayjs(),
-    fromTime: '',
-    toTime: '',
+    fromDate: null,
+    fromTime: null, // Add fromTime
+    toTime: null,     // Add toTime
     totalHours: '',
     notes: '',
-    notify: ''
   });
   const [editId, setEditId] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState({
-    date: '',
-    fromTime: '',
-    toTime: '',
+    fromDate: '',
     totalHours: '',
+    fromTime: '', // Add fromTime error
+    toTime: null,     // Add toTime
     notes: '',
-    notify: ''
   });
 
-const handleTimeChange = (field, newValue) => {
-  const updatedFormData = { ...formData, [field]: newValue };
-
-  if (updatedFormData.fromTime && updatedFormData.toTime) {
-    const from = dayjs(updatedFormData.fromTime);
-    const to = dayjs(updatedFormData.toTime);
-
-    if (to.isAfter(from)) {
-      const diff = dayjs.duration(to.diff(from)); // Difference in duration format
-      const totalHours = `${diff.hours()}h ${diff.minutes()}m`; // Format as "Xh Ym"
-
-      updatedFormData.totalHours = totalHours;
-    } else {
-      updatedFormData.totalHours = ''; // Clear if invalid range
-    }
-  }
-
-  setFormData(updatedFormData);
-};
+  const companyList = [
+    { label: 'Company A', id: 1 },
+    { label: 'Company B', id: 2 },
+  ];
 
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'fromTime', header: 'From Time', size: 140 },
-    {
-      accessorKey: 'toTime',
-      header: 'To Time',
-      size: 140
-    },
-    { accessorKey: 'date', header: 'Date', size: 140 }
+    { accessorKey: 'date', header: 'S.No', size: 140 },
+    { accessorKey: 'Date', header: 'Date', size: 140 },
+    { accessorKey: 'Date', header: 'From Time', size: 140 },
+    { accessorKey: 'Date', header: 'To Time', size: 140 },
+    { accessorKey: 'Date', header: 'Total Hrs', size: 140 },
+    { accessorKey: 'Date', header: 'Notes', size: 140 },
+    { accessorKey: 'Date', header: 'Status', size: 140 },
   ];
   const [listViewData, setListViewData] = useState([]);
 
   useEffect(() => {
-    getAllPermissionRequest();
+    getAllLeaveRequest();
   }, []);
 
-  const getAllPermissionRequest = async () => {
+  const getAllLeaveRequest = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/getDepartmentByOrgId?orgid=${orgId}`);
       setListViewData(result.paramObjectsMap.departmentVO.reverse());
@@ -106,21 +73,21 @@ const handleTimeChange = (field, newValue) => {
     }
   };
 
-  const getPermissionRequestById = async (row) => {
-    console.log('THE SELECTED PERMISSION REQUEST ID IS:', row.original.id);
+  const getLeaveRequestById = async (row) => {
+    console.log('THE SELECTED LEAVE REQUEST ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `/commonmaster/getPermissionRequestById?id=${row.original.id}`);
+      const response = await apiCalls('get', `/commonmaster/getLeaveRequestById?id=${row.original.id}`);
       console.log('API Response:', response);
       if (response.status === true) {
         setListView(false);
         const particularDepartment = response.paramObjectsMap.departmentVO;
         setFormData({
-          department: particularDepartment.departmentName,
-          departmentCode: particularDepartment.departmentCode,
-          active: particularDepartment.active === 'Active' ? true : false
+          fromDate: particularDepartment.departmentCode,
+          totalHours: particularDepartment.departmentCode,
+          notes: particularDepartment.departmentCode,
         });
-        
+
       } else {
         console.error('API Error');
       }
@@ -156,34 +123,27 @@ const handleTimeChange = (field, newValue) => {
 
   const handleClear = () => {
     setFormData({
-      date: dayjs(),
-      fromTime: '',
-      toTime: '',
+      fromDate: '',
       totalHours: '',
       notes: '',
-      notify: ''
+      fromTime: null,
+      toTime: null,
     });
     setFieldErrors({
-      date: '',
+      fromDate: '',
       fromTime: '',
       toTime: '',
       totalHours: '',
       notes: '',
-      notify: ''
     });
     setEditId('');
   };
 
   const handleSave = async () => {
     const errors = {};
-    if (!formData.date) {
-      errors.date = 'Date is required';
-    }
-    if (!formData.toTime) {
-      errors.toTime = 'To Time Code is required';
-    }
-    if (!formData.fromTime) {
-      errors.fromTime = 'From Time is required';
+
+    if (!formData.fromDate) {
+      errors.fromDate = 'From Date is required';
     }
     if (!formData.totalHours) {
       errors.totalHours = 'Total Hours is required';
@@ -191,17 +151,23 @@ const handleTimeChange = (field, newValue) => {
     if (!formData.notes) {
       errors.notes = 'Notes is required';
     }
-    if (!formData.notify) {
-      errors.notify = 'Notify is required';
+    // ... (Existing validation)
+    if (!formData.fromTime) {
+      errors.fromTime = 'From Time is required';
+    }
+    if (!formData.toTime) {
+      errors.toTime = 'To Time is required';
     }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
         ...(editId && { id: editId }),
-        active: formData.active,
-        toTime: formData.toTime,
-        departmentName: formData.department,
+        departmentName: formData.fromDate,
+        departmentName: formData.totalHours,
+        departmentName: formData.notes,
+        fromTime: formData.fromTime ? dayjs(formData.fromTime).format('HH:mm') : null, // Format time
+        toTime: formData.toTime ? dayjs(formData.toTime).format('HH:mm') : null,     // Format time
         orgId: orgId,
         createdBy: loginUserName
       };
@@ -215,7 +181,7 @@ const handleTimeChange = (field, newValue) => {
           console.log('Response:', result);
           showToast('success', editId ? 'Permission Request Updated Successfully' : 'Permission Request created successfully');
           handleClear();
-          getAllPermissionRequest();
+          getAllLeaveRequest();
           setIsLoading(false);
         } else {
           showToast('error', result.paramObjectsMap.errorMessage || 'Permission Request creation failed');
@@ -235,12 +201,21 @@ const handleTimeChange = (field, newValue) => {
     setListView(!listView);
   };
 
-  const handleCheckboxChange = (event) => {
-    setFormData({
-      ...formData,
-      active: event.target.checked
-    });
+  const handleDateChange = (field, newValue) => {
+    const updatedFormData = { ...formData, [field]: newValue };
+
+    if (updatedFormData.fromDate && updatedFormData.toDate) {
+      const from = dayjs(updatedFormData.fromDate);
+
+    }
+
+    setFormData(updatedFormData);
   };
+
+  const handleTimeChange = (field, newValue) => {
+    setFormData({ ...formData, [field]: newValue });
+  };
+
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -264,71 +239,79 @@ const handleTimeChange = (field, newValue) => {
               data={listViewData}
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getPermissionRequestById}
+              toEdit={getLeaveRequestById}
             />
           </div>
         ) : (
           <>
             <div className="row">
-            <div className="col-md-3 mb-3">
-                  <FormControl fullWidth>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <DatePicker
-                        label="Date"
-                        format="DD-MM-YYYY"
-                        disabled
-                        slotProps={{
-                          textField: { size: 'small', clearable: true }
-                        }}
-                        value={formData.date ? dayjs(formData.date) : null}
-                        onChange={(newValue) => setFormData({ ...formData, date: newValue })}
-                      />
-                    </LocalizationProvider>
-                  </FormControl>
-                </div>
-                <div className="col-md-3 mb-3">
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Date"
+                      format="DD-MM-YYYY"
+                      slotProps={{
+                        textField: { size: 'small', clearable: true }
+                      }}
+                      value={formData.fromDate ? dayjs(formData.fromDate) : null}
+                      onChange={(newValue) => handleDateChange('fromDate', newValue)}
+                    />
+                  </LocalizationProvider>
+                </FormControl>
+              </div>
+
+
+              <div className="col-md-3 mb-3"> {/* From Time */}
+                <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="From Time"
-                      value={formData.fromTime ? dayjs(formData.fromTime) : null}
-                      size="small"
+                      value={formData.fromTime}
                       onChange={(newValue) => handleTimeChange('fromTime', newValue)}
-                      disableFuture
-                      sx={{
-                        '& .MuiInputBase-root': { height: '40px'},
-                        '& .MuiInputBase-input': { height: '0px'},
+                      ampm={false} // 24-hour format
+                      slots={{
+                        openPickerIcon: AccessTimeIcon,
+                      }}
+                      slotProps={{
+                        textField: { size: 'small', clearable: true },
                       }}
                     />
                   </LocalizationProvider>
-                </div>
-                <div className="col-md-3 mb-3">
+                </FormControl>
+              </div>
+
+
+              <div className="col-md-3 mb-3"> {/* To Time */}
+                <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="To Time"
-                      value={formData.toTime ? dayjs(formData.toTime) : null}
-                      size="small"
+                      value={formData.toTime}
                       onChange={(newValue) => handleTimeChange('toTime', newValue)}
-                      disableFuture
-                      sx={{
-                        '& .MuiInputBase-root': { height: '40px' },
-                        '& .MuiInputBase-input': { height: '0px', display:'flex', alignItems:'center'},
+                      ampm={false} // 24-hour format
+                      slots={{
+                        openPickerIcon: AccessTimeIcon,
+                      }}
+                      slotProps={{
+                        textField: { size: 'small', clearable: true },
                       }}
                     />
                   </LocalizationProvider>
-                </div>  
+                </FormControl>
+              </div>
+
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Total Hours"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="totalHours"
-                  value={formData.totalHours}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.totalHours}
-                  helperText={fieldErrors.totalHours}
+                  value={formData.totalHours || ''}
+                  disabled // Prevent manual input
                 />
               </div>
+
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Notes"
@@ -342,7 +325,8 @@ const handleTimeChange = (field, newValue) => {
                   helperText={fieldErrors.notes}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+
+              {/* <div className="col-md-3 mb-3">
                 <TextField
                   label="Notify"
                   variant="outlined"
@@ -354,7 +338,41 @@ const handleTimeChange = (field, newValue) => {
                   error={!!fieldErrors.notify}
                   helperText={fieldErrors.notify}
                 />
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={companyList.map((option, index) => ({ ...option, key: index }))}
+                  getOptionLabel={(option) => option.notify || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={
+                    companyList.find((c) => c.notify === formData.notify) || null
+                  }
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'notify',
+                        value: newValue ? newValue.notify : ''
+                      }
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Notify"
+                      name="notify"
+                      error={Boolean(fieldErrors.notify)}
+                      helperText={fieldErrors.notify || ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 }
+                      }}
+                    />
+                  )}
+                />
               </div>
+
             </div>
           </>
         )}

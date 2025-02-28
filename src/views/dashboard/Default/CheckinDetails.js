@@ -69,55 +69,50 @@ const CheckinDetails = ({ isLoading }) => {
   // const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   // const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   // Handle Check-In and Check-Out button clicks
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
   const handleCheckIn = async () => {
     const saveCheckIN = {
       status: true,
       orgId: orgId,
       branch: branch,
-      // companycode: loginUserName,
       branchId: branchId,
       empcode: empcode,
     };
 
-    console.log('DATA TO SAVE IS:', saveCheckIN);
     try {
       const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
 
       if (result.status === true) {
-        console.log('Response:', result);
         showToast('success', 'Check-In Success');
+        setIsCheckedIn(true); // Hide Check-In button
       } else {
         showToast('error', result.paramObjectsMap.errorMessage || 'Check-In Failed');
       }
-    } 
-    catch (err) {
-      console.log('error', err);
+    } catch (err) {
       showToast('error', 'Check-In Failed');
     }
   };
+
 
   const handleCheckOut = async () => {
     const saveCheckIN = {
       status: false,
       orgId: orgId,
       branch: branch,
-      // companycode: loginUserName,
       branchId: branchId,
       empcode: empcode,
     };
-    console.log('DATA TO SAVE IS:', saveCheckIN);
+
     try {
       const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
 
       if (result.status === true) {
-        console.log('Response:', result);
         showToast('success', 'Check-Out Success');
+        setIsCheckedIn(false); // Hide Check-Out, show Check-In
       } else {
         showToast('error', result.paramObjectsMap.errorMessage || 'Check-Out Failed');
       }
-    } 
-    catch (err) {
-      console.log('error', err);
+    } catch (err) {
       showToast('error', 'Check-Out Failed');
     }
   };
@@ -144,14 +139,14 @@ const CheckinDetails = ({ isLoading }) => {
                       </Box>
                     </Grid>
 
-                    <Grid item>
+                    {/* <Grid item>
                       <Box className="d-lg-flex align-items-center ps-5 ms-4 ps-lg-5 ms-lg-0 pb-3 pb-lg-0 pt-0 pt-lg-2">
                         <Box>
                           <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{`${month} ${date}, ${year}`}</Typography>
-                          <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{time}</Typography> {/* Display Time */}
+                          <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>{time}</Typography> 
                         </Box>
                       </Box>
-                    </Grid>
+                    </Grid> */}
                   </div>
                   <Grid item>
                     <Box className="d-flex justify-content-start justify-content-lg-between align-items-center">
@@ -164,8 +159,8 @@ const CheckinDetails = ({ isLoading }) => {
                           width: '120px',
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           '&:hover': {
-                            transform: 'scale(1.05)', // Slightly enlarges the button
-                            boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.15)', // Adds a shadow effect on hover
+                            transform: 'scale(1.05)',
+                            boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.15)',
                           },
                         }}
                         onClick={handleCheckIn}
@@ -204,13 +199,13 @@ const CheckinDetails = ({ isLoading }) => {
                     <ListItem>
                       <AccessTimeIcon sx={{ mr: 2 }} color="white" />
                       <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>
-                        Logged in for work at 9:00 AM
+                        Check-In for work at 9:00 AM
                       </Typography>
                     </ListItem>
                     <ListItem>
                       <AccessTimeIcon sx={{ mr: 2 }} color="white" />
                       <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>
-                        Logged out for work at 12:30 PM
+                        Check out for work at 12:30 PM
                       </Typography>
                     </ListItem>
                   </List>

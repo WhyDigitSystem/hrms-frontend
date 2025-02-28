@@ -53,10 +53,10 @@ const UserCreation = () => {
     email: '',
     active: true,
     allIndiaAccess: false,
-    deactivatedOn: '', // Rename to match DTO structure
+    deactivatedOn: '', 
     userType: '',
     reportingTO: '',
-    orgId: orgId // Assuming orgId is defined elsewhere in your component
+    orgId: orgId 
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -609,7 +609,7 @@ const UserCreation = () => {
                       labelId="employeeCode-label"
                       label="Employee Code"
                       value={formData.employeeCode}
-                      onChange={handleSelectChange} // Using the updated function for Select
+                      onChange={handleSelectChange}
                       name="employeeCode"
                     >
                       {empList.length > 0 &&

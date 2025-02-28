@@ -80,15 +80,15 @@ const Login = () => {
                               gutterBottom
                               variant={matchDownSM ? 'h5' : 'h4'}
                             >
-                              Hi, Welcome Back
+                              HRMS
                             </Typography>
-                            <Typography
+                            {/* <Typography
                               variant="caption"
                               fontSize="14px"
                               textAlign={matchDownSM ? 'center' : 'inherit'}
                             >
                               Enter your credentials to continue
-                            </Typography>
+                            </Typography> */}
                           </Stack>
                         </Stack>
                       </Grid>
@@ -97,7 +97,7 @@ const Login = () => {
                   <Grid item xs={12} sx={{ marginBottom: 0, paddingBottom: 0 }}>
                     <AuthLogin />
                   </Grid>
-                  <Grid item xs={12} sx={{ marginBottom: 0, paddingBottom: 0 }}>
+                  {/* <Grid item xs={12} sx={{ marginBottom: 0, paddingBottom: 0 }}>
                     <Grid item container direction="column" alignItems="center" xs={12}>
                       <Typography
                         component={Link}
@@ -108,7 +108,7 @@ const Login = () => {
                         Don&apos;t have an account?
                       </Typography>
                     </Grid>
-                  </Grid>
+                  </Grid> */}
                   <Grid item xs={12}>
                     <Divider sx={{ display: 'none' }} />
                   </Grid>
