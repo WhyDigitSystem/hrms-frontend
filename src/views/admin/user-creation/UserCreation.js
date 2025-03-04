@@ -53,10 +53,10 @@ const UserCreation = () => {
     email: '',
     active: true,
     allIndiaAccess: false,
-    deactivatedOn: '', 
+    deactivatedOn: '',
     userType: '',
     reportingTO: '',
-    orgId: orgId 
+    orgId: orgId
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -114,6 +114,11 @@ const UserCreation = () => {
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    if (type === 'checkbox') {
+      setFormData({ ...formData, [name]: checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
 
     // Regex validation rules
     const nameRegex = /^[A-Za-z ]*$/;
@@ -383,7 +388,7 @@ const UserCreation = () => {
         employeeName: formData.employeeName,
         email: formData.email,
         allIndiaAcces: formData.allIndiaAccess,
-        active: formData.active === 'Active' ? true : false,
+        active: formData.active,
         orgId: orgId,
         roleAccessDTO: roleVo,
         branchAccessDTOList: branchVo
