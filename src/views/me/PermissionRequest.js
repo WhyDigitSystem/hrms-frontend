@@ -28,7 +28,7 @@ const PermissionRequest = () => {
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [formData, setFormData] = useState({
-    formDate: dayjs(),
+    formDate: null,
     fromTime: null,
     toTime: null,
     totalHours: "",
@@ -61,6 +61,12 @@ const PermissionRequest = () => {
   useEffect(() => {
     getAllPermissionRequestByOrgId();
     getNotifyList();
+
+    // Set default date to today when the component is mounted
+    setFormData((prev) => ({
+      ...prev,
+      formDate: dayjs(), // Set current date by default
+    }));
   }, []);
 
   // List API
@@ -69,7 +75,26 @@ const PermissionRequest = () => {
       const response = await apiCalls('get', `/employeemaster/getAllPermissionRequestByOrgId?orgId=${orgId}`);
 
       if (response.status === true) {
-        const formattedData = response.paramObjectsMap.permissionRequestVO;
+        const formattedData = response.paramObjectsMap.permissionRequestVO.map((item) => {
+          const formDate = dayjs(item.date);
+          const fromTime = dayjs(`${item.date}T${dayjs(item.fromTime, "HH:mm").format("HH:mm")}`);
+          const toTime = dayjs(`${item.date}T${dayjs(item.toTime, "HH:mm").format("HH:mm")}`);
+
+          let totalHours = '00:00';
+
+          if (toTime.isValid() && fromTime.isValid() && toTime.isAfter(fromTime)) {
+            const durationInMinutes = toTime.diff(fromTime, 'minute');
+
+            // Calculate hours and minutes
+            const hours = Math.floor(durationInMinutes / 60);
+            const minutes = durationInMinutes % 60;
+
+            // Format as HH:mm
+            totalHours = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+          }
+
+          return { ...item, totalHours };
+        });
 
         setListViewData(formattedData);
       } else {
@@ -100,15 +125,26 @@ const PermissionRequest = () => {
 
       if (response.status === true) {
         setListView(false);
-        const permissionDetails = response.paramObjectsMap.permissionRequestVO; // Correct key
+        const permissionDetails = response.paramObjectsMap.permissionRequestVO;
 
         console.log('PERMISSION REQUEST DETAILS:', permissionDetails);
+        // Calculate total hours from fromTime and toTime
+        const fromTime = dayjs(permissionDetails.fromTime, "HH:mm");
+        const toTime = dayjs(permissionDetails.toTime, "HH:mm");
+        let totalHours = '00:00';
+
+        if (toTime.isValid() && fromTime.isValid() && toTime.isAfter(fromTime)) {
+          const durationInMinutes = toTime.diff(fromTime, 'minute');
+          const hours = Math.floor(durationInMinutes / 60);
+          const minutes = durationInMinutes % 60;
+          totalHours = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        }
 
         setFormData({
-          formDate: permissionDetails.formDate ? dayjs(permissionDetails.formDate) : null,
+          formDate: permissionDetails.date ? dayjs(permissionDetails.date) : dayjs(), // Use dayjs(permissionDetails.date) to create a dayjs object
           fromTime: permissionDetails.fromTime ? dayjs(permissionDetails.fromTime, "HH:mm") : null,
           toTime: permissionDetails.toTime ? dayjs(permissionDetails.toTime, "HH:mm") : null,
-          totalHours: permissionDetails.totalHours || '',
+          totalHours: totalHours, // Set the formatted totalHours
           notes: permissionDetails.notes || '',
           notify: permissionDetails.notify || '',
         });
@@ -119,7 +155,6 @@ const PermissionRequest = () => {
       console.error('Error fetching data:', error);
     }
   };
-
 
 
   const handleInputChange = (e) => {
@@ -174,14 +209,17 @@ const PermissionRequest = () => {
 
 
   const handleClear = () => {
+    // Reset the form data state
     setFormData({
-      formDate: '',
-      fromTime: '',
-      toTime: '',
+      formDate: null,
+      fromTime: null,
+      toTime: null,
       totalHours: '',
       notes: '',
       notify: ''
     });
+
+    // Reset field errors state
     setFieldErrors({
       formDate: '',
       fromTime: '',
@@ -190,16 +228,21 @@ const PermissionRequest = () => {
       notes: '',
       notify: ''
     });
+
+    // Reset the editId if it's set (for edit mode)
     setEditId('');
+
+    // You can also set listView to false if you want to hide the list view after clearing
+    setListView(false);
   };
+
 
   const handleSave = async () => {
     const errors = {};
-
-    // if (!formData.formDate) {
-    //   errors.formDate = 'From Date is required';
-    // }
-    if (!formData.totalHours) {
+    if (!formData.formDate) {
+      errors.formDate = 'formDate is required';
+    }
+    if (!formData.totalHours || formData.totalHours === '00:00') {
       errors.totalHours = 'Total Hours is required';
     }
     if (!formData.notes) {
@@ -211,37 +254,36 @@ const PermissionRequest = () => {
     if (!formData.toTime) {
       errors.toTime = 'To Time is required';
     }
-    if (typeof formData.totalHours === "number") {
-      formData.totalHours = formData.totalHours.toString();
-    }
-    if (typeof formData.totalHours === "string") {
-      const sanitizedHours = formData.totalHours.replace(/[^0-9.]/g, "");
-      setFormData({
-        ...formData,
-        totalHours: sanitizedHours,
-      });
-      console.log("Saved data:", formData);
-    } else {
-      console.error("totalHours must be a string or a number");
-    }
-    if (!formData.notify) {
-      formData.notify = 'notify is required';
-    }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
-      const formattedDate = formData.date && dayjs(formData.date).isValid()
-        ? dayjs(formData.date).format('YYYY-MM-DD')
-        : null;
+      // Ensure totalHours is a string before using .replace()
+      let sanitizedTotalHours = formData.totalHours;
+      if (typeof sanitizedTotalHours !== 'string') {
+        sanitizedTotalHours = sanitizedTotalHours.toString(); // Convert number to string
+      }
+      sanitizedTotalHours = sanitizedTotalHours.replace(/[^0-9.]/g, ''); // Clean out non-numeric characters
+
+      setFormData({
+        ...formData,
+        totalHours: sanitizedTotalHours, // Update formData with sanitized value
+      });
+
+      console.log("Sanitized Total Hours:", sanitizedTotalHours);
+
+      // Handle date formatting or null case
+      const formattedDate = formData.formDate && dayjs(formData.formDate).isValid()
+        ? dayjs(formData.formDate).format('YYYY-MM-DD') // Convert the date to 'YYYY-MM-DD' format
+        : null; // If formDate is invalid, set it as null
 
       const saveData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        date: formattedDate.formDate,
+        date: formattedDate, // Save formatted date or null
         fromTime: formData.fromTime ? dayjs(formData.fromTime, 'HH:mm').format('HH:mm') : null,
         toTime: formData.toTime ? dayjs(formData.toTime, 'HH:mm').format('HH:mm') : null,
-        totalHours: parseFloat(formData.totalHours.replace(/[^\d.]/g, '')),
+        totalHours: parseFloat(sanitizedTotalHours), // Use sanitized totalHours
         notes: formData.notes,
         notify: formData.notify,
         orgId: orgId,
@@ -250,7 +292,7 @@ const PermissionRequest = () => {
 
       console.log('DATA TO SAVE IS:', saveData);
 
-      // save API
+      // Save API call
       try {
         const response = await apiCalls('put', '/employeemaster/createUpdatePermissionRequest', saveData);
 
@@ -281,16 +323,16 @@ const PermissionRequest = () => {
 
   const handleDateChange = (newValue) => {
     if (!newValue || !dayjs(newValue).isValid()) {
-      setFieldErrors((prev) => ({ ...prev, date: 'Invalid Date' }));
+      setFieldErrors((prev) => ({ ...prev, formDate: 'Invalid Date' }));
       return;
     }
 
     setFormData((prev) => ({
       ...prev,
-      date: newValue, // Store the `dayjs` object directly
+      formDate: dayjs(newValue), // Ensure it's a dayjs object directly
     }));
 
-    setFieldErrors((prev) => ({ ...prev, date: '' }));
+    setFieldErrors((prev) => ({ ...prev, formDate: '' }));
   };
 
 
@@ -298,15 +340,21 @@ const PermissionRequest = () => {
     setFormData((prev) => {
       const updatedFormData = { ...prev, [field]: newValue };
 
+      // When both fromTime and toTime are present, calculate totalHours
       if (updatedFormData.fromTime && updatedFormData.toTime) {
         const fromTime = dayjs(updatedFormData.fromTime);
         const toTime = dayjs(updatedFormData.toTime);
 
+        // Check if toTime is after fromTime
         if (toTime.isAfter(fromTime)) {
-          const duration = toTime.diff(fromTime, 'minute');
-          updatedFormData.totalHours = dayjs().startOf('day').add(duration, 'minute').format('HH:mm');
+          const durationInMinutes = toTime.diff(fromTime, 'minute'); // Get the duration in minutes
+          const totalHoursFormatted = dayjs()
+            .startOf('day') // Start from 00:00
+            .add(durationInMinutes, 'minute') // Add the duration in minutes
+            .format('HH:mm'); // Format as HH:mm
+          updatedFormData.totalHours = totalHoursFormatted;
         } else {
-          updatedFormData.totalHours = '00:00';
+          updatedFormData.totalHours = '00:00'; // Set to "00:00" if the toTime is earlier than fromTime
         }
       }
 
@@ -316,13 +364,15 @@ const PermissionRequest = () => {
 
 
 
+
+
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
-            <ActionButton title="Clear" icon={ClearIcon} />
+            <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
           </div>
@@ -351,13 +401,13 @@ const PermissionRequest = () => {
                       slotProps={{
                         textField: { size: 'small', clearable: true }
                       }}
-                      value={formData.formDate ? dayjs(formData.formDate) : null}
+                      value={formData.formDate ? dayjs(formData.formDate) : null} // Ensure the date is a dayjs object
                       onChange={handleDateChange}
                     />
-
-
                   </LocalizationProvider>
                 </FormControl>
+
+
               </div>
 
               {/* From Time */}
@@ -407,12 +457,13 @@ const PermissionRequest = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  value={formData.totalHours || ''}
-                  error={!!fieldErrors.totalHours} // Show error state
+                  value={formData.totalHours || '00:00'} // Default to '00:00' if not available
+                  error={!!fieldErrors.totalHours} // Show error state if validation fails
                   helperText={fieldErrors.totalHours} // Display error message
-                  disabled
+                  disabled // Make it read-only
                 />
               </div>
+
 
               {/* Notes */}
               <div className="col-md-3 mb-3">
