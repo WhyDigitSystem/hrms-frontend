@@ -205,7 +205,7 @@ const CheckinDetails = ({ isLoading }) => {
                     <ListItem>
                       <AccessTimeIcon sx={{ mr: 2 }} color="white" />
                       <Typography sx={{ fontSize: '1rem', color: theme.palette.secondary[200] }}>
-                        Check out for work at 12:30 PM
+                        Check-out for work at 12:30 PM
                       </Typography>
                     </ListItem>
                   </List>

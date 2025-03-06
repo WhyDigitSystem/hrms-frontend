@@ -86,6 +86,7 @@ const Responsibilities = () => {
     setFieldErrors({
       name: false
     });
+    setEditId('');
   };
 
   const handleChange = (event) => {

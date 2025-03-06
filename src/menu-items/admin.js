@@ -1,11 +1,15 @@
 // assets
-import { IconUser, IconPasswordUser } from '@tabler/icons-react';
+import { IconUser, IconPasswordUser, IconAppWindow } from '@tabler/icons-react';
 
 // constant
 const icons = { IconUser };
 
 const icons1 = {
   IconPasswordUser
+};
+
+const icons2 = {
+  IconAppWindow
 };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
@@ -29,7 +33,13 @@ const admin = {
       type: 'item',
       url: '/basicMaster/roles',
       icon: icons1.IconPasswordUser,
-
+    },
+    {
+      id: 'screenNames',
+      title: 'Screen Names',
+      type: 'item',
+      url: '/companysetup/ScreenNames',
+      icon: icons2.IconAppWindow
     }
   ]
 };

@@ -14,7 +14,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
@@ -25,11 +25,16 @@ const SalaryMaster = () => {
   const [listViewData, setListViewData] = useState([]);
   const [roleList, setRoleList] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
+  const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
+  const [createdBy, setCreatedBy] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [empList, setEmpList] = useState([]);
+  const [salaryHeadsType, setSalaryHeadsType] = useState([]);
 
   const [formData, setFormData] = useState({
     employeeName: '',
@@ -60,30 +65,28 @@ const SalaryMaster = () => {
   const listViewColumns = [
     { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
     { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
-    { accessorKey: 'dob', header: 'DOB', size: 140 },
+    { accessorKey: 'dateOfBirth', header: 'DOB', size: 140 },
     { accessorKey: 'grade', header: 'Grade', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'panNo', header: 'panNo', size: 140 },
     { accessorKey: 'bankAccountNo', header: 'Bank Account No', size: 140 },
-    { accessorKey: 'position', header: 'Position', size: 140 },
+    { accessorKey: 'designation', header: 'Position', size: 140 },
     { accessorKey: 'dateOfJoining', header: 'Date of Joining', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
-
   const [earningDetailsData, setEarningDetailsData] = useState([{ id: 1, heading: '', amount: '' }]);
-  const [detectionDetailsDataErrors, setEarningDetailsDataErrors] = useState([
+  const [earningDetailsDataErrors, setEarningDetailsDataErrors] = useState([
     {
       heading: '',
-      amount: '',
+      amount: ''
     }
   ]);
-
   const [detectionDetailsData, setDetectionDetailsData] = useState([{ id: 1, detectionHeading: '', detectionAmount: '' }]);
-  const [earningDetailsDataErrors, setDetectionDetailsDataErrors] = useState([
+  const [detectionDetailsDataErrors, setDetectionDetailsDataErrors] = useState([
     {
       detectionHeading: '',
-      detectionAmount: '',
+      detectionAmount: ''
     }
   ]);
 
@@ -113,14 +116,10 @@ const SalaryMaster = () => {
 
   const handleSelectChange = (e) => {
     const value = e.target.value;
-    console.log('Selected employeeCode value:', value);
+    console.log('Selected employeeName value:', value);
     console.log('Full empList:', empList);
 
-    empList.forEach((emp, index) => {
-      console.log(`Employee ${index}:`, emp);
-    });
-
-    const selectedEmp = empList.find((emp) => emp.employeeCode === value);
+    const selectedEmp = empList.find((emp) => emp.employeeName === value);
 
     if (selectedEmp) {
       console.log('Selected Employee:', selectedEmp);
@@ -128,10 +127,16 @@ const SalaryMaster = () => {
         ...prevData,
         employeeCode: selectedEmp.employeeCode,
         employeeName: selectedEmp.employeeName,
-        dob: selectedEmp.dob,
+        dob: selectedEmp.dateOfBirth, // Mapping Date of Birth
+        grade: selectedEmp.grade, // Mapping Grade
+        department: selectedEmp.department, // Mapping Department
+        panNo: selectedEmp.panNo, // Mapping PAN Number
+        bankAccountNo: selectedEmp.accountNo, // Mapping Bank Account Number
+        position: selectedEmp.designation, // Mapping Designation
+        dateOfJoining: selectedEmp.joiningDate // Mapping Date of Joining
       }));
     } else {
-      console.log('No employee found with the given code:', value);
+      console.log('No employee found with the given name:', value);
     }
   };
 
@@ -155,42 +160,93 @@ const SalaryMaster = () => {
     }
   };
 
-  const getUserById = async (row) => {
+  useEffect(() => {
+    getAllEmployeeList();
+    getSalaryHeadsDetails();
+    getAllSalaryStructure();
+  }, []);
+
+  const getAllSalaryStructure = async () => {
+    try {
+      const response = await apiCalls('get', `/employeemaster/getAllSalaryStructureByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.SalaryStructureVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getAllEmployeeList = async () => {
+    try {
+      const response = await apiCalls('get', `employeemaster/getAllEmployeeByActive?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setEmpList(response.paramObjectsMap.employeeVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getSalaryHeadsDetails = async () => {
+    try {
+      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setSalaryHeadsType(response.paramObjectsMap.salaryHeadsVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getSalaryStructureById = async (row) => {
     console.log('THE SELECTED EMPLOYEE ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `auth/getUserById?userId=${row.original.id}`);
+      const response = await apiCalls('get', `employeemaster/getSalaryStructureById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularUser = response.paramObjectsMap.userVO;
+        const particularSalaryStructure = response.paramObjectsMap.SalaryStructureVO;
 
         setFormData({
-          employeeCode: particularUser.employeeCode || '',
-          employeeName: particularUser.employeeName,
-          dob: particularUser.dob,
-          grade: particularUser.grade,
-          department: particularUser.department,
-          panNo: particularUser.panNo,
-          dateOfJoining: particularUser.dateOfJoining,
-          active: particularUser.active === 'Active' ? true : false
+          employeeCode: particularSalaryStructure.employeeCode || '',
+          employeeName: particularSalaryStructure.employeeName,
+          dob: particularSalaryStructure.dateOfBirth,
+          grade: particularSalaryStructure.grade,
+          department: particularSalaryStructure.department,
+          panNo: particularSalaryStructure.panNo,
+          bankAccountNo: particularSalaryStructure.bankAccountNo,
+          position: particularSalaryStructure.designation,
+          dateOfJoining: particularSalaryStructure.dateOfJoining,
         });
         setEarningDetailsData(
-          particularUser.roleAccessVO.map((role) => ({
+          particularSalaryStructure.salaryEarningDetailsVO.map((role) => ({
             id: role.id,
             heading: role.heading,
-            amount: role.amount,
+            amount: role.amount
           }))
         );
         setDetectionDetailsData(
-          particularUser.roleAccessVO.map((role) => ({
+          particularSalaryStructure.salaryDetectionDetailsVO.map((role) => ({
             id: role.id,
-            detectionHeading: role.detectionHeading,
-            detectionAmount: role.detectionAmount,
+            detectionHeading: role.heading,
+            detectionAmount: role.amount
           }))
         );
-
       } else {
         console.error('API Error:', response);
       }
@@ -201,26 +257,8 @@ const SalaryMaster = () => {
 
   const handleSave = async () => {
     const errors = {};
-    if (!formData.employeeCode) {
-      errors.employeeCode = 'Employee Code is required';
-    }
     if (!formData.employeeName) {
       errors.employeeName = 'Employee Name is required';
-    }
-    if (!formData.dob) {
-      errors.dob = 'DOB is required';
-    }
-    if (!formData.department) {
-      errors.department = 'Department is required';
-    }
-    if (!formData.panNo) {
-      errors.panNo = 'Pan No is required';
-    }
-    if (!formData.position) {
-      errors.position = 'Position is required';
-    }
-    if (!formData.dateOfJoining) {
-      errors.dateOfJoining = 'Date of Joining is required';
     }
 
     let earningDetailsDataValid = true;
@@ -240,63 +278,74 @@ const SalaryMaster = () => {
     setFieldErrors(errors);
 
     setEarningDetailsDataErrors(newTableErrors);
-    setDetectionDetailsDataErrors(newTableErrors);
 
-    // let branchTableDataValid = true;
-    // const newTableErrors1 = branchTableData.map((row) => {
-    //   const rowErrors = {};
-    //   if (!row.branchCode) {
-    //     rowErrors.branchCode = 'Branch Code is required';
-    //     branchTableDataValid = false;
-    //   }
-    //   return rowErrors;
-    // });
-    setFieldErrors(errors);
+    let deductionDetailsDataValid = true;
+    const newTableErrors1 = detectionDetailsData.map((row) => {
+      const rowErrors = {};
+      if (!row.detectionHeading) {
+        rowErrors.detectionHeading = 'Heading is required';
+        deductionDetailsDataValid = false;
+      }
+      if (!row.detectionAmount) {
+        rowErrors.detectionAmount = 'Amount is required';
+        deductionDetailsDataValid = false;
+      }
 
-    // setBranchTableErrors(newTableErrors1);
+      return rowErrors;
+    });
 
-    if (Object.keys(errors).length === 0 && earningDetailsDataValid) {
+    setDetectionDetailsDataErrors(newTableErrors1);
+
+    if (Object.keys(errors).length === 0 && earningDetailsDataValid && deductionDetailsDataValid) {
       setIsLoading(true);
 
-      const roleVo = earningDetailsData.map((row) => ({
-        // ...(editId && { id: row.id }),
+      const earningDetailsVO = earningDetailsData.map((row) => ({
+        ...(editId && { id: row.id }),
         heading: row.heading,
-        amount: row.amount,
+        amount: row.amount
       }));
-      const roleTableVo = detectionDetailsData.map((row) => ({
-        // ...(editId && { id: row.id }),
-        heading: row.heading,
-        amount: row.amount,
+      const detectionDetailsVO = detectionDetailsData.map((row) => ({
+        ...(editId && { id: row.id }),
+        heading: row.detectionHeading,
+        amount: row.detectionAmount
       }));
 
       const saveFormData = {
-        ...(editId && { id: formData.docId }),
+        ...(editId && { id: editId}),
+        active: formData.active,
+        bankAccountNo: formData.bankAccountNo,
+        branch: branch,
+        branchCode: branchCode,
+        createdBy: createdBy,
+        dateOfBirth: formData.dob,
+        dateOfJoining: formData.dateOfJoining,
+        department: formData.department,
+        designation: formData.position,
         employeeCode: formData.employeeCode,
         employeeName: formData.employeeName,
-        dob: formData.dob,
-        department: formData.department,
-        panNo: formData.panNo,
-        dateOfJoining: formData.dateOfJoining,
-        active: formData.active === 'Active' ? true : false,
+        finYear: finYear,
+        grade: formData.grade,
         orgId: orgId,
-        roleAccessDTO: roleVo,
-        // branchAccessDTOList: branchVo
+        panNo: formData.panNo,
+        salaryDetectionDetailsDTO: detectionDetailsVO,
+        salaryEarningDetailsDTO: earningDetailsVO,
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-        const response = await apiCalls('put', `auth/signup`, saveFormData);
+        const response = await apiCalls('put', `employeemaster/createUpdateSalaryStructure`, saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'User Updated Successfully' : 'User created successfully');
+          showToast('success', editId ? 'Salary Structure Updated Successfully' : 'Salary Structure created successfully');
           handleClear();
+          getAllSalaryStructure();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'User creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Salary Structure creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'User creation failed');
+        showToast('error', 'Salary Structure creation failed');
         setIsLoading(false);
       }
     } else {
@@ -326,7 +375,7 @@ const SalaryMaster = () => {
       bankAccountNo: false,
       position: false,
       panNo: false,
-      dateOfJoining: false,
+      dateOfJoining: false
     });
     setEarningDetailsData([{ id: 1, heading: '', amount: '' }]);
     setEarningDetailsDataErrors('');
@@ -352,14 +401,25 @@ const SalaryMaster = () => {
     const newRow = {
       id: Date.now(),
       heading: '',
-      amount: '',
+      amount: ''
     };
     setEarningDetailsData([...earningDetailsData, newRow]);
     setEarningDetailsDataErrors([...earningDetailsDataErrors, { heading: '', amount: '' }]);
+  };
+
+  const handleAddRow1 = () => {
+    if (isLastRowEmpty(detectionDetailsData)) {
+      displayRowError(detectionDetailsData);
+      return;
+    }
+    const newRow = {
+      id: Date.now(),
+      detectionHeading: '',
+      detectionAmount: ''
+    };
     setDetectionDetailsData([...detectionDetailsData, newRow]);
     setDetectionDetailsDataErrors([...detectionDetailsDataErrors, { detectionHeading: '', detectionAmount: '' }]);
   };
-
 
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
@@ -367,8 +427,7 @@ const SalaryMaster = () => {
 
     if (table === earningDetailsData) {
       return !lastRow.heading || !lastRow.amount;
-    }
-    if (table === detectionDetailsData) {
+    } else if (table === detectionDetailsData) {
       return !lastRow.detectionHeading || !lastRow.detectionAmount;
     }
     return false;
@@ -410,18 +469,29 @@ const SalaryMaster = () => {
     }
   };
 
-  const handleRoleChange = (row, index, event) => {
+  const handleSalaryHeadChange = (row, index, event, type) => {
     const value = event.target.value;
-    const selectedRole = roleList.find((role) => role.role === value);
-    setEarningDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
-    setEarningDetailsDataErrors((prev) => {
-      const newErrors = [...prev];
-      newErrors[index] = {
-        ...newErrors[index],
-        role: !value ? 'Role is required' : ''
-      };
-      return newErrors;
-    });
+    const selectedHead = salaryHeadsType.find((head) => head.heading === value);
+
+    if (type === 'EARNING') {
+      setEarningDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, heading: value, headId: selectedHead?.id || '' } : r)));
+
+      setEarningDetailsDataErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = { ...newErrors[index], heading: !value ? 'Heading is required' : '' };
+        return newErrors;
+      });
+    } else {
+      setDetectionDetailsData((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, detectionHeading: value, headId: selectedHead?.id || '' } : r))
+      );
+
+      setDetectionDetailsDataErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = { ...newErrors[index], detectionHeading: !value ? 'Heading is required' : '' };
+        return newErrors;
+      });
+    }
   };
 
   const handleView = () => {
@@ -481,7 +551,6 @@ const SalaryMaster = () => {
                     value={formData.employeeCode}
                     onChange={handleInputChange}
                     disabled
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.employeeCode ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
@@ -498,7 +567,7 @@ const SalaryMaster = () => {
                         }}
                         format="DD-MM-YYYY"
                         error={fieldErrors.dob}
-                        helperText={fieldErrors.dob ? 'This field is required' : ''}
+                        disabled
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -514,8 +583,8 @@ const SalaryMaster = () => {
                     name="grade"
                     value={formData.grade}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.email ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 40 }}
+                    disabled
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -528,8 +597,8 @@ const SalaryMaster = () => {
                     fullWidth
                     value={formData.department}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.userName ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 15 }}
+                    disabled
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -542,8 +611,8 @@ const SalaryMaster = () => {
                     fullWidth
                     value={formData.panNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.userName ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 15 }}
+                    disabled
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -558,6 +627,7 @@ const SalaryMaster = () => {
                     onChange={handleInputChange}
                     helperText={<span style={{ color: 'red' }}>{fieldErrors.userName ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 15 }}
+                    disabled
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -570,8 +640,8 @@ const SalaryMaster = () => {
                     fullWidth
                     value={formData.position}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.userName ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 15 }}
+                    disabled
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -586,7 +656,7 @@ const SalaryMaster = () => {
                         }}
                         format="DD-MM-YYYY"
                         error={fieldErrors.dateOfJoining}
-                        helperText={fieldErrors.dateOfJoining ? 'This field is required' : ''}
+                        disabled
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -645,7 +715,7 @@ const SalaryMaster = () => {
                                               earningDetailsData,
                                               setEarningDetailsData,
                                               earningDetailsDataErrors,
-                                              setEarningDetailsDataErrors,
+                                              setEarningDetailsDataErrors
                                             )
                                           }
                                         />
@@ -656,16 +726,19 @@ const SalaryMaster = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.heading}
-                                          onChange={(e) => handleRoleChange(row, index, e)}
+                                          onChange={(e) => handleSalaryHeadChange(row, index, e, 'EARNING')}
                                           className={earningDetailsDataErrors[index]?.heading ? 'error form-control' : 'form-control'}
                                         >
                                           <option value="">Select Option</option>
-                                          {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={heading.id} value={heading.role}>
-                                              {role.heading}
-                                            </option>
-                                          ))} */}
+                                          {salaryHeadsType
+                                            .filter((head) => head.type === 'EARNING')
+                                            .map((head) => (
+                                              <option key={head.id} value={head.heading}>
+                                                {head.heading}
+                                              </option>
+                                            ))}
                                         </select>
+
                                         {earningDetailsDataErrors[index]?.heading && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
                                             {earningDetailsDataErrors[index].heading}
@@ -679,17 +752,13 @@ const SalaryMaster = () => {
                                           onChange={(e) => {
                                             const amount = e.target.value;
 
-                                            setEarningDetailsData((prev) =>
-                                              prev.map((r) =>
-                                                r.id === row.id ? { ...r, amount } : r
-                                              )
-                                            );
+                                            setEarningDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, amount } : r)));
 
                                             setEarningDetailsDataErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                amount: !amount ? 'Amount is required' : '',
+                                                amount: !amount ? 'Amount is required' : ''
                                               };
                                               return newErrors;
                                             });
@@ -717,7 +786,7 @@ const SalaryMaster = () => {
                     <>
                       <div className="row d-flex ml">
                         <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
                         </div>
                         <div className="row mt-2">
                           <div className="col-lg-9">
@@ -735,7 +804,7 @@ const SalaryMaster = () => {
                                       Heading
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Amount
+                                      Amount111
                                     </th>
                                   </tr>
                                 </thead>
@@ -763,16 +832,21 @@ const SalaryMaster = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.detectionHeading}
-                                          onChange={(e) => handleRoleChange(row, index, e)}
-                                          className={detectionDetailsDataErrors[index]?.detectionHeading ? 'error form-control' : 'form-control'}
+                                          onChange={(e) => handleSalaryHeadChange(row, index, e, 'DEDUCTION')}
+                                          className={
+                                            detectionDetailsDataErrors[index]?.detectionHeading ? 'error form-control' : 'form-control'
+                                          }
                                         >
                                           <option value="">Select Option</option>
-                                          {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={detectionHeading.id} value={detectionHeading.role}>
-                                              {role.detectionHeading}
-                                            </option>
-                                          ))} */}
+                                          {salaryHeadsType
+                                            .filter((head) => head.type === 'DEDUCTION')
+                                            .map((head) => (
+                                              <option key={head.id} value={head.heading}>
+                                                {head.heading}
+                                              </option>
+                                            ))}
                                         </select>
+
                                         {detectionDetailsDataErrors[index]?.detectionHeading && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
                                             {detectionDetailsDataErrors[index].detectionHeading}
@@ -784,29 +858,29 @@ const SalaryMaster = () => {
                                           type="text"
                                           value={row.detectionAmount}
                                           onChange={(e) => {
-                                            const amount = e.target.value;
+                                            const detectionAmount = e.target.value;
 
-                                            setEarningDetailsData((prev) =>
-                                              prev.map((r) =>
-                                                r.id === row.id ? { ...r, amount } : r
-                                              )
+                                            setDetectionDetailsData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, detectionAmount } : r))
                                             );
 
-                                            setEarningDetailsDataErrors((prev) => {
+                                            setDetectionDetailsDataErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                detectionAmount: !amount ? 'Amount is required' : '',
+                                                detectionAmount: !detectionAmount ? 'Amount is required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={earningDetailsDataErrors[index]?.detectionAmount ? 'error form-control' : 'form-control'}
-                                          onKeyDown={(e) => handleKeyDown(e, row, earningDetailsData)}
+                                          className={
+                                            detectionDetailsDataErrors[index]?.detectionAmount ? 'error form-control' : 'form-control'
+                                          }
+                                          onKeyDown={(e) => handleKeyDown(e, row, detectionDetailsData)}
                                         />
-                                        {earningDetailsDataErrors[index]?.detectionAmount && (
+                                        {detectionDetailsDataErrors[index]?.detectionAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {earningDetailsDataErrors[index].detectionAmount}
+                                            {detectionDetailsDataErrors[index].detectionAmount}
                                           </div>
                                         )}
                                       </td>
@@ -820,12 +894,11 @@ const SalaryMaster = () => {
                       </div>
                     </>
                   )}
-
                 </Box>
               </div>
             </>
           ) : (
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getUserById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getSalaryStructureById} />
           )}
         </div>
       </div>

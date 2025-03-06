@@ -34,6 +34,20 @@ const icons8 = {
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
+const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
+
+const screenMapping = {
+  COUNTRY: 'country',
+  STATE: 'state',
+  CITY: 'city',
+  CURRENCY: 'currency',
+  REGION: 'region',
+  DEPARTMENT: 'department',
+  DESIGNATION: 'designation',
+};
+
+const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+
 const basicMaster = {
   id: 'basicMaster',
   title: '',
@@ -96,21 +110,7 @@ const basicMaster = {
           url: '/basicMaster/Designation',
           icon: icons6.IconIdBadge2
         },
-        // {
-        //   id: 'role',
-        //   title: 'Role',
-        //   type: 'item',
-        //   url: '/basicMaster/Role',
-        //   icon: icons8.IconUsersGroup
-        // },
-        // {
-        //   id: 'employee',
-        //   title: 'Employee',
-        //   type: 'item',
-        //   url: '/basicMaster/employee',
-        //   icon: icons5.IconUserPlus
-        // }
-      ]
+      ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]
 };

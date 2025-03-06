@@ -10,22 +10,27 @@ import me from './me';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
-  const localStorageValue = localStorage.getItem('userType');
+  const localStorageValue = localStorage.getItem('userType') || 'ROLE_ADMIN';
+
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, calendar, me]
+    items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me]
   };
 
   // Define menu items based on localStorage value
   switch (localStorageValue) {
-    case 'ROLE_SUPER_ADMIN':
+    case 'SUPER_ADMIN':
       return {
-        items: [dashboard,basicMaster ]
+        items: [dashboard, calendar, companySetup]
       };
-    case 'admin': // Correctly match the value
+    case 'ADMIN':
       return {
-        items: [dashboard,admin,basicMaster]
+        items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me]
+      };
+    case 'USER': // Correctly match the value
+      return {
+        items: [dashboard, calendar, me]
       };
     // Add more cases as needed
     default:

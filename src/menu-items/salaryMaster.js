@@ -8,6 +8,18 @@ const icons = {
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
+const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
+
+const screenMapping = {
+  "SALARY HEADS": 'salaryHeads',
+  "SALARY STRUCTURE": 'salaryStructure',
+  "SALARY PROCESS": 'salaryProcess',
+  "SALARY REPORT": 'SalaryReport',
+};
+
+const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+
+
 const salaryMaster = {
     id: 'salaryMaster',
     title: 'Salary Master',
@@ -43,7 +55,7 @@ const salaryMaster = {
                     type: 'item',
                     url: '/salaryMaster/SalaryReport'
                 }
-            ]
+            ].filter((item) => allowedScreenIds.includes(item.id))
         }
     ]
 };

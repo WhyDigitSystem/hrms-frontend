@@ -486,7 +486,7 @@ const EmployeeDetails = () => {
         ...(editId && { id: editId }),
         aadharNo: parseInt(formData.aadhaarNo),
         accountHolderName: formData.accountholderName,
-        accountNo: parseInt(formData.accountNo),
+        accountNo: formData.accountNo,
         active: formData.active,
         alternativeMobileNo: parseInt(formData.alternativeMobile),
         bloodGroup: formData.bloodGroup,

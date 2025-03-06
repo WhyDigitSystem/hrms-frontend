@@ -85,7 +85,7 @@ const FirebaseLogin = ({ ...others }) => {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      console.log("wer", response)
+      console.log('wer', response);
 
       if (response.data.status) {
         dispatch(setUser({ orgId: response.data.paramObjectsMap.userVO.orgId }));
@@ -94,13 +94,32 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('token', response.data.paramObjectsMap.userVO.token);
         localStorage.setItem('tokenId', response.data.paramObjectsMap.userVO.tokenId);
         localStorage.setItem('userName', response.data.paramObjectsMap.userVO.userName);
-        localStorage.setItem('LoginMessage', true);
+        localStorage.setItem('userType', response.data.paramObjectsMap.userVO.userType);
+        // localStorage.setItem('LoginMessage', true);
 
+        // const userRole = response.data.paramObjectsMap.userVO.roleVO;
+        // localStorage.setItem('ROLE', userRole);
         const userRole = response.data.paramObjectsMap.userVO.roleVO;
         localStorage.setItem('ROLE', userRole);
+        const roleVO = response.data.paramObjectsMap.userVO.roleVO;
+        let allScreensVO = [];
+        roleVO.forEach((roleObj) => {
+          roleObj.responsibilityVO.forEach((responsibility) => {
+            if (responsibility.screensVO) {
+              allScreensVO = allScreensVO.concat(responsibility.screensVO);
+            }
+          });
+        });
+        allScreensVO = [...new Set(allScreensVO)];
+        localStorage.setItem('screens', JSON.stringify(allScreensVO));
         dispatch(setUserRole(userRole));
         resetForm();
         navigate('/dashboard/default');
+        // window.location.reload();
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 50);
 
         if (checked) {
           localStorage.setItem('rememberedCredentials', JSON.stringify({ email: values.email, password: values.password }));
@@ -175,9 +194,7 @@ const FirebaseLogin = ({ ...others }) => {
                 onChange={handleChange}
                 label="Email Address / Username"
               />
-              {touched.email && errors.email && (
-                <FormHelperText error>{errors.email}</FormHelperText>
-              )}
+              {touched.email && errors.email && <FormHelperText error>{errors.email}</FormHelperText>}
             </FormControl>
 
             <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ mb: 2 }}>
@@ -191,32 +208,20 @@ const FirebaseLogin = ({ ...others }) => {
                 onChange={handleChange}
                 endAdornment={
                   <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                      size="large"
-                    >
+                    <IconButton onClick={handleClickShowPassword} onMouseDown={handleMouseDownPassword} edge="end" size="large">
                       {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
                 }
                 label="Password"
               />
-              {touched.password && errors.password && (
-                <FormHelperText error>{errors.password}</FormHelperText>
-              )}
+              {touched.password && errors.password && <FormHelperText error>{errors.password}</FormHelperText>}
             </FormControl>
 
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
               <FormControlLabel
                 control={
-                  <Checkbox
-                    checked={checked}
-                    onChange={(event) => setChecked(event.target.checked)}
-                    name="checked"
-                    color="primary"
-                  />
+                  <Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />
                 }
                 label="Remember me"
               />

@@ -10,6 +10,18 @@ const icons = {
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
+const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
+
+const screenMapping = {
+  "PERMISSION REQUEST": 'permissionRequest',
+  "LEAVE REQUEST": 'leaveRequest',
+  "HOLIDAY REPORT": 'holidayReport',
+  "SWIPEIN AND SWIPEOUT": 'swipeInSwipeOut',
+};
+
+const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+
+
 const me = {
   id: 'me',
   title: 'Me',
@@ -49,31 +61,7 @@ const me = {
           url: '/me/SwipeInSwipeOut',
           icon: icons.AccessTimeIcon 
         },
-        // {
-        //   id: 'leaveCreditControl',
-        //   title: 'Leave Credit Control',
-        //   type: 'item',
-        //   url: '/me/LeaveCreditControl'
-        // },
-        // {
-        //   id: 'salaryHeads',
-        //   title: 'Salary Heads',
-        //   type: 'item',
-        //   url: '/me/salaryHeads'
-        // },
-        // {
-        //   id: 'salaryStructure',
-        //   title: 'Salary Structure',
-        //   type: 'item',
-        //   url: '/me/SalaryStructure'
-        // },
-        // {
-        //   id: 'attendenceProcess',
-        //   title: 'Attendence Process',
-        //   type: 'item',
-        //   url: '/me/AttendenceProcess'
-        // }
-      ] 
+      ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]
 };

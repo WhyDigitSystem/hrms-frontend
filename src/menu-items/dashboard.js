@@ -5,7 +5,6 @@ import { IconDashboard } from '@tabler/icons-react';
 const icons = { IconDashboard };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
-
 const dashboard = {
   id: 'dashboard',
   title: 'Dashboard',

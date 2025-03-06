@@ -166,10 +166,10 @@ const GlobalSection = () => {
       setBranchName(globalParameterVO.branch);
       console.log('Test', result);
 
-      localStorage.setItem('customer', globalParameterVO.customer);
-      localStorage.setItem('client', globalParameterVO.client);
+      // localStorage.setItem('customer', globalParameterVO.customer);
+      // localStorage.setItem('client', globalParameterVO.client);
       localStorage.setItem('finYear', globalParameterVO.finYear);
-      localStorage.setItem('warehouse', globalParameterVO.warehouse);
+      // localStorage.setItem('warehouse', globalParameterVO.warehouse);
       localStorage.setItem('branchcode', globalParameterVO.branchcode);
       localStorage.setItem('branch', globalParameterVO.branch);
 

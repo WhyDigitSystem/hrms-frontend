@@ -66,13 +66,6 @@ const companySetup = {
           type: 'item',
           url: '/companysetup/finYear',
           icon: icons3.IconCalendarDollar
-        },
-        {
-          id: 'screenNames',
-          title: 'Screen Names',
-          type: 'item',
-          url: '/companysetup/ScreenNames',
-          icon: icons5.IconAppWindow
         }
       ]
     }
