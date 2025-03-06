@@ -465,7 +465,7 @@ const Company = () => {
 
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
-                  <InputLabel id="currency-label">currency</InputLabel>
+                  <InputLabel id="currency-label">Currency</InputLabel>
                   <Select labelId="currency-label" label="currency" value={formData.currency} onChange={handleInputChange} name="currency">
                     {currencyList?.map((row) => (
                       <MenuItem key={row.id} value={row.currency}>

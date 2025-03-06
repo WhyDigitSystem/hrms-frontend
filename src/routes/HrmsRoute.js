@@ -3,6 +3,7 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
+import { element } from 'prop-types';
 // import Roles from 'views/basicMaster/roles';
 
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -46,6 +47,13 @@ const PermissionRequest = Loadable(lazy(() => import('views/me/PermissionRequest
 const LeaveRequest = Loadable(lazy(() => import('views/me/LeaveRequest')));
 const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')));
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
+
+//team
+const LeaveApproval = Loadable(lazy(() => import('views/team/LeaveApproval')));
+const PermissionApproval = Loadable(lazy(() => import('views/team/PermissionApproval')));
+const AttendanceReport = Loadable(lazy(() => import('views/team/AttendanceReport')));
+const TodayAttendance = Loadable(lazy(() => import('views/team/TodayAttendance')));
+
 
 
 
@@ -170,7 +178,27 @@ const HrmsRoute = {
     {
       path: '/me/SwipeInSwipeOut',
       element: <SwipeInSwipeOut />
+    },
+    // Team path
+    {
+      path: '/team/LeaveApproval',
+      element: < LeaveApproval />
+    },
+    {
+      path: '/team/PermissionApproval',
+      element: < PermissionApproval />
+    },
+    {
+      path: '/team/AttendanceReport',
+      element: < AttendanceReport />
+    },
+    {
+      path: '/team/TodayAttendance',
+      element: < TodayAttendance />
     }
+
+
+
   ]
 };
 

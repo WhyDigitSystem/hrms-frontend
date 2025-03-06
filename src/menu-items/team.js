@@ -36,7 +36,7 @@ const icons8 = {
 
 const team = {
   id: 'team',
-  title: '',
+  title: 'Team',
   //   caption: 'Pages Caption',
   type: 'group',
   children: [
@@ -51,28 +51,28 @@ const team = {
           id: 'leaveApproval',
           title: 'Leave Approval',
           type: 'item',
-          url: '/team/leaveApproval',
+          url: '/team/LeaveApproval',
           icon: icons.IconWorld
         },
         {
           id: 'permissionApproval',
           title: 'Permission Approval',
           type: 'item',
-          url: '/team/permissionApproval',
+          url: '/team/PermissionApproval',
           icon: icons1.IconMap
         },
         {
           id: 'attendanceReport',
           title: 'Attendance Report',
           type: 'item',
-          url: '/team/attendanceReport',
+          url: '/team/AttendanceReport',
           icon: icons2.IconBuildingSkyscraper
         },
         {
           id: 'todayAttendance',
           title: 'Today Attendance',
           type: 'item',
-          url: '/team/todayAttendance',
+          url: '/team/TodayAttendance',
           icon: icons3.IconCashBanknote
         },
       ]

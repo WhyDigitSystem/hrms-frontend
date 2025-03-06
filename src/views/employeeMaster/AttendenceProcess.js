@@ -261,7 +261,7 @@ const AttendenceProcess = () => {
             <div className="row">
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.employeName}>
-                  <InputLabel id="employeName-label">Employe Name</InputLabel>
+                  <InputLabel id="employeName-label">Employee Name</InputLabel>
                   <Select labelId="employeName-label" label="Employe Name" value={formData.employeName} onChange={handleInputChange} name="employeName">
                     {/* {Array.isArray(employeNameList) &&
                       employeNameList?.map((row) => (

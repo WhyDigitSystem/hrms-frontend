@@ -1,61 +1,83 @@
-import ClearIcon from '@mui/icons-material/Clear';
-import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
-import SaveIcon from '@mui/icons-material/Save';
-import TextField from '@mui/material/TextField';
+import React, { useState, useEffect } from 'react';
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import apiCalls from 'apicall';
-import { useEffect, useRef, useState } from 'react';
-import 'react-tabs/style/react-tabs.css';
-import 'react-toastify/dist/ReactToastify.css';
-import ActionButton from 'utils/ActionButton';
-import ToastComponent, { showToast } from 'utils/toast-component';
-import CommonListViewTable from '../basicMaster/CommonListViewTable';
 import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import FormControl from '@mui/material/FormControl';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 
-const HolidayReport = () => {
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const listViewColumns = [
-    { accessorKey: 'Date', header: 'Date', size: 140 },
-    { accessorKey: 'Date', header: 'IN Time', size: 140 },
-    { accessorKey: 'Date', header: 'Out Time', size: 140 },
-    { accessorKey: 'Date', header: 'Worked Hours', size: 140 },
-  ];
+const HolidaysListView = () => {
   const [listViewData, setListViewData] = useState([]);
+  const orgId = localStorage.getItem('orgId');
+
+  const listViewColumns = [
+    { accessorKey: 'holidayDate', header: 'Holiday Date', size: 140 },
+    { accessorKey: 'day', header: 'Day', size: 140 },
+    { accessorKey: 'festival', header: 'Festival', size: 140 },
+    { accessorKey: 'branchName', header: 'Branch Name', size: 140 }
+  ];
 
   useEffect(() => {
-    getAllHolidayReport();
+    getAllHolidayByOrgId();
+    hideActionsColumn();
+
+    // Watch for UI changes and re-hide actions column when table updates
+    const observer = new MutationObserver(hideActionsColumn);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Reapply hiding logic when screen resizes or full screen changes
+    window.addEventListener('resize', hideActionsColumn);
+    document.addEventListener('fullscreenchange', hideActionsColumn);
+    
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', hideActionsColumn);
+      document.removeEventListener('fullscreenchange', hideActionsColumn);
+    };
   }, []);
 
-  const getAllHolidayReport = async () => {
+  const getAllHolidayByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `commonmaster/getDepartmentByOrgId?orgid=${orgId}`);
-      setListViewData(result.paramObjectsMap.departmentVO.reverse());
-      console.log('Test', result);
-    } catch (err) {
-      console.log('error', err);
+      const response = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
+      console.log("API Response:", response);
+
+      if (response.status === true && response.paramObjectsMap.holidayVO.length > 0) {
+        const formattedData = response.paramObjectsMap.holidayVO.map((holiday) => ({
+          ...holiday,
+          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '',
+        }));
+        setListViewData(formattedData);
+        console.log("Formatted Data:", formattedData);
+      } else {
+        console.error('API Error: No holiday data found');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
   };
 
+  const hideActionsColumn = () => {
+    setTimeout(() => {
+      document.querySelectorAll("th:first-child, td:first-child").forEach((el) => {
+        el.style.display = "none";
+      });
+    }, 100);
+  };
+
   return (
-    <>
-      <div className="card w-full p-6 bg-base-100 shadow-xl mb-3" style={{ padding: '20px' }}>
-          <div className=".d-flex flex-wrap justify-content-start mb-4">
-            {/* <div> */}
-              <CommonListViewTable
-                data={listViewData}
-                columns={listViewColumns}
-                blockEdit={true} // DISAPLE THE MODAL IF TRUE
-                toEdit={getAllHolidayReport}
-              />
-            {/* </div> */}
-          </div>
-        <ToastComponent />
+    <div style={{ width: '100%', padding: '20px', borderRadius: '10px', overflowX: 'auto' }}>
+      <div>
+        {listViewData.length > 0 ? (
+          <CommonListViewTable 
+            data={listViewData} 
+            columns={listViewColumns} 
+            blockEdit={true} 
+            showActions={false} 
+            hideActions={true} 
+          />
+        ) : (
+          <p style={{ textAlign: 'center', fontSize: '18px', color: 'gray' }}>No holidays available</p>
+        )}
       </div>
-    </>
+    </div>
   );
 };
-export default HolidayReport;
+
+export default HolidaysListView;
