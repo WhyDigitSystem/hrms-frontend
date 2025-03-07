@@ -54,7 +54,7 @@ const UserCreation = () => {
     active: true,
     allIndiaAccess: false,
     deactivatedOn: '',
-    userType: '',
+    // userType: '',
     reportingTO: '',
     orgId: orgId
   });
@@ -69,7 +69,7 @@ const UserCreation = () => {
     active: false,
     allIndiaAccess: false,
     deactivatedOn: '',
-    userType: '',
+    // userType: '',
     reportingTO: '',
     orgId: orgId
   });
@@ -275,7 +275,7 @@ const UserCreation = () => {
         setFormData({
           docId: particularUser.id,
           userName: particularUser.userName,
-          userType: particularUser.userType,
+          // userType: particularUser.userType,
           employeeCode: particularUser.employeeCode || '',
           employeeName: particularUser.employeeName,
           email: particularUser.email,
@@ -316,9 +316,9 @@ const UserCreation = () => {
     if (!formData.userName) {
       errors.userName = 'User Name is required';
     }
-    if (!formData.userType) {
-      errors.userType = 'User Type is required';
-    }
+    // if (!formData.userType) {
+    //   errors.userType = 'User Type is required';
+    // }
     if (!formData.employeeCode) {
       errors.employeeCode = 'Employee Code is required';
     }
@@ -383,7 +383,7 @@ const UserCreation = () => {
         ...(editId && { id: formData.docId }),
         userName: formData.userName,
         ...(!editId && { password: encryptedPassword }),
-        userType: formData.userType,
+        // userType: formData.userType,
         employeeCode: formData.employeeCode,
         employeeName: formData.employeeName,
         email: formData.email,
@@ -428,7 +428,7 @@ const UserCreation = () => {
       active: true,
       allIndiaAccess: false,
       deactivatedOn: '',
-      userType: '',
+      // userType: '',
       reportingTO: '',
       orgId: orgId
     });
@@ -676,7 +676,7 @@ const UserCreation = () => {
                   />
                 </div>
 
-                <div className="col-md-3 mb-3">
+                {/* <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.userType}>
                     <InputLabel id="userType-label">User Type</InputLabel>
                     <Select
@@ -694,7 +694,7 @@ const UserCreation = () => {
                     </Select>
                     {fieldErrors.userType && <FormHelperText>{fieldErrors.userType}</FormHelperText>}
                   </FormControl>
-                </div>
+                </div> */}
                 {/* <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingTO}>
                     <InputLabel id="reportingTO-label">Reporting To</InputLabel>

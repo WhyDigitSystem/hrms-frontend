@@ -5,7 +5,18 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, ButtonBase, FormHelperText, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import {
+  Avatar,
+  ButtonBase,
+  FormHelperText,
+  ListItemText,
+  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
+} from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -53,6 +64,8 @@ const Company = () => {
     gstIn: '',
     panNo: '',
     leaveCreditControl: '',
+    leavePolicy: '',
+    weekOff: '',
     gstRegistered: true,
     active: true
   });
@@ -70,6 +83,8 @@ const Company = () => {
     gstIn: '',
     panNo: '',
     leaveCreditControl: '',
+    leavePolicy: '',
+    weekOff: '',
     gstRegistered: true,
     active: true
   });
@@ -143,6 +158,14 @@ const Company = () => {
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+
+    if (name === 'weekOff') {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: typeof value === 'string' ? value.split(',') : value // Ensure array format
+      }));
+      return;
+    }
 
     // Regular expressions for validation
     const nameRegex = /^[A-Za-z ]*$/; // Allows only alphabetic characters and spaces
@@ -282,6 +305,8 @@ const Company = () => {
       gstIn: '',
       panNo: '',
       leaveCreditControl: '',
+      leavePolicy: '',
+      weekOff: '',
       gstRegistered: true,
       active: true
     });
@@ -297,7 +322,9 @@ const Company = () => {
       mobileNo: '',
       gstIn: '',
       panNo: '',
-      leaveCreditControl: ''
+      leaveCreditControl: '',
+      leavePolicy: '',
+      weekOff: ''
     });
     setEditId('');
   };
@@ -339,11 +366,14 @@ const Company = () => {
         city: formData.city,
         companyCode: formData.companyCode,
         companyName: formData.companyName,
+        companyWeekOffDTO: formData.weekOff?.map((day) => ({ weekOffDays: day })) || [],
         country: formData.country,
         createdBy: loginUserName,
         currency: formData.currency,
         gstIn: formData.gstIn,
         gstRegistered: formData.gstRegistered,
+        leaveCreditControl: formData.leaveCreditControl,
+        leavePolicy: formData.leavePolicy,
         panNo: formData.panNo,
         phone: formData.mobileNo,
         state: formData.state,
@@ -582,14 +612,55 @@ const Company = () => {
                     onChange={handleInputChange}
                     label="Leave Credit Control" // Add this line
                   >
-                    <MenuItem value="Monthly">Monthly</MenuItem>
-                    <MenuItem value="Quarterly">Quarterly</MenuItem>
-                    <MenuItem value="Half Yearly">Half Yearly</MenuItem>
-                    <MenuItem value="EARNED">Yearly</MenuItem>
+                    <MenuItem value="MONTHLY">MONTHLY</MenuItem>
+                    <MenuItem value="QUARTERLY">QUARTERLY</MenuItem>
+                    <MenuItem value="HALF YEARLY">HALF YEARLY</MenuItem>
+                    <MenuItem value="YEARLY">YEARLY</MenuItem>
                   </Select>
                   {fieldErrors.leaveCreditControl && <FormHelperText>{fieldErrors.leaveCreditControl}</FormHelperText>}
                 </FormControl>
               </div>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth size="small" error={!!fieldErrors.leavePolicy}>
+                  <InputLabel id="leavePolicy">Leave Policy</InputLabel>
+                  <Select
+                    labelId="leavePolicy"
+                    id="leavePolicy"
+                    name="leavePolicy"
+                    value={formData.leavePolicy || ''}
+                    onChange={handleInputChange}
+                    label="Leave Policy" // Add this line
+                  >
+                    <MenuItem value="REGULAR">REGULAR</MenuItem>
+                    <MenuItem value="SANDWICH ">SANDWICH</MenuItem>
+                  </Select>
+                  {fieldErrors.leavePolicy && <FormHelperText>{fieldErrors.leavePolicy}</FormHelperText>}
+                </FormControl>
+              </div>
+              
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth size="small" error={!!fieldErrors.weekOff}>
+                  <InputLabel id="weekOff">Week Off</InputLabel>
+                  <Select
+                    labelId="weekOff"
+                    label="Week Off"
+                    id="weekOff"
+                    name="weekOff"
+                    multiple // Enable multi-select
+                    value={formData.weekOff || []} // Ensure it's an array
+                    onChange={handleInputChange}
+                    renderValue={(selected) => selected.join(', ')} // Display selected values as comma-separated
+                  >
+                    {['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].map((day) => (
+                      <MenuItem key={day} value={day}>
+                        {day}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.weekOff && <FormHelperText>{fieldErrors.weekOff}</FormHelperText>}
+                </FormControl>
+              </div>
+
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.gstRegistered} onChange={handleInputChange} name="gstRegistered" />}

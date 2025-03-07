@@ -95,6 +95,7 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('tokenId', response.data.paramObjectsMap.userVO.tokenId);
         localStorage.setItem('userName', response.data.paramObjectsMap.userVO.userName);
         localStorage.setItem('userType', response.data.paramObjectsMap.userVO.userType);
+        localStorage.setItem('employeeCode', response.data.paramObjectsMap.userVO.employeeCode);
         // localStorage.setItem('LoginMessage', true);
 
         // const userRole = response.data.paramObjectsMap.userVO.roleVO;

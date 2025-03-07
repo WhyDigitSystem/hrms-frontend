@@ -33,7 +33,7 @@ const EmployeeDetails = () => {
   const [branchList, setBranchList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
   const [designationList, setDesignationList] = useState([]);
-  const [roleList, setRoleList] = useState([]);
+  // const [roleList, setRoleList] = useState([]);
   const [allleaveType, setAllLeaveType] = useState([]);
   const [allReportingPerson, setAllReportingPerson] = useState([]);
   const theme = useTheme();
@@ -64,7 +64,7 @@ const EmployeeDetails = () => {
     reportingRole: '',
     department: '',
     designation: '',
-    role: '',
+    // role: '',
     active: true,
     branchCode: ''
   });
@@ -92,7 +92,7 @@ const EmployeeDetails = () => {
     reportingRole: '',
     department: '',
     designation: '',
-    role: '',
+    // role: '',
     active: true,
     branchCode: ''
   });
@@ -127,7 +127,7 @@ const EmployeeDetails = () => {
     { accessorKey: 'team', header: 'Team', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
-    { accessorKey: 'role', header: 'Role', size: 140 },
+    // { accessorKey: 'role', header: 'Role', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
     
   ];
@@ -140,7 +140,7 @@ const EmployeeDetails = () => {
     getAllEmployees();
     getAllDesignation();
     getAllDepartment();
-    getAllRole();
+    // getAllRole();
     getAllLeaveType();
     getAllReportingPerson();
   }, []);
@@ -180,20 +180,20 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getAllRole = async () => {
-    try {
-      const response = await apiCalls('get', `commonmaster/getRolesByOrgId?OrgId=${orgId}`);
-      console.log('API Response:', response);
+  // const getAllRole = async () => {
+  //   try {
+  //     const response = await apiCalls('get', `commonmaster/getRolesByOrgId?OrgId=${orgId}`);
+  //     console.log('API Response:', response);
 
-      if (response.status === true) {
-        setRoleList(response.paramObjectsMap.rolesVO);
-      } else {
-        console.error('API Error:', response);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+  //     if (response.status === true) {
+  //       setRoleList(response.paramObjectsMap.rolesVO);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
 
   const getAllEmployees = async () => {
     try {
@@ -380,7 +380,7 @@ const EmployeeDetails = () => {
         reportingRole: '',
       department: '',
       designation: '',
-      role: '',
+      // role: '',
       active: true,
       branchCode: ''
     });
@@ -513,7 +513,7 @@ const EmployeeDetails = () => {
         reportingPerson: formData.reportingPerson,
         reportingRole: formData.reportingRole,
         resignDate: formData.resignationDate,
-        role: formData.role,
+        // role: formData.role,
         team: formData.team,
         updatedBy: loginUserName
       };
@@ -575,7 +575,7 @@ const EmployeeDetails = () => {
           team: employeeDetailsVO.team || '',
           department: employeeDetailsVO.department || '',
           designation: employeeDetailsVO.designation || '',
-          role: employeeDetailsVO.role || '',
+          // role: employeeDetailsVO.role || '',
           reportingPerson: employeeDetailsVO.reportnigPerson || '',
           reportingRole: employeeDetailsVO.reportingRole || '',
           dob: employeeDetailsVO.dateOfBirth || '',
@@ -805,7 +805,7 @@ const EmployeeDetails = () => {
                   {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
                 </FormControl>
               </div>
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
                   <InputLabel id="role-label">Role</InputLabel>
                   <Select
@@ -825,7 +825,7 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingPerson}>
                   <InputLabel id="reportingPerson-label">Reporting Person</InputLabel>

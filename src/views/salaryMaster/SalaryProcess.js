@@ -38,14 +38,14 @@ const SalaryProcess = () => {
     holidayDate: '',
     day: '',
     festival: '',
-    branchName: '',
+    branchName: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
     holidayDate: '',
     day: '',
     festival: '',
-    branchName: '',
+    branchName: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -57,10 +57,7 @@ const SalaryProcess = () => {
 
   const [listViewData, setListViewData] = useState([]);
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   const years = Array.from({ length: 10 }, (_, index) => currentYear - index);
 
@@ -73,13 +70,13 @@ const SalaryProcess = () => {
   };
 
   const handleSearch = () => {
-    console.log("Search button clicked");
+    console.log('Search button clicked');
   };
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      console.log("File uploaded:", file.name);
+      console.log('File uploaded:', file.name);
       // Handle file processing here
     }
   };
@@ -105,7 +102,7 @@ const SalaryProcess = () => {
       if (response.status === true) {
         const formattedData = response.paramObjectsMap.holidayVO.map((holiday) => ({
           ...holiday,
-          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '',
+          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : ''
         }));
 
         setListViewData(formattedData);
@@ -116,9 +113,6 @@ const SalaryProcess = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-
-
 
   // Edit API
   const getHolidayById = async (row) => {
@@ -138,7 +132,7 @@ const SalaryProcess = () => {
           holidayDate: holidayDetails.holidayDate ? dayjs(holidayDetails.holidayDate).format('YYYY-MM-DD') : '', // Ensure correct format
           day: holidayDetails.day,
           festival: holidayDetails.festival,
-          branchName: holidayDetails.branchName,
+          branchName: holidayDetails.branchName
         });
       } else {
         console.error('API Error:', response);
@@ -147,7 +141,6 @@ const SalaryProcess = () => {
       console.error('Error fetching data:', error);
     }
   };
-
 
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
@@ -207,13 +200,13 @@ const SalaryProcess = () => {
       holidayDate: '',
       day: '',
       festival: '',
-      branchName: '',
+      branchName: ''
     });
     setFieldErrors({
       holidayDate: '',
       day: '',
       festival: '',
-      branchName: '',
+      branchName: ''
     });
     setEditId('');
   };
@@ -297,9 +290,6 @@ const SalaryProcess = () => {
     setFieldErrors((prev) => ({ ...prev, holidayDate: '' })); // Clear error if valid
   };
 
-
-
-
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -316,7 +306,9 @@ const SalaryProcess = () => {
               <InputLabel>Select Month</InputLabel>
               <Select label="Select Month" value={month} onChange={handleMonthChange}>
                 {months.map((m, index) => (
-                  <MenuItem key={index} value={m}>{m}</MenuItem>
+                  <MenuItem key={index} value={m}>
+                    {m}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -327,185 +319,140 @@ const SalaryProcess = () => {
               <InputLabel>Select Year</InputLabel>
               <Select label="Select Year" value={year} onChange={handleYearChange}>
                 {years.map((y) => (
-                  <MenuItem key={y} value={y}>{y}</MenuItem>
+                  <MenuItem key={y} value={y}>
+                    {y}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </div>
-          {/* Search and Upload Buttons */}
-          {/* <div className="col-md-3 mb-3 d-flex justify-content-between">
-            <div>
-              <Button variant="contained" color="primary" onClick={handleSearch}>
-                Search
-              </Button>
-            </div>
-            <div>
-              <Button variant="contained" color="secondary" component="label">
-                Upload File
-                <input type="file" hidden onChange={handleFileUpload} />
-              </Button>
-            </div>
-          </div> */}
         </div>
-        {listView ? (
 
-          <div className="mt-4">
-            <CommonListViewTable
-              data={listViewData}
-              columns={listViewColumns}
-              // editCallback={editEmployee}
-              blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getHolidayById}
-            />
-          </div>
-        ) : (
-          <>
-            <div className="row">
-              {/* Holiday Date  */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl fullWidth>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Date"
-                      format="DD-MM-YYYY"
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      value={formData.holidayDate ? dayjs(formData.holidayDate, 'YYYY-MM-DD') : null} 
-                      onChange={handleDateChange}
-                    // onChange={(newValue) => setFormData({ ...formData, date: newValue })}
-                    />
-                  </LocalizationProvider>
-                </FormControl>
-              </div> */}
+        {/* Search and Upload Buttons */}
+        <div className="col-md-3 mb-3 d-flex align-items-center gap-2">
+          <Button variant="contained" color="primary" onClick={handleSearch}>
+            Search
+          </Button>
+          <Button variant="contained" color="primary" component="label">
+            Upload File
+            <input type="file" hidden onChange={handleFileUpload} />
+          </Button>
+        </div>
 
-              {/* Employee Name */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Employee Name"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeName"
-                  value={formData.employeeName}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeName}
-                  helperText={fieldErrors.employeeName}
-                />
+        <>
+          <div className="row d-flex ml">
+            <div className="row mt-2">
+              <div className="col-lg-12">
+                <div className="table-responsive">
+                  <table className="table table-bordered ">
+                    <thead>
+                      <tr style={{ backgroundColor: '#673AB7' }}>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                          Employee Name
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                          Employee Code
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '250px' }}>
+                          Days in Month
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                          Total Working Days
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                          No of Leaves
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                          LOP
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                          Gross pay
+                        </th>
+                        <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                          Net pay
+                        </th>
+                      </tr>
+                    </thead>
+                    {/* <tbody>
+                                  {earningDetailsData.map((row, index) => (
+                                    <tr key={row.id}>
+                                      <td className="border px-2 py-2 text-center">
+                                        <ActionButton
+                                          title="Delete"
+                                          icon={DeleteIcon}
+                                          onClick={() =>
+                                            handleDeleteRow(
+                                              row.id,
+                                              earningDetailsData,
+                                              setEarningDetailsData,
+                                              earningDetailsDataErrors,
+                                              setEarningDetailsDataErrors
+                                            )
+                                          }
+                                        />
+                                      </td>
+                                      <td className="text-center">
+                                        <div className="pt-2">{index + 1}</div>
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <select
+                                          value={row.heading}
+                                          onChange={(e) => handleSalaryHeadChange(row, index, e, 'EARNING')}
+                                          className={earningDetailsDataErrors[index]?.heading ? 'error form-control' : 'form-control'}
+                                        >
+                                          <option value="">Select Option</option>
+                                          {salaryHeadsType
+                                            .filter((head) => head.type === 'EARNING')
+                                            .map((head) => (
+                                              <option key={head.id} value={head.heading}>
+                                                {head.heading}
+                                              </option>
+                                            ))}
+                                        </select>
+
+                                        {earningDetailsDataErrors[index]?.heading && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {earningDetailsDataErrors[index].heading}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td>
+                                        <input
+                                          type="text"
+                                          value={row.amount}
+                                          onChange={(e) => {
+                                            const amount = e.target.value;
+
+                                            setEarningDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, amount } : r)));
+
+                                            setEarningDetailsDataErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                amount: !amount ? 'Amount is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={earningDetailsDataErrors[index]?.amount ? 'error form-control' : 'form-control'}
+                                          onKeyDown={(e) => handleKeyDown(e, row, earningDetailsData)}
+                                        />
+                                        {earningDetailsDataErrors[index]?.amount && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {earningDetailsDataErrors[index].amount}
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody> */}
+                  </table>
+                </div>
               </div>
-
-              {/* Employee Code  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Employee Code"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
-              {/* Date  */}
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="Date"
-                      format="DD-MM-YYYY"
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      value={formData.holidayDate ? dayjs(formData.holidayDate, 'YYYY-MM-DD') : null}
-                      onChange={handleDateChange}
-                    // onChange={(newValue) => setFormData({ ...formData, date: newValue })}
-                    />
-                  </LocalizationProvider>
-                </FormControl>
-              </div>
-
-              {/* Total working days  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Total working days"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
-              {/* Number of Leaves  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Number of Leaves"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
-              {/* LOP  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="LOP"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
-              {/* Gross Pay  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Gross Pay"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
-              {/* Gross Pay  */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Net Pay"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeeCode"
-                  value={formData.employeeCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeCode}
-                  helperText={fieldErrors.employeeCode}
-                />
-              </div>
-
             </div>
-          </>
-        )}
-      </div >
+          </div>
+        </>
+      </div>
       <ToastContainer />
     </>
   );

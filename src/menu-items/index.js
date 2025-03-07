@@ -7,6 +7,7 @@ import leaveMaster from './leaveMaster';
 import salaryMaster from './salaryMaster';
 import calendar from './calendar';
 import me from './me';
+import team from './team';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
@@ -15,7 +16,7 @@ const getMenuItems = () => {
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me]
+    items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me, team]
   };
 
   // Define menu items based on localStorage value
@@ -26,7 +27,7 @@ const getMenuItems = () => {
       };
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me]
+        items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me, team]
       };
     case 'USER': // Correctly match the value
       return {

@@ -34,6 +34,17 @@ const icons8 = {
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
+const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
+
+const screenMapping = {
+  "LEAVE APPROVAL": 'leaveApproval',
+  "PERMISSION APPROVAL": 'permissionApproval',
+  "ATTENDANCE REPORT": 'attendanceReport',
+  "TODAY ATTENDANCE": 'todayAttendance',
+};
+
+const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+
 const team = {
   id: 'team',
   title: 'Team',
@@ -75,7 +86,7 @@ const team = {
           url: '/team/TodayAttendance',
           icon: icons3.IconCashBanknote
         },
-      ]
+      ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]
 };
