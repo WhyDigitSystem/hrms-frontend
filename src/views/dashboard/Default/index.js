@@ -12,11 +12,15 @@ import EarningCard from './EarningCard';
 import TotalGrowthBarChart from './TotalGrowthBarChart';
 import TotalIncomeDarkCard from './TotalIncomeDarkCard';
 import TotalIncomeLightCard from './TotalIncomeLightCard';
+
 import TotalOrderLineChartCard from './TotalOrderLineChartCard';
 import CurrencyExchangeRates from './ExRateDash';
 import UpcomingHolidayCard from './UpcomingHolidayCard';
 import LeaveBalance from './LeaveBalance';
 import CheckinDetails from './CheckinDetails';
+import Announcement from './Announcements';
+import Organization from './Organization';
+import Inbox from './Inbox';
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
 
@@ -52,38 +56,35 @@ const Dashboard = () => {
       </div> */}
       <Grid item xs={12}>
         <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
-          <Grid item lg={12} md={12} sm={12} xs={12} >
+          <Grid item lg={6} md={12} sm={12} xs={12} >
             <CheckinDetails isLoading={isLoading} />
           </Grid>
           <Grid item sm={12} xs={12} md={12} lg={6}>
-            <UpcomingHolidayCard isLoading={isLoading} />
+            <Organization isLoading={isLoading} />
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
-            <LeaveBalance isLoading={isLoading} />
+            <Announcement isLoading={isLoading} />
           </Grid>
-          {/* <Grid item lg={4} md={12} sm={12} xs={12}>
-            <Grid container spacing={gridSpacing}>
-              <Grid item sm={6} xs={12} md={6} lg={12}>
-                <TotalIncomeDarkCard isLoading={isLoading} />
-              </Grid>
-              <Grid item sm={6} xs={12} md={6} lg={12}>
-                <TotalIncomeLightCard isLoading={isLoading} />
-              </Grid>
-            </Grid>
-          </Grid> */}
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            {/* <LeaveBalance isLoading={isLoading} /> */}
+            <Inbox isLoading={isLoading} />
+          </Grid>
         </Grid>
       </Grid>
       <Grid item xs={12}>
-        <Grid container spacing={gridSpacing}>
-          {/* <Grid item xs={12} md={8}>
-            <TotalGrowthBarChart isLoading={isLoading} />
-          </Grid> */}
-          {/* <Grid item xs={12} md={4}>
-            <PopularCard isLoading={isLoading} />
-          </Grid> */}
-          {/* <Grid item xs={12} md={4}>
-            <CurrencyExchangeRates />
-          </Grid> */}
+        <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
+          <Grid item lg={6} md={12} sm={12} xs={12} >
+            {/* <Inbox isLoading={isLoading} /> */}
+          </Grid>
+          <Grid item sm={12} xs={12} md={12} lg={6}>
+            {/* <Organization isLoading={isLoading} /> */}
+          </Grid>
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            {/* <Announcement isLoading={isLoading} /> */}
+          </Grid>
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            {/* <LeaveBalance isLoading={isLoading} /> */}
+          </Grid>
         </Grid>
       </Grid>
     </Grid>
