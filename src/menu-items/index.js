@@ -21,17 +21,17 @@ const getMenuItems = () => {
 
   // Define menu items based on localStorage value
   switch (localStorageValue) {
-    case 'SUPER_ADMIN':
-      return {
-        items: [dashboard, calendar, companySetup]
-      };
     case 'ADMIN':
       return {
         items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me, team]
       };
-    case 'USER': // Correctly match the value
+    case 'USER':
       return {
         items: [dashboard, calendar, me]
+      };
+    case 'DEPARTMENT HEAD': 
+      return {
+        items: [dashboard, calendar, me, team]
       };
     // Add more cases as needed
     default:
