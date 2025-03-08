@@ -49,6 +49,7 @@ const CheckinDetails = ({ isLoading }) => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
+  const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
   const [isCheckedIn, setIsCheckedIn] = useState(false);
 
   const handleCheckIn = async () => {
@@ -117,8 +118,8 @@ const CheckinDetails = ({ isLoading }) => {
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <Avatar alt="User" src="/path/to/avatar.jpg" sx={{ width: 60, height: 60, mr: 2 }} />
                       <Box>
-                        <Typography variant="h5" color="secondary.light">Dineshkumar P</Typography>
-                        <Typography variant="body2" color="secondary.light">WDS007 - Software Engineer</Typography>
+                        <Typography variant="h5" color="secondary.light">{empName}</Typography>
+                        <Typography variant="body2" color="secondary.light">{empcode} - Software Engineer</Typography>
                       </Box>
                     </Box>
                     <Box>
