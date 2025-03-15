@@ -3,11 +3,9 @@ import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBullete
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
 import apiCalls from 'apicall';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -17,72 +15,52 @@ import dayjs from 'dayjs';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { encryptPassword } from 'views/utilities/encryptPassword';
-import { FormHelperText } from '@mui/material';
+// import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Box from '@mui/material/Box';
 
 const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-  const [editId, setEditId] = useState('');
+  const [value, setValue] = useState(0);
   const [formData, setFormData] = useState({
-    employeName: '',
-    employeCode: '',
-    fromDate: '',
-    toDate: '',
-    noOfWorkingDays: '',
-    noOfLeaves: '',
-    month: '',
-    active: true
+    fromDate: null,
+    toDate: null
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    employeName: '',
-    employeCode: '',
-    fromDate: '',
-    toDate: '',
-    noOfWorkingDays: '',
-    noOfLeaves: '',
-    month: '',
-    active: ''
+    fromDate: null,
+    toDate: null
   });
   const [listView, setListView] = useState(false);
-  const listViewColumns = [
-    { accessorKey: 'employeName', header: 'Employe Name', size: 140 },
-    { accessorKey: 'employeCode', header: 'Employe Code', size: 140 },
-    { accessorKey: 'fromDate', header: 'From Date', size: 140 },
-    { accessorKey: 'toDate', header: 'To Date', size: 140 },
-    { accessorKey: 'noOfWorkingDaye', header: 'No of Working Days', size: 140 },
-    { accessorKey: 'noOfLeaves', header: 'No of Leaves', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
-  ];
+  // const listViewColumns = [
+  //   { accessorKey: 'employeName', header: 'Employe Name', size: 140 },
+  //   { accessorKey: 'employeCode', header: 'Employe Code', size: 140 },
+  //   { accessorKey: 'fromDate', header: 'From Date', size: 140 },
+  //   { accessorKey: 'toDate', header: 'To Date', size: 140 },
+  //   { accessorKey: 'noOfWorkingDaye', header: 'No of Working Days', size: 140 },
+  //   { accessorKey: 'noOfLeaves', header: 'No of Leaves', size: 140 }
+  //   // { accessorKey: 'active', header: 'Active', size: 140 }
+  // ];
+  const [allLeave, setAllLeave] = useState([]);
 
-  const [listViewData, setListViewData] = useState([]);
+  const getAllLeaveProcess = async () => {
+    if (!formData.fromDate || !formData.toDate) {
+      setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
+      return;
+    }
 
-
-  const getCompanyById = async (row) => {
-    console.log('THE SELECTED COMPANY ID IS:', row.original.id);
-    setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls(
+        'get',
+        `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
+      );
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
-
-        setFormData({
-          employeName: particularCompany.employeName,
-          employeCode: particularCompany.employeCode,
-          fromDate: particularCompany.employeeName,
-          toDate: particularCompany.email,
-          noOfWorkingDays: particularCompany.noOfWorkingDays,
-          noOfLeaves: particularCompany.noOfLeaves,
-          month: particularCompany.month,
-          active: particularCompany.active === 'Active' ? true : false
-        });
+        setAllLeave(response.paramObjectsMap.leaveProcessVO);
       } else {
         console.error('API Error:', response);
       }
@@ -93,143 +71,82 @@ const AttendenceProcess = () => {
 
   const handleDateChange = (name, date) => {
     if (date && dayjs(date).isValid()) {
-      const dateString = dayjs(date).toISOString();
-      setFormData({ ...formData, [name]: dateString });
-      setFieldErrors({ ...fieldErrors, [name]: false });
+      const dateString = dayjs(date).format('YYYY-MM-DD'); // Ensure correct format
+      setFormData((prev) => ({ ...prev, [name]: dateString }));
+      setFieldErrors((prev) => ({ ...prev, [name]: false }));
     } else {
-      setFormData({ ...formData, [name]: null });
-    }
-
-    // Perform additional validation if both dates are set
-    if (formData.fromDate && formData.toDate) {
-      const start = dayjs(formData.fromDate);
-      const end = dayjs(formData.toDate);
-      if (start.isAfter(end)) {
-        setFieldErrors({ ...fieldErrors, toDate: true });
-      } else {
-        setFieldErrors({ ...fieldErrors, toDate: false });
-      }
+      setFormData((prev) => ({ ...prev, [name]: null }));
+      setFieldErrors((prev) => ({ ...prev, [name]: true }));
     }
   };
-
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
-    let updatedValue = type === 'checkbox' ? checked : value;
-
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: updatedValue,
-    }));
-
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: '',
-    }));
-
-    if (type === 'text' || type === 'email' || type === 'textarea') {
-      setTimeout(() => {
-        const inputElement = document.getElementsByName(name)[0];
-        if (inputElement) {
-          inputElement.setSelectionRange(selectionStart, selectionEnd);
-        }
-      }, 0);
-    }
-  };
-
 
   const handleClear = () => {
     setFormData({
-      employeName: '',
-      employeCode: '',
-      fromDate: '',
-      toDate: '',
-      noOfWorkingDays: '',
-      noOfLeaves: '',
-      month: '',
-      active: true
+      fromDate: null,
+      toDate: null
     });
     setFieldErrors({
-      employeName: '',
-      employeCode: '',
-      fromDate: '',
-      toDate: '',
-      noOfWorkingDays: '',
-      noOfLeaves: '',
-      month: ''
+      fromDate: null,
+      toDate: null
     });
-    setEditId('');
+  };
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
   };
 
   const handleSave = async () => {
     const errors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.employeName) {
-      errors.employeName = 'Employe Code is required';
-    }
-    if (!formData.employeCode) {
-      errors.employeCode = 'Employe Code is required';
-    }
+  
+    // Validate required fields
     if (!formData.fromDate) {
       errors.fromDate = 'From Date is required';
     }
     if (!formData.toDate) {
       errors.toDate = 'To Date is required';
     }
-    if (!formData.noOfWorkingDays) {
-      errors.noOfWorkingDays = 'No of Working Days is required';
-    }
-    if (!formData.noOfLeaves) {
-      errors.noOfLeaves = 'No of Leaves is required';
-    }
-    if (!formData.month) {
-      errors.month = 'Month is required';
-    }
-
+  
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
+  
 
       const saveData = {
-        ...(editId && { id: editId }),
-        active: formData.active,
-        employeName: formData.employeName,
-        employeCode: formData.employeCode,
+        active: true,
         createdBy: loginUserName,
-        noOfWorkingDays: formData.noOfWorkingDays,
-        toDate: formData.toDate,
-        fromDate: formData.fromDate,
-        noOfLeaves: formData.noOfLeaves,
-        month: formData.month,
-        orgId: orgId
+        empSalaryDays: allLeave.empSalaryDays,
+        empTotalWorkingDays: allLeave.empTotalWorkingDays,
+        employeeCode: allLeave.employeeCode,
+        employeeName: allLeave.employeeName,
+        lopLeave: allLeave.lopLeave,
+        month: allLeave.month,
+        orgId: orgId,
+        totalCompanyWorkingDays: allLeave.totalCompanyWorkingDays,
+        totalLeave: allLeave.totalLeave,
+        year: allLeave.year,
       };
+  
       console.log('DATA TO SAVE IS:', saveData);
-
+  
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
-
-        const response = await apiCalls(method, url, saveData);
+        const response = await apiCalls('put', '/leaveprocess/createUpdateLeaveProcess', saveData);
+  
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
-
-          handleClear();
-          setIsLoading(false);
+          showToast('Attendence Process created successfully');
+          handleClear(); // Clear form after success
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
-          setIsLoading(false);
+          showToast('error', response.paramObjectsMap.errorMessage || 'Attendance Process creation failed');
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'Company creation failed');
-
+        showToast('error', 'Attendance Process creation failed');
+      } finally {
         setIsLoading(false);
       }
     } else {
       setFieldErrors(errors);
     }
-  };
+  };  
 
   const handleView = () => {
     setListView(!listView);
@@ -246,7 +163,7 @@ const AttendenceProcess = () => {
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
           </div>
         </div>
-        {listView ? (
+        {/* {listView ? (
           <div className="mt-4">
             <CommonListViewTable
               data={listViewData}
@@ -256,118 +173,146 @@ const AttendenceProcess = () => {
               toEdit={getCompanyById}
             />
           </div>
-        ) : (
-          <>
-            <div className="row">
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.employeName}>
-                  <InputLabel id="employeName-label">Employee Name</InputLabel>
-                  <Select labelId="employeName-label" label="Employe Name" value={formData.employeName} onChange={handleInputChange} name="employeName">
-                    {/* {Array.isArray(employeNameList) &&
-                      employeNameList?.map((row) => (
-                        <MenuItem key={row.id} value={row.employeName}>
-                          {row.employeName}
-                        </MenuItem>
-                      ))} */}
-                  </Select>
-                  {fieldErrors.employeName && <FormHelperText>{fieldErrors.employeName}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Employee Code"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="employeCode"
-                  value={formData.employeCode || ''}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeCode}
-                  helperText={fieldErrors.employeCode}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth variant="filled" size="small" sx={{ minWidth: '120px' }}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="From Date"
-                      value={formData.fromDate ? dayjs(formData.fromDate) : null}
-                      onChange={(date) => handleDateChange('fromDate', date)}
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      format="DD-MM-YYYY"
-                      error={fieldErrors.fromDate}
-                      helperText={fieldErrors.fromDate ? 'This field is required' : ''}
-                    />
-                  </LocalizationProvider>
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth variant="filled" size="small">
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="To Date"
-                      value={formData.toDate ? dayjs(formData.toDate) : null}
-                      onChange={(date) => handleDateChange('toDate', date)}
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      format="DD-MM-YYYY"
-                      error={fieldErrors.toDate}
-                      helperText={fieldErrors.toDate ? 'This field is required' : ''}
-                    />
-                  </LocalizationProvider>
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="No of Working Days"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="noOfWorkingDays"
-                  value={formData.noOfWorkingDays}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.noOfWorkingDays}
-                  helperText={fieldErrors.noOfWorkingDays}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="No of Leaves"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="noOfLeaves"
-                  value={formData.noOfLeaves}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.noOfLeaves}
-                  helperText={fieldErrors.noOfLeaves}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Month"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="month"
-                  value={formData.month}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.month}
-                  helperText={fieldErrors.month}
-                />
-              </div>
-              {/* <div className="col-md-3 mb-3">
-                <FormControlLabel
-                  control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
-                  label="Active"
-                />
-              </div> */}
+        ) : ( */}
+        <>
+          <div className="row">
+            <div className="col-md-3 mb-3">
+              <FormControl fullWidth variant="filled" size="small">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="From Date"
+                    value={formData.fromDate ? dayjs(formData.fromDate) : null}
+                    onChange={(date) => handleDateChange('fromDate', date)}
+                    format="DD-MM-YYYY"
+                    slotProps={{ textField: { size: 'small', clearable: true } }}
+                    error={fieldErrors.fromDate}
+                    helperText={fieldErrors.fromDate ? 'This field is required' : ''}
+                  />
+                </LocalizationProvider>
+              </FormControl>
             </div>
-          </>
-        )}
+
+            <div className="col-md-3 mb-3">
+              <FormControl fullWidth variant="filled" size="small">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    label="To Date"
+                    value={formData.toDate ? dayjs(formData.toDate) : null}
+                    onChange={(date) => handleDateChange('toDate', date)}
+                    format="DD-MM-YYYY"
+                    slotProps={{ textField: { size: 'small', clearable: true } }}
+                    error={fieldErrors.toDate}
+                    helperText={fieldErrors.toDate ? 'This field is required' : ''}
+                  />
+                </LocalizationProvider>
+              </FormControl>
+            </div>
+          </div>
+          <div className="row mt-3">
+            <div className="col-md-2">
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                onClick={getAllLeaveProcess}
+                disabled={!formData.fromDate || !formData.toDate}
+              >
+                Search
+              </Button>
+            </div>
+            <div className="col-md-2">
+              <Button
+                variant="contained"
+                color="secondary"
+                fullWidth
+                onClick={() => {
+                  setFormData({ ...formData, fromDate: null, toDate: null });
+                  setFieldErrors({ ...fieldErrors, fromDate: false, toDate: false });
+                  setAllLeave([]);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+
+          <div className="row mt-2">
+            <Box sx={{ width: '100%' }}>
+              <Tabs
+                value={value}
+                onChange={handleChange}
+                textColor="secondary"
+                indicatorColor="secondary"
+                aria-label="secondary tabs example"
+              >
+                <Tab value={0} label="Leave" />
+              </Tabs>
+            </Box>
+            <Box sx={{ padding: 2 }}>
+              {value === 0 && (
+                <>
+                  <div className="row d-flex ml">
+                    {allLeave.length > 0 && allLeave[0] && (
+                      <div className="row mt-3">
+                        <div className="col-12">
+                          <p className="font-weight-bold" style={{ fontSize: '20px' }}>
+                            <strong>
+                              {dayjs()
+                                .month(allLeave[0]?.month - 1)
+                                .format('MMMM')}{' '}
+                              {allLeave[0]?.year} - The company working days is {allLeave[0]?.totalCompanyWorkingDays}
+                            </strong>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="row mt-2">
+                      <div className="col-lg-12">
+                        <div className="table-responsive">
+                          <table className="table table-bordered">
+                            <thead>
+                              <tr style={{ backgroundColor: '#673AB7' }}>
+                                <th className="px-2 py-2 text-white text-center">S.No</th>
+                                <th className="px-2 py-2 text-white text-center">Employee Name</th>
+                                <th className="px-2 py-2 text-white text-center">Employee Code</th>
+                                <th className="px-2 py-2 text-white text-center">Total Leave</th>
+                                <th className="px-2 py-2 text-white text-center">LOP (Loss of Pay)</th>
+                                <th className="px-2 py-2 text-white text-center">Total Employee Working Days</th>
+                                <th className="px-2 py-2 text-white text-center">Total Working Days</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {allLeave.length > 0 ? (
+                                allLeave.map((leave, index) => (
+                                  <tr key={index}>
+                                    <td className="text-center">{index + 1}</td>
+                                    <td className="text-center">{leave.employeeName}</td>
+                                    <td className="text-center">{leave.employeeCode}</td>
+                                    <td className="text-center">{leave.totalLeave}</td>
+                                    <td className="text-center">{leave.lopLeave}</td>
+                                    <td className="text-center">{leave.empTotalWorkingDays}</td>
+                                    <td className="text-center">{leave.totalCompanyWorkingDays}</td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan="7" className="text-center">
+                                    No data available
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </Box>
+          </div>
+        </>
+        {/* )} */}
       </div>
       <ToastContainer />
     </>

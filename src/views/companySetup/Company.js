@@ -38,7 +38,11 @@ import FormLabel from '@mui/material/FormLabel';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import { getAllActiveCitiesByState, getAllActiveCountries, getAllActiveStatesByCountry, getAllActiveCurrency } from 'utils/CommonFunctions';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import apiCalls from 'apicall';
+import dayjs from 'dayjs';
 
 const Company = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -64,6 +68,7 @@ const Company = () => {
     gstIn: '',
     panNo: '',
     leaveCreditControl: '',
+    autoCreditDate: null,
     leavePolicy: '',
     weekOff: '',
     gstRegistered: true,
@@ -83,6 +88,7 @@ const Company = () => {
     gstIn: '',
     panNo: '',
     leaveCreditControl: '',
+    autoCreditDate: null,
     leavePolicy: '',
     weekOff: '',
     gstRegistered: true,
@@ -240,6 +246,7 @@ const Company = () => {
   const getCompanyById = async (row) => {
     console.log('THE SELECTED BRANCH ID IS:', row.original.id);
     setEditId(row.original.id);
+
     try {
       const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
       console.log('API Response:', response);
@@ -248,6 +255,9 @@ const Company = () => {
         setListView(false);
         const particularCompany = response.paramObjectsMap.companyVO[0];
         console.log('PARTICULAR COMPANY IS:', particularCompany);
+
+        // Extract weekOffDays as an array
+        const weekOffDays = particularCompany.companyWeekOffVO ? particularCompany.companyWeekOffVO.map((item) => item.weekOffDays) : [];
 
         setFormData({
           companyCode: particularCompany.companyCode,
@@ -262,9 +272,18 @@ const Company = () => {
           mobileNo: particularCompany.phone,
           gstIn: particularCompany.gstIn,
           panNo: particularCompany.panNo,
-          gstRegistered: particularCompany.gstregistered === 'Active' ? true : false,
-          active: particularCompany.active === 'Active' ? true : false
+          leaveCreditControl: particularCompany.leaveCreditControl,
+          // autoCreditDate: particularCompany.autoCreditDate,
+          autoCreditDate: particularCompany.autoCreditDate
+            ? dayjs(particularCompany.autoCreditDate) // Convert to Dayjs object
+            : null,
+          leavePolicy: particularCompany.leavePolicy,
+          gstRegistered: particularCompany.gstregistered === 'Active',
+          active: particularCompany.active === 'Active',
+          weekOff: weekOffDays // Setting week off days in form data
         });
+
+        console.log('WEEK OFF DAYS:', weekOffDays);
       } else {
         console.error('API Error:', response);
       }
@@ -272,6 +291,7 @@ const Company = () => {
       console.error('Error fetching data:', error);
     }
   };
+
   const getCompanyDetails = async () => {
     try {
       const response = await apiCalls('get', `commonmaster/company`);
@@ -305,6 +325,7 @@ const Company = () => {
       gstIn: '',
       panNo: '',
       leaveCreditControl: '',
+      autoCreditDate: null,
       leavePolicy: '',
       weekOff: '',
       gstRegistered: true,
@@ -323,6 +344,7 @@ const Company = () => {
       gstIn: '',
       panNo: '',
       leaveCreditControl: '',
+      autoCreditDate: null,
       leavePolicy: '',
       weekOff: ''
     });
@@ -373,6 +395,10 @@ const Company = () => {
         gstIn: formData.gstIn,
         gstRegistered: formData.gstRegistered,
         leaveCreditControl: formData.leaveCreditControl,
+        // autoCreditDate: formData.autoCreditDate,
+        autoCreditDate: formData.autoCreditDate
+          ? dayjs(formData.autoCreditDate).format('YYYY-MM-DD') // Convert to YYYY-MM-DD
+          : null,
         leavePolicy: formData.leavePolicy,
         panNo: formData.panNo,
         phone: formData.mobileNo,
@@ -415,6 +441,15 @@ const Company = () => {
     console.log('LIST VIEW DATAS ARE:', listViewData);
 
     setListView(!listView);
+  };
+
+  const handleDateChange = (field, newValue) => {
+    if (newValue.isValid()) {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: newValue
+      }));
+    }
   };
 
   return (
@@ -621,6 +656,21 @@ const Company = () => {
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
+                <FormControl fullWidth>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      label="Auto Credit Date"
+                      format="DD-MM-YYYY"
+                      slotProps={{
+                        textField: { size: 'small', clearable: true }
+                      }}
+                      value={formData.autoCreditDate}
+                      onChange={(newValue) => handleDateChange('autoCreditDate', newValue)}
+                    />
+                  </LocalizationProvider>
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.leavePolicy}>
                   <InputLabel id="leavePolicy">Leave Policy</InputLabel>
                   <Select
@@ -637,7 +687,7 @@ const Company = () => {
                   {fieldErrors.leavePolicy && <FormHelperText>{fieldErrors.leavePolicy}</FormHelperText>}
                 </FormControl>
               </div>
-              
+
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.weekOff}>
                   <InputLabel id="weekOff">Week Off</InputLabel>

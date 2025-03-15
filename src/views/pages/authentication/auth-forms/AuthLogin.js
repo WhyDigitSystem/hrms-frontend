@@ -97,6 +97,10 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('userType', response.data.paramObjectsMap.userVO.roleVO[0].role);
         localStorage.setItem('employeeCode', response.data.paramObjectsMap.userVO.employeeCode);
         localStorage.setItem('employeeName', response.data.paramObjectsMap.userVO.employeeName);
+        localStorage.setItem('branch', response.data.paramObjectsMap.userVO.branch);
+        localStorage.setItem('branchCode', response.data.paramObjectsMap.userVO.branchCode);
+        localStorage.setItem('department', response.data.paramObjectsMap.userVO.department);
+        localStorage.setItem('designation', response.data.paramObjectsMap.userVO.designation);
         // localStorage.setItem('LoginMessage', true);
 
         // const userRole = response.data.paramObjectsMap.userVO.roleVO;
@@ -117,11 +121,10 @@ const FirebaseLogin = ({ ...others }) => {
         dispatch(setUserRole(userRole));
         resetForm();
         navigate('/dashboard/default');
-        // window.location.reload();
 
-        setTimeout(() => {
+        // setTimeout(() => {
           window.location.reload();
-        }, 50);
+        // }, 50);
 
         if (checked) {
           localStorage.setItem('rememberedCredentials', JSON.stringify({ email: values.email, password: values.password }));

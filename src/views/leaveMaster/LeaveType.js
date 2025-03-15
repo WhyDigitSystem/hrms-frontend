@@ -25,14 +25,17 @@ const LeaveType = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
   const [editId, setEditId] = useState('');
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveCode: '',
     leaveApplicable: '',
-    totalLeave: '',
-    effective: '',
-    carryForward: '',
+    salaryDeduction: '',
+    // totalLeave: '',
+    // effective: '',
+    // carryForward: '',
     active: true
   });
 
@@ -40,9 +43,10 @@ const LeaveType = () => {
     leaveType: '',
     leaveCode: '',
     leaveApplicable: '',
-    totalLeave: '',
-    effective: '',
-    carryForward: '',
+    salaryDeduction: '',
+    // totalLeave: '',
+    // effective: '',
+    // carryForward: '',
     active: ''
   });
   const [listView, setListView] = useState(false);
@@ -50,7 +54,8 @@ const LeaveType = () => {
     { accessorKey: 'leaveType', header: 'Leave Type', size: 140 },
     { accessorKey: 'leaveCode', header: 'Leave Code', size: 140 },
     { accessorKey: 'leaveApplicable', header: 'Leave Applicable', size: 140 },
-    { accessorKey: 'totalLeave', header: 'Total Leaves', size: 140 },
+    { accessorKey: 'salaryDeduction', header: 'Salary Deduction', size: 140 },
+    // { accessorKey: 'totalLeave', header: 'Total Leaves', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
@@ -64,7 +69,7 @@ const LeaveType = () => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/getLeaveTypeById?id=${row.original.id}`);
+      const response = await apiCalls('get', `leaveprocess/getLeaveTypeById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -76,9 +81,10 @@ const LeaveType = () => {
           leaveType: particularCompany.leaveType,
           leaveCode: particularCompany.leaveCode,
           leaveApplicable: particularCompany.leaveApplicable,
-          totalLeave: particularCompany.totalLeave,
-          effective: particularCompany.effective,
-          carryForward: particularCompany.carryForward,
+          salaryDeduction: particularCompany.salaryDeduction,
+          // totalLeave: particularCompany.totalLeave,
+          // effective: particularCompany.effective,
+          // carryForward: particularCompany.carryForward,
           active: particularCompany.active === 'Active' ? true : false
         });
       } else {
@@ -119,30 +125,31 @@ const LeaveType = () => {
       leaveType: '',
       leaveCode: '',
       leaveApplicable: '',
-      totalLeave: '',
-      effective: '',
-      carryForward: '',
+      salaryDeduction: '',
+      // totalLeave: '',
+      // effective: '',
+      // carryForward: '',
       active: true
     });
     setFieldErrors({
       leaveType: '',
       leaveCode: '',
       leaveApplicable: '',
-      totalLeave: '',
-      effective: '',
-      carryForward: ''
+      salaryDeduction: '',
+      // totalLeave: '',
+      // effective: '',
+      // carryForward: ''
     });
     setEditId('');
   };
 
   const getLeaveType = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/getLeaveTypeByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `leaveprocess/getLeaveTypeByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListViewData(response.paramObjectsMap.leaveTypeVO);
-
       } else {
         console.error('API Error:', response);
       }
@@ -163,15 +170,15 @@ const LeaveType = () => {
     if (!formData.leaveApplicable) {
       errors.leaveApplicable = 'Leave Applicable is required';
     }
-    if (!formData.totalLeave) {
-      errors.totalLeave = 'No of Leaves is required';
-    }
-    if (!formData.effective) {
-      errors.effective = 'effective is required';
-    }
-    if (!formData.carryForward) {
-      errors.carryForward = 'Carry Forward is required';
-    }
+    // if (!formData.totalLeave) {
+    //   errors.totalLeave = 'No of Leaves is required';
+    // }
+    // if (!formData.effective) {
+    //   errors.effective = 'effective is required';
+    // }
+    // if (!formData.carryForward) {
+    //   errors.carryForward = 'Carry Forward is required';
+    // }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
@@ -179,23 +186,24 @@ const LeaveType = () => {
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        branch: null,
-        branchCode: null,
-        carryForward: formData.carryForward,
+        branch: branch,
+        branchCode: branchCode,
+        // carryForward: formData.carryForward || null,
         createdBy: loginUserName,
-        effective: formData.effective,
-        finYear: "2025",
+        // effective: formData.effective || null,
+        finYear: '2025',
         leaveApplicable: formData.leaveApplicable,
         leaveCode: formData.leaveCode,
         leaveType: formData.leaveType,
         orgId: parseInt(orgId),
-        totalLeave: parseInt(formData.totalLeave),
-        updatedBy: loginUserName,
+        salaryDeduction: formData.salaryDeduction,
+        // totalLeave: parseInt(formData.totalLeave || 0),
+        updatedBy: loginUserName
       };
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const response = await apiCalls('put', '/commonmaster/createUpdateLeaveType', saveFormData);
+        const response = await apiCalls('put', '/leaveprocess/createUpdateLeaveType', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? ' Leave Type Updated Successfully' : 'Leave Type created successfully');
@@ -291,54 +299,75 @@ const LeaveType = () => {
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
-                <TextField
-                  label="Total Leave"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="totalLeave"
-                  value={formData.totalLeave || ''}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.totalLeave}
-                  helperText={fieldErrors.totalLeave}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth size="small" error={!!fieldErrors.effective}>
-                  <InputLabel id="effective">Effective</InputLabel>
+                <FormControl fullWidth size="small" error={!!fieldErrors.salaryDeduction}>
+                  <InputLabel id="salaryDeduction">Salary Deduction</InputLabel>
                   <Select
-                    labelId="effective"
-                    id="effective"
-                    name="effective"
-                    value={formData.effective || ''}
+                    labelId="salaryDeduction"
+                    id="salaryDeduction"
+                    name="salaryDeduction"
+                    value={formData.salaryDeduction || ''}
                     onChange={handleInputChange}
-                    label="Effective" // Add this line
-                  >
-                    <MenuItem value="Monthly">Monthly</MenuItem>
-                    <MenuItem value="Quarterly">Quarterly</MenuItem>
-                    <MenuItem value="Half Yearly">Half Yearly</MenuItem>
-                    <MenuItem value="EARNED">Yearly</MenuItem>
-                  </Select>
-                  {fieldErrors.effective && <FormHelperText>{fieldErrors.effective}</FormHelperText>}
-                </FormControl>
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
-                  <InputLabel id="carryForward">Carry Forward</InputLabel>
-                  <Select
-                    labelId="carryForward"
-                    id="carryForward"
-                    name="carryForward"
-                    value={formData.carryForward || ''}
-                    onChange={handleInputChange}
-                    label="Carry Forward" // Add this line
+                    label="Salary Deduction" // Add this line
                   >
                     <MenuItem value="Yes">Yes</MenuItem>
                     <MenuItem value="No">No</MenuItem>
                   </Select>
-                  {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
+                  {fieldErrors.salaryDeduction && <FormHelperText>{fieldErrors.salaryDeduction}</FormHelperText>}
                 </FormControl>
               </div>
+              {/* {formData.salaryDeduction == 'No' && (
+                <>
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      label="Total Leave"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      name="totalLeave"
+                      value={formData.totalLeave || ''}
+                      onChange={handleInputChange}
+                      error={!!fieldErrors.totalLeave}
+                      helperText={fieldErrors.totalLeave}
+                    />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <FormControl fullWidth size="small" error={!!fieldErrors.effective}>
+                      <InputLabel id="effective">Effective</InputLabel>
+                      <Select
+                        labelId="effective"
+                        id="effective"
+                        name="effective"
+                        value={formData.effective || ''}
+                        onChange={handleInputChange}
+                        label="Effective" // Add this line
+                      >
+                        <MenuItem value="Monthly">Monthly</MenuItem>
+                        <MenuItem value="Quarterly">Quarterly</MenuItem>
+                        <MenuItem value="Half Yearly">Half Yearly</MenuItem>
+                        <MenuItem value="Yearly">Yearly</MenuItem>
+                      </Select>
+                      {fieldErrors.effective && <FormHelperText>{fieldErrors.effective}</FormHelperText>}
+                    </FormControl>
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
+                      <InputLabel id="carryForward">Carry Forward</InputLabel>
+                      <Select
+                        labelId="carryForward"
+                        id="carryForward"
+                        name="carryForward"
+                        value={formData.carryForward || ''}
+                        onChange={handleInputChange}
+                        label="Carry Forward" // Add this line
+                      >
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
+                      </Select>
+                      {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
+                    </FormControl>
+                  </div>
+                </>
+              )} */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
