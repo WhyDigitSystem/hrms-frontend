@@ -449,6 +449,7 @@ const Branch = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getBranchById}
+              enableEditing={true}
             />
           </div>
         ) : (

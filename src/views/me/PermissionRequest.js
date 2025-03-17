@@ -385,6 +385,7 @@ const PermissionRequest = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getPermissionRequestById}
+              enableEditing={true}
             />
           </div>
         ) : (

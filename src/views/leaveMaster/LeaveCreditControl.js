@@ -202,6 +202,7 @@ const handleDateChange = (newValue) => {
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getLeaveCreditControlById}
+              enableEditing={true}
             />
           </div>
         ) : (

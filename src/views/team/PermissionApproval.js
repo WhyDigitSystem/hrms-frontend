@@ -38,6 +38,7 @@ const PermissionApproval = () => {
                 columns={listViewColumns}
                 blockEdit={true} // DISAPLE THE MODAL IF TRUE
                 toEdit={getAllHolidayReport}
+                enableEditing={true}
               />
             {/* </div> */}
           </div>

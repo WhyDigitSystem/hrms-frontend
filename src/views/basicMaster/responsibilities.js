@@ -323,6 +323,7 @@ const Responsibilities = () => {
                 columns={columns}
                 toEdit={getResponsibilityById}
                 blockEdit={true} // DISAPLE THE MODAL IF TRUE
+                enableEditing={true}
               />
             )}
           </Box>

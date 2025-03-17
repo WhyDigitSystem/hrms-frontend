@@ -1,5 +1,6 @@
 // assets
 import { IconUser, IconPasswordUser, IconAppWindow } from '@tabler/icons-react';
+import { AiOutlineSchedule } from 'react-icons/ai';
 
 // constant
 const icons = { IconUser };
@@ -12,6 +13,9 @@ const icons2 = {
   IconAppWindow
 };
 
+const icons3 = {
+  IconLeaveAssigned: AiOutlineSchedule
+};
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
 const admin = {
@@ -40,7 +44,14 @@ const admin = {
       type: 'item',
       url: '/companysetup/ScreenNames',
       icon: icons2.IconAppWindow
-    }
+    },
+    {
+      id: 'leaveAssigned',
+      title: 'Leave Assigned',
+      type: 'item',
+      url: '/companysetup/LeaveAssigned',
+      icon: icons3.IconLeaveAssigned
+    },
   ]
 };
 

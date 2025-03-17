@@ -103,9 +103,10 @@ const EmployeeDetails = () => {
       leaveType: '',
       leaveCode: '',
       leaveApplicable: '',
-      totalLeave: '',
-      effective: '',
-      carryforward: ''
+      // totalLeave: '',
+      // effective: '',
+      effectiveFrom: null
+      // carryforward: ''
     }
   ]);
   const [leaveTypeErrors, setLeaveTypeErrors] = useState([
@@ -113,9 +114,10 @@ const EmployeeDetails = () => {
       leaveType: '',
       leaveCode: '',
       leaveApplicable: '',
-      totalLeave: '',
-      effective: '',
-      carryforward: ''
+      // totalLeave: '',
+      // effective: '',
+      effectiveFrom: null
+      // carryforward: ''
     }
   ]);
   const columns = [
@@ -129,7 +131,6 @@ const EmployeeDetails = () => {
     { accessorKey: 'designation', header: 'Designation', size: 140 },
     // { accessorKey: 'role', header: 'Role', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
-    
   ];
 
   useEffect(() => {
@@ -141,7 +142,7 @@ const EmployeeDetails = () => {
     getAllDesignation();
     getAllDepartment();
     // getAllRole();
-    getAllLeaveType();
+    // getAllLeaveType();
     getAllReportingPerson();
   }, []);
   const getAllBranches = async () => {
@@ -209,20 +210,60 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getAllLeaveType = async () => {
+  // const getAllLeaveType = async () => {
+  //   try {
+  //     const response = await apiCalls('get', `leaveprocess/getLeaveTypeByOrgId?orgId=${orgId}`);
+  //     console.log('API Response:', response);
+
+  //     if (response.status === true) {
+  //       setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
+  // const getAllLeaveType = async (designationCode, gender) => {
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `master/getLeaveDetailsFromDesignationLeave?designationCode=${designationCode}&leaveApplicable=${gender}&orgId=${orgId}`
+  //     );
+  //     console.log('API Response:', response);
+
+  //     if (response.status === true) {
+  //       setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
+  const getAllLeaveType = async (designationCode, gender) => {
     try {
-      const response = await apiCalls('get', `commonmaster/getLeaveTypeByOrgId?orgId=${orgId}`);
+      const response = await apiCalls(
+        'get',
+        `master/getLeaveDetailsFromDesignationLeave?designationCode=${designationCode}&leaveApplicable=${gender}&orgId=${orgId}`
+      );
+
       console.log('API Response:', response);
 
-      if (response.status === true) {
-        setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
+      if (response.status === true && response.paramObjectsMap?.employeeVO) {
+        setAllLeaveType(response.paramObjectsMap.employeeVO); // Ensure correct mapping
       } else {
         console.error('API Error:', response);
+        setAllLeaveType([]); // Set empty array to avoid undefined issues
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+      setAllLeaveType([]); // Handle errors gracefully
     }
   };
+
   const getAllReportingPerson = async () => {
     try {
       const response = await apiCalls('get', `master/getReportingNameForEmployee?orgId=${orgId}`);
@@ -237,6 +278,67 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
+  //   const nameRegex = /^[A-Za-z ]*$/;
+  //   const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+
+  //   let errorMessage = '';
+
+  //   if (name === 'employeeName' && !codeRegex.test(value)) {
+  //     errorMessage = 'Invalid Format';
+  //   } else if (name === 'employeeCode' && !codeRegex.test(value)) {
+  //     errorMessage = 'Invalid Format';
+  //   }
+
+  //   if (errorMessage) {
+  //     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+  //   } else {
+  //     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+
+  //     if (name === 'branch') {
+  //       const selectedBranch = branchList.find((br) => br.branch === value);
+  //       setFormData((prevData) => ({
+  //         ...prevData,
+  //         branch: value,
+  //         branchCode: selectedBranch ? selectedBranch.branchCode : ''
+  //       }));
+  //     } else if (type === 'checkbox') {
+  //       setFormData((prevData) => ({ ...prevData, [name]: checked }));
+  //     } else {
+  //       let inputValue = value;
+
+  //       if (name === 'email') {
+  //         inputValue = value.toLowerCase();
+  //       } else if (type === 'text' || type === 'textarea') {
+  //         inputValue = value.toUpperCase();
+  //       }
+
+  //       setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
+
+  //       // If reportingPerson is selected, map its role automatically.
+  //       if (name === 'reportingPerson') {
+  //         const selectedEmployee = allReportingPerson.find((emp) => emp.employeeName === value);
+  //         setFormData((prevData) => ({
+  //           ...prevData,
+  //           reportingPerson: value,
+  //           reportingRole: selectedEmployee ? selectedEmployee.role : ''
+  //         }));
+  //       }
+
+  //       // Check if input type is text or textarea before calling setSelectionRange
+  //       if (type === 'text' || type === 'textarea') {
+  //         setTimeout(() => {
+  //           const inputElement = document.getElementsByName(name)[0];
+  //           if (inputElement && inputElement.setSelectionRange) {
+  //             inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //           }
+  //         }, 0);
+  //       }
+  //     }
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
     const nameRegex = /^[A-Za-z ]*$/;
@@ -275,7 +377,6 @@ const EmployeeDetails = () => {
 
         setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
 
-        // If reportingPerson is selected, map its role automatically.
         if (name === 'reportingPerson') {
           const selectedEmployee = allReportingPerson.find((emp) => emp.employeeName === value);
           setFormData((prevData) => ({
@@ -283,6 +384,19 @@ const EmployeeDetails = () => {
             reportingPerson: value,
             reportingRole: selectedEmployee ? selectedEmployee.role : ''
           }));
+        }
+
+        // If gender or designation is selected, call getAllLeaveType
+        if (name === 'gender' || name === 'designation') {
+          const selectedDesignation = designationList.find(
+            (row) => row.designationName === (name === 'designation' ? value : formData.designation)
+          );
+          const updatedGender = name === 'gender' ? value : formData.gender;
+          const updatedDesignationCode = selectedDesignation ? selectedDesignation.designationCode : '';
+
+          if (updatedGender && updatedDesignationCode) {
+            getAllLeaveType(updatedDesignationCode, updatedGender);
+          }
         }
 
         // Check if input type is text or textarea before calling setSelectionRange
@@ -307,13 +421,13 @@ const EmployeeDetails = () => {
       id: Date.now(),
       leaveType: '',
       leaveCode: '',
-      leaveApplicable: '',
-      totalLeave: '',
-      effective: '',
-      carryforward: ''
+      leaveApplicable: ''
+      // totalLeave: '',
+      // effective: '',
+      // carryforward: ''
     };
     setLeaveTypeTable([...leaveTypeTable, newRow]);
-    setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', totalLeave: '', effective: '', carryforward: '' }]);
+    setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', totalLeave: '', effective: '', effectiveFrom: '', carryforward: '' }]);
   };
   const isLastRowEmpty = (table) => {
     if (!table || table.length === 0) return false;
@@ -322,7 +436,7 @@ const EmployeeDetails = () => {
     if (!lastRow) return false;
 
     if (table === leaveTypeTable) {
-      return !lastRow.leaveCode || !lastRow.totalLeave || !lastRow.effective || !lastRow.carryforward;
+      return !lastRow.leaveCode || !lastRow.effectiveFrom;
     }
     return false;
   };
@@ -336,9 +450,10 @@ const EmployeeDetails = () => {
           leaveType: !table[table.length - 1].leaveType ? 'Leave Type is required' : '',
           leaveCode: !table[table.length - 1].leaveCode ? 'Leave Code is required' : '',
           leaveApplicable: !table[table.length - 1].leaveApplicable ? 'Leave Applicable is required' : '',
-          totalLeave: !table[table.length - 1].totalLeave ? 'Total Leave is required' : '',
-          effective: !table[table.length - 1].effective ? 'Effective is required' : '',
-          carryforward: !table[table.length - 1].carryforward ? 'Carry Forward is required' : ''
+          // totalLeave: !table[table.length - 1].totalLeave ? 'Total Leave is required' : '',
+          // effective: !table[table.length - 1].effective ? 'Effective is required' : '',
+          effectiveFrom: !table[table.length - 1].effectiveFrom ? 'Effective From is required' : ''
+          // carryforward: !table[table.length - 1].carryforward ? 'Carry Forward is required' : ''
         };
         return newErrors;
       });
@@ -377,7 +492,7 @@ const EmployeeDetails = () => {
       grade: '',
       team: '',
       reportingPerson: '',
-        reportingRole: '',
+      reportingRole: '',
       department: '',
       designation: '',
       // role: '',
@@ -391,9 +506,10 @@ const EmployeeDetails = () => {
         leaveType: '',
         leaveCode: '',
         leaveApplicable: '',
-        totalLeave: '',
-        effective: '',
-        carryforward: ''
+        // totalLeave: '',
+        // effective: '',
+        effectiveFrom: null
+        // carryforward: ''
       }
     ]);
     setLeaveTypeErrors('');
@@ -447,18 +563,22 @@ const EmployeeDetails = () => {
           rowErrors.leaveApplicable = 'Leave Applicable is required';
           detailsTableDataValid = false;
         }
-        if (!row.totalLeave) {
-          rowErrors.totalLeave = 'Total Leave is required';
+        // if (!row.totalLeave) {
+        //   rowErrors.totalLeave = 'Total Leave is required';
+        //   detailsTableDataValid = false;
+        // }
+        // if (!row.effective) {
+        //   rowErrors.effective = 'Effective is required';
+        //   detailsTableDataValid = false;
+        // }
+        if (!row.effectiveFrom) {
+          rowErrors.effectiveFrom = 'Effective From is required';
           detailsTableDataValid = false;
         }
-        if (!row.effective) {
-          rowErrors.effective = 'Effective is required';
-          detailsTableDataValid = false;
-        }
-        if (!row.carryforward) {
-          rowErrors.carryforward = 'Carry Forward is required';
-          detailsTableDataValid = false;
-        }
+        // if (!row.carryforward) {
+        //   rowErrors.carryforward = 'Carry Forward is required';
+        //   detailsTableDataValid = false;
+        // }
         return rowErrors;
       });
       setLeaveTypeErrors(newTableErrors);
@@ -471,9 +591,7 @@ const EmployeeDetails = () => {
 
       const detailsVo = leaveTypeTable.map((row) => ({
         ...(editId && { id: row.id }),
-        carryForward: row.carryforward,
-        effective: row.effective,
-        leaveApplicable: row.leaveApplicable,
+        effectiveFrom: row.effectiveFrom,
         leaveCode: row.leaveCode,
         leaveType: row.leaveType,
         totalLeave: parseInt(row.totalLeave)
@@ -524,8 +642,8 @@ const EmployeeDetails = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
-          // getAllListOfValuesByOrgId();
           handleClear();
+          getAllEmployees();
           setIsLoading(false);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
@@ -596,9 +714,10 @@ const EmployeeDetails = () => {
             leaveType: cl.leaveType,
             leaveCode: cl.leaveCode,
             leaveApplicable: cl.leaveApplicable,
-            totalLeave: cl.totalLeave,
-            effective: cl.effective,
-            carryforward: cl.carryForward
+            // totalLeave: cl.totalLeave,
+            // effective: cl.effective,
+            effectiveFrom: cl.effectiveFrom
+            // carryforward: cl.carryForward
           }))
         );
 
@@ -615,6 +734,32 @@ const EmployeeDetails = () => {
   };
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const handleLeaveTypeChange = (event, newValue, row, index) => {
+    setLeaveTypeTable((prev) =>
+      prev.map((r) =>
+        r.id === row.id
+          ? {
+              ...r,
+              leaveType: newValue ? newValue.leaveType : '',
+              leaveCode: newValue ? newValue.leaveCode : '',
+              totalLeave: newValue ? newValue.totalLeave : ''
+            }
+          : r
+      )
+    );
+
+    setLeaveTypeErrors((prevErrors) => {
+      if (!Array.isArray(prevErrors)) return [];
+
+      const newErrors = [...prevErrors];
+      while (newErrors.length < leaveTypeTable.length) {
+        newErrors.push({});
+      }
+
+      return newErrors.map((err, idx) => (idx === index ? { ...err, leaveType: '', leaveCode: '', totalLeave: '' } : err));
+    });
   };
 
   return (
@@ -688,6 +833,7 @@ const EmployeeDetails = () => {
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.gender}>
                   <InputLabel id="gender-label">Gender</InputLabel>
                   <Select labelId="gender-label" label="Gender" value={formData.gender} onChange={handleInputChange} name="gender">
+                    <MenuItem value="ALL">ALL</MenuItem>
                     <MenuItem value="MALE">MALE</MenuItem>
                     <MenuItem value="FEMALE">FEMALE</MenuItem>
                   </Select>
@@ -847,7 +993,7 @@ const EmployeeDetails = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Reporting Role"
+                  label="Reporting Designation"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -856,6 +1002,7 @@ const EmployeeDetails = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.reportingRole}
                   helperText={fieldErrors.reportingRole}
+                  disabled
                 />
               </div>
               <h5 className="mb-4 mt-2">Personal Details</h5>
@@ -960,7 +1107,7 @@ const EmployeeDetails = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="AccountHolder Name"
+                  label="Account Holder Name"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1033,17 +1180,20 @@ const EmployeeDetails = () => {
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
                                     Leave Code
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
+                                  {/* <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
                                     Leave Applicable
-                                  </th>
+                                  </th> */}
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                     Total Leave
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                                  {/* <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                     Effective
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                     Carry Forward
+                                  </th> */}
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                                    Effective From
                                   </th>
                                 </tr>
                               </thead>
@@ -1066,57 +1216,26 @@ const EmployeeDetails = () => {
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
                                     </td>
-                                    <Autocomplete
-                                      options={allleaveType}
-                                      getOptionLabel={(option) => option.leaveType || ''}
-                                      groupBy={(option) => (option.leaveType ? option.leaveType : '')}
-                                      value={row.leaveType ? allleaveType.find((a) => a.leaveType === row.leaveType) : null}
-                                      onChange={(event, newValue) => {
-                                        setLeaveTypeTable((prev) =>
-                                          prev.map((r) =>
-                                            r.id === row.id
-                                              ? {
-                                                  ...r,
-                                                  leaveType: newValue ? newValue.leaveType : '',
-                                                  leaveCode: newValue ? newValue.leaveCode : '',
-                                                  leaveApplicable: newValue ? newValue.leaveApplicable : '',
-                                                  totalLeave: newValue ? newValue.totalLeave : '',
-                                                  effective: newValue ? newValue.effective : '',
-                                                  carryforward: newValue ? newValue.carryForward : ''
-                                                }
-                                              : r
-                                          )
-                                        );
-
-                                        setLeaveTypeErrors((prevErrors) =>
-                                          prevErrors.map((err, idx) =>
-                                            idx === index
-                                              ? {
-                                                  ...err,
-                                                  leaveType: '',
-                                                  leaveCode: '',
-                                                  leaveApplicable: '',
-                                                  totalLeave: '',
-                                                  effective: '',
-                                                  carryforward: ''
-                                                }
-                                              : err
-                                          )
-                                        );
-                                      }}
-                                      size="small"
-                                      renderInput={(params) => (
-                                        <TextField
-                                          {...params}
-                                          label="Leave Type"
-                                          variant="outlined"
-                                          error={!!leaveTypeErrors[index]?.leaveType}
-                                          helperText={leaveTypeErrors[index]?.leaveType}
-                                        />
-                                      )}
-                                      sx={{ width: 250 }}
-                                    />
-
+                                    <td className="border px-2 py-2">
+                                      <Autocomplete
+                                        key={row.id}
+                                        options={allleaveType}
+                                        getOptionLabel={(option) => option.leaveType || ''}
+                                        value={row.leaveType ? allleaveType.find((a) => a.leaveType === row.leaveType) : null}
+                                        onChange={(event, newValue) => handleLeaveTypeChange(event, newValue, row, index)}
+                                        size="small"
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            label="Leave Type"
+                                            variant="outlined"
+                                            error={!!leaveTypeErrors[index]?.leaveType}
+                                            helperText={leaveTypeErrors[index]?.leaveType}
+                                          />
+                                        )}
+                                        sx={{ width: 250, marginBottom: 2 }}
+                                      />
+                                    </td>
                                     <td className="border px-2 py-2">
                                       <input
                                         type="text"
@@ -1141,7 +1260,7 @@ const EmployeeDetails = () => {
                                         </div>
                                       )}
                                     </td>
-                                    <td className="border px-2 py-2">
+                                    {/* <td className="border px-2 py-2">
                                       <input
                                         type="text"
                                         value={row.leaveApplicable}
@@ -1166,7 +1285,7 @@ const EmployeeDetails = () => {
                                           {leaveTypeErrors[index].leaveApplicable}
                                         </div>
                                       )}
-                                    </td>
+                                    </td> */}
                                     <td className="border px-2 py-2">
                                       <input
                                         type="text"
@@ -1193,51 +1312,32 @@ const EmployeeDetails = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        type="text"
-                                        value={row.effective}
+                                        type="date"
+                                        value={row.effectiveFrom}
+                                        className={leaveTypeErrors[index]?.effectiveFrom ? 'error form-control' : 'form-control'}
                                         onChange={(e) => {
-                                          const value = e.target.value;
-                                          setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, effective: value } : r)));
-                                          setLeaveTypeErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              effective: !value ? 'Effective is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={leaveTypeErrors[index]?.effective ? 'error form-control' : 'form-control'}
-                                      />
-                                      {leaveTypeErrors[index]?.effective && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {leaveTypeErrors[index].effective}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        type="text"
-                                        value={row.carryforward}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
+                                          const date = e.target.value; // Capture the date string from input
+
+                                          // Update the effectiveFrom in the row
                                           setLeaveTypeTable((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, carryforward: value } : r))
+                                            prev.map((r) => (r.id === row.id ? { ...r, effectiveFrom: date } : r))
                                           );
+
+                                          // Handle error validation for effectiveFrom
                                           setLeaveTypeErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
                                               ...newErrors[index],
-                                              carryforward: !value ? 'Carry forward is required' : ''
+                                              effectiveFrom: !date ? 'Effective From is required' : ''
                                             };
                                             return newErrors;
                                           });
                                         }}
-                                        className={leaveTypeErrors[index]?.carryforward ? 'error form-control' : 'form-control'}
+                                        min={row.effectiveFrom || new Date().toISOString().split('T')[0]} // Ensure the minDate is properly set
                                       />
-                                      {leaveTypeErrors[index]?.carryforward && (
+                                      {leaveTypeErrors[index]?.effectiveFrom && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {leaveTypeErrors[index].carryforward}
+                                          {leaveTypeErrors[index].effectiveFrom}
                                         </div>
                                       )}
                                     </td>

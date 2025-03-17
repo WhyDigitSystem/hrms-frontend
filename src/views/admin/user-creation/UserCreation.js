@@ -56,6 +56,10 @@ const UserCreation = () => {
     deactivatedOn: '',
     // userType: '',
     reportingTO: '',
+    branch: '',
+    branchCode: '',
+    department: '',
+    designation: '',
     orgId: orgId
   });
 
@@ -205,7 +209,11 @@ const UserCreation = () => {
         userName: selectedEmp.employeeCode,
         employeeCode: selectedEmp.employeeCode,
         employeeName: selectedEmp.employeeName,
-        email: selectedEmp.email
+        email: selectedEmp.email,
+        branch: selectedEmp.branch,
+        branchCode: selectedEmp.branchCode,
+        department: selectedEmp.department,
+        designation: selectedEmp.designation,
       }));
     } else {
       console.log('No employee found with the given code:', value); // Log if no employee is found
@@ -278,6 +286,10 @@ const UserCreation = () => {
           // userType: particularUser.userType,
           employeeCode: particularUser.employeeCode || '',
           employeeName: particularUser.employeeName,
+          branch: particularUser.branch,
+          branchCode: particularUser.branchcode,
+          department: particularUser.department,
+          designation: particularUser.designation,
           email: particularUser.email,
           allIndiaAccess: particularUser.allIndiaAcces,
           active: particularUser.active === 'Active' ? true : false
@@ -383,7 +395,10 @@ const UserCreation = () => {
         ...(editId && { id: formData.docId }),
         userName: formData.userName,
         ...(!editId && { password: encryptedPassword }),
-        // userType: formData.userType,
+        branch: formData.branch,
+        branchcode: formData.branchCode,
+        department: formData.department,
+        designation: formData.designation,
         employeeCode: formData.employeeCode,
         employeeName: formData.employeeName,
         email: formData.email,
@@ -400,7 +415,7 @@ const UserCreation = () => {
           console.log('Response:', response);
           showToast('success', editId ? 'User Updated Successfully' : 'User created successfully');
           handleClear();
-          getAllUsers();
+          getAllUserCreation();
           setIsLoading(false);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'User creation failed');

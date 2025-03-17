@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import ActionButton from 'utils/ActionButton';
 import dayjs from 'dayjs';
 
-const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon, viewIcon, isPdf, GeneratePdf }) => {
+const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon, viewIcon, isPdf, GeneratePdf, enableEditing }) => {
   const [tableData, setTableData] = useState(data || []);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
 
@@ -100,7 +100,7 @@ const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon
         columns={customColumns}
         data={tableData && tableData}
         enableColumnOrdering
-        enableEditing
+        enableEditing={enableEditing}
         renderRowActions={renderRowActions}
         renderTopToolbarCustomActions={() => <Stack direction="row" spacing={2} className="ml-5 "></Stack>}
       />

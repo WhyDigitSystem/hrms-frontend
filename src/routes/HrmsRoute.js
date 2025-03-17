@@ -24,6 +24,7 @@ const Designation = Loadable(lazy(() => import('views/basicMaster/designation'))
 const Region = Loadable(lazy(() => import('views/basicMaster/RegionMaster')));
 const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
 const ScreenNames = Loadable(lazy(() => import('views/basicMaster/ScreenNames')));
+const LeaveAssigned = Loadable(lazy(() => import('views/basicMaster/leaveAssigned')));
 
 // Employee Master
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
@@ -118,6 +119,10 @@ const HrmsRoute = {
     {
       path: '/companysetup/ScreenNames',
       element: <ScreenNames />
+    },
+    {
+      path: '/companysetup/LeaveAssigned',
+      element: <LeaveAssigned />
     },
     {
       path: '/employeeMaster/EmployeeDetails',

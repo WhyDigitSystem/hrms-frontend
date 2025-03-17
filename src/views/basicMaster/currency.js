@@ -228,7 +228,7 @@ export const Currency = () => {
         </div>
         {listView ? (
           <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getCurrencyById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getCurrencyById} enableEditing={true} />
           </div>
         ) : (
           <>

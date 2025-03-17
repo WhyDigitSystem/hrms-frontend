@@ -53,7 +53,7 @@ const Inbox = ({ isLoading }) => {
         <CardWrapper border={false} content={false}>
           <Box sx={{ p: 2 }}>
             {/* Heading for Inbox */}
-            <Typography variant="h4" sx={{ mb: 2 }}>
+            <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold', fontSize: '1rem' }}>
               Inbox
             </Typography>
 
@@ -66,13 +66,18 @@ const Inbox = ({ isLoading }) => {
                     mt: 0.45,
                     mb: 0.45
                   }}
-                  primary={<Typography variant="h6">New Orders</Typography>}
+                  primary={
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                      New Orders
+                    </Typography>
+                  }
                   secondary={
                     <Typography
                       variant="subtitle2"
                       sx={{
                         color: theme.palette.grey[500],
-                        mt: 0.5
+                        mt: 0.5,
+                        fontSize: '1rem'
                       }}
                     >
                       15 new orders received
@@ -87,13 +92,18 @@ const Inbox = ({ isLoading }) => {
                     mt: 0.45,
                     mb: 0.45
                   }}
-                  primary={<Typography variant="h6">Pending Orders</Typography>}
+                  primary={
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1rem' }}>
+                      Pending Orders
+                    </Typography>
+                  }
                   secondary={
                     <Typography
                       variant="subtitle2"
                       sx={{
                         color: theme.palette.grey[500],
-                        mt: 0.5
+                        mt: 0.5,
+                        fontSize: '1rem'
                       }}
                     >
                       5 orders pending

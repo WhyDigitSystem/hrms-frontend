@@ -250,7 +250,7 @@ export const City = () => {
         </div>
         {listView ? (
           <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getCityById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getCityById} enableEditing={true} />
           </div>
         ) : (
           <>

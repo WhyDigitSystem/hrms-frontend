@@ -291,6 +291,7 @@ const RolesNew = () => {
             columns={columns}
             toEdit={getRoleById}
             blockEdit={true} // DISAPLE THE MODAL IF TRUE
+            enableEditing={true}
           />
         ) : (
           <div className="row d-flex">

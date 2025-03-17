@@ -199,6 +199,7 @@ export const Department = () => {
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getDepartmentById}
+              enableEditing={true}
             />
           </div>
         ) : (

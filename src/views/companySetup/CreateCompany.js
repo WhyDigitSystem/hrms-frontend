@@ -265,6 +265,8 @@ const CreateCompany = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getCompanyById}
+              enableEditing={true}
+              
             />
           </div>
         ) : (

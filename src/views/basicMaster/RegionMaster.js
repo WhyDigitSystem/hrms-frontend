@@ -202,7 +202,7 @@ export const RegionMaster = () => {
         </div>
         {listView ? (
           <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getRegionById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getRegionById} enableEditing={true} />
           </div>
         ) : (
           <>

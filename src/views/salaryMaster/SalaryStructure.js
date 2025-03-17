@@ -898,7 +898,7 @@ const SalaryMaster = () => {
               </div>
             </>
           ) : (
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getSalaryStructureById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getSalaryStructureById} enableEditing={true} />
           )}
         </div>
       </div>

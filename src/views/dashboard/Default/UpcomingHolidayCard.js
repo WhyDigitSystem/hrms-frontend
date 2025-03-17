@@ -1,77 +1,139 @@
-import React from 'react';
-import holidayImage from '../../../assets/images/vecteezy_abstract-white-luxury-style-background_25374760.jpg'; // Ensure the correct path
+import PropTypes from 'prop-types';
 
-const UpcomingHolidayCard = () => {
-  const holiday = {
-    name: "Valentine's Day",
-    date: "February 14, 2025",
-  };
+// material-ui
+import { Avatar, Box, List, ListItem, ListItemAvatar, ListItemText, Typography, Divider, Grid } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
 
-  const cardStyles = {
-    position: 'relative',
-    width: '100%',
-    height: '275px',
-    backgroundImage: `url(${holidayImage})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    borderRadius: '8px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
-    alignItems: 'flex-end',
-    padding: '20px',
-    color: 'black',
-    fontFamily: 'Arial, sans-serif',
-  };
+// project imports
+import MainCard from 'ui-component/cards/MainCard';
+import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
 
-  const uh = {
-    fontSize: '32px',  // Slightly larger header
-    fontWeight: '700',  // Bolder header text
-    fontFamily: "'Lora', serif",  // Lora for elegant header
-  };
+// assets
+import EventNoteTwoToneIcon from '@mui/icons-material/EventNoteTwoTone';
+import BeachAccessTwoToneIcon from '@mui/icons-material/BeachAccessTwoTone';
+import LocalActivityTwoToneIcon from '@mui/icons-material/LocalActivityTwoTone';
+
+// styles
+const CardWrapper = styled(MainCard)(({ theme }) => ({
+  overflow: 'hidden',
+  position: 'relative',
+  '&:after': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: `linear-gradient(210.04deg, ${theme.palette.warning.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
+    borderRadius: '50%',
+    top: -30,
+    right: -180
+  },
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    width: 210,
+    height: 210,
+    background: `linear-gradient(140.9deg, ${theme.palette.warning.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
+    borderRadius: '50%',
+    top: -160,
+    right: -130
+  }
+}));
+
+// ==============================|| DASHBOARD - UPCOMING LEAVE CARD ||============================== //
+
+const UpcomingLeaveCard = ({ isLoading }) => {
+  const theme = useTheme();
 
   return (
-    <div>
-      <div style={cardStyles} className="upcoming-holiday-card p-5">
-        <div className="text-center p-5" style={uh}>Upcoming Holiday</div>
-      </div>
-
-      <style jsx>
-        {`
-          /* Default styling */
-          .upcoming-holiday-card {
-            position: relative;
-            width: 100%;
-            height: 300px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            align-items: flex-end;
-            padding: 20px;
-            color: black;
-            font-family: 'Arial', sans-serif;
-          }
-
-          /* Mobile view styling */
-          @media (max-width: 768px) {
-            .upcoming-holiday-card {
-              position: fixed;
-              bottom: 0;
-              left: 0;
-              right: 0;
-              z-index: 1000;
-              width: 100%;
-              height: 100px;  /* Adjusted height for mobile */
-              box-shadow: none; /* Remove shadow on mobile */
-            }
-            .text-center {
-              font-size: 16px; /* Adjust font size for mobile */
-              padding: 10px;   /* Adjust padding for mobile */
-            }
-          }
-        `}
-      </style>
-    </div>
+    <>
+      {isLoading ? (
+        <TotalIncomeCard />
+      ) : (
+        <CardWrapper border={false} content={false}>
+          <Box sx={{ p: 2 }}>
+            <List sx={{ py: 0 }}>
+              <ListItem alignItems="center" disableGutters sx={{ py: 0 }}>
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    sx={{
+                      ...theme.typography.commonAvatar,
+                      ...theme.typography.largeAvatar,
+                      backgroundColor: theme.palette.warning.light,
+                      color: theme.palette.warning.dark
+                    }}
+                  >
+                    <EventNoteTwoToneIcon fontSize="inherit" />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  sx={{
+                    py: 0,
+                    mt: 0.45,
+                    mb: 0.45
+                  }}
+                  primary={<Typography variant="h4">Upcoming Leave</Typography>}
+                />
+              </ListItem>
+            </List>
+            <Divider sx={{ my: 1.5 }} />
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Typography
+                variant="subtitle2"
+                align="center"
+                sx={{
+                  color: theme.palette.grey[500],
+                  mt: 0.5,
+                  width: '100%',
+                  fontWeight: 'bold',
+                  fontSize: '15px',
+                  py: 1,
+                  borderRadius: 1
+                }}
+              >
+                Next Leave: Ramzan on Mon, 31 March, 2025
+              </Typography>
+            </Grid>
+            <Divider sx={{ my: 2 }} />
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ color: theme.palette.grey[700], mb: 1 }}>
+                Upcoming Holidays
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LocalActivityTwoToneIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
+                <Typography variant="body1" sx={{ color: theme.palette.grey[600] }}>
+                  Eid al-Fitr: Fri, 21 April, 2025
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LocalActivityTwoToneIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
+                <Typography variant="body1" sx={{ color: theme.palette.grey[600] }}>
+                  Christmas: Wed, 25 December, 2025
+                </Typography>
+              </Box>
+              {/* Add two more holidays here */}
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LocalActivityTwoToneIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
+                <Typography variant="body1" sx={{ color: theme.palette.grey[600] }}>
+                  New Year's Day: Wed, 1 January, 2026
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LocalActivityTwoToneIcon sx={{ color: theme.palette.error.main, mr: 1 }} />
+                <Typography variant="body1" sx={{ color: theme.palette.grey[600] }}>
+                  Labour Day: Thu, 1 May, 2025
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </CardWrapper>
+      )}
+    </>
   );
 };
 
-export default UpcomingHolidayCard;
+UpcomingLeaveCard.propTypes = {
+  isLoading: PropTypes.bool
+};
+
+export default UpcomingLeaveCard;

@@ -194,6 +194,7 @@ export const Designation = () => {
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getDesignationById}
+              enableEditing={true}
             />
           </div>
         ) : (

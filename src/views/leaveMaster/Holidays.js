@@ -288,6 +288,7 @@ const Holidays = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getHolidayById}
+              enableEditing={true}
             />
           </div>
         ) : (

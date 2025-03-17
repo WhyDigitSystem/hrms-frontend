@@ -239,7 +239,7 @@ export const State = () => {
 
         {listView ? (
           <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getStateById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getStateById} enableEditing={true} />
           </div>
         ) : (
           <div className="row">

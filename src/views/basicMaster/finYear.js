@@ -405,7 +405,7 @@ const FinYear = () => {
             </div>
           </div>
         ) : (
-          <CommonListViewTable data={Array.isArray(data) ? data : []} columns={columns} toEdit={getFinYearById} blockEdit={true} />
+          <CommonListViewTable data={Array.isArray(data) ? data : []} columns={columns} toEdit={getFinYearById} blockEdit={true} enableEditing={true} />
         )}
       </div>
     </div>

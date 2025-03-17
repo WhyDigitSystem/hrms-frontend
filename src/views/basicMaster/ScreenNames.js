@@ -192,6 +192,7 @@ export const ScreenNames = () => {
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getScreenById}
+              enableEditing={true}
             />
           </div>
         ) : (

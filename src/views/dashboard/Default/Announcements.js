@@ -19,23 +19,8 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   overflow: 'hidden',
   position: 'relative',
-  backgroundColor: theme.palette.background.paper, // Transparent background
-  boxShadow: theme.shadows[4], // Subtle shadow
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-  '&:hover': {
-    transform: 'translateY(-5px)', // Lift effect on hover
-    boxShadow: theme.shadows[8] // Stronger shadow on hover
-  },
-  '&:after': {
-    content: '""',
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    top: 0,
-    left: 0,
-    backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 50%)', // Subtle radial gradient
-    zIndex: 1
-  }
+  backgroundColor: theme.palette.background.paper,
+  boxShadow: theme.shadows[4],
 }));
 
 // Dummy data for announcements (without "Office Holiday")
@@ -67,30 +52,14 @@ const Announcements = ({ isLoading }) => {
         <TotalIncomeCard />
       ) : (
         <CardWrapper border={false} content={false}>
-          <Box
-            sx={{
-              p: 2,
-              position: 'relative',
-              zIndex: 2 // Ensure content is above the background
-            }}
-          >
+          <Box sx={{ p: 2, position: 'relative' }}>
             <Typography variant="h4" sx={{ mb: 2, color: theme.palette.text.primary }}>
               Announcements
             </Typography>
             <List sx={{ py: 0 }}>
               {dummyAnnouncements.map((announcement) => (
                 <Box key={announcement.id}>
-                  <ListItem
-                    alignItems="flex-start"
-                    disableGutters
-                    sx={{
-                      py: 1,
-                      transition: 'background-color 0.3s ease-in-out',
-                      '&:hover': {
-                        backgroundColor: theme.palette.action.hover // Hover effect for list items
-                      }
-                    }}
-                  >
+                  <ListItem alignItems="flex-start" disableGutters sx={{ py: 1 }}>
                     <ListItemAvatar>
                       <Avatar
                         variant="rounded"

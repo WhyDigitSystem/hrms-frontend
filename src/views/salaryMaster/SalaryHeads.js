@@ -228,6 +228,7 @@ const SalaryHeads = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getSalaryHeadsById}
+              enableEditing={true}
             />
           </div>
         ) : (
