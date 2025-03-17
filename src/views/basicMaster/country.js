@@ -222,6 +222,7 @@ export const Country = () => {
               columns={listViewColumns}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getCountryById}
+              enableEditing={true}
             />
           </div>
         ) : (
