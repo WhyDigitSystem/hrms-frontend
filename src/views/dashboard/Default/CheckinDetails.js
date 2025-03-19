@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, Box, Grid, Typography, List, ListItem, Button, useMediaQuery } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
@@ -7,7 +7,6 @@ import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
-import { display } from '@mui/system';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
   background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
@@ -44,6 +43,37 @@ const CheckinDetails = ({ isLoading }) => {
   const [checkInTime, setCheckInTime] = useState(null); // State to store check-in time
   const [checkOutTime, setCheckOutTime] = useState(null); // State to store check-out time
   const [hoursWorked, setHoursWorked] = useState(null); // State to store hours worked
+  const [currentTime, setCurrentTime] = useState(new Date()); // State to store current time
+
+  // Update current time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount
+  }, []);
+
+  // Update check-in time every second after check-in
+  useEffect(() => {
+    let interval;
+    if (isCheckedIn) {
+      interval = setInterval(() => {
+        setCheckInTime((prevTime) => new Date(prevTime.getTime() + 1000)); // Increment time by 1 second
+      }, 1000);
+    }
+
+    return () => clearInterval(interval); // Cleanup interval on component unmount or check-out
+  }, [isCheckedIn]);
+
+  // Retrieve check-in time from localStorage when component mounts
+  useEffect(() => {
+    const storedCheckInTime = localStorage.getItem('checkInTime');
+    if (storedCheckInTime) {
+      setCheckInTime(new Date(storedCheckInTime));
+      setIsCheckedIn(true);
+    }
+  }, []);
 
   const handleCheckIn = async () => {
     const saveCheckIN = {
@@ -58,8 +88,10 @@ const CheckinDetails = ({ isLoading }) => {
 
       if (result.status === true) {
         showToast('success', 'Check-In Success');
+        const now = new Date();
+        setCheckInTime(now); // Set check-in time
+        localStorage.setItem('checkInTime', now.toISOString()); // Save check-in time to localStorage
         setIsCheckedIn(true); // Enable Check-Out, Disable Check-In
-        setCheckInTime(new Date()); // Set check-in time
         setCheckOutTime(null); // Reset check-out time
         setHoursWorked(null); // Reset hours worked
       } else {
@@ -94,6 +126,9 @@ const CheckinDetails = ({ isLoading }) => {
           const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
           setHoursWorked(`${hours} hours ${minutes} minutes`); // Set hours worked
         }
+
+        // Clear check-in time from localStorage
+        localStorage.removeItem('checkInTime');
       } else {
         showToast('error', result.paramObjectsMap.errorMessage || 'Check-Out Failed');
       }
@@ -182,13 +217,27 @@ const CheckinDetails = ({ isLoading }) => {
                       <ListItem sx={{ px: 0 }}>
                         <AccessTimeIcon sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
                         <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
-                          {checkInTime ? `Check-In at ${checkInTime.toLocaleTimeString()}` : 'No Check-In Recorded'}
+                          {checkInTime
+                            ? `Check-In at ${checkInTime.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                                hour12: true
+                              })}`
+                            : `No Check-In Recorded `}
                         </Typography>
                       </ListItem>
                       <ListItem sx={{ px: 0 }}>
                         <AccessTimeIcon sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
                         <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
-                          {checkOutTime ? `Check-Out at ${checkOutTime.toLocaleTimeString()}` : 'No Check-Out Recorded'}
+                          {checkOutTime
+                            ? `Check-Out at ${checkOutTime.toLocaleTimeString('en-US', {
+                                hour: 'numeric',
+                                minute: 'numeric',
+                                second: 'numeric',
+                                hour12: true
+                              })}`
+                            : 'No Check-Out Recorded'}
                         </Typography>
                       </ListItem>
                     </div>
