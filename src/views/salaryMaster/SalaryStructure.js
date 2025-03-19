@@ -35,6 +35,7 @@ const SalaryMaster = () => {
   const [listView, setListView] = useState(false);
   const [empList, setEmpList] = useState([]);
   const [salaryHeadsType, setSalaryHeadsType] = useState([]);
+  const [employeeSalary, setEmployeeSalary] = useState(0);
 
   const [formData, setFormData] = useState({
     employeeName: '',
@@ -89,6 +90,25 @@ const SalaryMaster = () => {
       detectionAmount: ''
     }
   ]);
+
+  useEffect(() => {
+    // Calculate total earnings
+    const totalEarnings = earningDetailsData.reduce((sum, row) => {
+      return sum + (parseFloat(row.amount) || 0);
+    }, 0);
+  
+    // Calculate total deductions
+    const totalDeductions = detectionDetailsData.reduce((sum, row) => {
+      return sum + (parseFloat(row.detectionAmount) || 0);
+    }, 0);
+  
+    // Calculate net salary
+    const netSalary = totalEarnings - totalDeductions;
+  
+    // Update employee salary
+    setEmployeeSalary(netSalary);
+  }, [earningDetailsData, detectionDetailsData]); // Runs when earningDetailsData or detectionDetailsData changes
+  
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
@@ -660,6 +680,19 @@ const SalaryMaster = () => {
                       />
                     </LocalizationProvider>
                   </FormControl>
+                </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea"
+                    label="Employee Salary"
+                    variant="outlined"
+                    size="small"
+                    name="position"
+                    fullWidth
+                    value={employeeSalary}
+                    inputProps={{ maxLength: 15 }}
+                    disabled
+                  />
                 </div>
               </div>
               <div className="row mt-2">
