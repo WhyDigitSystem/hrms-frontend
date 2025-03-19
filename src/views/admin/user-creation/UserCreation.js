@@ -1002,7 +1002,7 @@ const UserCreation = () => {
               </div>
             </>
           ) : (
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getUserById} />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getUserById} enableEditing={true} />
           )}
         </div>
       </div>
