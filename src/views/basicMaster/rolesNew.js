@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Chip, FormHelperText, Grid, InputLabel, MenuItem, Select, Typography } from '@mui/material';
+import { Chip, FormHelperText, Grid, InputLabel, MenuItem, Select, Typography, Autocomplete } from '@mui/material';
 import Box from '@mui/material/Box';
 import Checkbox from '@mui/material/Checkbox';
 import FormControl from '@mui/material/FormControl';
@@ -137,27 +137,21 @@ const RolesNew = () => {
   };
 
   const handleMultiSelectChange = (event) => {
-    const {
-      target: { value }
-    } = event;
-
-    console.log('THE VALUE IS:', value);
+    const { value } = event.target; // value is an array of responsibility strings
 
     setSelectedRes(value);
-    console.log('responsibilities list from multiselect :', responsibilityList);
 
     const selectedResScreen = responsibilityList
       .filter((res) => value.includes(res.responsibility))
       .map((res) => res.screensVO.map((screen) => screen.screenName))
       .flat(); // Flatten the array of arrays
-    console.log("SELECTED RESPONSIBILITY'S SCREENS:", selectedResScreen);
 
     setScreenList(selectedResScreen);
 
     const selectedResDetails = responsibilityList
       .filter((res) => value.includes(res.responsibility))
       .map((res) => ({ responsibility: res.responsibility, responsibilityId: res.id }));
-    console.log('SELECTED RESPONSIBILITY DETAILS:', selectedResDetails);
+
     setSelectedResponsibilitiesDetails(selectedResDetails);
   };
 
@@ -351,7 +345,7 @@ const RolesNew = () => {
                         </Select>
                       </FormControl>
                     </div> */}
-            <div className="col-md-3 mb-3">
+            {/* <div className="col-md-3 mb-3">
               <FormControl sx={{ width: 215 }} size="small" error={!!fieldErrors.selectedRes}>
                 <InputLabel id="demo-multiple-chip-label">Responsibilities</InputLabel>
                 <Select
@@ -378,7 +372,43 @@ const RolesNew = () => {
                 </Select>
                 {fieldErrors.selectedRes && <FormHelperText>{fieldErrors.selectedRes}</FormHelperText>}
               </FormControl>
+            </div> */}
+            <div className="col-md-3 mb-3">
+              <Autocomplete
+                multiple
+                options={responsibilityList}
+                getOptionLabel={(option) => option.responsibility || ""}
+                value={responsibilityList.filter((res) => selectedRes.includes(res.responsibility))}
+                onChange={(event, newValue) => {
+                  // Extract the responsibility values from the selected options
+                  const selectedResponsibilities = newValue.map((item) => item.responsibility);
+                  // Call handleMultiSelectChange with the array of responsibility values
+                  handleMultiSelectChange({ target: { value: selectedResponsibilities } });
+                }}
+                renderTags={(selected, getTagProps) =>
+                  selected.map((option, index) => (
+                    <Chip key={option.responsibility} label={option.responsibility} {...getTagProps({ index })} />
+                  ))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Responsibilities"
+                    name="selectedRes"
+                    error={Boolean(fieldErrors.selectedRes)}
+                    helperText={fieldErrors.selectedRes || ""}
+                    InputProps={{
+                      ...params.InputProps,
+                      style: { height: 40 },
+                    }}
+                  />
+                )}
+                sx={{ width: "100%" }}
+                size="small"
+              />
             </div>
+
+
 
             <div className="col-md-3 mb-3">
               <FormGroup>

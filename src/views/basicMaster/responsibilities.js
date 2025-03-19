@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Box, Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Box, Checkbox, FormControl, FormControlLabel, Autocomplete, FormGroup, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
 import Chip from '@mui/material/Chip';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import { useTheme } from '@mui/material/styles';
@@ -97,7 +97,6 @@ const Responsibilities = () => {
     // Convert the selected values into the required format
     const selectedScreens = typeof value === 'string' ? value.split(',') : value;
     const screenDTO = selectedScreens.map((screenName, index) => ({
-      //   id: index, // Assuming you don't have actual ids for the screens
       screenName
     }));
 
@@ -252,7 +251,6 @@ const Responsibilities = () => {
         <div>
           <Box sx={{ width: '100%', typography: 'body1' }}>
             <div className="d-flex flex-wrap justify-content-start mb-4">
-              {/* <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} /> */}
               <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
               <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
               <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
@@ -272,33 +270,42 @@ const Responsibilities = () => {
                     helperText={fieldErrors.name}
                   />
                 </div>
+
                 <div className="col-md-3 mb-3">
-                  <FormControl sx={{ width: 215 }} size="small" error={!!fieldErrors.selectedScreens}>
-                    <InputLabel id="demo-multiple-chip-label">Screens</InputLabel>
-                    <Select
-                      labelId="demo-multiple-chip-label"
-                      id="demo-multiple-chip"
-                      multiple
-                      value={selectedScreens}
-                      onChange={handleChange}
-                      input={<OutlinedInput id="select-multiple-chip" label="Screens" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {selected.map((value) => (
-                            <Chip key={value} label={value} />
-                          ))}
-                        </Box>
-                      )}
-                      MenuProps={MenuProps}
-                    >
-                      {screenList.map((name, index) => (
-                        <MenuItem key={index} value={name.screenName} style={getStyles(name, selectedScreens, theme)}>
-                          {name.screenName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.selectedScreens && <FormHelperText>{fieldErrors.selectedScreens}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    multiple
+                    options={screenList}
+                    getOptionLabel={(option) => option.screenName || ""}
+                    value={screenList.filter((screen) => selectedScreens.includes(screen.screenName))}
+                    onChange={(event, newValue) => {
+                      const selectedScreenNames = newValue.map((item) => item.screenName);
+                      setSelectedScreens(selectedScreenNames);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        screenDTO: selectedScreenNames.map((screenName) => ({ screenName }))
+                      }));
+                    }}
+                    renderTags={(selected, getTagProps) =>
+                      selected.map((option, index) => (
+                        <Chip key={option.screenName} label={option.screenName} {...getTagProps({ index })} />
+                      ))
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Screens"
+                        name="screens"
+                        error={Boolean(fieldErrors.selectedScreens)}
+                        helperText={fieldErrors.selectedScreens || ""}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                    sx={{ width: "100%" }}
+                    size="small"
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
@@ -322,7 +329,7 @@ const Responsibilities = () => {
                 data={listViewData}
                 columns={columns}
                 toEdit={getResponsibilityById}
-                blockEdit={true} // DISAPLE THE MODAL IF TRUE
+                blockEdit={true} // DISABLE THE MODAL IF TRUE
                 enableEditing={true}
               />
             )}

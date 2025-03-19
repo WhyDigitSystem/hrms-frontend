@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControlLabel, FormHelperText, TextField } from '@mui/material';
+import { Checkbox, FormControlLabel, FormHelperText, TextField, Autocomplete } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -233,6 +233,7 @@ export const Currency = () => {
         ) : (
           <>
             <div className="row">
+              {/* Currency */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Currency"
@@ -246,6 +247,8 @@ export const Currency = () => {
                   helperText={fieldErrors.currency}
                 />
               </div>
+
+              {/* Currency Description */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Currency Description"
@@ -259,6 +262,8 @@ export const Currency = () => {
                   helperText={fieldErrors.currencyDescription}
                 />
               </div>
+
+              {/* Sub Currency */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Sub Currency"
@@ -272,7 +277,8 @@ export const Currency = () => {
                   helperText={fieldErrors.subCurrency}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
                   <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
@@ -285,7 +291,35 @@ export const Currency = () => {
                   </Select>
                   {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
                 </FormControl>
+              </div> */}
+
+              {/* Country List */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={countryList}
+                  getOptionLabel={(option) => option.countryName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={countryList.find((c) => c.countryName === formData.country) || null}
+                  onChange={(event, newValue) => handleInputChange(null, newValue ? newValue.countryName : "", "country")}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Country"
+                      name="country"
+                      error={Boolean(fieldErrors.country)}
+                      helperText={fieldErrors.country || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

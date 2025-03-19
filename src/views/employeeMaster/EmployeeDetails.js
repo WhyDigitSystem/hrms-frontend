@@ -30,7 +30,7 @@ const EmployeeDetails = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
-  const [branchList, setBranchList] = useState([]);
+  const [branchList, setBranchList] = useState([]); 
   const [departmentList, setDepartmentList] = useState([]);
   const [designationList, setDesignationList] = useState([]);
   // const [roleList, setRoleList] = useState([]);
@@ -120,6 +120,20 @@ const EmployeeDetails = () => {
       // carryforward: ''
     }
   ]);
+
+  const genderList = [
+    { label: "ALL", value: "ALL" },
+    { label: "MALE", value: "MALE" },
+    { label: "FEMALE", value: "FEMALE" },
+  ];
+
+  const gradeList = [
+    { label: "A GRADE", value: "A GRADE" },
+    { label: "B GRADE", value: "B GRADE" },
+    { label: "C GRADE", value: "C GRADE" },
+    { label: "D GRADE", value: "D GRADE" },
+  ];
+
   const columns = [
     { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
     { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
@@ -741,11 +755,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-              ...r,
-              leaveType: newValue ? newValue.leaveType : '',
-              leaveCode: newValue ? newValue.leaveCode : '',
-              totalLeave: newValue ? newValue.totalLeave : ''
-            }
+            ...r,
+            leaveType: newValue ? newValue.leaveType : '',
+            leaveCode: newValue ? newValue.leaveCode : '',
+            totalLeave: newValue ? newValue.totalLeave : ''
+          }
           : r
       )
     );
@@ -776,6 +790,8 @@ const EmployeeDetails = () => {
           <>
             <div className="row">
               <h5 className="mb-4">Employee Details</h5>
+
+              {/* Employee Name */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Employee Name"
@@ -789,6 +805,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.employeeName}
                 />
               </div>
+
+              {/* Employee Code */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Employee Code"
@@ -802,6 +820,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.employeeCode}
                 />
               </div>
+
+              {/* Employee Address */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Employee Address"
@@ -815,7 +835,9 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.employeeAddress}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+
+              {/* Branch */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.branch}>
                   <InputLabel id="branch-label">Branch</InputLabel>
                   <Select labelId="branch-label" label="Branch" value={formData.branch} onChange={handleInputChange} name="branch">
@@ -827,9 +849,35 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.branch && <FormHelperText>{fieldErrors.branch}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={branchList}
+                  getOptionLabel={(option) => option.branch || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={branchList.find((c) => c.branch === formData.branch) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "branch", value: newValue ? newValue.branch : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Branch"
+                      name="branch"
+                      error={Boolean(fieldErrors.branch)}
+                      helperText={fieldErrors.branch || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
 
-              <div className="col-md-3 mb-3">
+              {/* gender */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.gender}>
                   <InputLabel id="gender-label">Gender</InputLabel>
                   <Select labelId="gender-label" label="Gender" value={formData.gender} onChange={handleInputChange} name="gender">
@@ -839,7 +887,34 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={genderList}
+                  getOptionLabel={(option) => option.label}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={genderList.find((c) => c.value === formData.gender) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "gender", value: newValue ? newValue.value : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Gender"
+                      name="gender"
+                      error={Boolean(fieldErrors.gender)}
+                      helperText={fieldErrors.gender || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+              {/* Email */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Email"
@@ -853,6 +928,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.email}
                 />
               </div>
+
+              {/* DOJ */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled" size="small">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -883,7 +960,9 @@ const EmployeeDetails = () => {
                   />
                 </div>
               )}
-              <div className="col-md-3 mb-3">
+
+              {/* Grade */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.grade}>
                   <InputLabel id="grade-label">Grade</InputLabel>
                   <Select labelId="grade-label" label="Grade" value={formData.grade} onChange={handleInputChange} name="grade">
@@ -894,8 +973,35 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.grade && <FormHelperText>{fieldErrors.grade}</FormHelperText>}
                 </FormControl>
+              </div> */}
+
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={gradeList}
+                  getOptionLabel={(option) => option.label}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={gradeList.find((c) => c.value === formData.grade) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "grade", value: newValue ? newValue.value : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Grade"
+                      name="grade"
+                      error={Boolean(fieldErrors.grade)}
+                      helperText={fieldErrors.grade || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
 
+              {/* Team */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Team"
@@ -909,7 +1015,9 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.team}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+
+              {/* Department */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
                   <InputLabel id="department-label">Department</InputLabel>
                   <Select
@@ -919,7 +1027,7 @@ const EmployeeDetails = () => {
                     value={formData.department}
                     onChange={handleInputChange}
                     name="department"
-                    // disabled={isEditMode}
+                  // disabled={isEditMode}
                   >
                     {departmentList?.map((row) => (
                       <MenuItem key={row.id} value={row.departmentName}>
@@ -929,8 +1037,35 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={departmentList}
+                  getOptionLabel={(option) => option.departmentName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={departmentList.find((c) => c.departmentName === formData.department) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "department", value: newValue ? newValue.departmentName : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Department Name"
+                      name="department"
+                      error={Boolean(fieldErrors.department)}
+                      helperText={fieldErrors.department || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+
+              {/* Designation */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.designation}>
                   <InputLabel id="designation-label">Designation</InputLabel>
                   <Select
@@ -940,7 +1075,7 @@ const EmployeeDetails = () => {
                     value={formData.designation}
                     onChange={handleInputChange}
                     name="designation"
-                    // disabled={isEditMode}
+                  // disabled={isEditMode}
                   >
                     {designationList?.map((row) => (
                       <MenuItem key={row.id} value={row.designationName}>
@@ -950,7 +1085,35 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
                 </FormControl>
+              </div> */}
+
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={designationList}
+                  getOptionLabel={(option) => option.designationName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={designationList.find((c) => c.designationName === formData.designation) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "designation", value: newValue ? newValue.designationName : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Designation"
+                      name="designation"
+                      error={Boolean(fieldErrors.designation)}
+                      helperText={fieldErrors.designation || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+
               {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
                   <InputLabel id="role-label">Role</InputLabel>
@@ -972,7 +1135,9 @@ const EmployeeDetails = () => {
                   {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
                 </FormControl>
               </div> */}
-              <div className="col-md-3 mb-3">
+
+              {/* Reporting Person */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingPerson}>
                   <InputLabel id="reportingPerson-label">Reporting Person</InputLabel>
                   <Select
@@ -990,7 +1155,59 @@ const EmployeeDetails = () => {
                   </Select>
                   {fieldErrors.reportingPerson && <FormHelperText>{fieldErrors.reportingPerson}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              {/* <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={designationList}
+                  getOptionLabel={(option) => option.reportingPerson || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={designationList.find((c) => c.reportingPerson === formData.employeeName) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "designation", value: newValue ? newValue.reportingPerson : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Reporting Person"
+                      name="employeeName"
+                      error={Boolean(fieldErrors.employeeName)}
+                      helperText={fieldErrors.employeeName || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={allReportingPerson}
+                  getOptionLabel={(option) => option.employeeName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={allReportingPerson.find((c) => c.employeeName === formData.reportingPerson) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "reportingPerson", value: newValue ? newValue.employeeName : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Reporting Person"
+                      name="reportingPerson"
+                      error={Boolean(fieldErrors.reportingPerson)}
+                      helperText={fieldErrors.reportingPerson || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+              {/* Reporting Designation */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Reporting Designation"
@@ -1006,6 +1223,8 @@ const EmployeeDetails = () => {
                 />
               </div>
               <h5 className="mb-4 mt-2">Personal Details</h5>
+
+              {/* Date of Birth */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled" size="small">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1024,6 +1243,8 @@ const EmployeeDetails = () => {
                   </LocalizationProvider>
                 </FormControl>
               </div>
+
+              {/* Blood Group */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Blood Group"
@@ -1037,6 +1258,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.bloodGroup}
                 />
               </div>
+
+              {/* Mobile No */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Mobile No"
@@ -1051,6 +1274,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.mobileNo}
                 />
               </div>
+
+              {/* Alternative Mobile No */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Alternative Mobile No"
@@ -1065,6 +1290,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.alternativeMobile}
                 />
               </div>
+
+              {/* Aadhaar Number */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Aadhaar Number"
@@ -1078,6 +1305,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.aadhaarNo}
                 />
               </div>
+
+              {/* Pan Number */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Pan Number"
@@ -1091,7 +1320,10 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.panNo}
                 />
               </div>
+
               <h5 className="mb-4 mt-2">Bank Details</h5>
+
+              {/* Account Number */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Account Number"
@@ -1105,6 +1337,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.accountNo}
                 />
               </div>
+
+              {/* Account Holder Name */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Account Holder Name"
@@ -1118,6 +1352,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.accountholderName}
                 />
               </div>
+
+              {/* IFSC Code */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="IFSC Code"
@@ -1131,6 +1367,8 @@ const EmployeeDetails = () => {
                   helperText={fieldErrors.ifscCode}
                 />
               </div>
+
+              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
@@ -1355,7 +1593,7 @@ const EmployeeDetails = () => {
             </div>
           </>
         ) : (
-          <CommonListViewTable data={listViewData} columns={columns} blockEdit={true} toEdit={getEmployeeDetailsById} />
+          <CommonListViewTable data={listViewData} columns={columns} blockEdit={true} toEdit={getEmployeeDetailsById} enableEditing={true} />
         )}
       </div>
     </div>

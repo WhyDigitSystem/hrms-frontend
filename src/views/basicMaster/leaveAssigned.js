@@ -4,8 +4,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import {TextField, FormControl } from '@mui/material';
-import { InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
+import { TextField, FormControl } from '@mui/material';
+import { InputLabel, Select, MenuItem, FormHelperText, Autocomplete } from '@mui/material';
 import apiCalls from 'apicall';
 import { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
@@ -128,26 +128,26 @@ export const LeaveAssigned = () => {
     let additionalData = {};
 
     if (name === 'designation') {
-        const selectedDesignation = designationList.find((row) => row.designationName === value);
-        additionalData.designationCode = selectedDesignation ? selectedDesignation.designationCode : '';
+      const selectedDesignation = designationList.find((row) => row.designationName === value);
+      additionalData.designationCode = selectedDesignation ? selectedDesignation.designationCode : '';
     }
 
     if (name === 'leaveType') {
-        const selectedLeaveType = allLeaveType.find((row) => row.leaveType === value);
-        additionalData.leaveCode = selectedLeaveType ? selectedLeaveType.leaveCode : '';
+      const selectedLeaveType = allLeaveType.find((row) => row.leaveType === value);
+      additionalData.leaveCode = selectedLeaveType ? selectedLeaveType.leaveCode : '';
     }
 
     setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: updatedValue,
-        ...additionalData,
+      ...prevFormData,
+      [name]: updatedValue,
+      ...additionalData,
     }));
 
     setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: '',
+      ...prevErrors,
+      [name]: '',
     }));
-};
+  };
 
   const handleClear = () => {
     setFormData({
@@ -254,14 +254,16 @@ export const LeaveAssigned = () => {
             <CommonListViewTable
               data={listViewData}
               columns={listViewColumns}
-              blockEdit={true} // DISAPLE THE MODAL IF TRUE
+              blockEdit={true} 
               toEdit={getAllDesignationById}
+              enableEditing={true}
             />
           </div>
         ) : (
           <>
             <div className="row">
-              <div className="col-md-3 mb-3">
+              {/* Designation */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.designation}>
                   <InputLabel id="designation-label">Designation</InputLabel>
                   <Select
@@ -280,8 +282,39 @@ export const LeaveAssigned = () => {
                   </Select>
                   {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={designationList}
+                  getOptionLabel={(option) => option.designationName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={designationList.find((c) => c.designationName === formData.designation) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "designation", value: newValue ? newValue.designationName : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Designation"
+                      name="designation"
+                      error={Boolean(fieldErrors.designation)}
+                      helperText={fieldErrors.designation || ""}
+                      variant="outlined"
+                      fullWidth
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+
+
+              {/* Leave Type */}
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.leaveType}>
                   <InputLabel id="leaveType-label">Leave Type</InputLabel>
                   <Select
@@ -300,7 +333,38 @@ export const LeaveAssigned = () => {
                   </Select>
                   {fieldErrors.leaveType && <FormHelperText>{fieldErrors.leaveType}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={allLeaveType}
+                  getOptionLabel={(option) => option.leaveType || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={allLeaveType.find((c) => c.leaveType === formData.leaveType) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "leaveType", value: newValue ? newValue.leaveType : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Leave Type"
+                      name="leaveType"
+                      error={Boolean(fieldErrors.leaveType)}
+                      helperText={fieldErrors.leaveType || ""}
+                      variant="outlined"
+                      fullWidth
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+
+              {/* Total Leave */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Total Leave"
@@ -314,6 +378,8 @@ export const LeaveAssigned = () => {
                   helperText={fieldErrors.totalLeave}
                 />
               </div>
+
+              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} />}
@@ -322,6 +388,7 @@ export const LeaveAssigned = () => {
                   labelPlacement="end"
                 />
               </div>
+
             </div>
           </>
         )}

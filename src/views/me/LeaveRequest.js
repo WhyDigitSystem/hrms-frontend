@@ -142,6 +142,29 @@ const LeaveRequest = () => {
     }
   };
 
+
+  // calculateLeavedays
+  const calculateLeavedays = async (fromDate, toDate) => {
+    try {
+      if (!fromDate || !toDate) return;
+
+      // Convert dates to API-friendly format
+      const formattedFromDate = dayjs(fromDate).format("YYYY-MM-DD");
+      const formattedToDate = dayjs(toDate).format("YYYY-MM-DD");
+
+      const result = await apiCalls(
+        'get',
+        `/leaveprocess/calculateLeavedays?fromDate=${encodeURIComponent(formattedFromDate)}&orgId=${orgId}&toDate=${encodeURIComponent(formattedToDate)}`
+      );
+
+      if (result.workingDays !== undefined) {
+        setFormData((prev) => ({ ...prev, totalDays: result.workingDays }));
+      }
+    } catch (error) {
+      console.error("Error fetching leave days:", error);
+    }
+  };
+
   // Edit API
   const getLeaveRequestById = async (row) => {
     console.log('THE SELECTED LEAVE REQUEST ID IS:', row.original.id);
@@ -225,123 +248,123 @@ const LeaveRequest = () => {
   //   }));
   // };
 
-//   const handleInputChange = (e) => {
-//     const { name, value, checked, type } = e.target;
-//     let inputValue = value;
+  //   const handleInputChange = (e) => {
+  //     const { name, value, checked, type } = e.target;
+  //     let inputValue = value;
 
-//     // Validation Rules
-//     const textRegex = /^[A-Za-z ]*$/;
-//     const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+  //     // Validation Rules
+  //     const textRegex = /^[A-Za-z ]*$/;
+  //     const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
 
-//     // Convert to Uppercase for text fields
-//     if (type === 'text' || type === 'textarea') {
-//         inputValue = inputValue.toUpperCase();
-//     } else if (name === 'email') {
-//         inputValue = inputValue.toLowerCase();
-//     }
+  //     // Convert to Uppercase for text fields
+  //     if (type === 'text' || type === 'textarea') {
+  //         inputValue = inputValue.toUpperCase();
+  //     } else if (name === 'email') {
+  //         inputValue = inputValue.toLowerCase();
+  //     }
 
-//     // Checkbox Handling
-//     if (type === 'checkbox') {
-//         inputValue = checked;
-//     }
+  //     // Checkbox Handling
+  //     if (type === 'checkbox') {
+  //         inputValue = checked;
+  //     }
 
-//     // Validate Specific Fields
-//     let errorMessage = '';
-//     if (name === 'employeeName' && !textRegex.test(value)) {
-//         errorMessage = 'Invalid Format';
-//     } else if (name === 'employeeCode' && !codeRegex.test(value)) {
-//         errorMessage = 'Invalid Format';
-//     }
+  //     // Validate Specific Fields
+  //     let errorMessage = '';
+  //     if (name === 'employeeName' && !textRegex.test(value)) {
+  //         errorMessage = 'Invalid Format';
+  //     } else if (name === 'employeeCode' && !codeRegex.test(value)) {
+  //         errorMessage = 'Invalid Format';
+  //     }
 
-//     // Branch Selection Handling
-//     if (name === 'branch') {
-//         const selectedBranch = branchList.find((br) => br.branch === value);
-//         setFormData((prevData) => ({
-//             ...prevData,
-//             branch: value,
-//             branchCode: selectedBranch ? selectedBranch.branchCode : ''
-//         }));
-//     } 
-//     // Reset fromDate & toDate when leaveType is cleared
-//     else if (name === 'leaveType' && !value) {
-//         setFormData((prevData) => ({
-//             ...prevData,
-//             leaveType: '',
-//             fromDate: null,
-//             toDate: null,
-//             totalDays: ''
-//         }));
-//     } 
-//     // Prevent selecting toDate before fromDate
-//     else if (name === 'toDate' && !formData.fromDate) {
-//         showErrorDialog("Please select From Date first.");
-//     } 
-//     else {
-//         setFormData((prevData) => ({
-//             ...prevData,
-//             [name]: inputValue
-//         }));
-//     }
+  //     // Branch Selection Handling
+  //     if (name === 'branch') {
+  //         const selectedBranch = branchList.find((br) => br.branch === value);
+  //         setFormData((prevData) => ({
+  //             ...prevData,
+  //             branch: value,
+  //             branchCode: selectedBranch ? selectedBranch.branchCode : ''
+  //         }));
+  //     } 
+  //     // Reset fromDate & toDate when leaveType is cleared
+  //     else if (name === 'leaveType' && !value) {
+  //         setFormData((prevData) => ({
+  //             ...prevData,
+  //             leaveType: '',
+  //             fromDate: null,
+  //             toDate: null,
+  //             totalDays: ''
+  //         }));
+  //     } 
+  //     // Prevent selecting toDate before fromDate
+  //     else if (name === 'toDate' && !formData.fromDate) {
+  //         showErrorDialog("Please select From Date first.");
+  //     } 
+  //     else {
+  //         setFormData((prevData) => ({
+  //             ...prevData,
+  //             [name]: inputValue
+  //         }));
+  //     }
 
-//     // Update Errors
-//     setFieldErrors((prevErrors) => ({
-//         ...prevErrors,
-//         [name]: errorMessage
-//     }));
-// };
+  //     // Update Errors
+  //     setFieldErrors((prevErrors) => ({
+  //         ...prevErrors,
+  //         [name]: errorMessage
+  //     }));
+  // };
 
-const handleInputChange = (e) => {
-  const { name, value, checked, type } = e.target;
-  let inputValue = value;
+  const handleInputChange = (e) => {
+    const { name, value, checked, type } = e.target;
+    let inputValue = value;
 
-  // Validation Rules
-  const textRegex = /^[A-Za-z ]*$/;
-  const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+    // Validation Rules
+    const textRegex = /^[A-Za-z ]*$/;
+    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
 
-  // Convert to Uppercase for text fields
-  if (type === 'text' || type === 'textarea') {
+    // Convert to Uppercase for text fields
+    if (type === 'text' || type === 'textarea') {
       inputValue = inputValue.toUpperCase();
-  } else if (name === 'email') {
+    } else if (name === 'email') {
       inputValue = inputValue.toLowerCase();
-  }
+    }
 
-  // Checkbox Handling
-  if (type === 'checkbox') {
+    // Checkbox Handling
+    if (type === 'checkbox') {
       inputValue = checked;
-  }
+    }
 
-  // Validate Specific Fields
-  let errorMessage = '';
-  if (name === 'employeeName' && !textRegex.test(value)) {
+    // Validate Specific Fields
+    let errorMessage = '';
+    if (name === 'employeeName' && !textRegex.test(value)) {
       errorMessage = 'Invalid Format';
-  } else if (name === 'employeeCode' && !codeRegex.test(value)) {
+    } else if (name === 'employeeCode' && !codeRegex.test(value)) {
       errorMessage = 'Invalid Format';
-  }
+    }
 
-  // Branch Selection Handling
-  if (name === 'branch') {
+    // Branch Selection Handling
+    if (name === 'branch') {
       const selectedBranch = branchList.find((br) => br.branch === value);
       setFormData((prevData) => ({
-          ...prevData,
-          branch: value,
-          branchCode: selectedBranch ? selectedBranch.branchCode : ''
+        ...prevData,
+        branch: value,
+        branchCode: selectedBranch ? selectedBranch.branchCode : ''
       }));
-  } 
-  // Reset fromDate & toDate when leaveType is cleared
-  else if (name === 'leaveType' && !value) {
+    }
+    // Reset fromDate & toDate when leaveType is cleared
+    else if (name === 'leaveType' && !value) {
       setFormData((prevData) => ({
-          ...prevData,
-          leaveType: '',
-          fromDate: null,
-          toDate: null,
-          totalDays: ''
+        ...prevData,
+        leaveType: '',
+        fromDate: null,
+        toDate: null,
+        totalDays: ''
       }));
-  } 
-  // Prevent selecting toDate before fromDate
-  else if (name === 'toDate') {
+    }
+    // Prevent selecting toDate before fromDate
+    else if (name === 'toDate') {
       if (!formData.fromDate) {
-          showErrorDialog("Please select From Date first.");
-          return;
+        showErrorDialog("Please select From Date first.");
+        return;
       }
 
       // Calculate the difference between fromDate and toDate
@@ -352,25 +375,25 @@ const handleInputChange = (e) => {
 
       // Check if the selected leave type has a limit
       if (formData.leaveType && formData.leaveCount) {
-          if (daysDifference > formData.leaveCount) {
-              showErrorDialog(`You can only select up to ${formData.leaveCount} day(s) for this leave.`);
-              return;
-          }
+        if (daysDifference > formData.leaveCount) {
+          showErrorDialog(`You can only select up to ${formData.leaveCount} day(s) for this leave.`);
+          return;
+        }
       }
-  }
+    }
 
-  // Update formData
-  setFormData((prevData) => ({
+    // Update formData
+    setFormData((prevData) => ({
       ...prevData,
       [name]: inputValue
-  }));
+    }));
 
-  // Update Errors
-  setFieldErrors((prevErrors) => ({
+    // Update Errors
+    setFieldErrors((prevErrors) => ({
       ...prevErrors,
       [name]: errorMessage
-  }));
-};
+    }));
+  };
 
 
   // handleClear
@@ -543,42 +566,27 @@ const handleInputChange = (e) => {
   //   }
   // };
 
-  const handleDateChange = (name, value) => {
+  const handleDateChange = async (name, value) => {
     if (!value) {
-      setFormData((prevData) => ({ ...prevData, [name]: null, totalDays: '' }));
+      setFormData((prevData) => ({ ...prevData, [name]: null, totalDays: "" }));
       return;
     }
-  
-    // Check if Leave Type is selected before setting To Date
+
+    // Ensure Leave Type is selected before proceeding
     if (!formData.leaveType) {
       showErrorDialog("Please select a Leave Type.");
       return;
     }
-  
-    const fromDate = name === 'fromDate' ? value : formData.fromDate;
-    const toDate = name === 'toDate' ? value : formData.toDate;
-  
-    // Prevent selecting To Date before From Date
-    if (name === 'toDate' && !fromDate) {
-      showErrorDialog("Please select From Date first.");
-      return;
-    }
-  
-    if (fromDate && name === 'toDate') {
-      const diffDays = dayjs(value).diff(dayjs(fromDate), 'day') + 1;
-      const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-  
-      if (selectedLeave && selectedLeave.leaveType !== "Loss Of Pay" && parseInt(diffDays) > parseInt(selectedLeave.leaveDays)) {
-        showErrorDialog(`You can only take ${selectedLeave.leaveDays} days for ${selectedLeave.leaveType}.`);
-        return; // ❌ Do not update the toDate field
-      }
-  
-      setFormData((prevData) => ({ ...prevData, toDate: value, totalDays: diffDays }));
-    } else {
-      setFormData((prevData) => ({ ...prevData, [name]: value }));
+
+    const updatedFormData = { ...formData, [name]: value };
+    setFormData(updatedFormData);
+
+    // Call API to calculate leave days if both dates are selected
+    if (updatedFormData.fromDate && updatedFormData.toDate) {
+      await calculateLeavedays(updatedFormData.fromDate, updatedFormData.toDate);
     }
   };
-  
+
 
   return (
     <>
@@ -692,10 +700,10 @@ const handleInputChange = (e) => {
                       label="From Date"
                       format="DD-MM-YYYY"
                       slotProps={{
-                        textField: { size: 'small', clearable: true }
+                        textField: { size: "small", clearable: true },
                       }}
                       value={formData.fromDate}
-                      onChange={(newValue) => handleDateChange('fromDate', newValue)}
+                      onChange={(newValue) => handleDateChange("fromDate", newValue)}
                     />
                   </LocalizationProvider>
                 </FormControl>
@@ -709,10 +717,10 @@ const handleInputChange = (e) => {
                       label="To Date"
                       format="DD-MM-YYYY"
                       slotProps={{
-                        textField: { size: 'small', clearable: true }
+                        textField: { size: "small", clearable: true },
                       }}
                       value={formData.toDate}
-                      onChange={(newValue) => handleDateChange('toDate', newValue)}
+                      onChange={(newValue) => handleDateChange("toDate", newValue)}
                     />
                   </LocalizationProvider>
                 </FormControl>
@@ -725,7 +733,7 @@ const handleInputChange = (e) => {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  value={formData.totalDays}
+                  value={formData.totalDays || 0}
                   error={!!fieldErrors.totalDays}
                   helperText={fieldErrors.totalDays}
                   disabled

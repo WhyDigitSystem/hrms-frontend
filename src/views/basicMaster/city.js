@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, ButtonBase, FormHelperText, Tooltip, TextField, Checkbox, FormControlLabel } from '@mui/material';
+import { Avatar, ButtonBase, FormHelperText, Tooltip, TextField, Checkbox, FormControlLabel, Autocomplete } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -26,6 +26,7 @@ export const City = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [countryList, setCountryList] = useState([]);
   const [stateList, setStateList] = useState([]);
+  const [companyList, setCompanyList] = useState([]);
 
   const [formData, setFormData] = useState({
     cityCode: '',
@@ -51,6 +52,7 @@ export const City = () => {
     }
   }, [formData.country]);
 
+  // getAllCountries
   const getAllCountries = async () => {
     try {
       const countryData = await getAllActiveCountries(orgId);
@@ -59,6 +61,8 @@ export const City = () => {
       console.error('Error fetching country data:', error);
     }
   };
+
+  // getAllStates
   const getAllStates = async () => {
     try {
       const stateData = await getAllActiveStatesByCountry(formData.country, orgId);
@@ -68,52 +72,41 @@ export const City = () => {
     }
   };
 
-  // const handleInputChange = (e) => {
-  //   const { name, value, checked } = e.target;
-  //   const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-  //   const nameRegex = /^[A-Za-z ]*$/;
+  const handleInputChange = (e, newValue, fieldName) => {
+    if (e && e.target) {
+      // Standard input handling
+      const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+      const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+      const nameRegex = /^[A-Za-z ]*$/;
 
-  //   if (name === 'cityCode' && !codeRegex.test(value)) {
-  //     setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-  //   } else if (name === 'cityCode' && value.length > 3) {
-  //     setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
-  //   } else if (name === 'cityName' && !nameRegex.test(value)) {
-  //     setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-  //   } else {
-  //     setFormData({ ...formData, [name]: name === 'active' ? checked : value.toUpperCase() });
-  //     setFieldErrors({ ...fieldErrors, [name]: '' });
-  //   }
-  // };
+      if (name === 'cityCode' && !codeRegex.test(value)) {
+        setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
+      } else if (name === 'cityCode' && value.length > 3) {
+        setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
+      } else if (name === 'cityName' && !nameRegex.test(value)) {
+        setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
+      } else {
+        setFormData({
+          ...formData,
+          [name]: name === 'active' ? checked : value.toUpperCase(),
+        });
+        setFieldErrors({ ...fieldErrors, [name]: '' });
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-    const nameRegex = /^[A-Za-z ]*$/;
-
-    if (name === 'cityCode' && !codeRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else if (name === 'cityCode' && value.length > 3) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
-    } else if (name === 'cityName' && !nameRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: name === 'active' ? checked : value.toUpperCase()
-      });
-      setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Update the cursor position after the input change
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
+        if (type === 'text' || type === 'textarea') {
+          setTimeout(() => {
+            const inputElement = document.getElementsByName(name)[0];
+            if (inputElement) {
+              inputElement.setSelectionRange(selectionStart, selectionEnd);
+            }
+          }, 0);
+        }
       }
+    } else if (fieldName) {
+      // Handling Autocomplete selections
+      setFormData({ ...formData, [fieldName]: newValue || '' });
     }
   };
+
 
   const handleClear = () => {
     setFormData({
@@ -255,9 +248,10 @@ export const City = () => {
         ) : (
           <>
             <div className="row">
+              {/* City Code */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Code"
+                  label="City Code"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -268,9 +262,10 @@ export const City = () => {
                   helperText={fieldErrors.cityCode}
                 />
               </div>
+              {/* City Name */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Name"
+                  label="City Name"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -282,7 +277,7 @@ export const City = () => {
                 />
               </div>
 
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
                   <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
@@ -295,8 +290,36 @@ export const City = () => {
                   </Select>
                   {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
+
+              {/* Country List */}
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={countryList}
+                  getOptionLabel={(option) => option.countryName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={countryList.find((c) => c.countryName === formData.country) || null}
+                  onChange={(event, newValue) => handleInputChange(null, newValue ? newValue.countryName : "", "country")}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Country"
+                      name="country"
+                      error={Boolean(fieldErrors.country)}
+                      helperText={fieldErrors.country || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+
+              </div>
+
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.state}>
                   <InputLabel id="state-label">State</InputLabel>
                   <Select labelId="state-label" label="State" value={formData.state} onChange={handleInputChange} name="state">
@@ -308,7 +331,40 @@ export const City = () => {
                   </Select>
                   {fieldErrors.state && <FormHelperText>{fieldErrors.state}</FormHelperText>}
                 </FormControl>
+              </div> */}
+
+              {/* State Name */}
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  disablePortal
+                  options={stateList}
+                  getOptionLabel={(option) => option.stateName || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={stateList.find((c) => c.stateName === formData.state) || null}
+                  onChange={(event, newValue) => {
+                    setFormData((prevData) => ({
+                      ...prevData,
+                      state: newValue ? newValue.stateName : "",
+                    }));
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="State"
+                      name="state"
+                      error={Boolean(fieldErrors.state)}
+                      helperText={fieldErrors.state || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
+
+              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

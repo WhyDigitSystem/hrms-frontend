@@ -18,12 +18,13 @@ import CurrencyExchangeRates from './ExRateDash';
 import UpcomingHolidayCard from './UpcomingHolidayCard';
 import LeaveBalance from './LeaveBalance';
 import CheckinDetails from './CheckinDetails';
-import Announcement from './Announcements';
+import Announcement from './Announcements/Announcements';
 import Organization from './Organization';
 import Inbox from './Inbox';
 import TimeDate from './TimeDate';
 import BirthdayNews from './BirthdayNews'
 import Main from './SocialMedia/Main'
+import Home from './Announcements/Home'
 
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
@@ -62,31 +63,22 @@ const Dashboard = () => {
         <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
           <Grid item lg={6} md={12} sm={12} xs={12} >
             <CheckinDetails isLoading={isLoading} />
+            <TimeDate isLoading={isLoading} />
           </Grid>
           <Grid item sm={12} xs={12} md={12} lg={6}>
-            {/* <Organization isLoading={isLoading} /> */}
             <Main isLoading={isLoading} />
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
-            {/* <Announcement isLoading={isLoading} /> */}
-            <TimeDate isLoading={isLoading} />
+            <UpcomingHolidayCard isLoading={isLoading} />
+          </Grid>
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            <Home />
+          </Grid>
+          <Grid item lg={6} md={12} sm={12} xs={12}>
+            <BirthdayNews isLoading={isLoading} />
+          </Grid>
+          <Grid item lg={6} md={12} sm={12} xs={12}>
             <Inbox isLoading={isLoading} />
-
-          </Grid>
-          <Grid item lg={6} md={12} sm={12} xs={12}>
-            {/* <LeaveBalance isLoading={isLoading} /> */}
-            {/* <Inbox isLoading={isLoading} /> */}
-              <Announcement isLoading={isLoading} />
-
-          </Grid>
-          <Grid item lg={6} md={12} sm={12} xs={12}>
-            {/* <TimeDate isLoading={isLoading} /> */}
-              {/* <Announcement isLoading={isLoading} /> */}
-              <BirthdayNews isLoading={isLoading} />
-          </Grid>
-          <Grid item lg={6} md={12} sm={12} xs={12}>
-            {/* <TimeDate isLoading={isLoading} /> */}
-              <UpcomingHolidayCard isLoading={isLoading} />
           </Grid>
         </Grid>
       </Grid>
@@ -100,7 +92,7 @@ const Dashboard = () => {
             {/* <UpcomingHolidayCard isLoading={isLoading} /> */}
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
-          {/* <UpcomingHolidayCard isLoading={isLoading} /> */}
+            {/* <UpcomingHolidayCard isLoading={isLoading} /> */}
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
             {/* <LeaveBalance isLoading={isLoading} /> */}

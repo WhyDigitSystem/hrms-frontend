@@ -19,7 +19,7 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { encryptPassword } from 'views/utilities/encryptPassword';
-import { Checkbox, FormHelperText, FormControlLabel, MenuItem } from '@mui/material';
+import { Checkbox, FormHelperText, FormControlLabel, MenuItem, Autocomplete } from '@mui/material';
 
 const LeaveType = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -94,6 +94,18 @@ const LeaveType = () => {
       console.error('Error fetching data:', error);
     }
   };
+
+  const salaryDeductionList = [
+    { label: "Yes", value: "Yes" },
+    { label: "No", value: "No" },
+  ];
+
+  const leaveApplicableList = [
+    { label: "All", value: "All" },
+    { label: "Male", value: "Male" },
+    { label: "Female", value: "Female" },
+  ];
+
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
@@ -254,6 +266,7 @@ const LeaveType = () => {
         ) : (
           <>
             <div className="row">
+              {/* Leave Type */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Leave Type"
@@ -267,6 +280,8 @@ const LeaveType = () => {
                   helperText={fieldErrors.leaveType}
                 />
               </div>
+
+              {/* Leave Code */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Leave Code"
@@ -280,7 +295,34 @@ const LeaveType = () => {
                   helperText={fieldErrors.leaveCode}
                 />
               </div>
+
+              {/* Leave Applicable */}
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={leaveApplicableList}
+                  getOptionLabel={(option) => option.label}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={leaveApplicableList.find((c) => c.value === formData.leaveApplicable) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "leaveApplicable", value: newValue ? newValue.value : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Leave Applicable"
+                      name="leaveApplicable"
+                      error={Boolean(fieldErrors.leaveApplicable)}
+                      helperText={fieldErrors.leaveApplicable || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              {/* <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.leaveApplicable}>
                   <InputLabel id="leaveApplicable">Leave Applicable</InputLabel>
                   <Select
@@ -297,8 +339,36 @@ const LeaveType = () => {
                   </Select>
                   {fieldErrors.leaveApplicable && <FormHelperText>{fieldErrors.leaveApplicable}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
+
+              {/* Salary Deduction */}
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={salaryDeductionList}
+                  getOptionLabel={(option) => option.label}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={salaryDeductionList.find((c) => c.value === formData.salaryDeduction) || null}
+                  onChange={(event, newValue) =>
+                    handleInputChange({ target: { name: "salaryDeduction", value: newValue ? newValue.value : "" } })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Salary Deduction"
+                      name="salaryDeduction"
+                      error={Boolean(fieldErrors.salaryDeduction)}
+                      helperText={fieldErrors.salaryDeduction || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+
+              {/* <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.salaryDeduction}>
                   <InputLabel id="salaryDeduction">Salary Deduction</InputLabel>
                   <Select
@@ -314,7 +384,8 @@ const LeaveType = () => {
                   </Select>
                   {fieldErrors.salaryDeduction && <FormHelperText>{fieldErrors.salaryDeduction}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
+
               {/* {formData.salaryDeduction == 'No' && (
                 <>
                   <div className="col-md-3 mb-3">

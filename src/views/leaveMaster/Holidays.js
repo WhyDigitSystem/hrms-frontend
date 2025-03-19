@@ -21,7 +21,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { FormHelperText, MenuItem } from '@mui/material';
+import { FormHelperText, MenuItem, Autocomplete } from '@mui/material';
 import { date } from 'yup';
 
 const Holidays = () => {
@@ -70,13 +70,13 @@ const Holidays = () => {
   const getAllHolidayByOrgId = async () => {
     try {
       const response = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
-  
+
       if (response.status === true) {
         const formattedData = response.paramObjectsMap.holidayVO.map((holiday) => ({
           ...holiday,
-          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '', 
+          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '',
         }));
-  
+
         setListViewData(formattedData);
       } else {
         console.error('API Error:', response);
@@ -85,7 +85,7 @@ const Holidays = () => {
       console.error('Error fetching data:', error);
     }
   };
-  
+
 
 
 
@@ -253,19 +253,19 @@ const Holidays = () => {
       setFieldErrors((prev) => ({ ...prev, holidayDate: 'Invalid Date' }));
       return;
     }
-  
+
     const selectedDate = dayjs(newValue);
     const formattedDate = selectedDate.format('YYYY-MM-DD'); // Ensure correct storage format
-  
+
     setFormData((prev) => ({
       ...prev,
-      holidayDate: formattedDate, 
+      holidayDate: formattedDate,
       day: selectedDate.format('dddd') // Extract day name correctly
     }));
-  
+
     setFieldErrors((prev) => ({ ...prev, holidayDate: '' })); // Clear error if valid
   };
-  
+
 
 
 
@@ -305,7 +305,7 @@ const Holidays = () => {
                       slotProps={{
                         textField: { size: 'small', clearable: true }
                       }}
-                      value={formData.holidayDate ? dayjs(formData.holidayDate, 'YYYY-MM-DD') : null} 
+                      value={formData.holidayDate ? dayjs(formData.holidayDate, 'YYYY-MM-DD') : null}
                       onChange={handleDateChange}
                     // onChange={(newValue) => setFormData({ ...formData, date: newValue })}
                     />
@@ -344,6 +344,38 @@ const Holidays = () => {
                 />
               </div>
               <div className="col-md-3 mb-3">
+                <Autocomplete
+                  options={branchList}
+                  getOptionLabel={(option) => option.branch || ""}
+                  sx={{ width: "100%" }}
+                  size="small"
+                  value={branchList.find((c) => c.branch === formData.branchName) || null}
+                  onChange={(event, newValue) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      branchName: newValue ? newValue.branch : "",
+                    }));
+                    setFieldErrors((prevErrors) => ({
+                      ...prevErrors,
+                      branchName: "",
+                    }));
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Branch"
+                      name="branchName"
+                      error={Boolean(fieldErrors.branchName)}
+                      helperText={fieldErrors.branchName || ""}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.branchName}>
                   <InputLabel id="branchName-label">Branch</InputLabel>
                   <Select labelId="branchName-label" label="Branch" value={formData.branchName} onChange={handleInputChange} name="branchName">
@@ -355,7 +387,7 @@ const Holidays = () => {
                   </Select>
                   {fieldErrors.branchName && <FormHelperText>{fieldErrors.branchName}</FormHelperText>}
                 </FormControl>
-              </div>
+              </div> */}
             </div>
           </>
         )}

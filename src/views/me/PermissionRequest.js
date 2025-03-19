@@ -239,8 +239,20 @@ const PermissionRequest = () => {
 
   const handleSave = async () => {
     const errors = {};
+
+    // Check if totalHours exceeds 2 hours
+    if (formData.totalHours && formData.totalHours !== '00:00') {
+      const [hours, minutes] = formData.totalHours.split(':').map(Number);
+      const totalMinutes = hours * 60 + minutes;
+
+      if (totalMinutes > 120) {
+        errors.totalHours = 'Permission request cannot exceed 2 hours.';
+      }
+    }
+
+    // Existing validation rules
     if (!formData.formDate) {
-      errors.formDate = 'formDate is required';
+      errors.formDate = 'Date is required';
     }
     if (!formData.totalHours || formData.totalHours === '00:00') {
       errors.totalHours = 'Total Hours is required';
@@ -348,23 +360,42 @@ const PermissionRequest = () => {
         // Check if toTime is after fromTime
         if (toTime.isAfter(fromTime)) {
           const durationInMinutes = toTime.diff(fromTime, 'minute'); // Get the duration in minutes
-          const totalHoursFormatted = dayjs()
-            .startOf('day') // Start from 00:00
-            .add(durationInMinutes, 'minute') // Add the duration in minutes
-            .format('HH:mm'); // Format as HH:mm
-          updatedFormData.totalHours = totalHoursFormatted;
+
+          // Check if the duration exceeds 2 hours (120 minutes)
+          if (durationInMinutes > 120) {
+            // Set an error message for totalHours
+            setFieldErrors((prevErrors) => ({
+              ...prevErrors,
+              totalHours: 'Permission request cannot exceed 2 hours.',
+            }));
+            updatedFormData.totalHours = '00:00'; // Reset totalHours if the duration is invalid
+          } else {
+            // Clear the error message if the duration is valid
+            setFieldErrors((prevErrors) => ({
+              ...prevErrors,
+              totalHours: '',
+            }));
+
+            // Format the total hours as HH:mm
+            const totalHoursFormatted = dayjs()
+              .startOf('day') // Start from 00:00
+              .add(durationInMinutes, 'minute') // Add the duration in minutes
+              .format('HH:mm'); // Format as HH:mm
+            updatedFormData.totalHours = totalHoursFormatted;
+          }
         } else {
-          updatedFormData.totalHours = '00:00'; // Set to "00:00" if the toTime is earlier than fromTime
+          // If toTime is earlier than fromTime, set an error
+          setFieldErrors((prevErrors) => ({
+            ...prevErrors,
+            totalHours: 'To Time must be after From Time.',
+          }));
+          updatedFormData.totalHours = '00:00'; // Reset totalHours
         }
       }
 
       return updatedFormData;
     });
   };
-
-
-
-
 
   return (
     <>
