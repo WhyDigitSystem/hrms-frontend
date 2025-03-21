@@ -35,6 +35,8 @@ const UserCreation = () => {
   const [branchList, setBranchList] = useState([]);
   const [dataToEdit, setDataToEdit] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [roleDataSelect, setRoleDataSelect] = useState([]);
   const [value, setValue] = useState(0);
   const [editMode, setEditMode] = useState(false);
@@ -239,7 +241,7 @@ const UserCreation = () => {
 
   const getAllUsers = async () => {
     try {
-      const response = await apiCalls('get', `/master/getAllEmployeeByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `/master/getAllEmployeeByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

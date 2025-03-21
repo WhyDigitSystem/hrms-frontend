@@ -211,7 +211,7 @@ const EmployeeDetails = () => {
 
   const getAllEmployees = async () => {
     try {
-      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -279,7 +279,7 @@ const EmployeeDetails = () => {
 
   const getAllReportingPerson = async () => {
     try {
-      const response = await apiCalls('get', `master/getReportingNameForEmployee?orgId=${orgId}`);
+      const response = await apiCalls('get', `master/getReportingNameForEmployee?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

@@ -28,6 +28,8 @@ const LeaveProgress = () => {
   const [data, setData] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
   const [branchList, setBranchList] = useState([]);
@@ -172,7 +174,7 @@ const LeaveProgress = () => {
   };
   const getAllEmployees = async () => {
     try {
-      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

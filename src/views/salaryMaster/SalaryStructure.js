@@ -188,7 +188,7 @@ const SalaryMaster = () => {
 
   const getAllSalaryStructure = async () => {
     try {
-      const response = await apiCalls('get', `/employeemaster/getAllSalaryStructureByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `/employeemaster/getAllSalaryStructureByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -203,7 +203,7 @@ const SalaryMaster = () => {
 
   const getAllEmployeeList = async () => {
     try {
-      const response = await apiCalls('get', `employeemaster/getAllEmployeeByActive?orgId=${orgId}`);
+      const response = await apiCalls('get', `employeemaster/getAllEmployeeByActive?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -218,7 +218,7 @@ const SalaryMaster = () => {
 
   const getSalaryHeadsDetails = async () => {
     try {
-      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

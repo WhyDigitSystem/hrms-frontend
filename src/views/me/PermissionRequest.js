@@ -24,6 +24,8 @@ const PermissionRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -72,7 +74,7 @@ const PermissionRequest = () => {
   // List API
   const getAllPermissionRequestByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `/employeemaster/getAllPermissionRequestByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `/employeemaster/getAllPermissionRequestByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
 
       if (response.status === true) {
         const formattedData = response.paramObjectsMap.permissionRequestVO.map((item) => {

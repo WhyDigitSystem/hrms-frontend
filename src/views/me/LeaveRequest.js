@@ -87,7 +87,7 @@ const LeaveRequest = () => {
   // List API
   const getLeaveRequestByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `/leaveprocess/getLeaveRequestByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `/leaveprocess/getLeaveRequestByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

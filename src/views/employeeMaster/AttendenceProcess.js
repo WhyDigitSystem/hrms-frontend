@@ -57,7 +57,7 @@ const AttendenceProcess = () => {
     try {
       const response = await apiCalls(
         'get',
-        `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
+        `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}&branchCode=${branchCode}`
       );
       console.log('API Response:', response);
 
