@@ -28,9 +28,11 @@ const EmployeeDetails = () => {
   const [data, setData] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
-  const [branchList, setBranchList] = useState([]); 
+  const [branchList, setBranchList] = useState([]);
   const [departmentList, setDepartmentList] = useState([]);
   const [designationList, setDesignationList] = useState([]);
   // const [roleList, setRoleList] = useState([]);
@@ -122,16 +124,16 @@ const EmployeeDetails = () => {
   ]);
 
   const genderList = [
-    { label: "ALL", value: "ALL" },
-    { label: "MALE", value: "MALE" },
-    { label: "FEMALE", value: "FEMALE" },
+    // { label: "ALL", value: "ALL" },
+    { label: 'MALE', value: 'MALE' },
+    { label: 'FEMALE', value: 'FEMALE' }
   ];
 
   const gradeList = [
-    { label: "A GRADE", value: "A GRADE" },
-    { label: "B GRADE", value: "B GRADE" },
-    { label: "C GRADE", value: "C GRADE" },
-    { label: "D GRADE", value: "D GRADE" },
+    { label: 'A GRADE', value: 'A GRADE' },
+    { label: 'B GRADE', value: 'B GRADE' },
+    { label: 'C GRADE', value: 'C GRADE' },
+    { label: 'D GRADE', value: 'D GRADE' }
   ];
 
   const columns = [
@@ -147,9 +149,6 @@ const EmployeeDetails = () => {
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
-  useEffect(() => {
-    // getAllListOfValuesByOrgId();
-  }, []);
   useEffect(() => {
     getAllBranches();
     getAllEmployees();
@@ -255,7 +254,7 @@ const EmployeeDetails = () => {
   //   } catch (error) {
   //     console.error('Error fetching data:', error);
   //   }
-  // };
+  // };   
 
   const getAllLeaveType = async (designationCode, gender) => {
     try {
@@ -573,10 +572,10 @@ const EmployeeDetails = () => {
           rowErrors.leaveCode = 'Leave Code is required';
           detailsTableDataValid = false;
         }
-        if (!row.leaveApplicable) {
-          rowErrors.leaveApplicable = 'Leave Applicable is required';
-          detailsTableDataValid = false;
-        }
+        // if (!row.leaveApplicable) {
+        //   rowErrors.leaveApplicable = 'Leave Applicable is required';
+        //   detailsTableDataValid = false;
+        // }
         // if (!row.totalLeave) {
         //   rowErrors.totalLeave = 'Total Leave is required';
         //   detailsTableDataValid = false;
@@ -647,7 +646,9 @@ const EmployeeDetails = () => {
         resignDate: formData.resignationDate,
         // role: formData.role,
         team: formData.team,
-        updatedBy: loginUserName
+        updatedBy: loginUserName,
+        branch: branch,
+        branchCode: branchCode,
       };
 
       console.log('DATA TO SAVE IS:', saveFormData);
@@ -684,64 +685,128 @@ const EmployeeDetails = () => {
   //   }
   // };
 
+  // const getEmployeeDetailsById = async (row) => {
+  //   console.log('first', row);
+  //   setShowForm(true);
+  //   try {
+  //     const result = await apiCalls('get', `/master/employee/${row.original.id}`);
+
+  //     if (result) {
+  //       const employeeDetailsVO = result.paramObjectsMap.Employee;
+  //       setEditId(row.original.id);
+
+  //       setFormData({
+  //         employeeName: employeeDetailsVO.employeeName || '',
+  //         employeeCode: employeeDetailsVO.employeeCode || '',
+  //         employeeAddress: employeeDetailsVO.employeeAddress || '',
+  //         branch: employeeDetailsVO.branch || '',
+  //         gender: employeeDetailsVO.gender || '',
+  //         email: employeeDetailsVO.email || '',
+  //         doj: employeeDetailsVO.joiningDate || '',
+  //         resignationDate: employeeDetailsVO.resignDate || '',
+  //         grade: employeeDetailsVO.grade || '',
+  //         team: employeeDetailsVO.team || '',
+  //         department: employeeDetailsVO.department || '',
+  //         designation: employeeDetailsVO.designation || '',
+  //         // role: employeeDetailsVO.role || '',
+  //         reportingPerson: employeeDetailsVO.reportnigPerson || '',
+  //         reportingRole: employeeDetailsVO.reportingRole || '',
+  //         dob: employeeDetailsVO.dateOfBirth || '',
+  //         bloodGroup: employeeDetailsVO.bloodGroup || '',
+  //         mobileNo: employeeDetailsVO.mobileNo || '',
+  //         alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
+  //         aadhaarNo: employeeDetailsVO.aadharNo || '',
+  //         panNo: employeeDetailsVO.panNo || '',
+  //         accountNo: employeeDetailsVO.accountNo || '',
+  //         accountholderName: employeeDetailsVO.accountHolderName || '',
+  //         ifscCode: employeeDetailsVO.ifscCode || '',
+  //         active: employeeDetailsVO.active === 'Active' ? true : false,
+  //         id: employeeDetailsVO.id || 0
+  //       });
+  //       setLeaveTypeTable(
+  //         employeeDetailsVO.employeeLeaveVO.map((cl) => ({
+  //           id: cl.id,
+  //           leaveType: cl.leaveType,
+  //           leaveCode: cl.leaveCode,
+  //           // leaveApplicable: cl.leaveApplicable,
+  //           totalLeave: cl.totalLeave,
+  //           // effective: cl.effective,
+  //           effectiveFrom: cl.effectiveFrom
+  //           // carryforward: cl.carryForward
+  //         }))
+  //       );
+
+  //       console.log('DataToEdit', employeeDetailsVO);
+  //     } else {
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
   const getEmployeeDetailsById = async (row) => {
-    console.log('first', row);
+    console.log('Fetching employee details for:', row);
     setShowForm(true);
+
     try {
-      const result = await apiCalls('get', `/master/employee/${row.original.id}`);
+        const result = await apiCalls('get', `/master/employee/${row.original.id}`);
 
-      if (result) {
-        const employeeDetailsVO = result.paramObjectsMap.Employee;
-        setEditId(row.original.id);
+        if (result) {
+            const employeeDetailsVO = result.paramObjectsMap.Employee;
+            setEditId(row.original.id);
 
-        setFormData({
-          employeeName: employeeDetailsVO.employeeName || '',
-          employeeCode: employeeDetailsVO.employeeCode || '',
-          employeeAddress: employeeDetailsVO.employeeAddress || '',
-          branch: employeeDetailsVO.branch || '',
-          gender: employeeDetailsVO.gender || '',
-          email: employeeDetailsVO.email || '',
-          doj: employeeDetailsVO.joiningDate || '',
-          resignationDate: employeeDetailsVO.resignDate || '',
-          grade: employeeDetailsVO.grade || '',
-          team: employeeDetailsVO.team || '',
-          department: employeeDetailsVO.department || '',
-          designation: employeeDetailsVO.designation || '',
-          // role: employeeDetailsVO.role || '',
-          reportingPerson: employeeDetailsVO.reportnigPerson || '',
-          reportingRole: employeeDetailsVO.reportingRole || '',
-          dob: employeeDetailsVO.dateOfBirth || '',
-          bloodGroup: employeeDetailsVO.bloodGroup || '',
-          mobileNo: employeeDetailsVO.mobileNo || '',
-          alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
-          aadhaarNo: employeeDetailsVO.aadharNo || '',
-          panNo: employeeDetailsVO.panNo || '',
-          accountNo: employeeDetailsVO.accountNo || '',
-          accountholderName: employeeDetailsVO.accountHolderName || '',
-          ifscCode: employeeDetailsVO.ifscCode || '',
-          active: employeeDetailsVO.active === 'Active' ? true : false,
-          id: employeeDetailsVO.id || 0
-        });
-        setLeaveTypeTable(
-          employeeDetailsVO.employeeLeaveVO.map((cl) => ({
-            id: cl.id,
-            leaveType: cl.leaveType,
-            leaveCode: cl.leaveCode,
-            leaveApplicable: cl.leaveApplicable,
-            // totalLeave: cl.totalLeave,
-            // effective: cl.effective,
-            effectiveFrom: cl.effectiveFrom
-            // carryforward: cl.carryForward
-          }))
-        );
+            // Get designationCode from the fetched employee data
+            const designationCode = designationList.find(d => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
+            const gender = employeeDetailsVO.gender || '';
 
-        console.log('DataToEdit', employeeDetailsVO);
-      } else {
-      }
+            if (designationCode && gender) {
+                await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
+            }
+
+            // Now set the form data after fetching leave types
+            setFormData({
+                employeeName: employeeDetailsVO.employeeName || '',
+                employeeCode: employeeDetailsVO.employeeCode || '',
+                employeeAddress: employeeDetailsVO.employeeAddress || '',
+                branch: employeeDetailsVO.branch || '',
+                gender: gender,
+                email: employeeDetailsVO.email || '',
+                doj: employeeDetailsVO.joiningDate || '',
+                resignationDate: employeeDetailsVO.resignDate || '',
+                grade: employeeDetailsVO.grade || '',
+                team: employeeDetailsVO.team || '',
+                department: employeeDetailsVO.department || '',
+                designation: employeeDetailsVO.designation || '',
+                reportingPerson: employeeDetailsVO.reportnigPerson || '',
+                reportingRole: employeeDetailsVO.reportingRole || '',
+                dob: employeeDetailsVO.dateOfBirth || '',
+                bloodGroup: employeeDetailsVO.bloodGroup || '',
+                mobileNo: employeeDetailsVO.mobileNo || '',
+                alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
+                aadhaarNo: employeeDetailsVO.aadharNo || '',
+                panNo: employeeDetailsVO.panNo || '',
+                accountNo: employeeDetailsVO.accountNo || '',
+                accountholderName: employeeDetailsVO.accountHolderName || '',
+                ifscCode: employeeDetailsVO.ifscCode || '',
+                active: employeeDetailsVO.active === 'Active',
+                id: employeeDetailsVO.id || 0
+            });
+
+            // Map leave type data
+            setLeaveTypeTable(employeeDetailsVO.employeeLeaveVO.map((cl) => ({
+                id: cl.id,
+                leaveType: cl.leaveType,
+                leaveCode: cl.leaveCode,
+                totalLeave: cl.totalLeave,
+                effectiveFrom: cl.effectiveFrom
+            })));
+
+            console.log('DataToEdit', employeeDetailsVO);
+        }
     } catch (error) {
-      console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error);
     }
-  };
+};
 
   const handleList = () => {
     setShowForm(!showForm);
@@ -755,11 +820,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-            ...r,
-            leaveType: newValue ? newValue.leaveType : '',
-            leaveCode: newValue ? newValue.leaveCode : '',
-            totalLeave: newValue ? newValue.totalLeave : ''
-          }
+              ...r,
+              leaveType: newValue ? newValue.leaveType : '',
+              leaveCode: newValue ? newValue.leaveCode : '',
+              totalLeave: newValue ? newValue.totalLeave : ''
+            }
           : r
       )
     );
@@ -853,23 +918,21 @@ const EmployeeDetails = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={branchList}
-                  getOptionLabel={(option) => option.branch || ""}
-                  sx={{ width: "100%" }}
+                  getOptionLabel={(option) => option.branch || ''}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={branchList.find((c) => c.branch === formData.branch) || null}
-                  onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "branch", value: newValue ? newValue.branch : "" } })
-                  }
+                  onChange={(event, newValue) => handleInputChange({ target: { name: 'branch', value: newValue ? newValue.branch : '' } })}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Branch"
                       name="branch"
                       error={Boolean(fieldErrors.branch)}
-                      helperText={fieldErrors.branch || ""}
+                      helperText={fieldErrors.branch || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -892,22 +955,20 @@ const EmployeeDetails = () => {
                 <Autocomplete
                   options={genderList}
                   getOptionLabel={(option) => option.label}
-                  sx={{ width: "100%" }}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={genderList.find((c) => c.value === formData.gender) || null}
-                  onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "gender", value: newValue ? newValue.value : "" } })
-                  }
+                  onChange={(event, newValue) => handleInputChange({ target: { name: 'gender', value: newValue ? newValue.value : '' } })}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Gender"
                       name="gender"
                       error={Boolean(fieldErrors.gender)}
-                      helperText={fieldErrors.gender || ""}
+                      helperText={fieldErrors.gender || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -979,22 +1040,20 @@ const EmployeeDetails = () => {
                 <Autocomplete
                   options={gradeList}
                   getOptionLabel={(option) => option.label}
-                  sx={{ width: "100%" }}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={gradeList.find((c) => c.value === formData.grade) || null}
-                  onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "grade", value: newValue ? newValue.value : "" } })
-                  }
+                  onChange={(event, newValue) => handleInputChange({ target: { name: 'grade', value: newValue ? newValue.value : '' } })}
                   renderInput={(params) => (
                     <TextField
                       {...params}
                       label="Grade"
                       name="grade"
                       error={Boolean(fieldErrors.grade)}
-                      helperText={fieldErrors.grade || ""}
+                      helperText={fieldErrors.grade || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -1041,12 +1100,12 @@ const EmployeeDetails = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={departmentList}
-                  getOptionLabel={(option) => option.departmentName || ""}
-                  sx={{ width: "100%" }}
+                  getOptionLabel={(option) => option.departmentName || ''}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={departmentList.find((c) => c.departmentName === formData.department) || null}
                   onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "department", value: newValue ? newValue.departmentName : "" } })
+                    handleInputChange({ target: { name: 'department', value: newValue ? newValue.departmentName : '' } })
                   }
                   renderInput={(params) => (
                     <TextField
@@ -1054,10 +1113,10 @@ const EmployeeDetails = () => {
                       label="Department Name"
                       name="department"
                       error={Boolean(fieldErrors.department)}
-                      helperText={fieldErrors.department || ""}
+                      helperText={fieldErrors.department || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -1090,12 +1149,12 @@ const EmployeeDetails = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={designationList}
-                  getOptionLabel={(option) => option.designationName || ""}
-                  sx={{ width: "100%" }}
+                  getOptionLabel={(option) => option.designationName || ''}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={designationList.find((c) => c.designationName === formData.designation) || null}
                   onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "designation", value: newValue ? newValue.designationName : "" } })
+                    handleInputChange({ target: { name: 'designation', value: newValue ? newValue.designationName : '' } })
                   }
                   renderInput={(params) => (
                     <TextField
@@ -1103,16 +1162,15 @@ const EmployeeDetails = () => {
                       label="Designation"
                       name="designation"
                       error={Boolean(fieldErrors.designation)}
-                      helperText={fieldErrors.designation || ""}
+                      helperText={fieldErrors.designation || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
                 />
               </div>
-
 
               {/* <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
@@ -1184,12 +1242,12 @@ const EmployeeDetails = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={allReportingPerson}
-                  getOptionLabel={(option) => option.employeeName || ""}
-                  sx={{ width: "100%" }}
+                  getOptionLabel={(option) => option.employeeName || ''}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={allReportingPerson.find((c) => c.employeeName === formData.reportingPerson) || null}
                   onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "reportingPerson", value: newValue ? newValue.employeeName : "" } })
+                    handleInputChange({ target: { name: 'reportingPerson', value: newValue ? newValue.employeeName : '' } })
                   }
                   renderInput={(params) => (
                     <TextField
@@ -1197,10 +1255,10 @@ const EmployeeDetails = () => {
                       label="Reporting Person"
                       name="reportingPerson"
                       error={Boolean(fieldErrors.reportingPerson)}
-                      helperText={fieldErrors.reportingPerson || ""}
+                      helperText={fieldErrors.reportingPerson || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -1593,7 +1651,13 @@ const EmployeeDetails = () => {
             </div>
           </>
         ) : (
-          <CommonListViewTable data={listViewData} columns={columns} blockEdit={true} toEdit={getEmployeeDetailsById} enableEditing={true} />
+          <CommonListViewTable
+            data={listViewData}
+            columns={columns}
+            blockEdit={true}
+            toEdit={getEmployeeDetailsById}
+            enableEditing={true}
+          />
         )}
       </div>
     </div>
