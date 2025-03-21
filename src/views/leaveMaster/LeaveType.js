@@ -261,6 +261,7 @@ const LeaveType = () => {
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getLeaveTypeById}
+              enableEditing={true}
             />
           </div>
         ) : (

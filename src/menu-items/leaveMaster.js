@@ -36,18 +36,18 @@ const leaveMaster = {
           type: 'item',
           url: '/leaveMaster/LeaveType'
         },
-        {
-          id: 'leaveProcess',
-          title: 'Leave Process',
-          type: 'item',
-          url: '/leaveMaster/LeaveProcess'
-        },
-        {
-          id: 'leaveCreditControl',
-          title: 'Leave Credit Control',
-          type: 'item',
-          url: '/leaveMaster/LeaveCreditControl'
-        },
+        // {
+        //   id: 'leaveProcess',
+        //   title: 'Leave Process',
+        //   type: 'item',
+        //   url: '/leaveMaster/LeaveProcess'
+        // },
+        // {
+        //   id: 'leaveCreditControl',
+        //   title: 'Leave Credit Control',
+        //   type: 'item',
+        //   url: '/leaveMaster/LeaveCreditControl'
+        // },
         {
           id: 'holidays',
           title: 'Holidays',

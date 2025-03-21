@@ -39,6 +39,7 @@ const CheckinDetails = ({ isLoading }) => {
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
   const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
+  const [designation, setDesignation] = useState(localStorage.getItem('designation'));
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null); // State to store check-in time
   const [checkOutTime, setCheckOutTime] = useState(null); // State to store check-out time
@@ -162,7 +163,7 @@ const CheckinDetails = ({ isLoading }) => {
                           {empName}
                         </Typography>
                         <Typography variant="body2" color="secondary.light" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
-                          {empcode} - Software Engineer
+                          {empcode} - {designation}
                         </Typography>
                       </Box>
                     </Box>

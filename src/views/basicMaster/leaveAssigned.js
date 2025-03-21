@@ -173,9 +173,9 @@ export const LeaveAssigned = () => {
     if (!formData.leaveType) {
       errors.leaveType = 'Leave Type is required';
     }
-    if (!formData.totalLeave) {
-      errors.totalLeave = 'Total Leave is required';
-    }
+    // if (!formData.totalLeave) {
+    //   errors.totalLeave = 'Total Leave is required';
+    // }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);

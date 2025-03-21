@@ -16,7 +16,7 @@ const getMenuItems = () => {
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me, team]
+    items: [dashboard, calendar, companySetup]
   };
 
   // Define menu items based on localStorage value

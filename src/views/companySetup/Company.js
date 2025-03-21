@@ -469,6 +469,7 @@ const Company = () => {
               data={listViewData}
               columns={listViewColumns}
               // editCallback={editEmployee}
+              enableEditing={true}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getCompanyById}
             />

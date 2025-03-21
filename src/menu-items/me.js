@@ -56,7 +56,7 @@ const me = {
         },
         {
           id: 'swipeInSwipeOut',
-          title: 'SwipeIn & SwipeOut ',
+          title: 'Check In & Out',
           type: 'item',
           url: '/me/SwipeInSwipeOut',
           icon: icons.AccessTimeIcon 
