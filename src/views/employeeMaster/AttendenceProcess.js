@@ -24,6 +24,8 @@ const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [value, setValue] = useState(0);
   const [formData, setFormData] = useState({
     fromDate: null,
@@ -89,6 +91,7 @@ const AttendenceProcess = () => {
       fromDate: null,
       toDate: null
     });
+    setAllLeave([])
   };
 
   const handleChange = (event, newValue) => {
@@ -109,21 +112,22 @@ const AttendenceProcess = () => {
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
   
-
-      const saveData = {
+      const saveData = allLeave.map((leave) => ({
         active: true,
         createdBy: loginUserName,
-        empSalaryDays: allLeave.empSalaryDays,
-        empTotalWorkingDays: allLeave.empTotalWorkingDays,
-        employeeCode: allLeave.employeeCode,
-        employeeName: allLeave.employeeName,
-        lopLeave: allLeave.lopLeave,
-        month: allLeave.month,
+        empSalaryDays: leave.empSalaryDays,
+        empTotalWorkingDays: leave.empTotalWorkingDays,
+        employeeCode: leave.employeeCode,
+        employeeName: leave.employeeName,
+        lopLeave: leave.lopLeave,
+        month: leave.month,
         orgId: orgId,
-        totalCompanyWorkingDays: allLeave.totalCompanyWorkingDays,
-        totalLeave: allLeave.totalLeave,
-        year: allLeave.year,
-      };
+        totalCompanyWorkingDays: leave.totalCompanyWorkingDays,
+        totalLeave: leave.totalLeave,
+        year: leave.year,
+        branch: branch,
+        branchCode: branchCode,
+      }));
   
       console.log('DATA TO SAVE IS:', saveData);
   
@@ -132,10 +136,13 @@ const AttendenceProcess = () => {
   
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('Attendence Process created successfully');
+  
+          // Ensure correct toast usage
+          showToast('success', 'Attendance Process created successfully');
+  
           handleClear(); // Clear form after success
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Attendance Process creation failed');
+          showToast('error', response.paramObjectsMap?.errorMessage || 'Attendance Process creation failed');
         }
       } catch (error) {
         console.error('Error:', error);
