@@ -4,8 +4,12 @@ import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import FormControl from '@mui/material/FormControl';
 import Button from '@mui/material/Button';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
+import { Typography } from '@mui/material';
+
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -27,6 +31,7 @@ const AttendenceProcess = () => {
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [value, setValue] = useState(0);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [formData, setFormData] = useState({
     fromDate: null,
     toDate: null
@@ -100,7 +105,7 @@ const AttendenceProcess = () => {
 
   const handleSave = async () => {
     const errors = {};
-  
+
     // Validate required fields
     if (!formData.fromDate) {
       errors.fromDate = 'From Date is required';
@@ -108,10 +113,10 @@ const AttendenceProcess = () => {
     if (!formData.toDate) {
       errors.toDate = 'To Date is required';
     }
-  
+
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-  
+
       const saveData = allLeave.map((leave) => ({
         active: true,
         createdBy: loginUserName,
@@ -128,18 +133,18 @@ const AttendenceProcess = () => {
         branch: branch,
         branchCode: branchCode,
       }));
-  
+
       console.log('DATA TO SAVE IS:', saveData);
-  
+
       try {
         const response = await apiCalls('put', '/leaveprocess/createUpdateLeaveProcess', saveData);
-  
+
         if (response.status === true) {
           console.log('Response:', response);
-  
+
           // Ensure correct toast usage
           showToast('success', 'Attendance Process created successfully');
-  
+
           handleClear(); // Clear form after success
         } else {
           showToast('error', response.paramObjectsMap?.errorMessage || 'Attendance Process creation failed');
@@ -153,10 +158,27 @@ const AttendenceProcess = () => {
     } else {
       setFieldErrors(errors);
     }
-  };  
+  };
 
   const handleView = () => {
     setListView(!listView);
+  };
+
+  const handleBulkUploadOpen = () => {
+    setUploadOpen(true);
+  };
+
+  const handleBulkUploadClose = () => {
+    setUploadOpen(false);
+  };
+
+  const handleSubmit = async () => {
+    console.log('Submit clicked');
+    handleBulkUploadClose();
+  };
+
+  const handleFileUpload = (event) => {
+    console.log(event.target.files[0]);
   };
 
   return (
@@ -241,8 +263,55 @@ const AttendenceProcess = () => {
                 Cancel
               </Button>
             </div>
+            <div className="col-md-3">
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 4,
+                }}
+              >
+                <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<CloudUploadIcon />}
+                    sx={{
+                      background: 'linear-gradient(90deg, #3f51b5, #5c6bc0)',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      height: '40px',
+                      px: 4,
+                      py: 1,
+                      borderRadius: 2,
+                      boxShadow: '0px 4px 8px rgba(63, 81, 181, 0.2)',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #3949ab, #536dfe)',
+                        boxShadow: '0px 6px 12px rgba(63, 81, 181, 0.3)',
+                      },
+                    }}
+                    onClick={handleBulkUploadOpen}
+                  >
+                    Upload Excel
+                  </Button>
+                </Typography>
+              </Box>
+            </div>
           </div>
-
+          {uploadOpen && (
+            <CommonBulkUpload
+              open={uploadOpen}
+              handleClose={handleBulkUploadClose}
+              dialogTitle="Upload Files"
+              uploadText="Upload File"
+              onSubmit={handleSubmit}
+              handleFileUpload={handleFileUpload}
+              apiUrl="/leaveprocess/uploadLeaveProcess"
+              screen="AttendenceProcess"
+              loginUser={loginUserName}
+              orgId={orgId}
+            />
+          )}
           <div className="row mt-2">
             <Box sx={{ width: '100%' }}>
               <Tabs
