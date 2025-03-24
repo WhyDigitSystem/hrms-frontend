@@ -224,7 +224,7 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
           )}
         </Grid>
 
-        {listViewData.length > 1 && (
+        {listViewData.length > 0 && (
           <Box
             sx={{
               display: "flex",

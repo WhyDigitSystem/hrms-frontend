@@ -47,30 +47,30 @@ function Poll({ blockEdit = false, enableEditing = true }) {
 
   // Fetch all circulars on component mount
   useEffect(() => {
-    getAllCircularByOrgId();
+    // getAllCircularByOrgId();
   }, [orgId]);
 
   // Fetch all circulars by organization ID
-  const getAllCircularByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?orgId=${orgId}`);
-      if (result?.paramObjectsMap?.circularVO) {
-        const formattedData = result.paramObjectsMap.circularVO
-          .map((item, index) => ({
-            id: item.circularId || index,
-            ...item,
-          }))
-          .reverse();
-        setListViewData(formattedData);
-      } else {
-        setListViewData([]);
-      }
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      toast.error('Failed to fetch circulars');
-      setListViewData([]);
-    }
-  };
+  // const getAllCircularByOrgId = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?orgId=${orgId}`);
+  //     if (result?.paramObjectsMap?.circularVO) {
+  //       const formattedData = result.paramObjectsMap.circularVO
+  //         .map((item, index) => ({
+  //           id: item.circularId || index,
+  //           ...item,
+  //         }))
+  //         .reverse();
+  //       setListViewData(formattedData);
+  //     } else {
+  //       setListViewData([]);
+  //     }
+  //   } catch (err) {
+  //     console.error('Error fetching data:', err);
+  //     toast.error('Failed to fetch circulars');
+  //     setListViewData([]);
+  //   }
+  // };
 
   // Handle image click to open modal
   const handleImageClick = (image) => {
@@ -157,7 +157,7 @@ function Poll({ blockEdit = false, enableEditing = true }) {
         toast.success(editId ? 'Post Updated Successfully' : 'Post created successfully');
         setIsLoading(false);
         setOpenCreateModal(false);
-        getAllCircularByOrgId();
+        // getAllCircularByOrgId();
         setFormData({ circularTopic: '', circularcontent: '', postImage: '' });
         setEditId('');
       } else {

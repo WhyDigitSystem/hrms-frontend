@@ -11,13 +11,10 @@ import {
   IconButton,
   Button,
   TextField,
-  Paper,
 } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Divider from '@mui/material/Divider';
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import CommentIcon from '@mui/icons-material/Comment';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
@@ -317,7 +314,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
           )}
         </Grid>
 
-        {listViewData.length > 1 && (
+        {listViewData.length > 0 && (
           <Box
             sx={{
               display: "flex",
@@ -362,21 +359,23 @@ function Post({ blockEdit = false, enableEditing = true }) {
             </Button>
           </Box>
         )}
+
+        {/* Debugging: Log listViewData */}
+        {console.log("listViewData:", listViewData)}
       </Box>
 
       {/* Image Modal */}
-      < Modal open={openModal} onClose={handleCloseModal} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }
-      }>
+      <Modal open={openModal} onClose={handleCloseModal} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
         <Box className="modal-container">
           <IconButton className="modal-close-button" onClick={handleCloseModal}>
             <CloseIcon />
           </IconButton>
           {selectedImage && <img src={selectedImage} alt="Full View" className="modal-image" />}
         </Box>
-      </Modal >
+      </Modal>
 
       {/* Create Post Modal */}
-      < Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
+      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
         <Box className="modal-container" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
           <Typography variant="h6" mb={2}>{editId ? 'Edit Post' : 'Create Post'}</Typography>
           <TextField
@@ -409,7 +408,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
             </Button>
           </Box>
         </Box>
-      </Modal >
+      </Modal>
 
       {/* View More Modal */}
       <Modal
