@@ -10,7 +10,7 @@ const icons = {
 
 const calendar = {
   id: 'calendar',
-  title: 'Calendar',
+  // title: 'Calendar',
   type: 'group',
   children: [
         {

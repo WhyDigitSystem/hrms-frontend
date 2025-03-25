@@ -32,8 +32,7 @@ const icons8 = {
   IconUsersGroup 
 };
 
-// ==============================|| DASHBOARD MENU ITEMS ||============================== //
-
+const userType = localStorage.getItem("userType");
 const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
 
 const screenMapping = {
@@ -43,11 +42,20 @@ const screenMapping = {
   "TODAY ATTENDANCE": 'todayAttendance',
 };
 
-const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+const allScreens = [
+  { id: "leaveApproval", title: "Leave Approval", type: "item", url: "/team/LeaveApproval", icon: icons.IconWorld },
+  { id: "permissionApproval", title: "Permission Approval", type: "item", url: "/team/PermissionApproval", icon: icons1.IconMap },
+  { id: "attendanceReport", title: "Attendance Report", type: "item", url: "/team/AttendanceReport", icon: icons2.IconBuildingSkyscraper },
+  { id: "todayAttendance", title: "Today Attendance", type: "item", url: "/team/TodayAttendance", icon: icons3.IconCashBanknote }
+];
+
+const allowedScreenIds = userType === "ADMIN"
+  ? allScreens.map(screen => screen.id) // Show all screens for ADMIN
+  : allowedScreens.map(screen => screenMapping[screen]).filter(Boolean);
 
 const team = {
   id: 'team',
-  title: 'Team',
+  // title: 'Team',
   //   caption: 'Pages Caption',
   type: 'group',
   children: [

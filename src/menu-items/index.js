@@ -11,25 +11,43 @@ import team from './team';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
-  const localStorageValue = localStorage.getItem('userType') || 'ROLE_ADMIN';
+  const localStorageValue = localStorage.getItem('userType') || 'SADMIN';
 
+  const filteredCompanySetup = {
+    ...companySetup,
+    children: companySetup.children.map((child) => ({
+      ...child,
+      children: child.children.filter((item) => item.id === 'createCompany') // Keeping only "Create Company"
+    }))
+  };
 
-  // Define default menu items
+  const adminCompanySetup = {
+    ...companySetup,
+    children: companySetup.children.map((child) => ({
+      ...child,
+      children: child.children.filter(
+        (item) => item.id === 'company'
+      )
+    }))
+  };
+  
+
   const defaultMenuItems = {
-    items: [dashboard, calendar, companySetup]
+    items: localStorageValue === 'SADMIN'
+      && [filteredCompanySetup] // Show only filteredCompanySetup for SADMIN
   };
 
   // Define menu items based on localStorage value
   switch (localStorageValue) {
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, admin, companySetup, basicMaster,employeeMaster,leaveMaster,salaryMaster, me, team]
+        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, leaveMaster, salaryMaster, me, team]
       };
     case 'USER':
       return {
         items: [dashboard, calendar, me]
       };
-    case 'DEPARTMENT HEAD': 
+    case 'DEPARTMENT HEAD':
       return {
         items: [dashboard, calendar, me, team]
       };

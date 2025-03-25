@@ -94,7 +94,7 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('token', response.data.paramObjectsMap.userVO.token);
         localStorage.setItem('tokenId', response.data.paramObjectsMap.userVO.tokenId);
         localStorage.setItem('userName', response.data.paramObjectsMap.userVO.userName);
-        localStorage.setItem('userType', response.data.paramObjectsMap.userVO.roleVO[0].role);
+        // localStorage.setItem('userType', response.data.paramObjectsMap.userVO.roleVO[0].role);
         localStorage.setItem('employeeCode', response.data.paramObjectsMap.userVO.employeeCode);
         localStorage.setItem('employeeName', response.data.paramObjectsMap.userVO.employeeName);
         localStorage.setItem('branch', response.data.paramObjectsMap.userVO.branch);
@@ -105,6 +105,22 @@ const FirebaseLogin = ({ ...others }) => {
 
         // const userRole = response.data.paramObjectsMap.userVO.roleVO;
         // localStorage.setItem('ROLE', userRole);
+        // const userType = response.data.paramObjectsMap.userVO.userType;
+        // const role = response.data.paramObjectsMap.userVO.roleVO[0].role;
+
+        // if (userType === "SADMIN" || userType === "ADMIN") {
+        //   localStorage.setItem('userType', userType);
+        // } else {
+        //   localStorage.setItem('userType', role);
+        // }
+
+        const userType = response.data?.paramObjectsMap?.userVO?.userType;
+        const role = response.data?.paramObjectsMap?.userVO?.roleVO?.[0]?.role;
+
+        if (userType || role) {
+          localStorage.setItem('userType', userType === 'SADMIN' || userType === 'ADMIN' ? userType : role);
+        }
+
         const userRole = response.data.paramObjectsMap.userVO.roleVO;
         localStorage.setItem('ROLE', userRole);
         const roleVO = response.data.paramObjectsMap.userVO.roleVO;
@@ -123,7 +139,7 @@ const FirebaseLogin = ({ ...others }) => {
         navigate('/dashboard/default');
 
         // setTimeout(() => {
-          window.location.reload();
+        // window.location.reload();
         // }, 50);
 
         if (checked) {

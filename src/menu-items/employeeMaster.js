@@ -6,21 +6,31 @@ const icons = {
   IconKey
 };
 
-// ==============================|| DASHBOARD MENU ITEMS ||============================== //
+
+const userType = localStorage.getItem('userType');
 
 const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
 
 const screenMapping = {
-  "EMPLOYEE CODE GENERATION": 'employeeCodeGeneration',
-  "EMPLOYEE DETAILS": 'employeeDetails',
-  "ATTENDENCE PROCESS": 'attendenceProcess',
+  'EMPLOYEE CODE GENERATION': 'employeeCodeGeneration',
+  'EMPLOYEE DETAILS': 'employeeDetails',
+  'ATTENDENCE PROCESS': 'attendenceProcess'
 };
 
-const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+const allScreens = [
+  { id: 'employeeCodeGeneration', title: 'Employee Code Generation', type: 'item', url: '/employeeMaster/employeeCodeGeneration' },
+  { id: 'employeeDetails', title: 'Employee Details', type: 'item', url: '/employeeMaster/employeeDetails' },
+  { id: 'attendenceProcess', title: 'Attendence Process', type: 'item', url: '/employeeMaster/AttendenceProcess' }
+];
+
+const allowedScreenIds =
+  userType === 'ADMIN'
+    ? allScreens.map((screen) => screen.id) 
+    : allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
 
 const employeeMaster = {
   id: 'employeeMaster',
-  title: 'Employee Master',
+  // title: 'Employee Master',
   type: 'group',
   children: [
     {

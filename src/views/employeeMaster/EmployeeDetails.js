@@ -211,7 +211,7 @@ const EmployeeDetails = () => {
 
   const getAllEmployees = async () => {
     try {
-      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
+      const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -374,9 +374,11 @@ const EmployeeDetails = () => {
         const selectedBranch = branchList.find((br) => br.branch === value);
         setFormData((prevData) => ({
           ...prevData,
-          branch: value,
+          branch: value,  
           branchCode: selectedBranch ? selectedBranch.branchCode : ''
         }));
+        console.log("br", branch);
+
       } else if (type === 'checkbox') {
         setFormData((prevData) => ({ ...prevData, [name]: checked }));
       } else {
@@ -611,6 +613,8 @@ const EmployeeDetails = () => {
       }));
 
       const selectedBranch = branchList.find((br) => br.branch === formData.branch);
+      console.log("brr", selectedBranch.branch);
+      
       const branchCode = selectedBranch ? selectedBranch.branchCode : '';
 
       const saveFormData = {
@@ -621,7 +625,7 @@ const EmployeeDetails = () => {
         active: formData.active,
         alternativeMobileNo: parseInt(formData.alternativeMobile),
         bloodGroup: formData.bloodGroup,
-        branch: formData.branch,
+        branch: selectedBranch.branch,
         branchCode: branchCode,
         cancel: true,
         cancelRemark: null,
@@ -647,8 +651,6 @@ const EmployeeDetails = () => {
         // role: formData.role,
         team: formData.team,
         updatedBy: loginUserName,
-        branch: branch,
-        branchCode: branchCode,
       };
 
       console.log('DATA TO SAVE IS:', saveFormData);

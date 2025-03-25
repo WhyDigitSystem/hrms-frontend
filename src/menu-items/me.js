@@ -8,8 +8,7 @@ const icons = {
   IconUsers, FaPersonWalkingLuggage ,FaUserClock, BeachAccessIcon, AccessTimeIcon   
 };
 
-// ==============================|| DASHBOARD MENU ITEMS ||============================== //
-
+const userType = localStorage.getItem("userType");
 const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
 
 const screenMapping = {
@@ -19,12 +18,20 @@ const screenMapping = {
   "SWIPEIN AND SWIPEOUT": 'swipeInSwipeOut',
 };
 
-const allowedScreenIds = allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+const allScreens = [
+  { id: "permissionRequest", title: "Permission Request", type: "item", url: "/me/permissionRequest", icon: icons.FaUserClock },
+  { id: "leaveRequest", title: "Leave Request", type: "item", url: "/me/leaveRequest", icon: icons.FaPersonWalkingLuggage },
+  { id: "holidayReport", title: "Holiday Report", type: "item", url: "/me/HolidayReport", icon: icons.BeachAccessIcon },
+  { id: "swipeInSwipeOut", title: "Check In & Out", type: "item", url: "/me/SwipeInSwipeOut", icon: icons.AccessTimeIcon }
+];
 
+const allowedScreenIds = userType === "ADMIN"
+  ? allScreens.map(screen => screen.id) // Show all screens for ADMIN
+  : allowedScreens.map(screen => screenMapping[screen]).filter(Boolean);
 
 const me = {
   id: 'me',
-  title: 'Me',
+  // title: 'Me',
   type: 'group',
   children: [
     {
