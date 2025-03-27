@@ -234,23 +234,8 @@ const Main = () => {
             <PollIcon />
             <Typography variant="h6" style={{ fontSize: '14px' }}>POLL</Typography>
           </Box>
-          <Box
-            onClick={() => setNestedTabValue('PRAISE')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              color: nestedTabValue === 'PRAISE' ? theme.palette.primary.main : theme.palette.text.secondary,
-              fontWeight: 600,
-              '&:hover': {
-                color: theme.palette.primary.main,
-              },
-            }}
-          >
-            <PraiseIcon />
-            <Typography variant="h6" style={{ fontSize: '14px' }}>PRAISE</Typography>
-          </Box>
+
+
         </Box>
 
         {/* Content for POST Tab */}
@@ -270,12 +255,11 @@ const Main = () => {
         )}
 
         {/* Content for PRAISE Tab */}
-        {nestedTabValue === 'PRAISE' && (
+        {/* {nestedTabValue === 'PRAISE' && (
           <Box sx={{ mt: 3 }}>
-            {/* Removed the heading */}
             <Praise />
           </Box>
-        )}
+        )} */}
       </CardWrapper>
 
       {/* Modals */}

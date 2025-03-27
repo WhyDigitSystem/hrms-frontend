@@ -65,7 +65,6 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
       }
     } catch (err) {
       console.error('Error fetching data:', err);
-      toast.error('Failed to fetch announcements');
       setListViewData([]);
     }
   };

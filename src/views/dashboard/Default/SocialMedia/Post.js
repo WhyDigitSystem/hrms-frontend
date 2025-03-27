@@ -12,6 +12,14 @@ import {
   Button,
   TextField,
 } from '@mui/material';
+import {
+  List,
+  ListItem,
+  ListItemAvatar,
+  Avatar,
+  ListItemText
+} from '@mui/material';
+import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Divider from '@mui/material/Divider';
@@ -22,6 +30,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useTheme } from '@mui/material/styles';
 import apiCalls from 'apicall';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
 
 function Post({ blockEdit = false, enableEditing = true }) {
   const [listViewData, setListViewData] = useState([]);
@@ -30,24 +40,55 @@ function Post({ blockEdit = false, enableEditing = true }) {
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
   const orgId = localStorage.getItem('orgId');
+  const id = localStorage.getItem('id');
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const loginUserName = localStorage.getItem('userName');
-
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
   const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
     circularcontent: '',
     postImage: '',
   });
+
+
   const [editId, setEditId] = useState('');
 
   const theme = useTheme();
 
+  // Add this function near your other handler functions
+  const handleLike = () => {
+    if (isLiked) {
+      setLikes(likes - 1);
+    } else {
+      setLikes(likes + 1);
+    }
+    setIsLiked(!isLiked);
+  };
+
+
   // Fetch all circulars on component mount
   useEffect(() => {
     getAllCircularByOrgId();
+    getLeaveProcessByOrgId();
   }, [orgId]);
+
+  const getLeaveProcessByOrgId = async () => {
+    try {
+      const result = await apiCalls('get', `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${id}&orgId=${orgId}`);
+      if (result && result.paramObjectsMap && result.paramObjectsMap.leaveProcessVO.reverse()) {
+        setListViewData(result.paramObjectsMap.leaveProcessVO.reverse());
+      } else {
+        setListViewData([]);
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setListViewData([]);
+    }
+  };
+
 
   // Fetch all circulars by organization ID
   const getAllCircularByOrgId = async () => {
@@ -66,7 +107,6 @@ function Post({ blockEdit = false, enableEditing = true }) {
       }
     } catch (err) {
       console.error('Error fetching data:', err);
-      toast.error('Failed to fetch circulars');
       setListViewData([]);
     }
   };
@@ -230,6 +270,30 @@ function Post({ blockEdit = false, enableEditing = true }) {
     padding-bottom: 0px;
 }
     
+.css-1w25cgw-MuiCardActions-root {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex
+;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    padding: 8px;
+    padding: 0px;
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex
+;
+    -webkit-align-items: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    gap: 0px;
+}
+    
         `}
       </style>
       <Box sx={{ p: 4, background: "linear-gradient(45deg, #f3f4f6, #e5e7eb)" }}>
@@ -266,18 +330,39 @@ function Post({ blockEdit = false, enableEditing = true }) {
                     }}
                   />
                 )}
+
                 <CardContent sx={{ p: 4 }}>
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontWeight: 600,
-                      mb: 2,
-                      color: "text.primary",
-                      fontFamily: "'Merriweather', serif",
-                    }}
-                  >
-                    {listViewData[0].circularTopic}
-                  </Typography>
+                  <div className='d-flex justify-content-between align-items-baseline'>
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontWeight: 600,
+                        mb: 2,
+                        color: "text.primary",
+                        fontFamily: "'Merriweather', serif",
+                      }}
+                    >
+                      {listViewData[0].circularTopic}
+                    </Typography>
+                    <CardActions sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <IconButton
+                        aria-label="like"
+                        onClick={handleLike}
+                        sx={{
+                          color: isLiked ? theme.palette.primary.main : 'inherit',
+                          '&:hover': {
+                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                          }
+                        }}
+                      >
+                        {isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                      </IconButton>
+                      <Typography variant="body2" color="text.secondary">
+                        {likes}
+                      </Typography>
+                    </CardActions>
+                  </div>
+
                   <Divider sx={{ my: 2 }} />
                   <Typography
                     variant="body1"
@@ -293,6 +378,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
                 </CardContent>
               </Card>
             </Grid>
+
           ) : (
             <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
               <Typography
@@ -313,53 +399,49 @@ function Post({ blockEdit = false, enableEditing = true }) {
             </Grid>
           )}
         </Grid>
-
-        {listViewData.length > 0 && (
-          <Box
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mt: 3,
+            animation: "fadeIn 0.5s ease-in-out",
+          }}
+        >
+          <IconButton
+            color="primary"
+            aria-label="add news"
+            onClick={() => {
+              setFormData({ circularTopic: "", circularcontent: "", postImage: "" });
+              setEditId("");
+              setOpenCreateModal(true);
+            }}
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 3,
-              animation: "fadeIn 0.5s ease-in-out",
+              background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+              color: "white",
+              "&:hover": {
+                background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+              },
             }}
           >
-            <IconButton
-              color="primary"
-              aria-label="add news"
-              onClick={() => {
-                setFormData({ circularTopic: "", circularcontent: "", postImage: "" });
-                setEditId("");
-                setOpenCreateModal(true);
-              }}
-              sx={{
-                background: "linear-gradient(45deg, #3f51b5, #2196f3)",
-                color: "white",
-                "&:hover": {
-                  background: "linear-gradient(45deg, #2196f3, #3f51b5)",
-                },
-              }}
-            >
-              <AddIcon />
-            </IconButton>
+            <AddIcon />
+          </IconButton>
 
-            <Button
-              variant="contained"
-              color="primary"
-              endIcon={<MoreHorizIcon />}
-              onClick={() => setOpenViewMoreModal(true)}
-              sx={{
-                background: "linear-gradient(45deg, #3f51b5, #2196f3)",
-                "&:hover": {
-                  background: "linear-gradient(45deg, #2196f3, #3f51b5)",
-                },
-              }}
-            >
-              View More
-            </Button>
-          </Box>
-        )}
-
+          <Button
+            variant="contained"
+            color="primary"
+            endIcon={<MoreHorizIcon />}
+            onClick={() => setOpenViewMoreModal(true)}
+            sx={{
+              background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+              "&:hover": {
+                background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+              },
+            }}
+          >
+            View More
+          </Button>
+        </Box>
         {/* Debugging: Log listViewData */}
         {console.log("listViewData:", listViewData)}
       </Box>
@@ -411,127 +493,59 @@ function Post({ blockEdit = false, enableEditing = true }) {
       </Modal>
 
       {/* View More Modal */}
-      <Modal
-        open={openViewMoreModal}
-        onClose={() => setOpenViewMoreModal(false)}
-        BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'white',
-            p: 5, // Increased padding
-            borderRadius: 3,
-            width: { xs: '90%', md: '80%' }, // Responsive width
-            mx: 'auto',
-            mt: '5%',
-            boxShadow: 4,
-          }}
-        >
-          {/* Title Section */}
-          <Typography
-            variant="h5"
-            fontWeight={700}
-            mb={4} // Increased margin
-            textAlign="center"
-          >
-            📢 All Posts
-          </Typography>
-
-          {/* Posts List in Single Column */}
-          <Grid container spacing={5} sx={{ px: 2, mt: 5 }}>
+      <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
+        <Box className="view-more-modal" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
+          <Typography variant="h5" mb={3}>All Post</Typography>
+          <List sx={{ py: 0 }}>
             {listViewData.map((item) => (
-              <Grid item key={item.id} xs={12}> {/* Set xs={12} for full width */}
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 3,
-                    boxShadow: 3,
-                    p: 2, // Added padding inside cards
-                    transition: 'all 0.3s ease-in-out',
-                    '&:hover': {
-                      transform: 'scale(1.03)',
-                      boxShadow: 6,
-                    },
-                  }}
-                >
-                  {/* Image */}
-                  {item.postImage && (
-                    <CardMedia
-                      component="img"
-                      height="180"
-                      image={item.postImage}
-                      alt="Post Image"
-                      onClick={() => handleImageClick(item.postImage)}
-                      sx={{
-                        cursor: 'pointer',
-                        borderTopLeftRadius: 12,
-                        borderTopRightRadius: 12,
-                        mb: 2, // Added margin below image
-                      }}
-                    />
-                  )}
-
-                  {/* Content */}
-                  <CardContent sx={{ flexGrow: 1, px: 3, py: 2 }}>
-                    <Typography
-                      variant="h6"
-                      fontWeight={700}
-                      color="primary"
-                      sx={{ mb: 2 }} // Increased margin
-                    >
-                      {item.circularTopic}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ lineHeight: 1.6 }}
-                    >
-                      {item.circularcontent}
-                    </Typography>
-                  </CardContent>
-
-                  {/* Actions */}
-                  <CardActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-                    {enableEditing && (
-                      <IconButton
-                        color="primary"
-                        onClick={() => getCircularById(item)}
-                        disabled={blockEdit}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    )}
-                    <IconButton color="error">
-                      <DeleteIcon />
+              <Box key={item.id}>
+                <ListItem
+                  alignItems="flex-start"
+                  disableGutters
+                  sx={{ py: 1 }}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => getCircularById(item)}>
+                      <EditIcon />
                     </IconButton>
-                  </CardActions>
-                </Card>
-              </Grid>
+                  }
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      variant="rounded"
+                      sx={{
+                        ...theme.typography.commonAvatar,
+                        ...theme.typography.largeAvatar,
+                        backgroundColor: theme.palette.primary.light,
+                        color: theme.palette.primary.dark
+                      }}
+                    >
+                      <StorefrontTwoToneIcon />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
+                        {item.topic}
+                      </Typography>
+                    }
+                    secondary={
+                      <>
+                        <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
+                          {item.circularTopic}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mt: 0.5 }}>
+                          {new Date(item.circularcontent).toLocaleDateString()}
+                        </Typography>
+                      </>
+                    }
+                  />
+                </ListItem>
+                <Divider sx={{ my: 1, backgroundColor: theme.palette.divider }} />
+              </Box>
             ))}
-          </Grid>
-
-          {/* Footer Buttons */}
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              mt: 5, // Increased margin-top for spacing
-            }}
-          >
-            <Button
-              variant="contained"
-              color="secondary"
-              sx={{
-                textTransform: 'none',
-                borderRadius: 2,
-                fontSize: '1rem',
-                px: 5, // Increased padding for a bigger button
-                py: 1.5,
-              }}
-              onClick={() => setOpenViewMoreModal(false)}
-            >
+          </List>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button variant="contained" color="secondary" onClick={() => setOpenViewMoreModal(false)}>
               Close
             </Button>
           </Box>

@@ -1,11 +1,37 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, TextField, Modal } from '@mui/material';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp'; // Icon for Praise
+import { useEffect } from 'react';
+import apiCalls from 'apicall';
 
 function Praise() {
   const [isCreatePraiseModalOpen, setIsCreatePraiseModalOpen] = useState(false); // Modal state
   const [praises, setPraises] = useState([]); // List of praises
   const [newPraiseText, setNewPraiseText] = useState(''); // New praise text
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [circularid, setCircularid] = useState(localStorage.getItem('circularid'))
+  const [listViewData, setListViewData] = useState([]);
+
+  useEffect(() => {
+    GetCountOfPraiseByOrgIdAndCircularId();
+  }, [circularid, orgId]);
+
+  const GetCountOfPraiseByOrgIdAndCircularId = async () => {
+    try {
+      const result = await apiCalls('get', `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${circularid}&orgId=${orgId}`);
+      if (result?.paramObjectsMap?.praiseVO) {
+        const praiseList = result.paramObjectsMap.praiseVO.reverse();
+        setPraises(praiseList);
+        setListViewData(praiseList);
+      } else {
+        setPraises([]);
+        setListViewData([]);
+      }
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setPraises([]);
+    }
+  };
 
   // Handle creating a new praise
   const handleCreatePraise = () => {
@@ -21,15 +47,17 @@ function Praise() {
   };
 
   // Handle liking a praise
-  const handleLikePraise = (index) => {
-    const updatedPraises = praises.map((praise, i) => {
-      if (i === index) {
-        return { ...praise, likes: praise.likes + 1 }; // Increment likes immutably
-      }
-      return praise;
-    });
-    setPraises(updatedPraises); // Update the praises state
+  const handleLikePraise = async (index, praiseId) => {
+    try {
+      await apiCalls('post', `/basicmaster/LikePraise`, { praiseId });
+      setPraises((prev) =>
+        prev.map((praise, i) => (i === index ? { ...praise, likes: praise.likes + 1 } : praise))
+      );
+    } catch (err) {
+      console.error('Error liking praise:', err);
+    }
   };
+
 
   return (
     <div>
