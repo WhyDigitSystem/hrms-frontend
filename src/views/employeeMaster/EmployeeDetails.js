@@ -254,7 +254,7 @@ const EmployeeDetails = () => {
   //   } catch (error) {
   //     console.error('Error fetching data:', error);
   //   }
-  // };   
+  // };
 
   const getAllLeaveType = async (designationCode, gender) => {
     try {
@@ -356,6 +356,7 @@ const EmployeeDetails = () => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
     const nameRegex = /^[A-Za-z ]*$/;
     const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+    const numberRegex = /^[0-9]*$/;
 
     let errorMessage = '';
 
@@ -363,6 +364,12 @@ const EmployeeDetails = () => {
       errorMessage = 'Invalid Format';
     } else if (name === 'employeeCode' && !codeRegex.test(value)) {
       errorMessage = 'Invalid Format';
+    } else if (name === 'mobileNo' || name === 'alternativeMobile') {
+      if (!numberRegex.test(value)) {
+        errorMessage = 'Only numbers are allowed.';
+      } else if (value.length > 10) {
+        errorMessage = 'Mobile number cannot exceed 10 digits.';
+      }
     }
 
     if (errorMessage) {
@@ -374,7 +381,7 @@ const EmployeeDetails = () => {
         const selectedBranch = branchList.find((br) => br.branch === value);
         setFormData((prevData) => ({
           ...prevData,
-          branch: value,  
+          branch: value,
           branchCode: selectedBranch ? selectedBranch.branchCode : ''
         }));
         console.log("br", branch);
@@ -613,8 +620,8 @@ const EmployeeDetails = () => {
       }));
 
       const selectedBranch = branchList.find((br) => br.branch === formData.branch);
-      console.log("brr", selectedBranch.branch);
-      
+      console.log('brr', selectedBranch.branch);
+
       const branchCode = selectedBranch ? selectedBranch.branchCode : '';
 
       const saveFormData = {
@@ -650,7 +657,7 @@ const EmployeeDetails = () => {
         resignDate: formData.resignationDate,
         // role: formData.role,
         team: formData.team,
-        updatedBy: loginUserName,
+        updatedBy: loginUserName
       };
 
       console.log('DATA TO SAVE IS:', saveFormData);
@@ -751,64 +758,66 @@ const EmployeeDetails = () => {
     setShowForm(true);
 
     try {
-        const result = await apiCalls('get', `/master/employee/${row.original.id}`);
+      const result = await apiCalls('get', `/master/employee/${row.original.id}`);
 
-        if (result) {
-            const employeeDetailsVO = result.paramObjectsMap.Employee;
-            setEditId(row.original.id);
+      if (result) {
+        const employeeDetailsVO = result.paramObjectsMap.Employee;
+        setEditId(row.original.id);
 
-            // Get designationCode from the fetched employee data
-            const designationCode = designationList.find(d => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
-            const gender = employeeDetailsVO.gender || '';
+        // Get designationCode from the fetched employee data
+        const designationCode = designationList.find((d) => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
+        const gender = employeeDetailsVO.gender || '';
 
-            if (designationCode && gender) {
-                await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
-            }
-
-            // Now set the form data after fetching leave types
-            setFormData({
-                employeeName: employeeDetailsVO.employeeName || '',
-                employeeCode: employeeDetailsVO.employeeCode || '',
-                employeeAddress: employeeDetailsVO.employeeAddress || '',
-                branch: employeeDetailsVO.branch || '',
-                gender: gender,
-                email: employeeDetailsVO.email || '',
-                doj: employeeDetailsVO.joiningDate || '',
-                resignationDate: employeeDetailsVO.resignDate || '',
-                grade: employeeDetailsVO.grade || '',
-                team: employeeDetailsVO.team || '',
-                department: employeeDetailsVO.department || '',
-                designation: employeeDetailsVO.designation || '',
-                reportingPerson: employeeDetailsVO.reportnigPerson || '',
-                reportingRole: employeeDetailsVO.reportingRole || '',
-                dob: employeeDetailsVO.dateOfBirth || '',
-                bloodGroup: employeeDetailsVO.bloodGroup || '',
-                mobileNo: employeeDetailsVO.mobileNo || '',
-                alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
-                aadhaarNo: employeeDetailsVO.aadharNo || '',
-                panNo: employeeDetailsVO.panNo || '',
-                accountNo: employeeDetailsVO.accountNo || '',
-                accountholderName: employeeDetailsVO.accountHolderName || '',
-                ifscCode: employeeDetailsVO.ifscCode || '',
-                active: employeeDetailsVO.active === 'Active',
-                id: employeeDetailsVO.id || 0
-            });
-
-            // Map leave type data
-            setLeaveTypeTable(employeeDetailsVO.employeeLeaveVO.map((cl) => ({
-                id: cl.id,
-                leaveType: cl.leaveType,
-                leaveCode: cl.leaveCode,
-                totalLeave: cl.totalLeave,
-                effectiveFrom: cl.effectiveFrom
-            })));
-
-            console.log('DataToEdit', employeeDetailsVO);
+        if (designationCode && gender) {
+          await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
         }
+
+        // Now set the form data after fetching leave types
+        setFormData({
+          employeeName: employeeDetailsVO.employeeName || '',
+          employeeCode: employeeDetailsVO.employeeCode || '',
+          employeeAddress: employeeDetailsVO.employeeAddress || '',
+          branch: employeeDetailsVO.branch || '',
+          gender: gender,
+          email: employeeDetailsVO.email || '',
+          doj: employeeDetailsVO.joiningDate || '',
+          resignationDate: employeeDetailsVO.resignDate || '',
+          grade: employeeDetailsVO.grade || '',
+          team: employeeDetailsVO.team || '',
+          department: employeeDetailsVO.department || '',
+          designation: employeeDetailsVO.designation || '',
+          reportingPerson: employeeDetailsVO.reportnigPerson || '',
+          reportingRole: employeeDetailsVO.reportingRole || '',
+          dob: employeeDetailsVO.dateOfBirth || '',
+          bloodGroup: employeeDetailsVO.bloodGroup || '',
+          mobileNo: employeeDetailsVO.mobileNo || '',
+          alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
+          aadhaarNo: employeeDetailsVO.aadharNo || '',
+          panNo: employeeDetailsVO.panNo || '',
+          accountNo: employeeDetailsVO.accountNo || '',
+          accountholderName: employeeDetailsVO.accountHolderName || '',
+          ifscCode: employeeDetailsVO.ifscCode || '',
+          active: employeeDetailsVO.active === 'Active',
+          id: employeeDetailsVO.id || 0
+        });
+
+        // Map leave type data
+        setLeaveTypeTable(
+          employeeDetailsVO.employeeLeaveVO.map((cl) => ({
+            id: cl.id,
+            leaveType: cl.leaveType,
+            leaveCode: cl.leaveCode,
+            totalLeave: cl.totalLeave,
+            effectiveFrom: cl.effectiveFrom
+          }))
+        );
+
+        console.log('DataToEdit', employeeDetailsVO);
+      }
     } catch (error) {
-        console.error('Error fetching data:', error);
+      console.error('Error fetching data:', error);
     }
-};
+  };
 
   const handleList = () => {
     setShowForm(!showForm);
@@ -1325,7 +1334,7 @@ const EmployeeDetails = () => {
                   label="Mobile No"
                   variant="outlined"
                   size="small"
-                  type="number"
+                  type="text"
                   fullWidth
                   name="mobileNo"
                   value={formData.mobileNo}
@@ -1341,7 +1350,7 @@ const EmployeeDetails = () => {
                   label="Alternative Mobile No"
                   variant="outlined"
                   size="small"
-                  type="number"
+                  type="text"
                   fullWidth
                   name="alternativeMobile"
                   value={formData.alternativeMobile}

@@ -139,7 +139,7 @@ const FirebaseLogin = ({ ...others }) => {
         navigate('/dashboard/default');
 
         // setTimeout(() => {
-        // window.location.reload();
+        window.location.reload();
         // }, 50);
 
         if (checked) {

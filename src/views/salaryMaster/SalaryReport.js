@@ -68,7 +68,7 @@ const SalaryReport = () => {
 
       const response = await apiCalls(
         'get',
-        `employeemaster/getApprovedSalaryProcessReport?branchCode=${branchCode}&month=${selectedMonth}&orgId=${orgId}&Year=${selectedYear}`
+        `employeemaster/getApprovedSalaryProcessReport?month=${selectedMonth}&orgId=${orgId}&Year=${selectedYear}`
       );
 
       setShowSelectedMonthYear(true);

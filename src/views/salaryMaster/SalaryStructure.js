@@ -188,7 +188,7 @@ const SalaryMaster = () => {
 
   const getAllSalaryStructure = async () => {
     try {
-      const response = await apiCalls('get', `/employeemaster/getAllSalaryStructureByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
+      const response = await apiCalls('get', `/employeemaster/getAllSalaryStructureByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -203,7 +203,7 @@ const SalaryMaster = () => {
 
   const getAllEmployeeList = async () => {
     try {
-      const response = await apiCalls('get', `employeemaster/getAllEmployeeByActive?orgId=${orgId}&branchCode=${branchCode}`);
+      const response = await apiCalls('get', `employeemaster/getAllEmployeeByActive?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -218,7 +218,7 @@ const SalaryMaster = () => {
 
   const getSalaryHeadsDetails = async () => {
     try {
-      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
+      const response = await apiCalls('get', `employeemaster/getAllSalaryHeadsByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -705,7 +705,7 @@ const SalaryMaster = () => {
                     aria-label="secondary tabs example"
                   >
                     <Tab value={0} label="Earning Details" />
-                    <Tab value={1} label="Detection Details" />
+                    <Tab value={1} label="Deduction Details" />
                   </Tabs>
                 </Box>
                 <Box sx={{ padding: 2 }}>
