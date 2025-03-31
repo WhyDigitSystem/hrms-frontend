@@ -83,7 +83,7 @@ const AttendenceProcess = () => {
     try {
       const response = await apiCalls(
         'get',
-        `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}&branchCode=${branchCode}`
+        `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
       );
 
       if (response.status === true) {
@@ -298,7 +298,7 @@ const AttendenceProcess = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 4,
+                    mb: 2,
                   }}
                 >
                   <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
@@ -341,7 +341,7 @@ const AttendenceProcess = () => {
                 orgId={orgId}
               />
             )}
-            <div className="row mt-2">
+            <div className="row">
               <Box sx={{ width: '100%' }}>
                 <Tabs
                   value={value}
@@ -396,7 +396,7 @@ const AttendenceProcess = () => {
                                       <td className="text-center">{leave.totalLeave}</td>
                                       <td className="text-center">{leave.lopLeave}</td>
                                       <td className="text-center">{leave.empTotalWorkingDays}</td>
-                                      <td className="text-center">{leave.totalCompanyWorkingDays}</td>
+                                      <td className="text-center">{leave.empSalaryDays}</td>
                                     </tr>
                                   ))
                                 ) : (
