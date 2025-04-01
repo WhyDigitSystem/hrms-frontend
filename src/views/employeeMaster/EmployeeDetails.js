@@ -1378,7 +1378,7 @@ const EmployeeDetails = () => {
               {/* Pan Number */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Pan Number"
+                  label="PAN N0"
                   variant="outlined"
                   size="small"
                   fullWidth
