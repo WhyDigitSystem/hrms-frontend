@@ -60,7 +60,7 @@ const Inbox = ({ isLoading }) => {
               Inbox
             </Typography>
             <List sx={{ py: 0 }}>
-              {[{ title: 'New Orders', text: '15 new orders received' }, { title: 'Pending Orders', text: '5 orders pending' }].map((item, index) => (
+              {[{ title: 'New Task', text: '15 new task received' }, { title: 'Pending Task', text: '5 task pending' }].map((item, index) => (
                 <ListItem key={index} alignItems="center" disableGutters sx={{ py: 1, borderBottom: `1px solid ${theme.palette.divider}` }}>
                   <Avatar sx={{ bgcolor: theme.palette.secondary.main, mr: 2 }}>
                     <StorefrontTwoToneIcon />

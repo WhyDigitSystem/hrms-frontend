@@ -9,7 +9,7 @@ import WbSunnyIcon from '@mui/icons-material/WbSunny';
 const CardWrapper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(3),
     borderRadius: theme.shape.borderRadius * 2,
-    background: `linear-gradient(135deg, ${'#cdd3d9'} 30%, ${'#23689f'} 90%)`,
+    background: `linear-gradient(135deg, ${'#e1efef'} 30%, ${'#239f9d'} 90%)`,
     color: theme.palette.common.white,
     boxShadow: theme.shadows[4]
 }));

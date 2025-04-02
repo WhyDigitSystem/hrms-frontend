@@ -18,7 +18,12 @@ import {
   ListItemAvatar,
   ListItemText,
   Badge,
-  Collapse
+  Collapse,
+  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
 import { ToastContainer } from 'react-toastify';
@@ -30,6 +35,8 @@ import PieChartIcon from '@mui/icons-material/PieChart';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton';
 
 const UpcomingHolidayCard = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -37,7 +44,7 @@ const UpcomingHolidayCard = () => {
   const [activeHolidays, setActiveHolidays] = useState([]);
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [expanded, setExpanded] = useState(false);
+  const [viewMoreOpen, setViewMoreOpen] = useState(false);
   const theme = useTheme();
 
   const [stats, setStats] = useState({
@@ -138,12 +145,8 @@ const UpcomingHolidayCard = () => {
     return activeHolidays.slice(0, 3);
   };
 
-  const getUpcomingHolidays = () => {
-    return activeHolidays.slice(3);
-  };
-
-  const toggleExpand = () => {
-    setExpanded(!expanded);
+  const toggleViewMore = () => {
+    setViewMoreOpen(!viewMoreOpen);
   };
 
   // Holiday Card Component
@@ -157,7 +160,8 @@ const UpcomingHolidayCard = () => {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        mb: 2
       }}
     >
       <Box display="flex" alignItems="center">
@@ -193,106 +197,6 @@ const UpcomingHolidayCard = () => {
       <ToastContainer />
 
       {/* Summary Cards */}
-      {/* <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
-          <Card sx={{
-            p: 3,
-            height: '100%',
-            borderRadius: 3,
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
-            borderLeft: '4px solid #3f51b5',
-            transition: 'transform 0.3s',
-            '&:hover': {
-              transform: 'translateY(-5px)'
-            }
-          }}>
-            <Box display="flex" alignItems="center">
-              <Box sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                bgcolor: 'rgba(63, 81, 181, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2
-              }}>
-                <EventIcon color="primary" fontSize="medium" />
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">Active Holidays</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>{stats.totalHolidays}</Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card sx={{
-            p: 3,
-            height: '100%',
-            borderRadius: 3,
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
-            borderLeft: '4px solid #4caf50',
-            transition: 'transform 0.3s',
-            '&:hover': {
-              transform: 'translateY(-5px)'
-            }
-          }}>
-            <Box display="flex" alignItems="center">
-              <Box sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                bgcolor: 'rgba(76, 175, 80, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2
-              }}>
-                <CalendarMonthIcon color="success" fontSize="medium" />
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">Upcoming Holidays</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>{stats.upcomingHolidays}</Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card sx={{
-            p: 3,
-            height: '100%',
-            borderRadius: 3,
-            boxShadow: '0 4px 20px 0 rgba(0,0,0,0.05)',
-            borderLeft: '4px solid #ff9800',
-            transition: 'transform 0.3s',
-            '&:hover': {
-              transform: 'translateY(-5px)'
-            }
-          }}>
-            <Box display="flex" alignItems="center">
-              <Box sx={{
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                bgcolor: 'rgba(255, 152, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mr: 2
-              }}>
-                <PieChartIcon color="warning" fontSize="medium" />
-              </Box>
-              <Box>
-                <Typography variant="subtitle2" color="text.secondary">This Month</Typography>
-                <Typography variant="h4" sx={{ fontWeight: 700 }}>{stats.holidaysThisMonth}</Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Grid>
-      </Grid> */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{
@@ -393,7 +297,7 @@ const UpcomingHolidayCard = () => {
 
       {/* Holidays Section */}
       {activeHolidays.length > 0 && (
-        <Card sx={{ mb: 3, p: 3, borderRadius: 3, boxShadow: 3, borderLeft: '4px solid #ff5722' }}>
+        <Card sx={{ mb: 3, p: 3, borderRadius: 3, boxShadow: 3, borderLeft: '4px solid #264952' }}>
           <Box display="flex" alignItems="center" mb={2}>
             <NotificationsActiveIcon color="warning" sx={{ mr: 1, fontSize: 30 }} />
             <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Upcoming Holidays</Typography>
@@ -407,33 +311,58 @@ const UpcomingHolidayCard = () => {
             ))}
           </Grid>
 
-          {/* View More Section */}
+          {/* View More Button */}
           {activeHolidays.length > 3 && (
-            <>
-              <Collapse in={expanded}>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  {getUpcomingHolidays().map((holiday, index) => (
-                    <Grid item xs={12} sm={4} key={index + 3}>
-                      <HolidayCard holiday={holiday} />
-                    </Grid>
-                  ))}
-                </Grid>
-              </Collapse>
-
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                <Button
-                  onClick={toggleExpand}
-                  endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  color="primary"
-                  variant="text"
-                >
-                  {expanded ? 'Show Less' : `View All (${activeHolidays.length})`}
-                </Button>
-              </Box>
-            </>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+              <Button
+                onClick={toggleViewMore}
+                endIcon={<ExpandMoreIcon />}
+                color="primary"
+                variant="text"
+              >
+                View All ({activeHolidays.length})
+              </Button>
+            </Box>
           )}
         </Card>
       )}
+
+      {/* View More Modal */}
+      <Dialog
+        open={viewMoreOpen}
+        onClose={toggleViewMore}
+        maxWidth="md"
+        fullWidth
+        scroll="paper"
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              All Upcoming Holidays ({activeHolidays.length})
+            </Typography>
+            <IconButton onClick={toggleViewMore}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2}>
+            {activeHolidays.map((holiday, index) => (
+              <Grid item xs={12} sm={6} key={index}>
+                <HolidayCard 
+                  holiday={holiday} 
+                  isHighlighted={index === 0}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={toggleViewMore} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

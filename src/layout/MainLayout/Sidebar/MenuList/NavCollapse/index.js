@@ -34,11 +34,13 @@ const NavCollapse = ({ menu, level }) => {
       // menu?.id !== 'companySetup' &&
       menu?.id !== 'calendar' &&
       menu?.id !== 'companySetup' &&
+      menu?.id !== 'admin' &&
       menu?.id !== 'basicMaster' &&
       menu?.id !== 'employeeMaster' &&
       menu?.id !== 'leaveMaster' &&
       menu?.id !== 'salaryMaster' &&
       menu?.id !== 'me' &&
+      menu?.id !=='finance'&&
       menu?.id !== 'team'
     ) {
       navigate(menu.children[0]?.url);

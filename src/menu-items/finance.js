@@ -34,42 +34,28 @@ const icons5 = {
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
-const companySetup = {
-  id: 'companySetup',
+const finance = {
+  id: 'finance',
   // title: 'Company Setup',
   type: 'group',
   children: [
     {
-      id: 'companySetup',
-      title: 'Setup',
+      id: 'finance',
+      title: 'Finance',
       type: 'collapse',
       icon: icons.IconCopyright,
 
       children: [
         {
           id: 'createCompany',
-          title: 'Create Company',
+          title: 'Payslip',
           type: 'item',
           url: '/companysetup/createcompany',
           icon: icons1.IconSquareRoundedPlus
-        },
-        {
-          id: 'company',
-          title: 'Company Setup',
-          type: 'item',
-          url: '/companysetup/companysetup',
-          icon: icons2.IconSettingsPlus
-        },
-        {
-          id: 'finYear',
-          title: 'FinYear',
-          type: 'item',
-          url: '/companysetup/finYear',
-          icon: icons3.IconCalendarDollar
         }
       ]
     }
   ]
 };
 
-export default companySetup;
+export default finance;

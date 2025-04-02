@@ -6,7 +6,7 @@ import { ButtonBase } from '@mui/material';
 
 // project imports
 import { MENU_OPEN } from 'store/actions';
-import LogoImage from '../../../../src/assets/images/Why-Digit-Systems-Pvt-Ltd.png';
+import LogoImage from '../../../../src/assets/images/HRMS_Logo.png';
 
 // ==============================|| MAIN LOGO ||============================== //
 
@@ -14,13 +14,13 @@ const LogoSection = () => {
   const defaultId = useSelector((state) => state.customization.defaultId);
   const dispatch = useDispatch();
   return (
-    <ButtonBase disableRipple onClick={() => dispatch({ type: MENU_OPEN, id: defaultId })} component={Link}>
+    <ButtonBase disableRipple onClick={() => dispatch({ type: MENU_OPEN, id: defaultId })} component={Link} className='ps--lg-5 ps-0'>
       {/* <Logo /> */}
       <img
         src={LogoImage}
         alt="logo"
         style={{
-          width: '130px',
+          width: '110px',
           height: '75px'
         }}
       ></img>

@@ -25,6 +25,7 @@ import TimeDate from './TimeDate';
 import BirthdayNews from './BirthdayNews'
 import Main from './SocialMedia/Main'
 import Home from './Announcements/Home'
+import Pendingupload from './Pendingupload';
 
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
@@ -86,6 +87,7 @@ const Dashboard = () => {
         <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
           <Grid item lg={6} md={12} sm={12} xs={12} >
             {/* <BirthdayNews isLoading={isLoading} /> */}
+            <Pendingupload isLoading={isLoading} />
           </Grid>
           <Grid item sm={12} xs={12} md={12} lg={6}>
             {/* <Organization isLoading={isLoading} /> */}

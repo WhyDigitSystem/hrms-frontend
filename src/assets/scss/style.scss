@@ -219,7 +219,7 @@
 }
 
 .css-11zkiz-MuiTableRow-root {
-  background-color: #673ab7 !important;
+  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%);
   // background: linear-gradient(90deg, #673ab7, #7243c3) !important;
   font-weight: 700 !important;
 }
@@ -232,4 +232,258 @@
   border-radius: 26px !important;
   padding-right: .25rem !important;
   padding-left: .25rem !important;
+}
+
+.css-kvip5o-MuiToolbar-root {
+  // background: linear-gradient(193deg, #8ea6a8 30%, #4d7fa7 90%); }
+  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%);
+}
+
+.ps {
+  background: linear-gradient(193deg, #009d90 30%, #7bb9b4 90%);
+}
+
+.css-40exn0-MuiInputBase-root-MuiOutlinedInput-root {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.4375em;
+  font-family: 'Poppins', sans-serif;
+  color: #364152;
+  box-sizing: border-box;
+  position: relative;
+  cursor: text;
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+  position: relative;
+  border-radius: 4px;
+  padding-left: 14px;
+  padding-right: 14px;
+  background: #f8fafc;
+  border-radius: 12px;
+  width: 400px;
+  margin-left: 18px;
+  padding-left: 17px;
+  padding-right: 2px;
+  background-color: #ffffff;
+  /* border-radius: 4px; */
+}
+
+.css-1uj75u1-MuiInputBase-input-MuiOutlinedInput-input {
+  font: inherit;
+  letter-spacing: inherit;
+  color: currentColor;
+  padding: 4px 0 5px;
+  border: 0;
+  box-sizing: content-box;
+  background: none;
+  height: 14px;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+  display: block;
+  min-width: 0;
+  width: 100%;
+  -webkit-animation-name: mui-auto-fill-cancel;
+  animation-name: mui-auto-fill-cancel;
+  -webkit-animation-duration: 10ms;
+  animation-duration: 10ms;
+  color: #121921;
+  padding: 31.5px 26px;
+  padding-left: 0;
+  padding-right: 0;
+  font-weight: 600;
+  background: #f8fafc;
+  padding: 16px 5px;
+  border-radius: 15px;
+  /* padding-left: 4px; */
+}
+
+.css-kvip5o-MuiToolbar-root {
+  padding: 10px 25px 3px;
+}
+
+.css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected {
+  color: #ffffff;
+  background-color: #1c645e;
+}
+
+.css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
+  color: #fcfbff;
+}
+
+.css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected:hover {
+  background-color: #1c645e;
+  color: #fcfbff;
+}
+
+.css-126euq6-MuiButtonBase-root-MuiListItemButton-root:hover {
+  background-color: #1c645e;
+  color: #fcfbff;
+}
+
+.css-onexqs-MuiTypography-root {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.334em;
+  font-family: 'Poppins', sans-serif;
+  color: #fcfbff;
+}
+
+.css-1ips9rb-MuiListItemIcon-root {
+  min-width: 56px;
+  color: #ffffff;
+  -webkit-flex-shrink: 0;
+  -ms-flex-negative: 0;
+  flex-shrink: 0;
+  display: -webkit-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  color: #ffffff;
+  min-width: 36px;
+  margin-top: auto;
+  margin-bottom: auto;
+  min-width: 36px;
+}
+
+.css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root.Mui-selected  {
+  color: #ffffff;
+}
+
+.css-126euq6-MuiButtonBase-root-MuiListItemButton-root:hover .MuiListItemIcon-root {
+  color: #ffffff;
+}
+.css-fldosq-MuiTypography-root {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #ffffff;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.334;
+  color: #ffffff;
+}
+.css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root:hover .MuiListItemIcon-root {
+  color: #ffffff;
+}
+.css-t4hv1y-MuiTypography-root {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.334em;
+  font-family: 'Poppins', sans-serif;
+  color: #ffffff;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.css-sw9i2d-MuiTypography-root {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #697586;
+  font-weight: 400;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.66;
+  margin-bottom: 0.35em;
+  display: block;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0px;
+  text-transform: capitalize;
+  margin-top: 0px;
+}
+.css-na6y46-MuiList-root:after {
+  content: '';
+  position: absolute;
+  left: 32px;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  opacity: 1;
+  background: none;
+}
+.css-13y939n-MuiAvatar-root {
+  position: relative;
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex
+;
+  background-color: #bdbdbd;
+  color: #1c645e;
+  background: #ede7f6;
+  color: #1c645e;
+}
+.css-1kqpfbs-MuiAvatar-root:hover {
+  background: #1c645e;
+  color: #ede7f6;
+}
+.css-1kqpfbs-MuiAvatar-root {
+ 
+  color: #ffffff;
+  background-color: #bdbdbd;
+  color: #d8f3f1;
+  background: #90caf9;
+  font-size: 1.2rem;
+  background: #d8f3f1;
+  color: #1c645e;
+}
+.css-13y939n-MuiAvatar-root:hover {
+  background: #1c645e;
+  color: #ede7f6;
+}
+.css-13y939n-MuiAvatar-root {
+  position: relative;
+  display: flex
+;
+  background-color: #bdbdbd;
+  color: #1c645e;
+  background: #d8f3f1;
+  color: #1c645e;
+}
+.css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
+  color: #ffffff;
+}
+.css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root:hover {
+  background-color:#d8f3f1;
+}
+.css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root:hover {
+  background-color: #1c645e;
+  color: #5e35b1;
+}
+.css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root {
+  background-color: #d8f3f1; 
+}
+.css-16b7mku-MuiSvgIcon-root {
+  fill: #1c645e;
+  color: #673ab7;
+}
+.css-rth2ff-MuiAvatar-root {
+  color: #ffffff;
+  background-color: #bdbdbd;
+  color: #1e88e5;
+  background: #7dc5ff;
+  background: #d8f3f1;
+  color: #1c645e;
+}
+.css-rth2ff-MuiAvatar-root:hover {
+  background: #1c645e;
+  color: #ede7f6;
+}
+.css-inh4el-MuiButtonBase-root-MuiCheckbox-root .MuiSvgIcon-root {
+  color: #1c645e;
+}
+.css-1fdw62t-MuiButtonBase-root-MuiTab-root.Mui-selected {
+  color: #1c645e;
+}
+.css-78exr-MuiTabs-indicator {
+  background-color: #1c645e;
+}
+.css-1p5pb03-MuiButtonBase-root-MuiCheckbox-root.Mui-checked, .css-1p5pb03-MuiButtonBase-root-MuiCheckbox-root.MuiCheckbox-indeterminate {
+    color: #1c645e;
 }

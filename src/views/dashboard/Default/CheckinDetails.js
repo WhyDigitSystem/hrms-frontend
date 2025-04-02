@@ -9,7 +9,8 @@ import ToastComponent, { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-  background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+  // background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+  background: `linear-gradient(135deg, ${'#264952'} 30%, ${'#23869f'} 90%)`,
   color: '#fff',
   borderRadius: '16px',
   boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.3)'

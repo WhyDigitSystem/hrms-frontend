@@ -1,64 +1,93 @@
-import { useEffect, useRef, useState } from 'react';
-
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { Link, useNavigate } from 'react-router-dom';
-
-// material-ui
+import { useNavigate } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import apiCalls from 'apicall';
+import { styled, useTheme, alpha } from '@mui/material/styles';
 import {
   Avatar,
   Box,
-  Card,
-  CardContent,
   Chip,
   ClickAwayListener,
   Divider,
-  Grid,
-  InputAdornment,
   List,
+  ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  OutlinedInput,
   Paper,
   Popper,
   Stack,
-  Switch,
-  Typography
+  Typography,
+  Badge,
+  IconButton,
+  Modal,
+  Tab,
+  Tabs,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
 } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 
-// third-party
-import PerfectScrollbar from 'react-perfect-scrollbar';
+// Icons
+import {
+  IconLogout,
+  IconSettings,
+  IconUser,
+  IconMail,
+  IconDashboard,
+  IconCreditCard,
+  IconChevronDown,
+  IconBellRinging,
+  IconBuildingBank,
+  IconId,
+  IconPhone,
+  IconMapPin
+} from '@tabler/icons-react';
 
-// project imports
+// Project imports
 import User1 from 'assets/images/users/user-round.svg';
-import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 
-// assets
-import { IconLogout, IconSearch, IconSettings, IconUser } from '@tabler/icons-react';
-
-// ==============================|| PROFILE MENU ||============================== //
+// Styled component for the profile popover
+const ProfilePopper = styled(Paper)(({ theme }) => ({
+  overflow: 'hidden',
+  border: 'none',
+  boxShadow: theme.shadows[24],
+  borderRadius: 16,
+  width: 300,
+  background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.8)} 0%, ${alpha(theme.palette.background.default, 0.9)} 100%)`,
+  backdropFilter: 'blur(12px)',
+  '&:before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 6,
+    background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+  }
+}));
 
 const ProfileSection = () => {
   const theme = useTheme();
   const customization = useSelector((state) => state.customization);
   const navigate = useNavigate();
-
-  const [sdm, setSdm] = useState(true);
-  const [value, setValue] = useState('');
-  const [notification, setNotification] = useState(false);
+  const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
+  const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
+  const [designation, setDesignation] = useState(localStorage.getItem('designation'));
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [open, setOpen] = useState(false);
-  /**
-   * anchorRef is used on different componets and specifying one type leads to other components throwing an error
-   * */
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [employeeData, setEmployeeData] = useState(null);
   const anchorRef = useRef(null);
 
-  const handleLogout = async () => {
-    // history.push('/login');
-    console.log('Logout');
+  const handleLogout = () => {
     localStorage.clear();
+    navigate('pages/login/login3');
   };
 
   const handleClose = (event) => {
@@ -72,12 +101,20 @@ const ProfileSection = () => {
     setSelectedIndex(index);
     handleClose(event);
 
-    if (route && route !== '') {
+    if (index === 0) {
+      // My Profile clicked
+      setProfileModalOpen(true);
+    } else if (route) {
       navigate(route);
     }
   };
+
   const handleToggle = () => {
     setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
   };
 
   const prevOpen = useRef(open);
@@ -85,54 +122,102 @@ const ProfileSection = () => {
     if (prevOpen.current === true && open === false) {
       anchorRef.current.focus();
     }
-
     prevOpen.current = open;
   }, [open]);
 
+  useEffect(() => {
+    getAllEmployeeData();
+  }, []);
+
+  const getAllEmployeeData = useCallback(async () => {
+    try {
+      const orgId = localStorage.getItem('orgId');
+      const employeeCode = localStorage.getItem('employeeCode');
+
+      if (!orgId || !employeeCode) {
+        console.error('Organization ID or Employee Code missing');
+        return;
+      }
+
+      const result = await apiCalls(
+        'get',
+        `/master/getAllEmployeeByOrgIdAndEmployeeCode?employeeCode=${employeeCode}&orgId=${orgId}`
+      );
+
+      if (result?.paramObjectsMap?.employeeVO?.length > 0) {
+        const empData = result.paramObjectsMap.employeeVO[0];
+        setEmployeeData(empData);
+        
+        // Update state or localStorage with the fetched data
+        if (empData.employeeName) {
+          setEmpName(empData.employeeName);
+          localStorage.setItem('employeeName', empData.employeeName);
+        }
+        if (empData.designation) {
+          setDesignation(empData.designation);
+          localStorage.setItem('designation', empData.designation);
+        }
+      }
+
+    } catch (err) {
+     
+    }
+  }, []);
+
   return (
     <>
-      <Chip
+      <IconButton
+        ref={anchorRef}
+        onClick={handleToggle}
         sx={{
-          height: '48px',
-          alignItems: 'center',
-          borderRadius: '27px',
-          transition: 'all .2s ease-in-out',
-          borderColor: theme.palette.primary.light,
-          backgroundColor: theme.palette.primary.light,
-          '&[aria-controls="menu-list-grow"], &:hover': {
-            borderColor: theme.palette.primary.main,
-            background: `${theme.palette.primary.main}!important`,
-            color: theme.palette.primary.light,
-            '& svg': {
-              stroke: theme.palette.primary.light
-            }
-          },
-          '& .MuiChip-label': {
-            lineHeight: 0
+          p: 0,
+          position: 'relative',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            transition: 'all 0.3s ease'
           }
         }}
-        icon={
+      >
+        <Badge
+          overlap="circular"
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          badgeContent={
+            <Box
+              sx={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                bgcolor: 'success.main',
+                border: `2px solid ${theme.palette.background.paper}`,
+              }}
+            />
+          }
+        >
           <Avatar
             src={User1}
             sx={{
-              ...theme.typography.mediumAvatar,
-              margin: '8px 0 8px 8px !important',
-              cursor: 'pointer'
+              width: 40,
+              height: 40,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                border: `2px solid ${theme.palette.primary.main}`,
+                transform: 'scale(1.1)'
+              }
             }}
-            ref={anchorRef}
-            aria-controls={open ? 'menu-list-grow' : undefined}
-            aria-haspopup="true"
-            color="inherit"
           />
-        }
-        label={<IconSettings stroke={1.5} size="1.5rem" color={theme.palette.primary.main} />}
-        variant="outlined"
-        ref={anchorRef}
-        aria-controls={open ? 'menu-list-grow' : undefined}
-        aria-haspopup="true"
-        onClick={handleToggle}
-        color="primary"
-      />
+        </Badge>
+        <IconChevronDown
+          size={20}
+          style={{
+            marginLeft: 4,
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.3s ease',
+            color: theme.palette.text.secondary
+          }}
+        />
+      </IconButton>
+
       <Popper
         placement="bottom-end"
         open={open}
@@ -140,160 +225,416 @@ const ProfileSection = () => {
         role={undefined}
         transition
         disablePortal
-        popperOptions={{
-          modifiers: [
-            {
-              name: 'offset',
-              options: {
-                offset: [0, 14]
-              }
+        modifiers={[
+          {
+            name: 'offset',
+            options: {
+              offset: [0, 12]
             }
-          ]
+          }
+        ]}
+        sx={{
+          zIndex: 1300
         }}
       >
         {({ TransitionProps }) => (
-          <Transitions in={open} {...TransitionProps}>
-            <Paper>
+          <Transitions type="grow" position="top-right" in={open} {...TransitionProps}>
+            <ProfilePopper>
               <ClickAwayListener onClickAway={handleClose}>
-                <MainCard border={false} elevation={16} content={false} boxShadow shadow={theme.shadows[16]}>
-                  <Box sx={{ p: 2 }}>
-                    <Stack>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <Typography variant="h4">Good Morning,</Typography>
-                        <Typography component="span" variant="h4" sx={{ fontWeight: 400 }}>
-                          {localStorage.getItem('employeeName')}
+                <Box>
+                  {/* Header with user info */}
+                  <Box sx={{
+                    p: 2,
+                    pb: 1.5,
+                    background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, transparent 100%)`
+                  }}>
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Avatar
+                        src={User1}
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          border: `3px solid ${theme.palette.primary.main}`,
+                          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
+                        }}
+                      />
+                      <Stack>
+                        <Typography variant="h6" fontWeight={700}>
+                          {empName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {empcode} - {designation}
                         </Typography>
                       </Stack>
-                      <Typography variant="subtitle2">Project Admin</Typography>
                     </Stack>
-                    <Divider />
-                  </Box>
-                  <PerfectScrollbar style={{ height: '100%', maxHeight: 'calc(100vh - 250px)', overflowX: 'hidden' }}>
-                    <Box sx={{ p: 2 }}>
-                      {/* <UpgradePlanCard /> */}
-                      {/* <Divider /> */}
-                      <Card
+                    <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                      <Chip
+                        icon={<IconMail size={16} />}
+                        label={employeeData.email}
+                        size="small"
                         sx={{
-                          bgcolor: theme.palette.primary.light,
-                          my: 2
+                          borderRadius: 4,
+                          bgcolor: alpha(theme.palette.primary.light, 0.1),
+                          color: theme.palette.text.primary
                         }}
-                      >
-                        <CardContent>
-                          <Grid container spacing={3} direction="column">
-                            <Grid item>
-                              <Grid item container alignItems="center" justifyContent="space-between">
-                                <Grid item>
-                                  <Typography variant="subtitle1">Stock freeze</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Switch
-                                    color="primary"
-                                    checked={sdm}
-                                    onChange={(e) => setSdm(e.target.checked)}
-                                    name="sdm"
-                                    size="small"
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Grid>
-                            <Grid item>
-                              <Grid item container alignItems="center" justifyContent="space-between">
-                                <Grid item>
-                                  <Typography variant="subtitle1">Allow Notifications</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Switch
-                                    checked={notification}
-                                    onChange={(e) => setNotification(e.target.checked)}
-                                    name="sdm"
-                                    size="small"
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Grid>
-                          </Grid>
-                        </CardContent>
-                      </Card>
-                      <Divider />
-                      <List
-                        component="nav"
+                      />
+                      <Chip
+                        label={employeeData?.active === 'Active' ? 'active' : 'inactive'}
+                        size="small"
                         sx={{
-                          width: '100%',
-                          maxWidth: 350,
-                          minWidth: 300,
-                          backgroundColor: theme.palette.background.paper,
-                          borderRadius: '10px',
-                          [theme.breakpoints.down('md')]: {
-                            minWidth: '100%'
-                          },
-                          '& .MuiListItemButton-root': {
-                            mt: 0.5
+                          borderRadius: 4,
+                          bgcolor: employeeData?.active === 'Active'
+                            ? alpha(theme.palette.success.light, 0.2)
+                            : alpha(theme.palette.error.light, 0.2),
+                          color: employeeData?.active === 'Active'
+                            ? theme.palette.success.main
+                            : theme.palette.error.main
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+
+                  {/* Menu Items */}
+                  <Box sx={{ p: 1 }}>
+                    <List disablePadding>
+                      <ListItem disablePadding>
+                        <ListItemButton
+                          sx={{
+                            borderRadius: `${customization.borderRadius}px`,
+                            mb: 0.5,
+                            '&:hover': {
+                              bgcolor: alpha(theme.palette.primary.light, 0.1)
+                            }
+                          }}
+                          selected={selectedIndex === 0}
+                          onClick={(event) => handleListItemClick(event, 0)}
+                        >
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <IconUser size="1.2rem" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="My Profile"
+                            primaryTypographyProps={{ fontWeight: 500 }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+
+                      <ListItem disablePadding>
+                        <ListItemButton
+                          sx={{
+                            borderRadius: `${customization.borderRadius}px`,
+                            mb: 0.5,
+                            '&:hover': {
+                              bgcolor: alpha(theme.palette.primary.light, 0.1)
+                            }
+                          }}
+                          selected={selectedIndex === 2}
+                          onClick={(event) => handleListItemClick(event, 2, '/settings')}
+                        >
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <IconSettings size="1.2rem" />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Settings"
+                            primaryTypographyProps={{ fontWeight: 500 }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    </List>
+
+                    <ListItem disablePadding>
+                      <ListItemButton
+                        sx={{
+                          borderRadius: `${customization.borderRadius}px`,
+                          bgcolor: alpha(theme.palette.error.light, 0.1),
+                          '&:hover': {
+                            bgcolor: alpha(theme.palette.error.light, 0.2)
                           }
                         }}
+                        onClick={handleLogout}
                       >
-                        <ListItemButton
-                          sx={{ borderRadius: `${customization.borderRadius}px` }}
-                          selected={selectedIndex === 0}
-                          onClick={(event) => handleListItemClick(event, 0, '#')}
-                        >
-                          <ListItemIcon>
-                            <IconSettings stroke={1.5} size="1.3rem" />
-                          </ListItemIcon>
-                          <ListItemText primary={<Typography variant="body2">Account Settings</Typography>} />
-                        </ListItemButton>
-                        <ListItemButton
-                          sx={{ borderRadius: `${customization.borderRadius}px` }}
-                          selected={selectedIndex === 1}
-                          onClick={(event) => handleListItemClick(event, 1, '#')}
-                        >
-                          <ListItemIcon>
-                            <IconUser stroke={1.5} size="1.3rem" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Grid container spacing={1} justifyContent="space-between">
-                                <Grid item>
-                                  <Typography variant="body2">Social Profile</Typography>
-                                </Grid>
-                                <Grid item>
-                                  <Chip
-                                    label="02"
-                                    size="small"
-                                    sx={{
-                                      bgcolor: theme.palette.warning.dark,
-                                      color: theme.palette.background.default
-                                    }}
-                                  />
-                                </Grid>
-                              </Grid>
-                            }
-                          />
-                        </ListItemButton>
-                        <ListItemButton
-                          sx={{ borderRadius: `${customization.borderRadius}px` }}
-                          selected={selectedIndex === 4}
-                          onClick={handleLogout}
-                        >
-                          <ListItemIcon>
-                            <IconLogout stroke={1.5} size="1.3rem" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body2" className='text-decoration-none' component={Link} to="/pages/login/login3">
-                                Logout
-                              </Typography>
-                            }
-                          />
-                        </ListItemButton>
-                      </List>
-                    </Box>
-                  </PerfectScrollbar>
-                </MainCard>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <IconLogout size="1.2rem" color={theme.palette.error.main} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Logout"
+                          primaryTypographyProps={{
+                            fontWeight: 500,
+                            color: theme.palette.error.main
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  </Box>
+                </Box>
               </ClickAwayListener>
-            </Paper>
+            </ProfilePopper>
           </Transitions>
         )}
       </Popper>
+
+      {/* Profile Modal */}
+      <Dialog
+        open={profileModalOpen}
+        onClose={() => setProfileModalOpen(false)}
+        maxWidth="md"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: 4,
+            background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
+            backdropFilter: 'blur(12px)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <Avatar
+              src={User1}
+              sx={{
+                width: 56,
+                height: 56,
+                border: `3px solid ${theme.palette.primary.main}`,
+              }}
+            />
+            <Box>
+              <Typography variant="h5" fontWeight={700}>
+                {employeeData?.employeeName || empName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {employeeData?.designation || designation}
+              </Typography>
+            </Box>
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 3 }}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant="fullWidth"
+            sx={{
+              mb: 3,
+              '& .MuiTabs-indicator': {
+                height: 4,
+                borderRadius: '4px 4px 0 0'
+              }
+            }}
+          >
+            <Tab label="Personal Information" icon={<IconUser size={20} />} iconPosition="start" />
+            <Tab label="Bank Details" icon={<IconBuildingBank size={20} />} iconPosition="start" />
+          </Tabs>
+
+          {activeTab === 0 && employeeData && (
+            <Box>
+              <div className='container'>
+                <div className='row'>
+                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
+                    <Stack spacing={3}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                          <IconId color={theme.palette.primary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Employee Code
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.employeeCode}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                          <IconMail color={theme.palette.secondary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Email
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.email || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1) }}>
+                          <IconPhone color={theme.palette.success.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Mobile
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.mobileNo || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                          <IconMapPin color={theme.palette.warning.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Address
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.employeeAddress || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </div>
+                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
+                    <Stack spacing={3}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+                          <IconUser color={theme.palette.info.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Gender
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.gender || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1) }}>
+                          <IconId color={theme.palette.error.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Aadhar No
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.aadharNo || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                          <IconId color={theme.palette.primary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            PAN No
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.panNo || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                          <IconDashboard color={theme.palette.secondary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Department
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.department || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </div>
+                </div>
+              </div>
+            </Box>
+          )}
+
+          {activeTab === 1 && employeeData && (
+            <Box>
+              <div className='container'>
+                <div className='row'>
+                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
+                    <Stack spacing={3}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+                          <IconBuildingBank color={theme.palette.info.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Account Holder Name
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.accountHolderName || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                          <IconCreditCard color={theme.palette.primary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Account Number
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.accountNo || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </div>
+                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
+                    <Stack spacing={3}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                          <IconSettings color={theme.palette.secondary.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            IFSC Code
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.ifscCode || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                          <IconBuildingBank color={theme.palette.warning.main} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant="subtitle2" color="text.secondary">
+                            Bank Branch
+                          </Typography>
+                          <Typography variant="h6">
+                            {employeeData.branch || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Stack>
+                  </div>
+                </div>
+              </div>
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ pt: 2 }}>
+          <Button
+            onClick={() => setProfileModalOpen(false)}
+            variant="outlined"
+            color="inherit"
+            sx={{ borderRadius: 4 }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

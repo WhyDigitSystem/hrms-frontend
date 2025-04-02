@@ -8,6 +8,7 @@ import salaryMaster from './salaryMaster';
 import calendar from './calendar';
 import me from './me';
 import team from './team';
+import finance from './finance';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
@@ -41,15 +42,15 @@ const getMenuItems = () => {
   switch (localStorageValue) {
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, leaveMaster, salaryMaster, me, team]
+        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, leaveMaster, salaryMaster, me, finance, team]
       };
     case 'USER':
       return {
-        items: [dashboard, calendar, me]
+        items: [dashboard, calendar, me,finance]
       };
     case 'DEPARTMENT HEAD':
       return {
-        items: [dashboard, calendar, me, team]
+        items: [dashboard, calendar, me, finance , team,]
       };
     // Add more cases as needed
     default:

@@ -6,13 +6,13 @@ import { useTheme } from '@mui/material/styles';
 
 // project imports
 import LogoSection from '../LogoSection';
-import NotificationSection from './NotificationSection';
+// import NotificationSection from './NotificationSection';
 import ProfileSection from './ProfileSection';
 import SearchSection from './SearchSection';
 
 // assets
 import { IconMenu2 } from '@tabler/icons-react';
-import GlobalSection from './GlobalSection';
+// import GlobalSection from './GlobalSection';
 
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
@@ -77,8 +77,8 @@ const Header = ({ handleLeftDrawerToggle }) => {
         ></span>
         <h6>E - Books</h6>
       </div> */}
-      <NotificationSection />
-      <GlobalSection />
+      {/* <NotificationSection /> */}
+      {/* <GlobalSection /> */}
       {/* <SiteMapSection /> */}
       <ProfileSection />
     </>

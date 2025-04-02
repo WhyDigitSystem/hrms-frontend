@@ -10,6 +10,7 @@ import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
+import UploadIcon from '@mui/icons-material/Upload';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import { getAllActiveBranches } from 'utils/CommonFunctions';
@@ -21,6 +22,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
 import { FormHelperText, MenuItem, Autocomplete } from '@mui/material';
 import { date } from 'yup';
 
@@ -30,6 +32,7 @@ const Holidays = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [formData, setFormData] = useState({
     holidayDate: '',
     day: '',
@@ -266,7 +269,21 @@ const Holidays = () => {
     setFieldErrors((prev) => ({ ...prev, holidayDate: '' })); // Clear error if valid
   };
 
+  const handleBulkUploadOpen = () => {
+    setUploadOpen(true);
+  };
 
+  const handleBulkUploadClose = () => {
+    setUploadOpen(false);
+  };
+  const handleSubmit = async () => {
+    console.log('Submit clicked');
+    handleBulkUploadClose();
+  };
+
+  const handleFileUpload = (event) => {
+    console.log(event.target.files[0]);
+  };
 
 
   return (
@@ -277,7 +294,22 @@ const Holidays = () => {
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
+            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} />
+            <ActionButton title="Save" icon={UploadIcon} isLoading={isLoading} onClick={handleBulkUploadOpen} margin="0 10px 0 10px" />
+            {uploadOpen && (
+              <CommonBulkUpload
+                open={uploadOpen}
+                handleClose={handleBulkUploadClose}
+                dialogTitle="Upload Files"
+                uploadText="Upload File"
+                onSubmit={handleSubmit}
+                handleFileUpload={handleFileUpload}
+                apiUrl="/basicmaster/excelUploadForHolidays"
+                screen="HolidayReport"
+                loginUser={loginUserName}
+                orgId={orgId}
+              />
+            )}
           </div>
         </div>
         {listView ? (
