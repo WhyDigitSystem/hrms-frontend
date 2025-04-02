@@ -18,6 +18,9 @@ import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { Autocomplete } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { FormHelperText, MenuItem } from '@mui/material';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
 
 const LeaveRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -33,11 +36,14 @@ const LeaveRequest = () => {
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [leaveTypeList, setLeaveTypeList] = useState([]);
+  const [weekOffDays, setWeekOff] = useState([]);
+  const [totalLeaveDays, setTotalLeaveDays] = useState([]);
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveTypeCode: '',
     fromDate: dayjs(),
     toDate: null,
+    selectLeave: '',
     totalDays: '',
     notes: '',
     notify: ''
@@ -45,8 +51,9 @@ const LeaveRequest = () => {
 
   const [fieldErrors, setFieldErrors] = useState({
     leaveType: '',
-    fromDate: '',
-    toDate: '',
+    fromDate: null,
+    toDate: null,
+    selectLeave: '',
     totalDays: '',
     notes: '',
     notify: ''
@@ -59,7 +66,7 @@ const LeaveRequest = () => {
     { accessorKey: 'toDate', header: 'To Date', size: 140 },
     { accessorKey: 'totalDays', header: 'Total Days', size: 140 },
     { accessorKey: 'notes', header: 'Notes', size: 140 },
-    { accessorKey: 'notify', header: 'Notify', size: 140 },
+    { accessorKey: 'notify', header: 'Notify', size: 140 }
   ];
   const [listViewData, setListViewData] = useState([]);
   const [errorDialog, setErrorDialog] = useState({
@@ -78,21 +85,24 @@ const LeaveRequest = () => {
     setFormData((prevData) => ({
       ...prevData,
       toDate: null,
-      totalDays: ""
+      totalDays: ''
     }));
   };
 
   useEffect(() => {
+    getCompanyWeekOff();
     getLeaveRequestByOrgId();
     getNotifyList();
     getLeaveType();
   }, [formData.fromDate, formData.toDate, orgId, loginUserName]);
 
-
   // List API
   const getLeaveRequestByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `/leaveprocess/getLeaveRequestByOrgId?branchCode=${branchCode}&employeeCode=${employeeCode}&orgId=${orgId}`);
+      const response = await apiCalls(
+        'get',
+        `/leaveprocess/getLeaveRequestByOrgId?branchCode=${branchCode}&employeeCode=${employeeCode}&orgId=${orgId}`
+      );
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -101,17 +111,11 @@ const LeaveRequest = () => {
           console.log('Raw toDate:', item.toDate);
 
           // Convert fromDate and toDate to Dayjs objects
-          const fromDate = item.fromDate && dayjs(item.fromDate, 'YYYY-MM-DD', true).isValid()
-            ? dayjs(item.fromDate)
-            : null;
+          const fromDate = item.fromDate && dayjs(item.fromDate, 'YYYY-MM-DD', true).isValid() ? dayjs(item.fromDate) : null;
 
-          const toDate = item.toDate && dayjs(item.toDate, 'YYYY-MM-DD', true).isValid()
-            ? dayjs(item.toDate)
-            : null;
+          const toDate = item.toDate && dayjs(item.toDate, 'YYYY-MM-DD', true).isValid() ? dayjs(item.toDate) : null;
 
-
-
-          return { ...item, fromDate, toDate, };
+          return { ...item, fromDate, toDate };
         });
 
         console.log('Formatted Data:', formattedData);
@@ -124,8 +128,6 @@ const LeaveRequest = () => {
     }
   };
 
-
-
   // getNotifyList
   const getNotifyList = async () => {
     try {
@@ -136,17 +138,21 @@ const LeaveRequest = () => {
     }
   };
 
-  // getLeaveType
   const getLeaveType = async () => {
     try {
       const result = await apiCalls('get', `leaveprocess/getAllLeaveTypeFromLeaveMaster?employeeCode=${employeeCode}&orgId=${orgId}`);
-      setLeaveTypeList(result.paramObjectsMap.leaveRequestVO);
+      
+      const formattedLeaveList = result.paramObjectsMap.leaveRequestVO.map(leave => ({
+        ...leave,
+        leaveDays: parseFloat(leave.leaveDays).toString()
+      }));
+
+      setLeaveTypeList(formattedLeaveList);
     } catch (error) {
       console.error('Error fetching leave types:', error);
     }
   };
 
-  // Edit API
   const getLeaveRequestById = async (row) => {
     console.log('THE SELECTED LEAVE REQUEST ID IS:', row.original.id);
     setEditId(row.original.id);
@@ -164,6 +170,7 @@ const LeaveRequest = () => {
           leaveType: leaveRequestDetails.leaveType || '',
           fromDate: leaveRequestDetails.fromDate ? dayjs(leaveRequestDetails.fromDate) : dayjs(),
           toDate: leaveRequestDetails.toDate ? dayjs(leaveRequestDetails.toDate) : dayjs(),
+          selectLeave: leaveRequestDetails.selectLeave,
           totalDays: leaveRequestDetails.totalDays,
           notes: leaveRequestDetails.notes || '',
           notify: leaveRequestDetails.notify || ''
@@ -178,107 +185,30 @@ const LeaveRequest = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    let inputValue = value;
-
-    // Validation Rules
-    const textRegex = /^[A-Za-z ]*$/;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-
-    // Convert to Uppercase for text fields
-    if (type === 'text' || type === 'textarea') {
-      inputValue = inputValue.toUpperCase();
-    } else if (name === 'email') {
-      inputValue = inputValue.toLowerCase();
-    }
-
-    // Checkbox Handling
-    if (type === 'checkbox') {
-      inputValue = checked;
-    }
-
-    // Validate Specific Fields
-    let errorMessage = '';
-    if (name === 'employeeName' && !textRegex.test(value)) {
-      errorMessage = 'Invalid Format';
-    } else if (name === 'employeeCode' && !codeRegex.test(value)) {
-      errorMessage = 'Invalid Format';
-    }
-
-    // Branch Selection Handling
-    if (name === 'branch') {
-      const selectedBranch = branchList.find((br) => br.branch === value);
-      setFormData((prevData) => ({
-        ...prevData,
-        branch: value,
-        branchCode: selectedBranch ? selectedBranch.branchCode : ''
-      }));
-    }
-    // Reset fromDate & toDate when leaveType is cleared
-    else if (name === 'leaveType' && !value) {
-      setFormData((prevData) => ({
-        ...prevData,
-        leaveType: '',
-        leaveTypeCode: '',
-        fromDate: null,
-        toDate: null,
-        totalDays: ''
-      }));
-    }
-    // Prevent selecting toDate before fromDate
-    else if (name === 'toDate') {
-      if (!formData.fromDate) {
-        showErrorDialog("Please select From Date first.");
-        return;
-      }
-
-      // Calculate the difference between fromDate and toDate
-      const fromDate = new Date(formData.fromDate);
-      const selectedToDate = new Date(value);
-      const timeDifference = selectedToDate - fromDate;
-      const daysDifference = timeDifference / (1000 * 60 * 60 * 24) + 1; // Adding 1 to count inclusive
-
-      // Check if the selected leave type has a limit
-      if (formData.leaveType && formData.leaveCount) {
-        if (daysDifference > formData.leaveCount) {
-          showErrorDialog(`You can only select up to ${formData.leaveCount} day(s) for this leave.`);
-          return;
-        }
-      }
-    }
-
-    // Update formData
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: inputValue
-    }));
-
-    // Update Errors
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: errorMessage
+      [name]: value
     }));
   };
 
-
-  // handleClear
   const handleClear = () => {
-    // Reset the form data state
     setFormData({
       leaveType: '',
       fromDate: dayjs(),
       toDate: null,
+      selectLeave: '',
       totalDays: '',
       notes: '',
       notify: ''
     });
 
-    // Reset field errors state
     setFieldErrors({
       leaveType: '',
-      fromDate: '',
-      toDate: '',
+      fromDate: null,
+      toDate: null,
+      selectLeave: '',
       totalDays: '',
       notes: '',
       notify: ''
@@ -323,6 +253,7 @@ const LeaveRequest = () => {
         leaveCode: formData.leaveTypeCode,
         fromDate: formattedFromDate,
         toDate: formattedToDate,
+        selectLeave: formData.selectLeave,
         totalDays: formData.totalDays,
         notes: formData.notes,
         notify: formData.notify,
@@ -362,75 +293,19 @@ const LeaveRequest = () => {
     }
   };
 
-  // const calculateLeavedays = async (fromDate, toDate) => {
-  //   try {
-  //     if (!fromDate || !toDate) return;
-
-  //     // Convert dates to API-friendly format
-  //     const formattedFromDate = dayjs(fromDate).format("YYYY-MM-DD");
-  //     const formattedToDate = dayjs(toDate).format("YYYY-MM-DD");
-
-  //     const result = await apiCalls(
-  //       'get',
-  //       `/leaveprocess/calculateLeavedays?fromDate=${encodeURIComponent(formattedFromDate)}&orgId=${orgId}&toDate=${encodeURIComponent(formattedToDate)}`
-  //     );
-
-  //     if (result.workingDays !== undefined) {
-  //       setFormData((prev) => ({ ...prev, totalDays: result.workingDays }));
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching leave days:", error);
-  //   }
-  // };
-
-  const calculateLeavedays = async (fromDate, toDate) => {
-    try {
-      if (!fromDate || !toDate) return;
-  
-      const formattedFromDate = dayjs(fromDate).format("YYYY-MM-DD");
-      const formattedToDate = dayjs(toDate).format("YYYY-MM-DD");
-  
-      const result = await apiCalls(
-        'get',
-        `/leaveprocess/calculateLeavedays?fromDate=${encodeURIComponent(formattedFromDate)}&orgId=${orgId}&toDate=${encodeURIComponent(formattedToDate)}`
-      );
-  
-      if (result.workingDays !== undefined) {
-        const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-  
-        if (selectedLeave) {
-          const allowedLeaveDays = parseInt(selectedLeave.leaveDays);
-          const calculatedDays = parseInt(result.workingDays);
-  
-          // Check if the calculated days exceed the allowed leave days
-          if (selectedLeave.leaveType !== 'LOSS OF PAY' && calculatedDays > allowedLeaveDays) {
-            showErrorDialog(`You can only take ${allowedLeaveDays} days for ${selectedLeave.leaveType}.`);
-            return;
-          }
-  
-          setFormData((prev) => ({ ...prev, totalDays: calculatedDays }));
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching leave days:", error);
-    }
-  };  
-
-  // handleView
   const handleView = () => {
     setListView(!listView);
   };
 
   const handleLeaveTypeChange = (event, newValue) => {
     if (!newValue) {
-      setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '' }));
+      setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0 }));
       return;
     }
 
     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === newValue.leaveType);
     if (!selectedLeave) return;
 
-    // Skip validation for "Loss Of Pay"
     if (selectedLeave.leaveType !== 'LOSS OF PAY' && selectedLeave.leaveDays === '0') {
       showErrorDialog(`You don't have leave in ${selectedLeave.leaveType}`);
       return;
@@ -439,141 +314,92 @@ const LeaveRequest = () => {
     setFormData((prevData) => ({
       ...prevData,
       leaveType: newValue.leaveType,
-      leaveTypeCode: selectedLeave.leaveTypeCode // Ensure leaveTypeCode is updated
+      leaveTypeCode: selectedLeave.leaveTypeCode,
+      availableLeaveDays: parseFloat(selectedLeave.leaveDays) 
     }));
   };
 
-  // const handleDateChange = async (name, value) => {  // Add async here
-  //   if (!value) {
-  //     setFormData((prevData) => ({ ...prevData, [name]: null, totalDays: '' }));
-  //     return;
-  //   }
+  const handleDateChange = (name, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value || null 
+    }));
+  };
 
-  //   const fromDate = name === 'fromDate' ? value : formData.fromDate;
-  //   const toDate = name === 'toDate' ? value : formData.toDate;
+  const disableWeekOffDays = (date) => {
+    const disabledDays = {
+      SUNDAY: 0,
+      MONDAY: 1,
+      TUESDAY: 2,
+      WEDNESDAY: 3,
+      THURSDAY: 4,
+      FRIDAY: 5,
+      SATURDAY: 6
+    };
 
-  //   if (fromDate && name === 'toDate') {
-  //     const diffDays = dayjs(value).diff(dayjs(fromDate), 'day') + 1;
+    return weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
+  };
 
-  //     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-
-  //     if (selectedLeave && selectedLeave.leaveType !== 'LOSS OF PAY' && parseInt(diffDays) > parseInt(selectedLeave.leaveDays)) {
-  //       showErrorDialog(`You can only take ${selectedLeave.leaveDays} days for ${selectedLeave.leaveType}.`);
-  //       return;
-  //     }
-
-  //     setFormData((prevData) => ({ ...prevData, toDate: value, totalDays: diffDays }));
-  //   } else {
-  //     setFormData((prevData) => ({ ...prevData, [name]: value }));
-  //   }
-
-  //   // Call API to calculate leave days if both dates are selected
-  //   const updatedFormData = { ...formData, [name]: value };  // Ensure updated state values
-  //   if (updatedFormData.fromDate && updatedFormData.toDate) {
-  //     await calculateLeavedays(updatedFormData.fromDate, updatedFormData.toDate);
-  //   }
-  // };
-
-  // const handleDateChange = async (name, value) => {
-  //   if (!value) {
-  //     setFormData((prevData) => ({ ...prevData, [name]: null, totalDays: '' }));
-  //     return;
-  //   }
-  
-  //   const fromDate = name === 'fromDate' ? value : formData.fromDate;
-  //   const toDate = name === 'toDate' ? value : formData.toDate;
-  
-  //   setFormData((prevData) => ({ ...prevData, [name]: value }));
-  
-  //   if (fromDate && toDate) {
-  //     await calculateLeavedays(fromDate, toDate);
-  //   }
-  // };  
-
-  // const handleDateChange = async (name, value) => {
-  //   // Check if leaveType is selected before allowing date selection
-  //   if (!formData.leaveType) {
-  //     showErrorDialog("Please choose Leave Type first before selecting date fields.");
-  //     return;
-  //   }
-  
-  //   if (!value) {
-  //     setFormData((prevData) => ({ ...prevData, [name]: null, totalDays: '' }));
-  //     return;
-  //   }
-  
-  //   const fromDate = name === 'fromDate' ? value : formData.fromDate;
-  //   const toDate = name === 'toDate' ? value : formData.toDate;
-  
-  //   if (fromDate && name === 'toDate') {
-  //     const diffDays = dayjs(value).diff(dayjs(fromDate), 'day') + 1;
-  
-  //     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-  
-  //     if (selectedLeave && selectedLeave.leaveType !== 'LOSS OF PAY' && parseInt(diffDays) > parseInt(selectedLeave.leaveDays)) {
-  //       showErrorDialog(`You can only take ${selectedLeave.leaveDays} days for ${selectedLeave.leaveType}.`);
-  //       return;
-  //     }
-  
-  //     setFormData((prevData) => ({ ...prevData, toDate: value, totalDays: diffDays }));
-  //   } else {
-  //     setFormData((prevData) => ({ ...prevData, [name]: value }));
-  //   }
-  
-  //   // Call API to calculate leave days if both dates are selected
-  //   const updatedFormData = { ...formData, [name]: value };
-  //   if (updatedFormData.fromDate && updatedFormData.toDate) {
-  //     await calculateLeavedays(updatedFormData.fromDate, updatedFormData.toDate);
-  //   }
-  // };  
-
-  const handleDateChange = async (name, value) => {
-    // Check if leaveType is selected before allowing date selection
-    if (!formData.leaveType) {
-      showErrorDialog("Please choose Leave Type first before selecting date fields.");
-      setFormData(prevData => ({
-        ...prevData,
-        [name]: null,  // Clear the selected date if leaveType is not selected
-        totalDays: ''
-      }));
-      return;
+  const getCompanyWeekOff = async () => {
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
+      setWeekOff(weekOffDays); 
+    } catch (error) {
+      console.error('Error', error);
     }
-  
-    if (!value) {
-      setFormData(prevData => ({ ...prevData, [name]: null, totalDays: '' }));
-      return;
-    }
-  
-    const fromDate = name === 'fromDate' ? value : formData.fromDate;
-    const toDate = name === 'toDate' ? value : formData.toDate;
-  
-    if (fromDate && name === 'toDate') {
-      const diffDays = dayjs(value).diff(dayjs(fromDate), 'day') + 1;
-  
+  };
+
+  const getTotalLeave = async (fromDate, toDate, selectLeave) => {
+    try {
+      const formattedFromDate = dayjs(fromDate).format('YYYY-MM-DD');
+      const formattedToDate = dayjs(toDate).format('YYYY-MM-DD');
+
+      const leaveType = dayjs(fromDate).isSame(dayjs(toDate), 'day') ? selectLeave : null;
+
+      const result = await apiCalls(
+        'get',
+        `leaveprocess/calculateLeavedays?fromDate=${formattedFromDate}&orgId=${orgId}&selectLeave=${leaveType || ''}&toDate=${formattedToDate}`
+      );
+
+      const workingDays = result.workingDays || 0;
       const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-  
-      if (selectedLeave && selectedLeave.leaveType !== 'LOSS OF PAY' && parseInt(diffDays) > parseInt(selectedLeave.leaveDays)) {
-        showErrorDialog(`You can only take ${selectedLeave.leaveDays} days for ${selectedLeave.leaveType}.`);
-        
-        // Clear the toDate if the leave days exceed the limit
-        setFormData(prevData => ({
-          ...prevData,
-          toDate: null,
-          totalDays: ''
-        }));
-        return;
+      
+      if (selectedLeave) {
+        const availableLeaveDays = parseFloat(selectedLeave.leaveDays);
+
+        if (workingDays > availableLeaveDays && formData.leaveType !== 'LOSS OF PAY') {
+          showErrorDialog(`You have only ${availableLeaveDays} day available for ${formData.leaveType}.`);
+          setFormData((prevData) => ({
+            ...prevData,
+            totalDays: 0 
+          }));
+          return;
+        }
       }
-  
-      setFormData(prevData => ({ ...prevData, toDate: value, totalDays: diffDays }));
-    } else {
-      setFormData(prevData => ({ ...prevData, [name]: value }));
+
+      setFormData((prevData) => ({
+        ...prevData,
+        totalDays: workingDays
+      }));
+    } catch (error) {
+      console.error('Error fetching leave data:', error);
     }
-  
-    // Call API to calculate leave days if BOTH fromDate and toDate are selected
+  };
+
+  useEffect(() => {
     if (formData.fromDate && formData.toDate) {
-      await calculateLeavedays(formData.fromDate, formData.toDate);
+      if (dayjs(formData.fromDate).isSame(dayjs(formData.toDate), 'day')) {
+        getTotalLeave(formData.fromDate, formData.toDate, formData.selectLeave);
+      } else {
+        getTotalLeave(formData.fromDate, formData.toDate, null);
+        setFormData((prevData) => ({
+          ...prevData,
+          totalDays: 0
+        }));
+      }
     }
-  };  
+  }, [formData.fromDate, formData.toDate, formData.selectLeave]);
 
   return (
     <>
@@ -593,7 +419,7 @@ const LeaveRequest = () => {
               columns={listViewColumns}
               blockEdit={false}
               toEdit={getLeaveRequestById}
-            // enableEditing={true}
+              // enableEditing={true}
             />
           </div>
         ) : (
@@ -634,39 +460,70 @@ const LeaveRequest = () => {
                 />
               </div>
 
-              {/* From Time */}
+              {/* From Date */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="From Date"
-                      format="DD-MM-YYYY"
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      value={formData.fromDate || null}
-                      onChange={(newValue) => handleDateChange('fromDate', newValue)}
-                    />
+                    {formData.leaveType ? ( 
+                      <DatePicker
+                        label="From Date"
+                        format="DD-MM-YYYY"
+                        slotProps={{
+                          textField: { size: 'small', clearable: true }
+                        }}
+                        value={formData.fromDate || null}
+                        onChange={(newValue) => handleDateChange('fromDate', newValue)}
+                        shouldDisableDate={disableWeekOffDays}
+                      />
+                    ) : (
+                      <TextField label="From Date" size="small" value="" placeholder="Select Leave Type First" disabled />
+                    )}
                   </LocalizationProvider>
                 </FormControl>
               </div>
 
-              {/* To Time */}
+              {/* To Date */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      label="To Date"
-                      format="DD-MM-YYYY"
-                      slotProps={{
-                        textField: { size: 'small', clearable: true }
-                      }}
-                      value={formData.toDate || null}
-                      onChange={(newValue) => handleDateChange('toDate', newValue)}
-                    />
+                    {formData.leaveType ? ( // Render DatePicker only if leaveType is selected
+                      <DatePicker
+                        label="To Date"
+                        format="DD-MM-YYYY"
+                        slotProps={{
+                          textField: { size: 'small', clearable: true }
+                        }}
+                        value={formData.toDate || null}
+                        onChange={(newValue) => handleDateChange('toDate', newValue)}
+                        shouldDisableDate={disableWeekOffDays}
+                      />
+                    ) : (
+                      <TextField label="To Date" size="small" value="" placeholder="Select Leave Type First" disabled />
+                    )}
                   </LocalizationProvider>
                 </FormControl>
               </div>
+
+              {formData.fromDate && formData.toDate && dayjs(formData.fromDate).isSame(dayjs(formData.toDate), 'day') && (
+                <div className="col-md-3 mb-3">
+                  <FormControl fullWidth size="small" error={!!fieldErrors.selectLeave}>
+                    <InputLabel id="selectLeave">Select Leave</InputLabel>
+                    <Select
+                      labelId="selectLeave"
+                      id="selectLeave"
+                      name="selectLeave"
+                      value={formData.selectLeave || ''}
+                      onChange={handleInputChange}
+                      label="Select Leave"
+                    >
+                      <MenuItem value="FIRST HALF">1st Half</MenuItem>
+                      <MenuItem value="SECOND HALF">2nd Half</MenuItem>
+                      <MenuItem value="FULL DAY">Full Day</MenuItem>
+                    </Select>
+                    {fieldErrors.selectLeave && <FormHelperText>{fieldErrors.selectLeave}</FormHelperText>}
+                  </FormControl>
+                </div>
+              )}
 
               {/* Total Days */}
               <div className="col-md-3 mb-3">
@@ -729,7 +586,6 @@ const LeaveRequest = () => {
                   )}
                 />
               </div>
-
             </div>
           </>
         )}
