@@ -219,7 +219,7 @@
 }
 
 .css-11zkiz-MuiTableRow-root {
-  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%);
+  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%) !important;
   // background: linear-gradient(90deg, #673ab7, #7243c3) !important;
   font-weight: 700 !important;
 }
@@ -236,11 +236,11 @@
 
 .css-kvip5o-MuiToolbar-root {
   // background: linear-gradient(193deg, #8ea6a8 30%, #4d7fa7 90%); }
-  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%);
+  background: linear-gradient(193deg, #7bb9b4 30%, #009d90 90%) !important;
 }
 
 .ps {
-  background: linear-gradient(193deg, #009d90 30%, #7bb9b4 90%);
+  background: linear-gradient(193deg, #009d90 30%, #7bb9b4 90%) !important;
 }
 
 .css-40exn0-MuiInputBase-root-MuiOutlinedInput-root {
@@ -308,22 +308,22 @@
 }
 
 .css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected {
-  color: #ffffff;
-  background-color: #1c645e;
+  color: #ffffff !important;
+  background-color: #1c645e !important;
 }
 
 .css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: #fcfbff;
+  color: #fcfbff !important;
 }
 
 .css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected:hover {
-  background-color: #1c645e;
-  color: #fcfbff;
+  background-color: #1c645e !important;
+  color: #fcfbff !important;
 }
 
 .css-126euq6-MuiButtonBase-root-MuiListItemButton-root:hover {
-  background-color: #1c645e;
-  color: #fcfbff;
+  background-color: #1c645e !important;
+  color: #fcfbff !important;
 }
 
 .css-onexqs-MuiTypography-root {
@@ -414,76 +414,85 @@
   display: -ms-flexbox;
   display: flex
 ;
-  background-color: #bdbdbd;
-  color: #1c645e;
-  background: #ede7f6;
-  color: #1c645e;
+  background-color: #bdbdbd !important;
+  color: #1c645e !important;
+  background: #ede7f6 !important;
+  color: #1c645e !important;
 }
 .css-1kqpfbs-MuiAvatar-root:hover {
-  background: #1c645e;
-  color: #ede7f6;
+  background: #1c645e !important;
+  color: #ede7f6 !important;
 }
 .css-1kqpfbs-MuiAvatar-root {
  
-  color: #ffffff;
-  background-color: #bdbdbd;
-  color: #d8f3f1;
-  background: #90caf9;
+  color: #ffffff !important;
+  background-color: #bdbdbd !important;
+  color: #d8f3f1 !important;
+  background: #90caf9 !important;
   font-size: 1.2rem;
-  background: #d8f3f1;
-  color: #1c645e;
+  background: #d8f3f1 !important;
+  color: #1c645e !important;
 }
 .css-13y939n-MuiAvatar-root:hover {
-  background: #1c645e;
-  color: #ede7f6;
+  background: #1c645e !important;
+  color: #ede7f6 !important;
 }
 .css-13y939n-MuiAvatar-root {
   position: relative;
   display: flex
 ;
-  background-color: #bdbdbd;
-  color: #1c645e;
-  background: #d8f3f1;
-  color: #1c645e;
+  background-color: #bdbdbd !important;
+  color: #1c645e !important;
+  background: #d8f3f1 !important;
+  color: #1c645e !important;
 }
 .css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root.Mui-selected .MuiListItemIcon-root {
-  color: #ffffff;
+  color: #ffffff !important;
 }
 .css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root:hover {
-  background-color:#d8f3f1;
+  background-color:#d8f3f1 !important;
 }
 .css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root:hover {
-  background-color: #1c645e;
-  color: #5e35b1;
+  background-color: #1c645e !important;
+  color: #5e35b1 !important;
 }
 .css-1k8ujan-MuiButtonBase-root-MuiListItemButton-root {
-  background-color: #d8f3f1; 
+  background-color: #d8f3f1 !important; 
 }
 .css-16b7mku-MuiSvgIcon-root {
-  fill: #1c645e;
+  fill: #1c645e !important;
   color: #673ab7;
 }
 .css-rth2ff-MuiAvatar-root {
-  color: #ffffff;
-  background-color: #bdbdbd;
-  color: #1e88e5;
-  background: #7dc5ff;
-  background: #d8f3f1;
-  color: #1c645e;
+  color: #ffffff !important;
+  background-color: #bdbdbd !important;
+  color: #1e88e5 !important;
+  background: #7dc5ff !important;
+  background: #d8f3f1 !important;
+  color: #1c645e !important;
 }
 .css-rth2ff-MuiAvatar-root:hover {
-  background: #1c645e;
-  color: #ede7f6;
+  background: #1c645e !important;
+  color: #ede7f6 !important;
 }
 .css-inh4el-MuiButtonBase-root-MuiCheckbox-root .MuiSvgIcon-root {
-  color: #1c645e;
+  color: #1c645e !important;
 }
 .css-1fdw62t-MuiButtonBase-root-MuiTab-root.Mui-selected {
-  color: #1c645e;
+  color: #1c645e !important;
 }
 .css-78exr-MuiTabs-indicator {
-  background-color: #1c645e;
+  background-color: #1c645e !important;
 }
 .css-1p5pb03-MuiButtonBase-root-MuiCheckbox-root.Mui-checked, .css-1p5pb03-MuiButtonBase-root-MuiCheckbox-root.MuiCheckbox-indeterminate {
-    color: #1c645e;
+    color: #1c645e !important;
+}
+.css-s3s9uk {
+  background-color: #1c645e !important;
+}
+.css-1qbzidt {
+  background-color: #1c645e !important;
+}
+.css-rb5s7z::after {
+  background:none !important;
 }
