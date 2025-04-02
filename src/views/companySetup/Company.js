@@ -116,18 +116,37 @@ const Company = () => {
   ];
 
   const [listViewData, setListViewData] = useState([]);
+  // useEffect(() => {
+  //   getAllCountries();
+  //   getCompanyDetails();
+  //   getAllCurrency();
+  //   // getCompany();
+  //   if (formData.country) {
+  //     getAllStates();
+  //   }
+  //   if (formData.state) {
+  //     getAllCities();
+  //   }
+  // }, [formData.country, formData.state]);
+
   useEffect(() => {
+    getAllCountries();
     getCompanyDetails();
     getAllCurrency();
-    // getCompany();
-    getAllCountries();
+}, []); // Run only once on mount
+
+useEffect(() => {
     if (formData.country) {
-      getAllStates();
+        getAllStates(); // Fetch states only when country changes
     }
+}, [formData.country]); // Only depend on country change
+
+useEffect(() => {
     if (formData.state) {
-      getAllCities();
+        getAllCities(); // Fetch cities only when state changes
     }
-  }, [formData.country, formData.state]);
+}, [formData.state]); // Only depend on state change
+
 
   const getAllCurrency = async () => {
     try {
@@ -161,23 +180,16 @@ const Company = () => {
       console.error('Error fetching country data:', error);
     }
   };
-
+  
   const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
-    if (name === 'weekOff') {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: typeof value === 'string' ? value.split(',') : value // Ensure array format
-      }));
-      return;
-    }
+    const { name, value, checked, type } = e.target || e;
 
     // Regular expressions for validation
-    const nameRegex = /^[A-Za-z ]*$/; // Allows only alphabetic characters and spaces
-    const numericRegex = /^[0-9]*$/; // Allows only numeric characters
-    const alphanumericRegex = /^[A-Za-z0-9]*$/; // Allows only alphanumeric characters
+    const nameRegex = /^[A-Za-z ]*$/;
+    const numericRegex = /^[0-9]*$/;
+    const alphanumericRegex = /^[A-Za-z0-9]*$/;
 
+    let newValue = value?.toUpperCase() || '';
     let error = '';
 
     // Validation logic
@@ -199,47 +211,52 @@ const Company = () => {
       }
     }
 
-    // Handle errors if validation fails
-    if (error) {
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: error
+    // Update error state
+    setFieldErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: error
+    }));
+
+    // Only update form data if there's no error
+    if (!error) {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: newValue
       }));
-    } else {
-      // Clear previous error if input is valid
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: ''
+    }
+
+    if (type === 'checkbox') {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: checked
       }));
+      return; // Exit here to avoid further processing for checkboxes
+    }
 
-      // Update the form data
-      let updatedValue = value;
+    if (name === 'weekOff') {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: typeof value === 'string' ? value.split(',') : value
+      }));
+      return; // Exit here to avoid further processing for weekOff
+    }
 
-      if (name !== 'active') {
-        updatedValue = value.toUpperCase();
-      }
+    // Handle dropdowns separately
+    if (type === 'select-one') {
+      // This ensures dropdown updates do not affect other state properties
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: value
+      }));
+      return;
+    }
 
-      if (type === 'checkbox') {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: checked
-        }));
-      } else {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: updatedValue
-        }));
-      }
-
-      // Handle cursor position reset after input change (for text, email, and textarea)
-      if (type === 'text' || type === 'textarea' || type === 'email') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
+    // If it's not a checkbox or dropdown, process the input normally
+    if (type !== 'checkbox' && type !== 'select-one') {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: newValue
+      }));
     }
   };
 
@@ -315,16 +332,16 @@ const Company = () => {
     try {
       const response = await apiCalls('get', `commonmaster/company`);
       console.log('API Response:', response);
-  
+
       if (response.status === true) {
         const companyList = response.paramObjectsMap.companyVO;
         setListViewData(companyList);
-  
+
         console.log('THE LISTVIEW COMPANY IS:', companyList);
-  
+
         // Check if orgId exists and matches any company's id
-        const matchedCompany = companyList.find(company => company.id === parseInt(orgId));
-  
+        const matchedCompany = companyList.find((company) => company.id === parseInt(orgId));
+
         if (matchedCompany) {
           console.log('MATCHED COMPANY ID FOUND:', matchedCompany.id);
           await getCompanyById({ original: { id: matchedCompany.id } }); // Call getCompanyById if match is found
@@ -342,6 +359,8 @@ const Company = () => {
   const handleClear = () => {
     setFormData({
       // companyCode: '',
+      companyCode: formData.companyCode,
+      companyName: formData.companyName,
       ceo: '',
       address: '',
       currency: '',
@@ -374,7 +393,7 @@ const Company = () => {
       leaveCreditControl: '',
       autoCreditDate: null,
       leavePolicy: '',
-      weekOff: '',
+      weekOff: ''
     });
     setEditId('');
   };
@@ -437,12 +456,12 @@ const Company = () => {
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
       try {
-          const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-          
+        const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
+
         // if (editId) {
         //   // PUT request (update)
         //   response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-        // } 
+        // }
         // else {
         //   // POST request (create)
         //   response = await apiCalls('post', `commonmaster/company`, saveFormData);
@@ -562,14 +581,13 @@ const Company = () => {
 
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
-                  <InputLabel id="country-label">Country</InputLabel>
-                  <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
-                    {Array.isArray(countryList) &&
-                      countryList?.map((row) => (
-                        <MenuItem key={row.id} value={row.countryName}>
-                          {row.countryName}
-                        </MenuItem>
-                      ))}
+                  <InputLabel id="country">Country</InputLabel>
+                  <Select labelId="country" label="Country" name="country" value={formData.country} onChange={handleInputChange}>
+                    {countryList?.map((row) => (
+                      <MenuItem key={row.id} value={row.countryName}>
+                        {row.countryName}
+                      </MenuItem>
+                    ))}
                   </Select>
                   {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
                 </FormControl>
@@ -577,8 +595,8 @@ const Company = () => {
 
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.state}>
-                  <InputLabel id="state-label">State</InputLabel>
-                  <Select labelId="state-label" label="State" value={formData.state} onChange={handleInputChange} name="state">
+                  <InputLabel id="state">State</InputLabel>
+                  <Select labelId="state" label="State" name="state" value={formData.state} onChange={handleInputChange}>
                     {stateList?.map((row) => (
                       <MenuItem key={row.id} value={row.stateName}>
                         {row.stateName}
@@ -589,9 +607,9 @@ const Company = () => {
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.state}>
-                  <InputLabel id="city-label">City</InputLabel>
-                  <Select labelId="city-label" label="City" value={formData.city} onChange={handleInputChange} name="city">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.city}>
+                  <InputLabel id="city">City</InputLabel>
+                  <Select labelId="city" label="City" name="city" value={formData.city} onChange={handleInputChange}>
                     {cityList?.map((row) => (
                       <MenuItem key={row.id} value={row.cityName}>
                         {row.cityName}

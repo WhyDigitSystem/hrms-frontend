@@ -275,6 +275,7 @@ const Branch = () => {
 
   const handleClear = () => {
     setFormData({
+      companyName: formData.companyName,
       branchCode: '',
       branchName: '',
       contactPerson: '',

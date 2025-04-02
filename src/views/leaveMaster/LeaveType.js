@@ -84,7 +84,7 @@ const LeaveType = () => {
           salaryDeduction: particularCompany.salaryDeduction,
           // totalLeave: particularCompany.totalLeave,
           // effective: particularCompany.effective,
-          carryForward: particularCompany.carryForward,
+          carryForward: particularCompany.carryForward === true ? "Yes" : "No",
           active: particularCompany.active === 'Active' ? true : false
         });
       } else {
