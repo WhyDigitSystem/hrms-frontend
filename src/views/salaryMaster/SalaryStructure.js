@@ -96,19 +96,18 @@ const SalaryMaster = () => {
     const totalEarnings = earningDetailsData.reduce((sum, row) => {
       return sum + (parseFloat(row.amount) || 0);
     }, 0);
-  
+
     // Calculate total deductions
     const totalDeductions = detectionDetailsData.reduce((sum, row) => {
       return sum + (parseFloat(row.detectionAmount) || 0);
     }, 0);
-  
+
     // Calculate net salary
     const netSalary = totalEarnings - totalDeductions;
-  
+
     // Update employee salary
     setEmployeeSalary(netSalary);
   }, [earningDetailsData, detectionDetailsData]); // Runs when earningDetailsData or detectionDetailsData changes
-  
 
   const handleInputChange = (e) => {
     const { name, value, checked } = e.target;
@@ -251,7 +250,7 @@ const SalaryMaster = () => {
           panNo: particularSalaryStructure.panNo,
           bankAccountNo: particularSalaryStructure.bankAccountNo,
           position: particularSalaryStructure.designation,
-          dateOfJoining: particularSalaryStructure.dateOfJoining,
+          dateOfJoining: particularSalaryStructure.dateOfJoining
         });
         setEarningDetailsData(
           particularSalaryStructure.salaryEarningDetailsVO.map((role) => ({
@@ -331,7 +330,7 @@ const SalaryMaster = () => {
       }));
 
       const saveFormData = {
-        ...(editId && { id: editId}),
+        ...(editId && { id: editId }),
         active: formData.active,
         bankAccountNo: formData.bankAccountNo,
         branch: branch,
@@ -348,7 +347,7 @@ const SalaryMaster = () => {
         orgId: orgId,
         panNo: formData.panNo,
         salaryDetectionDetailsDTO: detectionDetailsVO,
-        salaryEarningDetailsDTO: earningDetailsVO,
+        salaryEarningDetailsDTO: earningDetailsVO
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
@@ -720,7 +719,7 @@ const SalaryMaster = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ backgroundColor: '#673AB7' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
@@ -931,7 +930,13 @@ const SalaryMaster = () => {
               </div>
             </>
           ) : (
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getSalaryStructureById} enableEditing={true} />
+            <CommonListViewTable
+              data={listViewData}
+              columns={listViewColumns}
+              blockEdit={true}
+              toEdit={getSalaryStructureById}
+              enableEditing={true}
+            />
           )}
         </div>
       </div>

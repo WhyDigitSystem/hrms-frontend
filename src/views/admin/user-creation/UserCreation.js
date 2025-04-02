@@ -215,7 +215,7 @@ const UserCreation = () => {
         branch: selectedEmp.branch,
         branchCode: selectedEmp.branchCode,
         department: selectedEmp.department,
-        designation: selectedEmp.designation,
+        designation: selectedEmp.designation
       }));
     } else {
       console.log('No employee found with the given code:', value); // Log if no employee is found
@@ -792,7 +792,7 @@ const UserCreation = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ backgroundColor: '#673AB7' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>

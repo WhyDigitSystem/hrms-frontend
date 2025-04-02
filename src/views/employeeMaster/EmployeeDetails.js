@@ -357,7 +357,8 @@ const EmployeeDetails = () => {
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
     const nameRegex = /^[A-Za-z ]*$/;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+    const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
+
     const numberRegex = /^[0-9]*$/;
 
     let errorMessage = '';
@@ -386,8 +387,7 @@ const EmployeeDetails = () => {
           branch: value,
           branchCode: selectedBranch ? selectedBranch.branchCode : ''
         }));
-        console.log("br", branch);
-
+        console.log('br', branch);
       } else if (type === 'checkbox') {
         setFormData((prevData) => ({ ...prevData, [name]: checked }));
       } else {
@@ -910,6 +910,7 @@ const EmployeeDetails = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
+                  multiline
                   name="employeeAddress"
                   value={formData.employeeAddress}
                   onChange={handleInputChange}
@@ -1127,7 +1128,7 @@ const EmployeeDetails = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Department Name"
+                      label="Department"
                       name="department"
                       error={Boolean(fieldErrors.department)}
                       helperText={fieldErrors.department || ''}
@@ -1369,7 +1370,7 @@ const EmployeeDetails = () => {
               {/* Aadhaar Number */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Aadhaar Number"
+                  label="Aadhaar No"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1384,7 +1385,7 @@ const EmployeeDetails = () => {
               {/* Pan Number */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="PAN N0"
+                  label="PAN No"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1401,7 +1402,7 @@ const EmployeeDetails = () => {
               {/* Account Number */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Account Number"
+                  label="Account No"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1476,40 +1477,32 @@ const EmployeeDetails = () => {
                           <div className="table-responsive">
                             <table className="table table-bordered ">
                               <thead>
-                                <tr style={{ backgroundColor: '#673AB7' }}>
+                                <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                   {!editId ? (
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                    <th className="px-2 py-2 text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
                                   ) : (
                                     ''
                                   )}
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                                  <th className="px-2 py-2 text-center" style={{ width: '50px' }}>
                                     S.No
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
+                                  <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
                                     Leave Type
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
+                                  <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
                                     Leave Code
                                   </th>
-                                  {/* <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
-                                    Leave Applicable
-                                  </th> */}
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                                  <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
                                     Total Leave
                                   </th>
-                                  {/* <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                    Effective
-                                  </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                    Carry Forward
-                                  </th> */}
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                                  <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
                                     Effective From
                                   </th>
                                 </tr>
                               </thead>
+
                               <tbody>
                                 {leaveTypeTable.map((row, index) => (
                                   <tr key={row.id}>

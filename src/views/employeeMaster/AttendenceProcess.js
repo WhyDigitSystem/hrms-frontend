@@ -24,7 +24,6 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 
-
 const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -52,7 +51,7 @@ const AttendenceProcess = () => {
     { accessorKey: 'totalLeave', header: 'Total Leave', size: 140 },
     { accessorKey: 'empTotalWorkingDays', header: 'Emp Total Working Days', size: 140 },
     { accessorKey: 'empSalaryDays', header: 'Emp Salary Days', size: 140 },
-    { accessorKey: 'active', header: 'Active', size: 140 },
+    { accessorKey: 'active', header: 'Active', size: 140 }
   ];
   const [allLeave, setAllLeave] = useState([]);
 
@@ -102,22 +101,22 @@ const AttendenceProcess = () => {
       setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
       return;
     }
-  
+
     try {
       const response = await apiCalls(
         'get',
         `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
       );
-  
+
       if (response.status === true && Array.isArray(response.paramObjectsMap.leaveProcessVO)) {
-        const formattedData = response.paramObjectsMap.leaveProcessVO.map(item => ({
+        const formattedData = response.paramObjectsMap.leaveProcessVO.map((item) => ({
           ...item,
           totalLeave: parseFloat(item.totalLeave).toString(),
           lopLeave: parseFloat(item.lopLeave).toString(),
           empSalaryDays: parseFloat(item.empSalaryDays).toString(),
           empTotalWorkingDays: parseFloat(item.empTotalWorkingDays).toString()
         }));
-  
+
         setAllLeave(formattedData);
         setListViewData(formattedData);
       } else {
@@ -126,7 +125,7 @@ const AttendenceProcess = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  };  
+  };
 
   const handleDateChange = (name, date) => {
     if (date && dayjs(date).isValid()) {
@@ -148,7 +147,7 @@ const AttendenceProcess = () => {
       fromDate: null,
       toDate: null
     });
-    setAllLeave([])
+    setAllLeave([]);
   };
 
   const handleChange = (event, newValue) => {
@@ -183,7 +182,7 @@ const AttendenceProcess = () => {
         totalLeave: leave.totalLeave,
         year: leave.year,
         branch: branch,
-        branchCode: branchCode,
+        branchCode: branchCode
       }));
 
       console.log('DATA TO SAVE IS:', saveData);
@@ -220,8 +219,6 @@ const AttendenceProcess = () => {
     }
   };
 
-
-
   const handleBulkUploadOpen = () => {
     setUploadOpen(true);
   };
@@ -241,7 +238,6 @@ const AttendenceProcess = () => {
 
   return (
     <>
-
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
@@ -329,7 +325,7 @@ const AttendenceProcess = () => {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 2,
+                    mb: 2
                   }}
                 >
                   <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
@@ -347,8 +343,8 @@ const AttendenceProcess = () => {
                         boxShadow: '0px 4px 8px rgba(63, 81, 181, 0.2)',
                         '&:hover': {
                           background: 'linear-gradient(90deg, #3949ab, #536dfe)',
-                          boxShadow: '0px 6px 12px rgba(63, 81, 181, 0.3)',
-                        },
+                          boxShadow: '0px 6px 12px rgba(63, 81, 181, 0.3)'
+                        }
                       }}
                       onClick={handleBulkUploadOpen}
                     >
@@ -407,7 +403,7 @@ const AttendenceProcess = () => {
                           <div className="table-responsive">
                             <table className="table table-bordered">
                               <thead>
-                                <tr style={{ backgroundColor: '#673AB7' }}>
+                                <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                   <th className="px-2 py-2 text-white text-center">S.No</th>
                                   <th className="px-2 py-2 text-white text-center">Employee Name</th>
                                   <th className="px-2 py-2 text-white text-center">Employee Code</th>
