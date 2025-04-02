@@ -74,29 +74,59 @@ const AttendenceProcess = () => {
     }
   };
 
+  // const getAllLeaveProcess = async () => {
+  //   if (!formData.fromDate || !formData.toDate) {
+  //     setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
+  //     );
+
+  //     if (response.status === true) {
+  //       setAllLeave(response.paramObjectsMap.leaveProcessVO);
+  //       setListViewData(response.paramObjectsMap.leaveProcessVO);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
   const getAllLeaveProcess = async () => {
     if (!formData.fromDate || !formData.toDate) {
       setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
       return;
     }
-
+  
     try {
       const response = await apiCalls(
         'get',
         `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
       );
-
-      if (response.status === true) {
-        setAllLeave(response.paramObjectsMap.leaveProcessVO);
-        setListViewData(response.paramObjectsMap.leaveProcessVO);
+  
+      if (response.status === true && Array.isArray(response.paramObjectsMap.leaveProcessVO)) {
+        const formattedData = response.paramObjectsMap.leaveProcessVO.map(item => ({
+          ...item,
+          totalLeave: parseFloat(item.totalLeave).toString(),
+          lopLeave: parseFloat(item.lopLeave).toString(),
+          empSalaryDays: parseFloat(item.empSalaryDays).toString(),
+          empTotalWorkingDays: parseFloat(item.empTotalWorkingDays).toString()
+        }));
+  
+        setAllLeave(formattedData);
+        setListViewData(formattedData);
       } else {
         console.error('API Error:', response);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  };
-
+  };  
 
   const handleDateChange = (name, date) => {
     if (date && dayjs(date).isValid()) {
@@ -228,6 +258,7 @@ const AttendenceProcess = () => {
               columns={listViewColumns}
               blockEdit={true} // Disable modal if true
               toEdit={true}
+              enableEditing={true}
             />
           </div>
         )}

@@ -292,17 +292,45 @@ const Company = () => {
     }
   };
 
+  // const getCompanyDetails = async () => {
+  //   try {
+  //     const response = await apiCalls('get', `commonmaster/company`);
+  //     console.log('API Response:', response);
+
+  //     if (response.status === true) {
+  //       const particularCompany = response.paramObjectsMap.companyVO[0];
+  //       setListViewData(response.paramObjectsMap.companyVO);
+  //       console.log('THE LISTVIEW COMPANY IS:', particularCompany);
+
+  //       setFormData({ ...formData, companyCode: particularCompany.companyCode, companyName: particularCompany.companyName });
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
   const getCompanyDetails = async () => {
     try {
       const response = await apiCalls('get', `commonmaster/company`);
       console.log('API Response:', response);
-
+  
       if (response.status === true) {
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        setListViewData(response.paramObjectsMap.companyVO);
-        console.log('THE LISTVIEW COMPANY IS:', particularCompany);
-
-        setFormData({ ...formData, companyCode: particularCompany.companyCode, companyName: particularCompany.companyName });
+        const companyList = response.paramObjectsMap.companyVO;
+        setListViewData(companyList);
+  
+        console.log('THE LISTVIEW COMPANY IS:', companyList);
+  
+        // Check if orgId exists and matches any company's id
+        const matchedCompany = companyList.find(company => company.id === parseInt(orgId));
+  
+        if (matchedCompany) {
+          console.log('MATCHED COMPANY ID FOUND:', matchedCompany.id);
+          await getCompanyById({ original: { id: matchedCompany.id } }); // Call getCompanyById if match is found
+        } else {
+          console.log('No matching company found for the given orgId.');
+        }
       } else {
         console.error('API Error:', response);
       }
@@ -346,7 +374,7 @@ const Company = () => {
       leaveCreditControl: '',
       autoCreditDate: null,
       leavePolicy: '',
-      weekOff: ''
+      weekOff: '',
     });
     setEditId('');
   };
@@ -380,7 +408,8 @@ const Company = () => {
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
-        ...(editId && { id: editId }),
+        // ...(editId && { id: editId }),
+        id: orgId,
         active: formData.active,
         address: formData.address,
         cancel: true,
@@ -408,18 +437,20 @@ const Company = () => {
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
       try {
-        let response;
-        if (editId) {
-          // PUT request (update)
-          response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-        } else {
-          // POST request (create)
-          response = await apiCalls('post', `commonmaster/company`, saveFormData);
-        }
+          const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
+          
+        // if (editId) {
+        //   // PUT request (update)
+        //   response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
+        // } 
+        // else {
+        //   // POST request (create)
+        //   response = await apiCalls('post', `commonmaster/company`, saveFormData);
+        // }
 
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'Company updated Successfully' : 'Company created Successfully');
+          showToast('success', 'Company updated Successfully');
           handleClear();
           setIsLoading(false);
         } else {
@@ -459,7 +490,7 @@ const Company = () => {
           <div className="d-flex flex-wrap justify-content-start mb-4" style={{ marginBottom: '20px' }}>
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-            <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
+            {/* <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} /> */}
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={() => handleSave()} margin="0 10px 0 10px" />
           </div>
         </div>
@@ -530,20 +561,6 @@ const Company = () => {
               </div>
 
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
-                  <InputLabel id="currency-label">Currency</InputLabel>
-                  <Select labelId="currency-label" label="currency" value={formData.currency} onChange={handleInputChange} name="currency">
-                    {currencyList?.map((row) => (
-                      <MenuItem key={row.id} value={row.currency}>
-                        {row.currency}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.currency && <FormHelperText>{fieldErrors.currency}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
                   <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
@@ -585,6 +602,19 @@ const Company = () => {
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <InputLabel id="currency-label">Currency</InputLabel>
+                  <Select labelId="currency-label" label="currency" value={formData.currency} onChange={handleInputChange} name="currency">
+                    {currencyList?.map((row) => (
+                      <MenuItem key={row.id} value={row.currency}>
+                        {row.currency}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.currency && <FormHelperText>{fieldErrors.currency}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
                 <TextField
                   label="Pincode"
                   variant="outlined"
@@ -613,7 +643,7 @@ const Company = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Gst In"
+                  label="GST In"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -626,7 +656,7 @@ const Company = () => {
               </div>
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Pan No"
+                  label="PAN No"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -711,7 +741,6 @@ const Company = () => {
                   {fieldErrors.weekOff && <FormHelperText>{fieldErrors.weekOff}</FormHelperText>}
                 </FormControl>
               </div>
-
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.gstRegistered} onChange={handleInputChange} name="gstRegistered" />}

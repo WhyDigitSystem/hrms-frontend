@@ -26,7 +26,7 @@ const LeaveType = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
-  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [editId, setEditId] = useState('');
   const [formData, setFormData] = useState({
     leaveType: '',
@@ -35,7 +35,7 @@ const LeaveType = () => {
     salaryDeduction: '',
     // totalLeave: '',
     // effective: '',
-    // carryForward: '',
+    carryForward: '',
     active: true
   });
 
@@ -46,7 +46,7 @@ const LeaveType = () => {
     salaryDeduction: '',
     // totalLeave: '',
     // effective: '',
-    // carryForward: '',
+    carryForward: '',
     active: ''
   });
   const [listView, setListView] = useState(false);
@@ -84,7 +84,7 @@ const LeaveType = () => {
           salaryDeduction: particularCompany.salaryDeduction,
           // totalLeave: particularCompany.totalLeave,
           // effective: particularCompany.effective,
-          // carryForward: particularCompany.carryForward,
+          carryForward: particularCompany.carryForward,
           active: particularCompany.active === 'Active' ? true : false
         });
       } else {
@@ -140,7 +140,7 @@ const LeaveType = () => {
       salaryDeduction: '',
       // totalLeave: '',
       // effective: '',
-      // carryForward: '',
+      carryForward: '',
       active: true
     });
     setFieldErrors({
@@ -150,7 +150,7 @@ const LeaveType = () => {
       salaryDeduction: '',
       // totalLeave: '',
       // effective: '',
-      // carryForward: ''
+      carryForward: ''
     });
     setEditId('');
   };
@@ -188,9 +188,9 @@ const LeaveType = () => {
     // if (!formData.effective) {
     //   errors.effective = 'effective is required';
     // }
-    // if (!formData.carryForward) {
-    //   errors.carryForward = 'Carry Forward is required';
-    // }
+    if (!formData.carryForward) {
+      errors.carryForward = 'Carry Forward is required';
+    }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
@@ -200,7 +200,7 @@ const LeaveType = () => {
         active: formData.active,
         branch: branch,
         branchCode: branchCode,
-        // carryForward: formData.carryForward || null,
+        carryForward: formData.carryForward === "Yes" ? true : false,
         createdBy: loginUserName,
         // effective: formData.effective || null,
         finYear: '2025',
@@ -421,6 +421,9 @@ const LeaveType = () => {
                       {fieldErrors.effective && <FormHelperText>{fieldErrors.effective}</FormHelperText>}
                     </FormControl>
                   </div>
+                </>
+
+                  )} */}
                   <div className="col-md-3 mb-3">
                     <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
                       <InputLabel id="carryForward">Carry Forward</InputLabel>
@@ -438,8 +441,7 @@ const LeaveType = () => {
                       {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
                     </FormControl>
                   </div>
-                </>
-              )} */}
+              
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

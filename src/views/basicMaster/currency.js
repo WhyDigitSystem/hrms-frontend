@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControlLabel, FormHelperText, TextField, Autocomplete } from '@mui/material';
+import { Checkbox, FormControlLabel, FormHelperText, TextField } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -14,6 +14,14 @@ import ActionButton from 'utils/ActionButton';
 import { getAllActiveCountries } from 'utils/CommonFunctions';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from '../basicMaster/CommonListViewTable';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
+import COASample from '../../assets/sample-files/COASample.xlsx';
+import { FaFileExcel } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { FaFilePdf } from 'react-icons/fa';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const Currency = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +29,9 @@ export const Currency = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [countryList, setCountryList] = useState([]);
+  const [showForm, setShowForm] = useState(true);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     currency: '',
@@ -52,25 +63,65 @@ export const Currency = () => {
     }
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+  //   const nameRegex = /^[A-Za-z ]*$/;
+  //   let errorMessage = '';
+
+  //   switch (name) {
+  //     case 'currency':
+  //     case 'currencyDescription':
+  //     case 'subCurrency':
+  //       if (!nameRegex.test(value)) {
+  //         errorMessage = 'Only Alphabets Allowed  ';
+  //       }
+  //       break;
+  //     default:
+  //       break;
+  //   }
+  //   if (errorMessage) {
+  //     setFieldErrors({ ...fieldErrors, [name]: errorMessage });
+  //   } else {
+  //     setFormData((prevFormData) => ({
+  //       ...prevFormData,
+  //       [name]: name === 'active' ? checked : value.toUpperCase()
+  //     }));
+
+  //     setFieldErrors({ ...fieldErrors, [name]: '' });
+
+  //     // Preserve the cursor position for text-based inputs
+  //     if (type === 'text' || type === 'textarea') {
+  //       setTimeout(() => {
+  //         const inputElement = document.getElementsByName(name)[0];
+  //         if (inputElement && inputElement.setSelectionRange) {
+  //           inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //         }
+  //       }, 0);
+  //     }
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-    const symbolRegex = /^[a-zA-Z₹$€]*$/;
     const nameRegex = /^[A-Za-z ]*$/;
     let errorMessage = '';
 
+    // Define max length for each field
+    const maxLengths = {
+      currency: 3,
+      currencyDescription: 50,
+      subCurrency: 20
+    };
     switch (name) {
       case 'currency':
+      case 'currencyDescription':
       case 'subCurrency':
         if (!nameRegex.test(value)) {
-          errorMessage = 'Invalid Format  ';
+          errorMessage = 'Only Alphabets Allowed';
+        } else if (value.length > maxLengths[name]) {
+          errorMessage = `Exceeded Max length`;
         }
         break;
-      // case 'currencyDescription':
-      //   if (!symbolRegex.test(value) || value.length > 1) {
-      //     errorMessage = 'Invalid Format';
-      //   }
-      //   break;
       default:
         break;
     }
@@ -113,6 +164,97 @@ export const Currency = () => {
     });
     setEditId('');
   };
+
+  const handleExcelFileDownload = () => {
+    console.log("Downloading Excel...");  // Debugging step
+    console.log("List View Data:", listViewData); // Check if data exists
+
+    if (!listViewData || listViewData.length === 0) {
+      showToast('error', 'No data available to download');
+      return;
+    }
+
+    try {
+      const filteredData = listViewData.map(({ currency, currencyDescription, country, active }) => ({
+        'Currency': currency,
+        'Currency Description': currencyDescription,
+        'Country': country,
+        'Active': (active === true || active === 'Active') ? 'Yes' : 'No'
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Currencies');
+
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      saveAs(blob, 'Currency_List.xlsx');
+      showToast('success', 'Excel file downloaded successfully');
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      showToast('error', 'Failed to generate Excel');
+    }
+  };
+
+
+
+  const handleBulkUploadClose = () => {
+    setUploadOpen(false); // Close dialog
+  };
+
+  const handleSubmit = () => {
+    console.log('Submit clicked');
+    handleBulkUploadClose();
+  };
+
+  const handleFileUpload = (event) => {
+    console.log(event.target.files[0]);
+  };
+
+  const handlePDFDownload = async () => {
+    setLoading(true);
+
+    if (!listViewData || listViewData.length === 0) {
+      showToast('error', 'No currency data available to download');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      doc.text('Currency List', 14, 10);
+
+      const tableColumn = ['Currency', 'Currency Description', 'Country', 'Active'];
+      const tableRows = [];
+
+      listViewData.forEach(({ currency, currencyDescription, country, active }) => {
+        tableRows.push([
+          currency,
+          currencyDescription,
+          country,
+          active === true || active === 'Active' ? 'Yes' : 'No', // Ensuring Active status is shown correctly
+        ]);
+      });
+
+      autoTable(doc, {  // ✅ Use 'autoTable' function directly with doc
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20
+      });
+
+      doc.save('Currency_List.pdf');
+      showToast('success', 'Currency List PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error generating Currency List PDF:', error);
+      showToast('error', 'Failed to generate Currency List PDF');
+    }
+
+    setLoading(false);
+  };
+
+
+
 
   const getAllCurrencies = async () => {
     try {
@@ -159,9 +301,18 @@ export const Currency = () => {
     const errors = {};
     if (!formData.currency) {
       errors.currency = 'Currency is required';
+    } else if (formData.currency.length <= 2) {
+      errors.currency = 'Min Length is 3';
     }
+
     if (!formData.currencyDescription) {
       errors.currencyDescription = 'Currency Description is required';
+    } else if (formData.currencyDescription.length <= 2) {
+      errors.currencyDescription = 'Min Length is 3';
+    }
+
+    if (formData.subCurrency.length <= 2) {
+      errors.subCurrency = 'Min Length is 3';
     }
     if (!formData.country) {
       errors.country = 'Country is required';
@@ -224,6 +375,30 @@ export const Currency = () => {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
+            {uploadOpen && (
+              <CommonBulkUpload
+                open={uploadOpen}
+                handleClose={handleBulkUploadClose}
+                title="Upload Files"
+                uploadText="Upload file"
+                downloadText="Sample File"
+                onSubmit={handleSubmit}
+                sampleFileDownload={COASample}
+                handleFileUpload={handleFileUpload}
+                apiUrl={`master/excelUploadForGroupLedger`}
+                screen="COA"
+                loginUser={loginUserName}
+                orgId={orgId}
+              ></CommonBulkUpload>
+            )}
+            {/* <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
+            <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} /> */}
+            {listView && (
+              <div className='ps-2'>
+                <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
+                <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} />
+              </div>
+            )}
           </div>
         </div>
         {listView ? (
@@ -233,7 +408,6 @@ export const Currency = () => {
         ) : (
           <>
             <div className="row">
-              {/* Currency */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Currency"
@@ -247,8 +421,6 @@ export const Currency = () => {
                   helperText={fieldErrors.currency}
                 />
               </div>
-
-              {/* Currency Description */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Currency Description"
@@ -262,8 +434,6 @@ export const Currency = () => {
                   helperText={fieldErrors.currencyDescription}
                 />
               </div>
-
-              {/* Sub Currency */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Sub Currency"
@@ -277,8 +447,7 @@ export const Currency = () => {
                   helperText={fieldErrors.subCurrency}
                 />
               </div>
-
-              {/* <div className="col-md-3 mb-3">
+              <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
                   <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
@@ -291,35 +460,7 @@ export const Currency = () => {
                   </Select>
                   {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
                 </FormControl>
-              </div> */}
-
-              {/* Country List */}
-              <div className="col-md-3 mb-3">
-                <Autocomplete
-                  disablePortal
-                  options={countryList}
-                  getOptionLabel={(option) => option.countryName || ""}
-                  sx={{ width: "100%" }}
-                  size="small"
-                  value={countryList.find((c) => c.countryName === formData.country) || null}
-                  onChange={(event, newValue) => handleInputChange(null, newValue ? newValue.countryName : "", "country")}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Country"
-                      name="country"
-                      error={Boolean(fieldErrors.country)}
-                      helperText={fieldErrors.country || ""}
-                      InputProps={{
-                        ...params.InputProps,
-                        style: { height: 40 },
-                      }}
-                    />
-                  )}
-                />
               </div>
-
-              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

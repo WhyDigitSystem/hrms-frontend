@@ -84,13 +84,16 @@ export const Department = () => {
 
   const handleInputChange = (e) => {
     const { name, value, selectionStart, selectionEnd, type } = e.target;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-    const nameRegex = /^[A-Za-z ]*$/;
+    const codeRegex = /^[a-zA-Z ]*$/;
 
     if (name === 'department' && !codeRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else if (name === 'departmentCode' && !nameRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
+      setFieldErrors({ ...fieldErrors, [name]: 'Only Alphabets Allowed' });
+    } else if (name === 'department' && value.length > 50) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Exceeded Max Length' });
+    } else if (name === 'departmentCode' && !codeRegex.test(value)) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Only Alphabets Allowed' });
+    } else if (name === 'departmentCode' && value.length > 10) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Exceeded Max Length' });
     } else {
       setFormData({ ...formData, [name]: value.toUpperCase() });
       setFieldErrors({ ...fieldErrors, [name]: '' });
@@ -124,9 +127,13 @@ export const Department = () => {
     const errors = {};
     if (!formData.department) {
       errors.department = 'Department is required';
+    } else if (formData.department.length <= 2) {
+      errors.department = 'Min Length is 3';
     }
     if (!formData.departmentCode) {
       errors.departmentCode = 'Department Code is required';
+    } else if (formData.departmentCode.length <= 1) {
+      errors.departmentCode = 'Min Length is 2';
     }
 
     if (Object.keys(errors).length === 0) {

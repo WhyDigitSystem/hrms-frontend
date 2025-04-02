@@ -19,6 +19,7 @@ import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Autocomplete } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography} from '@mui/material';
 
 const PermissionRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -29,11 +30,15 @@ const PermissionRequest = () => {
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
+  const [errorDialog, setErrorDialog] = useState({
+    open: false,
+    message: ''
+  });
   const [formData, setFormData] = useState({
     formDate: null,
     fromTime: null,
     toTime: null,
-    totalHours: "",
+    totalHours: '',
     notes: '',
     notify: '',
     permissionType: ''
@@ -45,7 +50,7 @@ const PermissionRequest = () => {
     fromTime: '',
     toTime: null,
     notes: '',
-    notify: '',
+    notify: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -55,7 +60,7 @@ const PermissionRequest = () => {
     { accessorKey: 'toTime', header: 'To Time', size: 140 },
     { accessorKey: 'totalHours', header: 'Total Hrs', size: 140 },
     { accessorKey: 'notes', header: 'Notes', size: 140 },
-    { accessorKey: 'notify', header: 'Notify', size: 140 },
+    { accessorKey: 'notify', header: 'Notify', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
@@ -63,11 +68,9 @@ const PermissionRequest = () => {
   useEffect(() => {
     getAllPermissionRequestByOrgId();
     getNotifyList();
-
-    // Set default date to today when the component is mounted
     setFormData((prev) => ({
       ...prev,
-      formDate: dayjs(), // Set current date by default
+      formDate: dayjs()
     }));
   }, []);
 
@@ -79,8 +82,8 @@ const PermissionRequest = () => {
       if (response.status === true) {
         const formattedData = response.paramObjectsMap.permissionRequestVO.map((item) => {
           const formDate = dayjs(item.date);
-          const fromTime = dayjs(`${item.date}T${dayjs(item.fromTime, "HH:mm").format("HH:mm")}`);
-          const toTime = dayjs(`${item.date}T${dayjs(item.toTime, "HH:mm").format("HH:mm")}`);
+          const fromTime = dayjs(`${item.date}T${dayjs(item.fromTime, 'HH:mm').format('HH:mm')}`);
+          const toTime = dayjs(`${item.date}T${dayjs(item.toTime, 'HH:mm').format('HH:mm')}`);
 
           let totalHours = '00:00';
 
@@ -112,9 +115,9 @@ const PermissionRequest = () => {
       const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`);
       setCompanyList(result.paramObjectsMap.PermisionRequestVO);
     } catch (error) {
-      console.error('Error', error)
+      console.error('Error', error);
     }
-  }
+  };
 
   // Edit API
   const getPermissionRequestById = async (row) => {
@@ -131,8 +134,8 @@ const PermissionRequest = () => {
 
         console.log('PERMISSION REQUEST DETAILS:', permissionDetails);
         // Calculate total hours from fromTime and toTime
-        const fromTime = dayjs(permissionDetails.fromTime, "HH:mm");
-        const toTime = dayjs(permissionDetails.toTime, "HH:mm");
+        const fromTime = dayjs(permissionDetails.fromTime, 'HH:mm');
+        const toTime = dayjs(permissionDetails.toTime, 'HH:mm');
         let totalHours = '00:00';
 
         if (toTime.isValid() && fromTime.isValid() && toTime.isAfter(fromTime)) {
@@ -144,11 +147,11 @@ const PermissionRequest = () => {
 
         setFormData({
           formDate: permissionDetails.date ? dayjs(permissionDetails.date) : dayjs(), // Use dayjs(permissionDetails.date) to create a dayjs object
-          fromTime: permissionDetails.fromTime ? dayjs(permissionDetails.fromTime, "HH:mm") : null,
-          toTime: permissionDetails.toTime ? dayjs(permissionDetails.toTime, "HH:mm") : null,
+          fromTime: permissionDetails.fromTime ? dayjs(permissionDetails.fromTime, 'HH:mm') : null,
+          toTime: permissionDetails.toTime ? dayjs(permissionDetails.toTime, 'HH:mm') : null,
           totalHours: totalHours, // Set the formatted totalHours
           notes: permissionDetails.notes || '',
-          notify: permissionDetails.notify || '',
+          notify: permissionDetails.notify || ''
         });
       } else {
         console.error('API Error:', response);
@@ -158,57 +161,13 @@ const PermissionRequest = () => {
     }
   };
 
-
-  const handleInputChange = (e) => {
-    const { name, value, checked, type } = e.target;
-    let inputValue = value;
-
-    // Validation Rules
-    const textRegex = /^[A-Za-z ]*$/;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-
-    // Convert to Uppercase for text fields
-    if (type === 'text' || type === 'textarea') {
-      inputValue = inputValue.toUpperCase();
-    } else if (name === 'email') {
-      inputValue = inputValue.toLowerCase();
-    }
-
-    // Checkbox Handling
-    if (type === 'checkbox') {
-      inputValue = checked;
-    }
-
-    // Validate Specific Fields
-    let errorMessage = '';
-    if (name === 'employeeName' && !textRegex.test(value)) {
-      errorMessage = 'Invalid Format';
-    } else if (name === 'employeeCode' && !codeRegex.test(value)) {
-      errorMessage = 'Invalid Format';
-    }
-
-    // Branch Selection Handling
-    if (name === 'branch') {
-      const selectedBranch = branchList.find((br) => br.branch === value);
-      setFormData((prevData) => ({
-        ...prevData,
-        branch: value,
-        branchCode: selectedBranch ? selectedBranch.branchCode : '',
-      }));
-    } else {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: inputValue,
-      }));
-    }
-
-    // Update Errors
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: errorMessage,
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
     }));
   };
-
 
   const handleClear = () => {
     // Reset the form data state
@@ -237,7 +196,6 @@ const PermissionRequest = () => {
     // You can also set listView to false if you want to hide the list view after clearing
     setListView(false);
   };
-
 
   const handleSave = async () => {
     const errors = {};
@@ -281,15 +239,16 @@ const PermissionRequest = () => {
 
       setFormData({
         ...formData,
-        totalHours: sanitizedTotalHours, // Update formData with sanitized value
+        totalHours: sanitizedTotalHours // Update formData with sanitized value
       });
 
-      console.log("Sanitized Total Hours:", sanitizedTotalHours);
+      console.log('Sanitized Total Hours:', sanitizedTotalHours);
 
       // Handle date formatting or null case
-      const formattedDate = formData.formDate && dayjs(formData.formDate).isValid()
-        ? dayjs(formData.formDate).format('YYYY-MM-DD') // Convert the date to 'YYYY-MM-DD' format
-        : null; // If formDate is invalid, set it as null
+      const formattedDate =
+        formData.formDate && dayjs(formData.formDate).isValid()
+          ? dayjs(formData.formDate).format('YYYY-MM-DD') // Convert the date to 'YYYY-MM-DD' format
+          : null; // If formDate is invalid, set it as null
 
       const saveData = {
         ...(editId && { id: editId }),
@@ -343,60 +302,119 @@ const PermissionRequest = () => {
 
     setFormData((prev) => ({
       ...prev,
-      formDate: dayjs(newValue), // Ensure it's a dayjs object directly
+      formDate: dayjs(newValue) // Ensure it's a dayjs object directly
     }));
 
     setFieldErrors((prev) => ({ ...prev, formDate: '' }));
   };
 
+  // const handleTimeChange = (field, newValue) => {
+  //   setFormData((prev) => {
+  //     const updatedFormData = { ...prev, [field]: newValue };
 
-  const handleTimeChange = (field, newValue) => {
-    setFormData((prev) => {
-      const updatedFormData = { ...prev, [field]: newValue };
+  //     // When both fromTime and toTime are present, calculate totalHours
+  //     if (updatedFormData.fromTime && updatedFormData.toTime) {
+  //       const fromTime = dayjs(updatedFormData.fromTime);
+  //       const toTime = dayjs(updatedFormData.toTime);
 
-      // When both fromTime and toTime are present, calculate totalHours
-      if (updatedFormData.fromTime && updatedFormData.toTime) {
-        const fromTime = dayjs(updatedFormData.fromTime);
-        const toTime = dayjs(updatedFormData.toTime);
+  //       // Check if toTime is after fromTime
+  //       if (toTime.isAfter(fromTime)) {
+  //         const durationInMinutes = toTime.diff(fromTime, 'minute'); // Get the duration in minutes
 
-        // Check if toTime is after fromTime
-        if (toTime.isAfter(fromTime)) {
-          const durationInMinutes = toTime.diff(fromTime, 'minute'); // Get the duration in minutes
+  //         // Check if the duration exceeds 2 hours (120 minutes)
+  //         if (durationInMinutes > 120) {
+  //           // Set an error message for totalHours
+  //           setFieldErrors((prevErrors) => ({
+  //             ...prevErrors,
+  //             totalHours: 'Permission request cannot exceed 2 hours.',
+  //           }));
+  //           updatedFormData.totalHours = '00:00'; // Reset totalHours if the duration is invalid
+  //         } else {
+  //           // Clear the error message if the duration is valid
+  //           setFieldErrors((prevErrors) => ({
+  //             ...prevErrors,
+  //             totalHours: '',
+  //           }));
 
-          // Check if the duration exceeds 2 hours (120 minutes)
-          if (durationInMinutes > 120) {
-            // Set an error message for totalHours
-            setFieldErrors((prevErrors) => ({
-              ...prevErrors,
-              totalHours: 'Permission request cannot exceed 2 hours.',
-            }));
-            updatedFormData.totalHours = '00:00'; // Reset totalHours if the duration is invalid
-          } else {
-            // Clear the error message if the duration is valid
-            setFieldErrors((prevErrors) => ({
-              ...prevErrors,
-              totalHours: '',
-            }));
+  //           // Format the total hours as HH:mm
+  //           const totalHoursFormatted = dayjs()
+  //             .startOf('day') // Start from 00:00
+  //             .add(durationInMinutes, 'minute') // Add the duration in minutes
+  //             .format('HH:mm'); // Format as HH:mm
+  //           updatedFormData.totalHours = totalHoursFormatted;
+  //         }
+  //       } else {
+  //         // If toTime is earlier than fromTime, set an error
+  //         setFieldErrors((prevErrors) => ({
+  //           ...prevErrors,
+  //           totalHours: 'To Time must be after From Time.',
+  //         }));
+  //         updatedFormData.totalHours = '00:00'; // Reset totalHours
+  //       }
+  //     }
 
-            // Format the total hours as HH:mm
-            const totalHoursFormatted = dayjs()
-              .startOf('day') // Start from 00:00
-              .add(durationInMinutes, 'minute') // Add the duration in minutes
-              .format('HH:mm'); // Format as HH:mm
-            updatedFormData.totalHours = totalHoursFormatted;
-          }
-        } else {
-          // If toTime is earlier than fromTime, set an error
-          setFieldErrors((prevErrors) => ({
-            ...prevErrors,
-            totalHours: 'To Time must be after From Time.',
-          }));
-          updatedFormData.totalHours = '00:00'; // Reset totalHours
-        }
+  //     return updatedFormData;
+  //   });
+  // };
+
+  const handleTimeChange = (fieldName, newValue) => {
+    if (!newValue) return;
+
+    const timeFormat = 'HH:mm';
+    const newTime = dayjs(newValue).format(timeFormat);
+
+    if (fieldName === 'fromTime') {
+      setFormData((prev) => ({
+        ...prev,
+        fromTime: newTime,
+        toTime: null, // Reset toTime if fromTime is changed
+        totalHours: '00:00'
+      }));
+    } else if (fieldName === 'toTime') {
+      if (!formData.fromTime) {
+        // Show error dialog if user tries to select toTime without fromTime
+        setErrorDialog({
+          open: true,
+          message: "Please select 'From Time' before choosing 'To Time'."
+        });
+        return;
       }
 
-      return updatedFormData;
-    });
+      const fromTime = dayjs(formData.fromTime, timeFormat);
+      const toTime = dayjs(newTime, timeFormat);
+
+      const diffInMinutes = toTime.diff(fromTime, 'minute');
+      const maxAllowedMinutes = 120; // 2 hours
+
+      if (diffInMinutes > maxAllowedMinutes || diffInMinutes <= 0) {
+        // Show error dialog if the difference is more than 2 hours or invalid (negative or zero)
+        setErrorDialog({
+          open: true,
+          message: "Invalid selection! Please choose a 'To Time' within 2 hours of 'From Time'."
+        });
+        return;
+      }
+
+      // Calculate total hours and minutes
+      const totalHours = Math.floor(diffInMinutes / 60)
+        .toString()
+        .padStart(2, '0');
+      const totalMinutes = (diffInMinutes % 60).toString().padStart(2, '0');
+
+      setFormData((prev) => ({
+        ...prev,
+        toTime: newTime,
+        totalHours: `${totalHours}:${totalMinutes}`
+      }));
+    }
+  };
+
+  const handleCloseErrorDialog = () => {
+    setErrorDialog({ open: false, message: '' });
+    setFormData((prevData) => ({
+      ...prevData,
+      toTime: null,
+    }));
   };
 
   return (
@@ -423,7 +441,6 @@ const PermissionRequest = () => {
         ) : (
           <>
             <div className="row">
-
               {/* Date */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
@@ -439,24 +456,24 @@ const PermissionRequest = () => {
                     />
                   </LocalizationProvider>
                 </FormControl>
-
-
               </div>
 
               {/* From Time */}
-              <div className="col-md-3 mb-3"> {/* From Time */}
+              <div className="col-md-3 mb-3">
+                {' '}
+                {/* From Time */}
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="From Time"
-                      value={formData.fromTime ? dayjs(formData.fromTime, "HH:mm") : null}
+                      value={formData.fromTime ? dayjs(formData.fromTime, 'HH:mm') : null}
                       onChange={(newValue) => handleTimeChange('fromTime', newValue)}
                       ampm={false} // 24-hour format
                       slots={{
-                        openPickerIcon: AccessTimeIcon,
+                        openPickerIcon: AccessTimeIcon
                       }}
                       slotProps={{
-                        textField: { size: 'small', clearable: true },
+                        textField: { size: 'small', clearable: true }
                       }}
                     />
                   </LocalizationProvider>
@@ -464,19 +481,21 @@ const PermissionRequest = () => {
               </div>
 
               {/* To Time */}
-              <div className="col-md-3 mb-3"> {/* To Time */}
+              <div className="col-md-3 mb-3">
+                {' '}
+                {/* To Time */}
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="To Time"
-                      value={formData.toTime ? dayjs(formData.toTime, "HH:mm") : null}
+                      value={formData.toTime ? dayjs(formData.toTime, 'HH:mm') : null}
                       onChange={(newValue) => handleTimeChange('toTime', newValue)}
                       ampm={false} // 24-hour format
                       slots={{
-                        openPickerIcon: AccessTimeIcon,
+                        openPickerIcon: AccessTimeIcon
                       }}
                       slotProps={{
-                        textField: { size: 'small', clearable: true },
+                        textField: { size: 'small', clearable: true }
                       }}
                     />
                   </LocalizationProvider>
@@ -490,13 +509,12 @@ const PermissionRequest = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  value={formData.totalHours || '00:00'} // Default to '00:00' if not available
-                  error={!!fieldErrors.totalHours} // Show error state if validation fails
-                  helperText={fieldErrors.totalHours} // Display error message
-                  disabled // Make it read-only
+                  value={formData.totalHours || '00:00'}
+                  error={!!fieldErrors.totalHours}
+                  helperText={fieldErrors.totalHours}
+                  disabled
                 />
               </div>
-
 
               {/* Notes */}
               <div className="col-md-3 mb-3">
@@ -521,9 +539,7 @@ const PermissionRequest = () => {
                   getOptionLabel={(option) => option.notify || ''}
                   sx={{ width: '100%' }}
                   size="small"
-                  value={
-                    companyList.find((c) => c.notify === formData.notify) || null
-                  }
+                  value={companyList.find((c) => c.notify === formData.notify) || null}
                   onChange={(event, newValue) => {
                     handleInputChange({
                       target: {
@@ -547,12 +563,22 @@ const PermissionRequest = () => {
                   )}
                 />
               </div>
-
             </div>
           </>
         )}
       </div>
       <ToastContainer />
+      <Dialog open={errorDialog.open} onClose={handleCloseErrorDialog}>
+        <DialogTitle style={{ color: 'red' }}>⚠ Permission Request Error</DialogTitle>
+        <DialogContent>
+          <Typography>{errorDialog.message}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseErrorDialog} color="primary" variant="contained">
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

@@ -137,22 +137,54 @@ const SalaryProcess = () => {
     }
   };
 
+  // const getAllEmployeeTotalSalary = async (employeeCode) => {
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `employeemaster/getSalaryStructureForSalaryProcess?employeeCode=${employeeCode}&orgId=${orgId}`
+  //     );
+
+  //     if (response.status === true) {
+  //       const empTotalSalaryAmount = response.paramObjectsMap.salaryProcessVO[0]?.empTotalSalaryAmount || 'Pending';
+
+  //       // Update employee salaries state
+  //       setEmployeeSalaries((prev) => ({
+  //         ...prev,
+  //         [employeeCode]: empTotalSalaryAmount
+  //       }));
+
+  //       return empTotalSalaryAmount;
+  //     } else {
+  //       console.error('API Error:', response);
+  //       return 'Pending';
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //     return 'Pending';
+  //   }
+  // };
+
   const getAllEmployeeTotalSalary = async (employeeCode) => {
     try {
       const response = await apiCalls(
         'get',
         `employeemaster/getSalaryStructureForSalaryProcess?employeeCode=${employeeCode}&orgId=${orgId}`
       );
-
+  
       if (response.status === true) {
-        const empTotalSalaryAmount = response.paramObjectsMap.salaryProcessVO[0]?.empTotalSalaryAmount || 'Pending';
-
+        let empTotalSalaryAmount = response.paramObjectsMap.salaryProcessVO[0]?.empTotalSalaryAmount || 'Pending';
+  
+        // Format the salary amount if it exists
+        if (empTotalSalaryAmount !== 'Pending') {
+          empTotalSalaryAmount = parseFloat(empTotalSalaryAmount).toString();
+        }
+  
         // Update employee salaries state
         setEmployeeSalaries((prev) => ({
           ...prev,
           [employeeCode]: empTotalSalaryAmount
         }));
-
+  
         return empTotalSalaryAmount;
       } else {
         console.error('API Error:', response);
@@ -162,7 +194,36 @@ const SalaryProcess = () => {
       console.error('Error fetching data:', error);
       return 'Pending';
     }
-  };
+  };  
+
+  // const getAllSalaryProcess = async () => {
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `employeemaster/getLeaveDetailsforSalaryProcess?month=${formData.month}&orgId=${orgId}&year=${formData.year}`
+  //     );
+
+  //     setShowSelectedMonthYear(true);
+
+  //     if (response.status === true) {
+  //       const salaryData = response.paramObjectsMap.salaryProcessVO;
+  //       setAllSalary(salaryData);
+  //       setDialogOpen(true);
+  //       // Fetch salary for each employee in parallel
+  //       salaryData.forEach(async (employee) => {
+  //         const empTotalSalaryAmount = await getAllEmployeeTotalSalary(employee.employeeCode);
+  //         if (empTotalSalaryAmount !== 'Pending') {
+  //           // Now fetch the net salary
+  //           getAllEmployeeNetSalary(employee.empSalaryDays, empTotalSalaryAmount, employee.totalCompanyWorkingDays, employee.employeeCode);
+  //         }
+  //       });
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
 
   const getAllSalaryProcess = async () => {
     try {
@@ -170,28 +231,38 @@ const SalaryProcess = () => {
         'get',
         `employeemaster/getLeaveDetailsforSalaryProcess?month=${formData.month}&orgId=${orgId}&year=${formData.year}`
       );
-
+  
       setShowSelectedMonthYear(true);
-
-      if (response.status === true) {
-        const salaryData = response.paramObjectsMap.salaryProcessVO;
+  
+      if (response.status === true && Array.isArray(response.paramObjectsMap.salaryProcessVO)) {
+        const salaryData = response.paramObjectsMap.salaryProcessVO.map(employee => ({
+          ...employee,
+          totalLeave: parseFloat(employee.totalLeave).toString(),
+          totalCompanyWorkingDays: parseFloat(employee.totalCompanyWorkingDays).toString(),
+          lopLeave: parseFloat(employee.lopLeave).toString(),
+          empSalaryDays: parseFloat(employee.empSalaryDays).toString(),
+          empTotalWorkingDays: parseFloat(employee.empTotalWorkingDays).toString()
+        }));
+  
         setAllSalary(salaryData);
         setDialogOpen(true);
+  
         // Fetch salary for each employee in parallel
         salaryData.forEach(async (employee) => {
           const empTotalSalaryAmount = await getAllEmployeeTotalSalary(employee.employeeCode);
           if (empTotalSalaryAmount !== 'Pending') {
-            // Now fetch the net salary
+            // Fetch the net salary
             getAllEmployeeNetSalary(employee.empSalaryDays, empTotalSalaryAmount, employee.totalCompanyWorkingDays, employee.employeeCode);
           }
         });
+  
       } else {
         console.error('API Error:', response);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-  };
+  };  
 
   const handleSave = async () => {
     setIsLoading(true);

@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, ButtonBase, FormHelperText, Tooltip, TextField, Checkbox, FormControlLabel, Autocomplete } from '@mui/material';
+import { Avatar, ButtonBase, FormHelperText, Tooltip, TextField, Checkbox, FormControlLabel } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -18,6 +18,14 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
 import { getAllActiveCountries, getAllActiveStatesByCountry } from 'utils/CommonFunctions';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
+import COASample from '../../assets/sample-files/COASample.xlsx';
+import { FaFileExcel } from 'react-icons/fa';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import { FaFilePdf } from 'react-icons/fa';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export const City = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +34,9 @@ export const City = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [countryList, setCountryList] = useState([]);
   const [stateList, setStateList] = useState([]);
-  const [companyList, setCompanyList] = useState([]);
+  const [showForm, setShowForm] = useState(true);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     cityCode: '',
@@ -52,7 +62,6 @@ export const City = () => {
     }
   }, [formData.country]);
 
-  // getAllCountries
   const getAllCountries = async () => {
     try {
       const countryData = await getAllActiveCountries(orgId);
@@ -61,8 +70,6 @@ export const City = () => {
       console.error('Error fetching country data:', error);
     }
   };
-
-  // getAllStates
   const getAllStates = async () => {
     try {
       const stateData = await getAllActiveStatesByCountry(formData.country, orgId);
@@ -71,42 +78,126 @@ export const City = () => {
       console.error('Error fetching country data:', error);
     }
   };
+  const handleExcelFileDownload = () => {
+    console.log("Downloading Excel...");  // Debugging step
+    console.log("List View Data:", listViewData); // Check if data exists
 
-  const handleInputChange = (e, newValue, fieldName) => {
-    if (e && e.target) {
-      // Standard input handling
-      const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-      const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-      const nameRegex = /^[A-Za-z ]*$/;
+    if (!listViewData || listViewData.length === 0) {
+      showToast('error', 'No data available to download');
+      return;
+    }
 
-      if (name === 'cityCode' && !codeRegex.test(value)) {
-        setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-      } else if (name === 'cityCode' && value.length > 3) {
-        setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
-      } else if (name === 'cityName' && !nameRegex.test(value)) {
-        setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-      } else {
-        setFormData({
-          ...formData,
-          [name]: name === 'active' ? checked : value.toUpperCase(),
-        });
-        setFieldErrors({ ...fieldErrors, [name]: '' });
+    try {
+      const filteredData = listViewData.map(({ cityCode, cityName, state, country, active }) => ({
+        'City Code': cityCode,
+        'City Name': cityName,
+        'State': state,
+        'Country': country,
+        'Active': (active === true || active === 'Active') ? 'Yes' : 'No'
+      }));
 
-        if (type === 'text' || type === 'textarea') {
-          setTimeout(() => {
-            const inputElement = document.getElementsByName(name)[0];
-            if (inputElement) {
-              inputElement.setSelectionRange(selectionStart, selectionEnd);
-            }
-          }, 0);
-        }
-      }
-    } else if (fieldName) {
-      // Handling Autocomplete selections
-      setFormData({ ...formData, [fieldName]: newValue || '' });
+      const worksheet = XLSX.utils.json_to_sheet(filteredData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Cities');
+
+      const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      saveAs(blob, 'City_List.xlsx');
+      showToast('success', 'Excel file downloaded successfully');
+    } catch (error) {
+      console.error('Error generating Excel:', error);
+      showToast('error', 'Failed to generate Excel');
     }
   };
 
+
+
+  const handleBulkUploadClose = () => {
+    setUploadOpen(false); // Close dialog
+  };
+
+  const handleSubmit = () => {
+    console.log('Submit clicked');
+    handleBulkUploadClose();
+  };
+
+  const handleFileUpload = (event) => {
+    console.log(event.target.files[0]);
+  };
+
+  const handlePDFDownload = async () => {
+    setLoading(true);
+
+    if (!listViewData || listViewData.length === 0) {
+      showToast('error', 'No city data available to download');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      doc.text('City List', 14, 10);
+
+      const tableColumn = ['City Name', 'State', 'Country', 'Active'];
+      const tableRows = [];
+
+      listViewData.forEach(({ cityName, state, country, active }) => {
+        tableRows.push([
+          cityName,
+          state,
+          country,
+          active === true || active === 'Active' ? 'Yes' : 'No',
+        ]);
+      });
+
+      autoTable(doc, {  // ✅ Use 'autoTable' function directly with doc
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20
+      });
+
+      doc.save('City_List.pdf');
+      showToast('success', 'City List PDF downloaded successfully');
+    } catch (error) {
+      console.error('Error generating City List PDF:', error);
+      showToast('error', 'Failed to generate City List PDF');
+    }
+
+    setLoading(false);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+    const nameRegex = /^[A-Za-z ]*$/;
+
+    if (name === 'cityCode' && !codeRegex.test(value)) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Only AlphaNumerics are Allowed' });
+    } else if (name === 'cityCode' && value.length > 3) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
+    } else if (name === 'cityName' && !nameRegex.test(value)) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Only Alphabets Allowed' });
+    } else if (name === 'cityName' && value.length > 40) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Exceeded Max Length' });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: name === 'active' ? checked : value.toUpperCase()
+      });
+      setFieldErrors({ ...fieldErrors, [name]: '' });
+
+      // Update the cursor position after the input change
+      if (type === 'text' || type === 'textarea') {
+        setTimeout(() => {
+          const inputElement = document.getElementsByName(name)[0];
+          if (inputElement) {
+            inputElement.setSelectionRange(selectionStart, selectionEnd);
+          }
+        }, 0);
+      }
+    }
+  };
 
   const handleClear = () => {
     setFormData({
@@ -170,10 +261,16 @@ export const City = () => {
     const errors = {};
     if (!formData.cityCode) {
       errors.cityCode = 'City Code is required';
+    } else if (formData.cityCode.length <= 1) {
+      errors.cityCode = 'Min Length is 2';
     }
+
     if (!formData.cityName) {
       errors.cityName = 'City Name is required';
+    } else if (formData.cityName.length <= 2) {
+      errors.cityName = 'Min Length is 3';
     }
+
     if (!formData.state) {
       errors.state = 'State is required';
     }
@@ -239,6 +336,30 @@ export const City = () => {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
+            {uploadOpen && (
+              <CommonBulkUpload
+                open={uploadOpen}
+                handleClose={handleBulkUploadClose}
+                title="Upload Files"
+                uploadText="Upload file"
+                downloadText="Sample File"
+                onSubmit={handleSubmit}
+                sampleFileDownload={COASample}
+                handleFileUpload={handleFileUpload}
+                apiUrl={`master/excelUploadForGroupLedger`}
+                screen="COA"
+                loginUser={loginUserName}
+                orgId={orgId}
+              ></CommonBulkUpload>
+            )}
+            {/* <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
+            <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} /> */}
+            {listView && (
+              <div className='ps-2'>
+                <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
+                <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} />
+              </div>
+            )}
           </div>
         </div>
         {listView ? (
@@ -248,10 +369,9 @@ export const City = () => {
         ) : (
           <>
             <div className="row">
-              {/* City Code */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="City Code"
+                  label="Code"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -262,10 +382,9 @@ export const City = () => {
                   helperText={fieldErrors.cityCode}
                 />
               </div>
-              {/* City Name */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="City Name"
+                  label="Name"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -277,7 +396,7 @@ export const City = () => {
                 />
               </div>
 
-              {/* <div className="col-md-3 mb-3">
+              <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
                   <InputLabel id="country-label">Country</InputLabel>
                   <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
@@ -290,36 +409,8 @@ export const City = () => {
                   </Select>
                   {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
                 </FormControl>
-              </div> */}
-
-              {/* Country List */}
-              <div className="col-md-3 mb-3">
-                <Autocomplete
-                  disablePortal
-                  options={countryList}
-                  getOptionLabel={(option) => option.countryName || ""}
-                  sx={{ width: "100%" }}
-                  size="small"
-                  value={countryList.find((c) => c.countryName === formData.country) || null}
-                  onChange={(event, newValue) => handleInputChange(null, newValue ? newValue.countryName : "", "country")}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Country"
-                      name="country"
-                      error={Boolean(fieldErrors.country)}
-                      helperText={fieldErrors.country || ""}
-                      InputProps={{
-                        ...params.InputProps,
-                        style: { height: 40 },
-                      }}
-                    />
-                  )}
-                />
-
               </div>
-
-              {/* <div className="col-md-3 mb-3">
+              <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.state}>
                   <InputLabel id="state-label">State</InputLabel>
                   <Select labelId="state-label" label="State" value={formData.state} onChange={handleInputChange} name="state">
@@ -331,40 +422,7 @@ export const City = () => {
                   </Select>
                   {fieldErrors.state && <FormHelperText>{fieldErrors.state}</FormHelperText>}
                 </FormControl>
-              </div> */}
-
-              {/* State Name */}
-              <div className="col-md-3 mb-3">
-                <Autocomplete
-                  disablePortal
-                  options={stateList}
-                  getOptionLabel={(option) => option.stateName || ""}
-                  sx={{ width: "100%" }}
-                  size="small"
-                  value={stateList.find((c) => c.stateName === formData.state) || null}
-                  onChange={(event, newValue) => {
-                    setFormData((prevData) => ({
-                      ...prevData,
-                      state: newValue ? newValue.stateName : "",
-                    }));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="State"
-                      name="state"
-                      error={Boolean(fieldErrors.state)}
-                      helperText={fieldErrors.state || ""}
-                      InputProps={{
-                        ...params.InputProps,
-                        style: { height: 40 },
-                      }}
-                    />
-                  )}
-                />
               </div>
-
-              {/* Active */}
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

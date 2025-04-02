@@ -41,35 +41,19 @@ export const RegionMaster = () => {
   useEffect(() => {
     getAllRegions();
   }, []);
-
-  // const getAllCountries = async () => {
-  //   try {
-  //     const countryData = await getAllActiveCountries(orgId);
-  //     setCountryList(countryData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-  // const getAllStates = async () => {
-  //   try {
-  //     const stateData = await getAllActiveStatesByCountry(formData.country, orgId);
-  //     setStateList(stateData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd } = e.target;
-    const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
+    const codeRegex = /^[a-zA-Z0-9 ]*$/;
     const nameRegex = /^[A-Za-z ]*$/;
 
     if (name === 'regionCode' && !codeRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else if (name === 'regionCode' && value.length > 3) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
+      setFieldErrors({ ...fieldErrors, [name]: 'Only AlphaNumerics are Allowed' });
+    } else if (name === 'regionCode' && value.length > 5) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 5' });
     } else if (name === 'regionName' && !nameRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
+      setFieldErrors({ ...fieldErrors, [name]: 'Only Alphabets Allowed' });
+    } else if (name === 'regionName' && value.length > 50) {
+      setFieldErrors({ ...fieldErrors, [name]: 'Exceeded Max Length' });
     } else {
       setFieldErrors({ ...fieldErrors, [name]: '' });
       const upperCaseValue = value.toUpperCase();
@@ -139,9 +123,13 @@ export const RegionMaster = () => {
     const errors = {};
     if (!formData.regionCode) {
       errors.regionCode = 'Region Code is required';
+    } else if (formData.regionCode.length <= 1) {
+      errors.regionCode = 'Min Length is 2';
     }
     if (!formData.regionName) {
       errors.regionName = 'Region Name is required';
+    } else if (formData.regionName.length <= 2) {
+      errors.regionName = 'Min Length is 3';
     }
 
     if (Object.keys(errors).length === 0) {
