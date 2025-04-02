@@ -20,6 +20,7 @@ import { Autocomplete } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 import { FormHelperText, MenuItem } from '@mui/material';
 import InputLabel from '@mui/material/InputLabel';
+import emailjs from '@emailjs/browser';
 import Select from '@mui/material/Select';
 
 const LeaveRequest = () => {
@@ -38,6 +39,7 @@ const LeaveRequest = () => {
   const [leaveTypeList, setLeaveTypeList] = useState([]);
   const [weekOffDays, setWeekOff] = useState([]);
   const [totalLeaveDays, setTotalLeaveDays] = useState([]);
+  const [notifyEmail, setNotifyEmail] = useState("");
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveTypeCode: '',
@@ -46,7 +48,9 @@ const LeaveRequest = () => {
     selectLeave: '',
     totalDays: '',
     notes: '',
-    notify: ''
+    notify: '',
+    notifyEmail: '',
+    notifyCode: '',
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -99,10 +103,7 @@ const LeaveRequest = () => {
   // List API
   const getLeaveRequestByOrgId = async () => {
     try {
-      const response = await apiCalls(
-        'get',
-        `/leaveprocess/getLeaveRequestByOrgId?branchCode=${branchCode}&employeeCode=${employeeCode}&orgId=${orgId}`
-      );
+      const response = await apiCalls('get', `/leaveprocess/getLeaveRequestByOrgId?orgId=${orgId}&employeeCode=${employeeCode}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -131,17 +132,32 @@ const LeaveRequest = () => {
   // getNotifyList
   const getNotifyList = async () => {
     try {
-      const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`);
-      setCompanyList(result.paramObjectsMap.PermisionRequestVO);
+      const result = await apiCalls(
+        "get",
+        `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`
+      );
+
+      if (result?.paramObjectsMap?.PermisionRequestVO) {
+        const notifyList = result.paramObjectsMap.PermisionRequestVO.map(person => ({
+          reportingPersonCode: person.reportingPersonCode,  // Ensure notifyCode is included
+          reportingPerson: person.reportingPerson,
+          notifyEmail: person.email,
+        }));
+
+        console.log("🔍 Notify List:", notifyList);
+        setCompanyList(notifyList);
+      } else {
+        console.error("❌ No reporting persons found");
+      }
     } catch (error) {
-      console.error('Error', error);
+      console.error("❌ Error fetching reporting persons:", error);
     }
   };
 
   const getLeaveType = async () => {
     try {
       const result = await apiCalls('get', `leaveprocess/getAllLeaveTypeFromLeaveMaster?employeeCode=${employeeCode}&orgId=${orgId}`);
-      
+
       const formattedLeaveList = result.paramObjectsMap.leaveRequestVO.map(leave => ({
         ...leave,
         leaveDays: parseFloat(leave.leaveDays).toString()
@@ -257,6 +273,8 @@ const LeaveRequest = () => {
         totalDays: formData.totalDays,
         notes: formData.notes,
         notify: formData.notify,
+        notifyEmail: formData.notifyEmail,
+        notifyCode: formData.notifyCode,  // Ensure notifyCode is included here
         orgId: orgId,
         branchCode: branchCode,
         branch: branch,
@@ -275,7 +293,7 @@ const LeaveRequest = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Leave Request Updated Successfully' : 'Leave Request created successfully');
-
+          await sendEmailNotification(formData, notifyEmail);
           handleClear();
           getLeaveRequestByOrgId();
           setIsLoading(false);
@@ -290,6 +308,43 @@ const LeaveRequest = () => {
       }
     } else {
       setFieldErrors(errors);
+    }
+  };
+
+  const sendEmailNotification = async (formData) => {
+    try {
+      const emailParams = {
+        name: formData.notify,
+        from_name: employeeName,
+        email: notifyEmail,
+        leave_type: formData.leaveType,
+        start_date: dayjs(formData.fromDate).format("DD-MM-YYYY"),
+        end_date: dayjs(formData.toDate).format("DD-MM-YYYY"),
+        total_days: formData.totalDays,
+        message: formData.notes,
+        approve_link: `/team/LeaveApproval/{leave_request_id}`
+      };
+
+      console.log("Email Params:", emailParams);
+
+      if (!emailParams.email) {
+        console.error("Error: Recipient email is missing!");
+        showToast("error", "Recipient email is missing!");
+        return;
+      }
+
+      await emailjs.send(
+        "service_hff8dd7",
+        "template_bs08toa",
+        emailParams,
+        "G6cKiPBXzCvlFaOuo"
+      );
+
+      showToast("success", "Email notification sent successfully!");
+      console.log("Email Sent Successfully");
+    } catch (error) {
+      console.error("Email Sending Failed:", error);
+      showToast("error", "Failed to send email notification. Please try again.");
     }
   };
 
@@ -315,14 +370,14 @@ const LeaveRequest = () => {
       ...prevData,
       leaveType: newValue.leaveType,
       leaveTypeCode: selectedLeave.leaveTypeCode,
-      availableLeaveDays: parseFloat(selectedLeave.leaveDays) 
+      availableLeaveDays: parseFloat(selectedLeave.leaveDays)
     }));
   };
 
   const handleDateChange = (name, value) => {
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value || null 
+      [name]: value || null
     }));
   };
 
@@ -344,7 +399,7 @@ const LeaveRequest = () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
       const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
-      setWeekOff(weekOffDays); 
+      setWeekOff(weekOffDays);
     } catch (error) {
       console.error('Error', error);
     }
@@ -364,7 +419,7 @@ const LeaveRequest = () => {
 
       const workingDays = result.workingDays || 0;
       const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
-      
+
       if (selectedLeave) {
         const availableLeaveDays = parseFloat(selectedLeave.leaveDays);
 
@@ -372,7 +427,7 @@ const LeaveRequest = () => {
           showErrorDialog(`You have only ${availableLeaveDays} day available for ${formData.leaveType}.`);
           setFormData((prevData) => ({
             ...prevData,
-            totalDays: 0 
+            totalDays: 0
           }));
           return;
         }
@@ -419,7 +474,7 @@ const LeaveRequest = () => {
               columns={listViewColumns}
               blockEdit={false}
               toEdit={getLeaveRequestById}
-              // enableEditing={true}
+            // enableEditing={true}
             />
           </div>
         ) : (
@@ -464,7 +519,7 @@ const LeaveRequest = () => {
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    {formData.leaveType ? ( 
+                    {formData.leaveType ? (
                       <DatePicker
                         label="From Date"
                         format="DD-MM-YYYY"
@@ -558,18 +613,33 @@ const LeaveRequest = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   disablePortal
-                  options={companyList} // Ensure this is an array of objects with `reportingPerson`
-                  getOptionLabel={(option) => option.reportingPerson || ''} // Use `reportingPerson`
+                  options={companyList}
+                  getOptionLabel={(option) => option.reportingPerson || ''}
                   sx={{ width: '100%' }}
                   size="small"
-                  value={companyList.find((c) => c.reportingPerson === formData.notify) || null} // Match based on `reportingPerson`
+                  value={companyList.find((c) => c.reportingPerson === formData.notify) || null}
                   onChange={(event, newValue) => {
-                    handleInputChange({
-                      target: {
-                        name: 'notify',
-                        value: newValue ? newValue.reportingPerson : '' // Update `formData.notify` with `reportingPerson`
-                      }
-                    });
+                    if (newValue) {
+                      handleInputChange({
+                        target: { name: 'notify', value: newValue.reportingPerson }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyCode', value: newValue.reportingPersonCode }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyEmail', value: newValue.notifyEmail }
+                      });
+                    } else {
+                      handleInputChange({
+                        target: { name: 'notify', value: '' }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyCode', value: '' }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyEmail', value: '' }
+                      });
+                    }
                   }}
                   renderInput={(params) => (
                     <TextField

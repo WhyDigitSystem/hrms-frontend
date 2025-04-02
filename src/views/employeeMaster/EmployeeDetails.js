@@ -63,6 +63,8 @@ const EmployeeDetails = () => {
     grade: '',
     team: '',
     reportingPerson: '',
+    reportingPersonEmail: '',
+    reportingPersonCode: '',
     reportingRole: '',
     department: '',
     designation: '',
@@ -404,6 +406,8 @@ const EmployeeDetails = () => {
           setFormData((prevData) => ({
             ...prevData,
             reportingPerson: value,
+            reportingPersonEmail: selectedEmployee ? selectedEmployee.email : '',
+            reportingPersonCode: selectedEmployee ? selectedEmployee.employeeCode : '',
             reportingRole: selectedEmployee ? selectedEmployee.role : ''
           }));
         }
@@ -653,6 +657,8 @@ const EmployeeDetails = () => {
         orgId: orgId,
         panNo: formData.panNo,
         reportingPerson: formData.reportingPerson,
+        reportingPersonEmail: formData.reportingPersonEmail,
+        reportningPersonCode: formData.reportingPersonCode,
         reportingRole: formData.reportingRole,
         resignDate: formData.resignationDate,
         // role: formData.role,
