@@ -35,37 +35,101 @@ import HowToVoteIcon from '@mui/icons-material/HowToVote';
 import { useTheme } from '@mui/material/styles';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import apiCalls from 'apicall';
+import { showToast } from 'utils/toast-component';
 
 function Poll() {
-  const [polls, setPolls] = useState([
-    {
-      id: 1,
-      question: "Which feature should we implement next?",
-      options: [
-        { id: 1, text: "Dark mode", votes: 15 },
-        { id: 2, text: "Multi-language support", votes: 8 },
-        { id: 3, text: "Advanced analytics", votes: 12 },
-        { id: 4, text: "Mobile app", votes: 5 }
-      ],
-      totalVotes: 40,
-      postImage: "https://source.unsplash.com/random/800x400/?poll",
-      circularTopic: "Feature Prioritization Poll",
-      // circularcontent: "Help us decide which features to prioritize in our next development cycle.",
-      expiresAt: "2023-12-31",
-      hasVoted: false
-    }
-  ]);
+  // const [polls, setPolls] = useState([
+  //   {
+  //     id: 1,
+  //     question: "Which feature should we implement next?",
+  //     options: [
+  //       { id: 1, text: "Dark mode", votes: 15 },
+  //       { id: 2, text: "Multi-language support", votes: 8 },
+  //       { id: 3, text: "Advanced analytics", votes: 12 },
+  //       { id: 4, text: "Mobile app", votes: 5 }
+  //     ],
+  //     totalVotes: 40,
+  //     postImage: "https://source.unsplash.com/random/800x400/?poll",
+  //     circularTopic: "Feature Prioritization Poll",
+  //     // circularcontent: "Help us decide which features to prioritize in our next development cycle.",
+  //     expiresAt: "2023-12-31",
+  //     hasVoted: false
+  //   }
+  // ]);
 
-  const [openModal, setOpenModal] = useState(false);
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
-  const [newPoll, setNewPoll] = useState({
+  const [polls, setPolls] = useState({
     question: "",
     options: ["", ""],
     expiresAt: ""
   });
+  const [openModal, setOpenModal] = useState(false);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [department, setDepartment] = useState(localStorage.getItem('department'));
+  const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [editId, setEditId] = useState('');
+
+  const [newPoll, setNewPoll] = useState({
+    question: "",
+    options: ["", ""],
+    expiresAt: "",
+    maxSelection: '',
+    multiSelect: '',
+  });
+  const [pollDetails, setPollDetails] = useState([
+    {
+      id: 1,
+      options: ''
+    }
+  ]);
   const [selectedOption, setSelectedOption] = useState(null);
   const theme = useTheme();
+
+
+
+  // const addPoll = () => {
+  //   const pollOptions = newPoll.options.filter(opt => opt.trim() !== "").map((opt, index) => ({
+  //     id: index + 1,
+  //     text: opt,
+  //     votes: 0
+  //   }));
+
+  //   if (pollOptions.length < 2) {
+  //     toast.error("Poll must have at least 2 options");
+  //     return;
+  //   }
+
+  //   if (!newPoll.question.trim()) {
+  //     toast.error("Poll question cannot be empty");
+  //     return;
+  //   }
+
+  //   const newPollObj = {
+  //     id: polls.length + 1,
+  //     question: newPoll.question,
+  //     options: pollOptions,
+  //     totalVotes: 0,
+  //     postImage: "https://source.unsplash.com/random/800x400/?survey",
+  //     circularTopic: newPoll.question,
+  //     circularcontent: "Newly created poll - vote now!",
+  //     expiresAt: newPoll.expiresAt || "2023-12-31",
+  //     hasVoted: false
+  //   };
+
+  //   setPolls([...polls, newPollObj]);
+  //   setOpenCreateModal(false);
+  //   setNewPoll({
+  //     question: "",
+  //     options: ["", ""],
+  //     expiresAt: ""
+  //   });
+  //   toast.success("New poll created successfully!");
+  // };
 
   const handleVote = (pollId) => {
     if (!selectedOption) {
@@ -98,43 +162,55 @@ function Poll() {
     setSelectedOption(null);
   };
 
-  const addPoll = () => {
-    const pollOptions = newPoll.options.filter(opt => opt.trim() !== "").map((opt, index) => ({
-      id: index + 1,
-      text: opt,
-      votes: 0
-    }));
+  const handleSave = async () => {
+    const errors = {};
 
-    if (pollOptions.length < 2) {
-      toast.error("Poll must have at least 2 options");
-      return;
+    if (Object.keys(errors).length === 0) {
+      setIsLoading(true);
+
+      const pollDetailsVo = pollDetails.map((row) => ({
+        ...(editId && { id: row.id }),
+        options: row.options,
+      }));
+
+      const saveData = {
+        ...(editId && { id: editId }),
+        active: true,
+        branchCode: branchCode,
+        branchName: branch,
+        createdBy: loginUserName,
+        department: department,
+        maxSelection: newPoll.maxSelection,
+        multiSelect: newPoll.multiSelect,
+        orgId: Number(orgId),
+        pollDetailsDTO: pollDetailsVo,
+        question: newPoll.question,
+        updatedBy: loginUserName
+      };
+
+      console.log('DATA TO SAVE IS:', saveData);
+
+      try {
+        const response = await apiCalls('put', '/basicmaster/createUpdatepolls', saveData);
+
+        if (response.status === true) {
+          console.log('Response:', response);
+          showToast('success', editId ? 'Poll Updated Successfully' : 'Poll created successfully');
+          // handleClear();
+          // getLeaveRequestByOrgId();
+          setIsLoading(false);
+        } else {
+          showToast('error', response.paramObjectsMap.errorMessage || 'Poll creation failed');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Leave Request creation failed');
+        setIsLoading(false);
+      }
+    } else {
+      // setFieldErrors(errors);
     }
-
-    if (!newPoll.question.trim()) {
-      toast.error("Poll question cannot be empty");
-      return;
-    }
-
-    const newPollObj = {
-      id: polls.length + 1,
-      question: newPoll.question,
-      options: pollOptions,
-      totalVotes: 0,
-      postImage: "https://source.unsplash.com/random/800x400/?survey",
-      circularTopic: newPoll.question,
-      circularcontent: "Newly created poll - vote now!",
-      expiresAt: newPoll.expiresAt || "2023-12-31",
-      hasVoted: false
-    };
-
-    setPolls([...polls, newPollObj]);
-    setOpenCreateModal(false);
-    setNewPoll({
-      question: "",
-      options: ["", ""],
-      expiresAt: ""
-    });
-    toast.success("New poll created successfully!");
   };
 
   const addOptionField = () => {
@@ -442,7 +518,7 @@ function Poll() {
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Button
               variant="contained"
-              onClick={addPoll}
+              onClick={handleSave}
               startIcon={<PollIcon />}
             >
               Create Poll
