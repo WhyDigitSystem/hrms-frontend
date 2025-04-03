@@ -1,175 +1,192 @@
 import PropTypes from 'prop-types';
-import { Avatar, Box, List, ListItem, ListItemText, Typography, Button, Stack, Divider } from '@mui/material';
+import { Avatar, Box, Typography, Button, Stack, Chip, Paper, Divider } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import TotalIncomeCard from 'ui-component/cards/Skeleton/TotalIncomeCard';
-import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import { ThumbUp, ThumbDown, Person, CalendarToday, AccessTime, Description, Work, Badge } from '@mui/icons-material';
 
-const CardWrapper = styled(MainCard)(({ theme }) => ({
-  overflow: 'hidden',
-  position: 'relative',
+const StyledCard = styled(MainCard)(({ theme }) => ({
   background: theme.palette.background.paper,
-  boxShadow: theme.shadows[3],
-  borderRadius: theme.shape.borderRadius,
-  padding: theme.spacing(2),
-  '&:after': {
-    content: '""',
-    position: 'absolute',
-    width: 210,
-    height: 210,
-    background: `linear-gradient(210.04deg, ${theme.palette.warning.dark} -50.94%, rgba(144, 202, 249, 0) 83.49%)`,
-    borderRadius: '50%',
-    top: -30,
-    right: -180,
-    opacity: 0.4
+  borderRadius: '16px',
+  boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.05)',
+  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+  '&:hover': {
+    transform: 'translateY(-5px)',
+    boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.1)'
   },
+  position: 'relative',
+  overflow: 'visible',
   '&:before': {
     content: '""',
     position: 'absolute',
-    width: 210,
-    height: 210,
-    background: `linear-gradient(140.9deg, ${theme.palette.warning.dark} -14.02%, rgba(144, 202, 249, 0) 70.50%)`,
-    borderRadius: '50%',
-    top: -160,
-    right: -130,
-    opacity: 0.4
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '4px',
+    background: `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.primary.main})`,
+    borderTopLeftRadius: '16px',
+    borderTopRightRadius: '16px'
   }
 }));
+
+const StatusBadge = styled(Chip)(({ theme }) => ({
+  position: 'absolute',
+  right: 20,
+  top: 15,
+  fontWeight: 700,
+  fontSize: '0.7rem',
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  backgroundColor: theme.palette.warning.light,
+  color: theme.palette.warning.dark
+}));
+
+const DetailRow = ({ icon, label, value }) => (
+  <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+    <Box sx={{
+      p: 1,
+      bgcolor: 'background.default',
+      borderRadius: '8px',
+      color: 'primary.main'
+    }}>
+      {icon}
+    </Box>
+    <Box sx={{ flex: 1 }}>
+      <Typography variant="caption" color="textSecondary">
+        {label}
+      </Typography>
+      <Typography variant="body2" fontWeight="500">
+        {value}
+      </Typography>
+    </Box>
+  </Stack>
+);
 
 const PendingApproval = ({ isLoading }) => {
   const theme = useTheme();
 
-  // Sample data - in a real app, this would come from props or API
   const leaveRequest = {
     empName: "John Doe",
     empId: "EMP-1001",
     leaveType: "Sick Leave",
-    fromDate: "2023-06-15",
-    toDate: "2023-06-18",
+    fromDate: "June 15, 2023",
+    toDate: "June 18, 2023",
     totalDays: 3,
-    reason: "High fever and doctor's recommendation for rest",
-    status: "Pending"
+    reason: "High fever and doctor's recommendation for rest. Need proper medication and recovery time.",
+    status: "Pending Review",
+    department: "Marketing",
+    position: "Senior Marketing Executive"
   };
 
-  const handleApprove = () => {
-    console.log("Leave approved");
-    // Add your approval logic here
-  };
+  const handleApprove = () => console.log("Leave approved");
+  const handleReject = () => console.log("Leave rejected");
 
-  const handleReject = () => {
-    console.log("Leave rejected");
-    // Add your rejection logic here
-  };
-
-  return (
-    <>
-      {isLoading ? (
-        <TotalIncomeCard />
-      ) : (
-        <CardWrapper border={false} content={false}>
+  return isLoading ? <TotalIncomeCard /> : (
+    <StyledCard>
+      <StatusBadge label={leaveRequest.status} size="small" />
+      
+      <Box sx={{ pt: 4, pb: 2 }}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+          <Avatar sx={{ 
+            width: 56, 
+            height: 56, 
+            bgcolor: theme.palette.primary.main,
+            fontSize: '1.25rem',
+            fontWeight: 600
+          }}>
+            {leaveRequest.empName.split(' ').map(n => n[0]).join('')}
+          </Avatar>
           <Box>
-            <Typography variant="h4" sx={{ mb: 2, fontWeight: 'bold', fontSize: '1.2rem', color: theme.palette.primary.main }}>
-              Pending Approval
+            <Typography variant="h6" fontWeight="600">{leaveRequest.empName}</Typography>
+            <Typography variant="body2" color="textSecondary">
+              {leaveRequest.position} • {leaveRequest.department}
             </Typography>
-            
-            <List sx={{ py: 0 }}>
-              {/* Employee Information */}
-              <ListItem alignItems="flex-start" disableGutters sx={{ py: 1 }}>
-                <Avatar sx={{ bgcolor: theme.palette.secondary.main, mr: 2 }}>
-                  <StorefrontTwoToneIcon />
-                </Avatar>
-                <ListItemText
-                  primary={<Typography variant="h6" sx={{ fontWeight: 'bold' }}>{leaveRequest.empName}</Typography>}
-                  secondary={
-                    <>
-                      <Typography variant="subtitle2" sx={{ color: theme.palette.grey[500] }}>
-                        Employee ID: {leaveRequest.empId}
-                      </Typography>
-                      <Typography variant="subtitle2" sx={{ color: theme.palette.grey[500] }}>
-                        Status: <span style={{ color: theme.palette.warning.main }}>{leaveRequest.status}</span>
-                      </Typography>
-                    </>
-                  }
-                />
-              </ListItem>
-              
-              <Divider sx={{ my: 1 }} />
-
-              {/* Leave Details */}
-              <ListItem sx={{ py: 1 }}>
-                <ListItemText
-                  primary="Leave Details"
-                  primaryTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
-                  secondary={
-                    <Box component="div" sx={{ mt: 1 }}>
-                      <Stack direction="row" spacing={2} justifyContent="space-between">
-                        <Typography variant="body2">Type:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{leaveRequest.leaveType}</Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={2} justifyContent="space-between">
-                        <Typography variant="body2">From:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{leaveRequest.fromDate}</Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={2} justifyContent="space-between">
-                        <Typography variant="body2">To:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{leaveRequest.toDate}</Typography>
-                      </Stack>
-                      <Stack direction="row" spacing={2} justifyContent="space-between">
-                        <Typography variant="body2">Total Days:</Typography>
-                        <Typography variant="body2" fontWeight="bold">{leaveRequest.totalDays}</Typography>
-                      </Stack>
-                    </Box>
-                  }
-                />
-              </ListItem>
-              
-              <Divider sx={{ my: 1 }} />
-
-              {/* Reason */}
-              <ListItem sx={{ py: 1 }}>
-                <ListItemText
-                  primary="Reason"
-                  primaryTypographyProps={{ variant: 'subtitle1', fontWeight: 'bold' }}
-                  secondary={
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      {leaveRequest.reason}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-              
-              <Divider sx={{ my: 1 }} />
-
-              {/* Action Buttons */}
-              <ListItem sx={{ py: 1, justifyContent: 'center' }}>
-                <Stack direction="row" spacing={2}>
-                  <Button 
-                    variant="contained" 
-                    color="success" 
-                    startIcon={<ThumbUpIcon />}
-                    onClick={handleApprove}
-                    sx={{ px: 3 }}
-                  >
-                    Approve
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    color="error" 
-                    startIcon={<ThumbDownIcon />}
-                    onClick={handleReject}
-                    sx={{ px: 3 }}
-                  >
-                    Reject
-                  </Button>
-                </Stack>
-              </ListItem>
-            </List>
+            <Chip 
+              label={leaveRequest.empId} 
+              size="small" 
+              icon={<Badge fontSize="small" />}
+              sx={{ mt: 0.5, fontSize: '0.7rem' }}
+            />
           </Box>
-        </CardWrapper>
-      )}
-    </>
+        </Stack>
+
+        <Paper elevation={0} sx={{ 
+          p: 2, 
+          mb: 3, 
+          borderRadius: '12px',
+          bgcolor: 'background.default'
+        }}>
+          <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2 }}>
+            Leave Details
+          </Typography>
+          
+          <DetailRow icon={<Work fontSize="small" />} label="Leave Type" value={leaveRequest.leaveType} />
+          <DetailRow icon={<CalendarToday fontSize="small" />} label="From Date" value={leaveRequest.fromDate} />
+          <DetailRow icon={<CalendarToday fontSize="small" />} label="To Date" value={leaveRequest.toDate} />
+          <DetailRow icon={<AccessTime fontSize="small" />} label="Total Days" value={`${leaveRequest.totalDays} days`} />
+        </Paper>
+
+        <Paper elevation={0} sx={{ 
+          p: 2, 
+          mb: 3, 
+          borderRadius: '12px',
+          bgcolor: 'background.default'
+        }}>
+          <Typography variant="subtitle2" fontWeight="600" sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+            <Description fontSize="small" sx={{ mr: 1 }} />
+            Reason for Leave
+          </Typography>
+          <Typography variant="body2" sx={{ 
+            p: 1.5,
+            bgcolor: 'background.paper',
+            borderRadius: '8px',
+            borderLeft: `3px solid ${theme.palette.primary.main}`
+          }}>
+            {leaveRequest.reason}
+          </Typography>
+        </Paper>
+
+        <Stack direction="row" spacing={2} justifyContent="center">
+          <Button
+            variant="contained"
+            color="success"
+            startIcon={<ThumbUp />}
+            onClick={handleApprove}
+            sx={{
+              px: 4,
+              borderRadius: '8px',
+              fontWeight: '600',
+              textTransform: 'none',
+              boxShadow: 'none',
+              '&:hover': {
+                boxShadow: `0 4px 12px ${theme.palette.success.light}`
+              }
+            }}
+          >
+            Approve
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<ThumbDown />}
+            onClick={handleReject}
+            sx={{
+              px: 4,
+              borderRadius: '8px',
+              fontWeight: '600',
+              textTransform: 'none',
+              borderWidth: '2px',
+              '&:hover': {
+                borderWidth: '2px',
+                bgcolor: 'error.light'
+              }
+            }}
+          >
+            Reject
+          </Button>
+        </Stack>
+      </Box>
+    </StyledCard>
   );
 };
 

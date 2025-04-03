@@ -28,7 +28,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
+  Button,
+  Grid,
+  useMediaQuery
 } from '@mui/material';
 
 // Icons
@@ -84,6 +86,9 @@ const ProfileSection = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [employeeData, setEmployeeData] = useState('');
   const anchorRef = useRef(null);
+  
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const handleLogout = () => {
     localStorage.clear();
@@ -160,7 +165,7 @@ const ProfileSection = () => {
       }
 
     } catch (err) {
-     
+      console.error('Error fetching employee data:', err);
     }
   }, []);
 
@@ -270,12 +275,15 @@ const ProfileSection = () => {
                     <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
                       <Chip
                         icon={<IconMail size={16} />}
-                        label={employeeData.email}
+                        label={employeeData?.email || 'N/A'}
                         size="small"
                         sx={{
                           borderRadius: 4,
                           bgcolor: alpha(theme.palette.primary.light, 0.1),
-                          color: theme.palette.text.primary
+                          color: theme.palette.text.primary,
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
                         }}
                       />
                       <Chip
@@ -379,9 +387,10 @@ const ProfileSection = () => {
         onClose={() => setProfileModalOpen(false)}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile} // Make it fullscreen on mobile
         sx={{
           '& .MuiDialog-paper': {
-            borderRadius: 4,
+            borderRadius: isMobile ? 0 : 4, // Remove border radius on mobile
             background: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)} 0%, ${alpha(theme.palette.background.default, 0.95)} 100%)`,
             backdropFilter: 'blur(12px)',
           }
@@ -412,7 +421,8 @@ const ProfileSection = () => {
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            variant="fullWidth"
+            variant={isMobile ? 'scrollable' : 'fullWidth'} // Scrollable tabs on mobile
+            scrollButtons={isMobile ? 'auto' : false} // Allow scrolling on mobile
             sx={{
               mb: 3,
               '& .MuiTabs-indicator': {
@@ -421,206 +431,198 @@ const ProfileSection = () => {
               }
             }}
           >
-            <Tab label="Personal Information" icon={<IconUser size={20} />} iconPosition="start" />
-            <Tab label="Bank Details" icon={<IconBuildingBank size={20} />} iconPosition="start" />
+            <Tab label={isMobile ? "Personal" : "Personal Information"} icon={<IconUser size={20} />} iconPosition="start" />
+            <Tab label={isMobile ? "Bank" : "Bank Details"} icon={<IconBuildingBank size={20} />} iconPosition="start" />
           </Tabs>
 
           {activeTab === 0 && employeeData && (
-            <Box>
-              <div className='container'>
-                <div className='row'>
-                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
-                    <Stack spacing={3}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                          <IconId color={theme.palette.primary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Employee Code
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.employeeCode}
-                          </Typography>
-                        </Box>
-                      </Stack>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                      <IconId color={theme.palette.primary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Employee Code
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.employeeCode}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
-                          <IconMail color={theme.palette.secondary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Email
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.email || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                      <IconMail color={theme.palette.secondary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Email
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.email || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1) }}>
-                          <IconPhone color={theme.palette.success.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Mobile
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.mobileNo || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.success.main, 0.1) }}>
+                      <IconPhone color={theme.palette.success.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Mobile
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.mobileNo || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
-                          <IconMapPin color={theme.palette.warning.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Address
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.employeeAddress || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </div>
-                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
-                    <Stack spacing={3}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
-                          <IconUser color={theme.palette.info.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Gender
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.gender || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                      <IconMapPin color={theme.palette.warning.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Address
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.employeeAddress || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+                      <IconUser color={theme.palette.info.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Gender
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.gender || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1) }}>
-                          <IconId color={theme.palette.error.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Aadhar No
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.aadharNo || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.error.main, 0.1) }}>
+                      <IconId color={theme.palette.error.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Aadhar No
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.aadharNo || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                          <IconId color={theme.palette.primary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            PAN No
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.panNo || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                      <IconId color={theme.palette.primary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        PAN No
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.panNo || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
-                          <IconDashboard color={theme.palette.secondary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Department
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.department || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </div>
-                </div>
-              </div>
-            </Box>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                      <IconDashboard color={theme.palette.secondary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Department
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.department || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </Grid>
+            </Grid>
           )}
 
           {activeTab === 1 && employeeData && (
-            <Box>
-              <div className='container'>
-                <div className='row'>
-                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
-                    <Stack spacing={3}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
-                          <IconBuildingBank color={theme.palette.info.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Account Holder Name
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.accountHolderName || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+                      <IconBuildingBank color={theme.palette.info.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Account Holder Name
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.accountHolderName || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
-                          <IconCreditCard color={theme.palette.primary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Account Number
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.accountNo || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </div>
-                  <div className='col-lg-6 col-sm-6 col-md-6 col-6'>
-                    <Stack spacing={3}>
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
-                          <IconSettings color={theme.palette.secondary.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            IFSC Code
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.ifscCode || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
+                      <IconCreditCard color={theme.palette.primary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Account Number
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.accountNo || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Stack spacing={3}>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
+                      <IconSettings color={theme.palette.secondary.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        IFSC Code
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.ifscCode || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
 
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
-                          <IconBuildingBank color={theme.palette.warning.main} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" color="text.secondary">
-                            Bank Branch
-                          </Typography>
-                          <Typography variant="h6">
-                            {employeeData.branch || 'N/A'}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </div>
-                </div>
-              </div>
-            </Box>
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                      <IconBuildingBank color={theme.palette.warning.main} />
+                    </Avatar>
+                    <Box>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Bank Branch
+                      </Typography>
+                      <Typography variant="h6">
+                        {employeeData.branch || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </Grid>
+            </Grid>
           )}
         </DialogContent>
 
