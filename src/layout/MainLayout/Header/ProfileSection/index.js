@@ -415,16 +415,21 @@ const ProfileSection = () => {
         <DialogTitle sx={{ borderBottom: `1px solid ${theme.palette.divider}`, pb: 2 }}>
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar
-              src={User1}
+              src={`data:image/png;base64,${employeeData?.profileImage}`}
               sx={{
-                width: 56,
-                height: 56,
-                border: `3px solid ${theme.palette.primary.main}`,
+                width: 40,
+                height: 40,
+                border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  border: `2px solid ${theme.palette.primary.main}`,
+                  transform: 'scale(1.1)'
+                }
               }}
             />
             <Box>
               <Typography variant="h5" fontWeight={700}>
-                {employeeData?.employeeName || empName}
+                {employeeData?.employeeName || empName} - {employeeData?.employeeCode || empcode}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {employeeData?.designation || designation}

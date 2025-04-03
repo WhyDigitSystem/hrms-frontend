@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getAllActiveBranches } from 'utils/CommonFunctions';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import ActionButton from 'utils/ActionButton';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import Tabs from '@mui/material/Tabs';
@@ -27,6 +28,10 @@ import LinearProgress from '@mui/material/LinearProgress';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import { Typography } from '@mui/material';
+import { IconButton } from '@mui/material';
+import ZoomInIcon from '@mui/icons-material/ZoomIn';
 
 const EmployeeDetails = () => {
   const [showForm, setShowForm] = useState(true);
@@ -789,6 +794,7 @@ const EmployeeDetails = () => {
           await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
         }
         // setSelectedImage(employeeDetailsVO.profileImage || null);
+        setLogo(result.paramObjectsMap.Employee.profileImage)
 
         // Now set the form data after fetching leave types
         setFormData({
@@ -896,16 +902,16 @@ const EmployeeDetails = () => {
       console.error("No image found in formData.profileImage");
       return;
     }
-  
+
     console.log("ID:", id); // Debugging
-  
+
     try {
       setIsLoading(true);
-  
+
       // Create FormData object
       const formDataToSend = new FormData();
       formDataToSend.append("file", logo); // Append the actual file
-  
+
       const uploadResponse = await apiCalls(
         "post",
         `/master/uploadEmployeeImageInBloob?id=${id}`,
@@ -913,9 +919,9 @@ const EmployeeDetails = () => {
         {},
         { 'Content-Type': 'multipart/form-data' } // Ensure proper headers
       );
-  
+
       console.log("Upload Response:", uploadResponse); // Debugging
-  
+
       if (uploadResponse?.status === true) {
         setFormData((prev) => ({
           ...prev,
@@ -923,7 +929,7 @@ const EmployeeDetails = () => {
             uploadResponse.paramObjectsMap?.imagePath ||
             uploadResponse.imageUrl,
         }));
-        showToast("success", "Profile image uploaded successfully");
+        // showToast("success", "Profile image uploaded successfully");
       } else {
         showToast("error", uploadResponse?.message || "Image upload failed");
       }
@@ -937,7 +943,7 @@ const EmployeeDetails = () => {
       setIsLoading(false);
     }
   };
-  
+
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({
@@ -1464,50 +1470,111 @@ const EmployeeDetails = () => {
 
               {/* Image Upload Section */}
               <div className="col-md-3 mb-3">
-                <label htmlFor="image-upload">
-                  <input
-                    accept="image/*"
-                    id="image-upload"
-                    type="file"
-                    style={{ display: "none" }}
-                    onChange={(e)=>handleImageChange(e)}
-                    disabled={isLoading}
-                  />
-                  <Button
-                    variant="contained"
-                    component="span"
-                    fullWidth
-                    startIcon={<CloudUploadIcon />}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Uploading..." : "Upload Profile Image"}
-                  </Button>
-                </label>
+                {/* Hidden file input */}
+                <input
+                  accept="image/*"
+                  id="image-upload"
+                  type="file"
+                  style={{ display: "none" }}
+                  onChange={handleImageChange}
+                  disabled={isLoading}
+                />
 
-                {isLoading && (
-                  <div style={{ marginTop: 8 }}>
-                    <LinearProgress />
-                  </div>
-                )}
-
-                {(selectedImage || logo) && (
-                  <div style={{ marginTop: "10px", textAlign: "center" }}>
-                    <p><strong>Selected Image:</strong></p>
-                    <div style={{ marginTop: 8 }}>
+                {/* Main container */}
+                <Box sx={{
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  p: 1,
+                  backgroundColor: 'background.paper'
+                }}>
+                  {/* Upload area */}
+                  <Box sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: selectedImage || logo ? 1 : 0
+                  }}>
+                    <label htmlFor="image-upload" style={{ flex: 1 }}>
                       <Button
-                        variant="outlined"
-                        color="error"
+                        variant="contained"
+                        component="span"
                         size="small"
-                        onClick={() => {
-                          setSelectedImage(null);
-                          setLogo('');
+                        startIcon={<CloudUploadIcon fontSize="small" />}
+                        disabled={isLoading}
+                        fullWidth
+                        sx={{
+                          py: 0.5,
+                          fontSize: '0.75rem',
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': { boxShadow: 'none' }
                         }}
                       >
-                        Remove Image
+                        {isLoading ? 'Uploading...' : 'Choose File'}
                       </Button>
-                    </div>
-                  </div>
-                )}
+                    </label>
+
+                    {(selectedImage || logo) && (
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setLogo("");
+                        }}
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'error.main',
+                          borderRadius: 1,
+                          p: 0.5
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </Box>
+
+                  {/* File info display */}
+                  {(selectedImage || logo) && (
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      p: 0.75,
+                      backgroundColor: 'action.hover',
+                      borderRadius: 0.5,
+                      cursor: 'pointer',
+                      '&:hover': { backgroundColor: 'action.selected' }
+                    }} onClick={() => {/* Add preview modal trigger here */ }}>
+                      <ImageIcon color="primary" fontSize="small" />
+                      <Typography variant="caption" sx={{
+                        flex: 1,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {selectedImage?.name || logo?.name || 'image.jpg'}
+                      </Typography>
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'text.secondary',
+                        fontSize: '0.75rem'
+                      }}>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {isLoading && (
+                    <LinearProgress
+                      sx={{
+                        height: 2,
+                        mt: 1
+                      }}
+                    />
+                  )}
+                </Box>
               </div>
 
 
