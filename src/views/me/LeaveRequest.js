@@ -340,7 +340,7 @@ const LeaveRequest = () => {
         "G6cKiPBXzCvlFaOuo"
       );
 
-      showToast("success", "Email notification sent successfully!");
+      // showToast("success", "Email notification sent successfully!");
       console.log("Email Sent Successfully");
     } catch (error) {
       console.error("Email Sending Failed:", error);
@@ -379,7 +379,7 @@ const LeaveRequest = () => {
       ...prevData,
       [name]: value || null
     }));
-  };
+  };  
 
   const disableWeekOffDays = (date) => {
     const disabledDays = {
@@ -551,6 +551,7 @@ const LeaveRequest = () => {
                         value={formData.toDate || null}
                         onChange={(newValue) => handleDateChange('toDate', newValue)}
                         shouldDisableDate={disableWeekOffDays}
+                        minDate={formData.fromDate ? dayjs(formData.fromDate) : null}
                       />
                     ) : (
                       <TextField label="To Date" size="small" value="" placeholder="Select Leave Type First" disabled />

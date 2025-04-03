@@ -43,8 +43,8 @@ const SwipeInSwipeOut = () => {
           ...item,
           date: formatDate(item.entryDate), // Format date as MM/DD/YYYY
           day: getDay(item.entryDate), // Get day (e.g., Tuesday)
-          totalWorkingHours: calculateGrossHours(item.checkInTime, item.checkOutTime), // Calculate Gross Hours
-          effectiveFrom: calculateEffectiveHours(item.checkInTime, item.checkOutTime), // Calculate Effective Hours
+          totalWorkingHours: formatTime(item.totalWorkingHours),
+          effectiveFrom: formatTime(item.effectiveFrom)
         }));
         setListViewData(transformedData.reverse());
       }
@@ -71,37 +71,43 @@ const SwipeInSwipeOut = () => {
     return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
-  // Helper function to calculate Gross Hours (HH:mm)
-  const calculateGrossHours = (checkInTime, checkOutTime) => {
-    if (!checkInTime || !checkOutTime) return '00:00';
+//   // Helper function to calculate Gross Hours (HH:mm)
+//   const calculateGrossHours = (checkInTime, checkOutTime) => {
+//     if (!checkInTime || !checkOutTime) return '00:00';
 
-    const checkIn = new Date(`1970-01-01T${checkInTime}`);
-    const checkOut = new Date(`1970-01-01T${checkOutTime}`);
-    const diff = checkOut - checkIn; // Difference in milliseconds
+//     const checkIn = new Date(`1970-01-01T${checkInTime}`);
+//     const checkOut = new Date(`1970-01-01T${checkOutTime}`);
+//     const diff = checkOut - checkIn; // Difference in milliseconds
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+//     const hours = Math.floor(diff / (1000 * 60 * 60));
+//     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-  };
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+//   };
 
-  // Helper function to calculate Effective Hours (HH:mm)
- const calculateEffectiveHours = (checkInTime, checkOutTime) => {
-  if (!checkInTime || !checkOutTime) return '00:00';
+//   // Helper function to calculate Effective Hours (HH:mm)
+//  const calculateEffectiveHours = (checkInTime, checkOutTime) => {
+//   if (!checkInTime || !checkOutTime) return '00:00';
 
-  const checkIn = new Date(`1970-01-01T${checkInTime}`);
-  const checkOut = new Date(`1970-01-01T${checkOutTime}`);
-  const diff = checkOut - checkIn; // Difference in milliseconds
+//   const checkIn = new Date(`1970-01-01T${checkInTime}`);
+//   const checkOut = new Date(`1970-01-01T${checkOutTime}`);
+//   const diff = checkOut - checkIn; // Difference in milliseconds
 
-  // Subtract 1 hour for lunch break (adjust as needed)
-  const adjustedDiff = diff - (60 * 60 * 1000);
+//   // Subtract 1 hour for lunch break (adjust as needed)
+//   const adjustedDiff = diff - (60 * 60 * 1000);
 
-  if (adjustedDiff < 0) return '00:00'; // Handle negative values
+//   if (adjustedDiff < 0) return '00:00'; // Handle negative values
 
-  const hours = Math.floor(adjustedDiff / (1000 * 60 * 60));
-  const minutes = Math.floor((adjustedDiff % (1000 * 60 * 60)) / (1000 * 60));
+//   const hours = Math.floor(adjustedDiff / (1000 * 60 * 60));
+//   const minutes = Math.floor((adjustedDiff % (1000 * 60 * 60)) / (1000 * 60));
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+//   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+// };
+
+const formatTime = (timeString) => {
+  if (!timeString) return '00:00';
+  const [hours, minutes] = timeString.split(':');
+  return `${hours}:${minutes}`; // Return only hours and minutes
 };
 
   return (

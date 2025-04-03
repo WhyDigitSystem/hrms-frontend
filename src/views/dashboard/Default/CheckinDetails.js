@@ -41,7 +41,6 @@ const CheckinDetails = ({ isLoading }) => {
   const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
   const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
   const [designation, setDesignation] = useState(localStorage.getItem('designation'));
-  const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage'));
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null); // State to store check-in time
   const [checkOutTime, setCheckOutTime] = useState(null); // State to store check-out time
@@ -77,6 +76,10 @@ const CheckinDetails = ({ isLoading }) => {
       setIsCheckedIn(true);
     }
   }, []);
+
+  useEffect(() => {
+    getCheckInOutStatus();
+  }, [])
 
   const handleCheckIn = async () => {
     const saveCheckIN = {
@@ -140,6 +143,36 @@ const CheckinDetails = ({ isLoading }) => {
     }
   };
 
+  const getCheckInOutStatus = async () => {
+    try {
+      const response = await apiCalls('get', `basicmaster/chkStatus/${empcode}`);
+      console.log('API Response:', response);
+  
+      if (response.status === true) {
+        const employeeStatus = response.paramObjectsMap.EmployeeStatus.status;
+        
+        if (employeeStatus === 'In') {
+          setIsCheckedIn(true);
+          const now = new Date();
+          setCheckInTime(now);
+          localStorage.setItem('checkInTime', now.toISOString());
+        } else if (employeeStatus === 'Out') {
+          setIsCheckedIn(false);
+          setCheckInTime(null);
+          localStorage.removeItem('checkInTime');
+        }
+  
+        // showToast('success', response.paramObjectsMap.message);
+      } else {
+        console.error('API Error:', response);
+        // showToast('error', 'Failed to retrieve employee status');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      // showToast('error', 'Error fetching data');
+    }
+  };  
+
   return (
     <>
       {isLoading ? (
@@ -157,9 +190,20 @@ const CheckinDetails = ({ isLoading }) => {
               <Grid container direction="column" spacing={2}>
                 {/* Profile Section */}
                 <Grid item>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexDirection: isMobile ? 'column' : 'row'
+                    }}
+                  >
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: isMobile ? 2 : 0 }}>
-                      <Avatar alt={profileImage} src={`data:image/png;base64,${profileImage}`}sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }} />
+                      <Avatar
+                        alt={empName}
+                        src="/path/to/avatar.jpg"
+                        sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }}
+                      />
                       <Box>
                         <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
                           {empName}
@@ -216,7 +260,7 @@ const CheckinDetails = ({ isLoading }) => {
                     Recent Activity
                   </Typography>
                   <List sx={{ borderRadius: '8px', p: 0, display: 'flex', flexDirection: 'column' }}>
-                    <div className='d-flex '>
+                    <div className="d-flex ">
                       <ListItem sx={{ px: 0 }}>
                         <AccessTimeIcon sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
                         <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
@@ -246,8 +290,11 @@ const CheckinDetails = ({ isLoading }) => {
                     </div>
                     {hoursWorked && (
                       <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon className='text-muted' sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
-                        <Typography className='text-muted' sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
+                        <AccessTimeIcon
+                          className="text-muted"
+                          sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }}
+                        />
+                        <Typography className="text-muted" sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
                           Hours Worked: {hoursWorked}
                         </Typography>
                       </ListItem>

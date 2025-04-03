@@ -7,7 +7,7 @@ import Routes from 'routes';
 import themes from 'themes';
 
 import SessionExpiredPopup from 'utils/SessionExpiredPopup';
-import ToastComponent from './utils/toast-component';
+// import ToastComponent from './utils/toast-component';
 
 const App = () => {
   const customization = useSelector((state) => state.customization);
