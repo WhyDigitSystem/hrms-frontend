@@ -1,9 +1,19 @@
 // assets
-import { IconKey } from '@tabler/icons-react';
+import { 
+  IconCalendar,
+  IconBeach,
+  IconSun,
+  IconCalendarEvent,
+  IconCalendarOff
+} from '@tabler/icons-react';
 
 // constant
 const icons = {
-  IconKey
+  IconCalendar,
+  IconBeach,
+  IconSun,
+  IconCalendarEvent,
+  IconCalendarOff
 };
 
 const userType = localStorage.getItem("userType");
@@ -17,8 +27,20 @@ const screenMapping = {
 };
 
 const allScreens = [
-  { id: "leaveType", title: "Leave Type", type: "item", url: "/leaveMaster/LeaveType" },
-  { id: "holidays", title: "Holidays", type: "item", url: "/leaveMaster/Holidays" }
+  { 
+    id: "leaveType", 
+    title: "Leave Type", 
+    type: "item", 
+    url: "/leaveMaster/LeaveType",
+    icon: icons.IconBeach  // Beach icon for leave types
+  },
+  { 
+    id: "holidays", 
+    title: "Holidays", 
+    type: "item", 
+    url: "/leaveMaster/Holidays",
+    icon: icons.IconSun  // Sun icon for holidays
+  }
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -27,38 +49,41 @@ const allowedScreenIds = userType === "ADMIN"
 
 const leaveMaster = {
   id: 'leaveMaster',
-  // title: 'Leave Master',
   type: 'group',
   children: [
     {
       id: 'leaveMaster',
       title: 'Leave Master',
       type: 'collapse',
-      icon: icons.IconKey,
+      icon: icons.IconCalendar,  // Calendar icon for Leave Master
       children: [
         {
           id: 'leaveType',
           title: 'Leave Type',
           type: 'item',
-          url: '/leaveMaster/LeaveType'
+          url: '/leaveMaster/LeaveType',
+          icon: icons.IconBeach
         },
         // {
         //   id: 'leaveProcess',
         //   title: 'Leave Process',
         //   type: 'item',
-        //   url: '/leaveMaster/LeaveProcess'
+        //   url: '/leaveMaster/LeaveProcess',
+        //   icon: icons.IconCalendarEvent
         // },
         // {
         //   id: 'leaveCreditControl',
         //   title: 'Leave Credit Control',
         //   type: 'item',
-        //   url: '/leaveMaster/LeaveCreditControl'
+        //   url: '/leaveMaster/LeaveCreditControl',
+        //   icon: icons.IconCalendarOff
         // },
         {
           id: 'holidays',
           title: 'Holidays',
           type: 'item',
-          url: '/leaveMaster/Holidays'
+          url: '/leaveMaster/Holidays',
+          icon: icons.IconSun
         }
       ].filter((item) => allowedScreenIds.includes(item.id))
     }

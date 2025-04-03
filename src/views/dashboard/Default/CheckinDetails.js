@@ -41,6 +41,7 @@ const CheckinDetails = ({ isLoading }) => {
   const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
   const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
   const [designation, setDesignation] = useState(localStorage.getItem('designation'));
+  const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage'));
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState(null); // State to store check-in time
   const [checkOutTime, setCheckOutTime] = useState(null); // State to store check-out time
@@ -158,7 +159,7 @@ const CheckinDetails = ({ isLoading }) => {
                 <Grid item>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: isMobile ? 2 : 0 }}>
-                      <Avatar alt={empName} src="/path/to/avatar.jpg" sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }} />
+                      <Avatar alt={profileImage} src={`data:image/png;base64,${profileImage}`}sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }} />
                       <Box>
                         <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
                           {empName}

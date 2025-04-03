@@ -86,7 +86,7 @@ const ProfileSection = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [employeeData, setEmployeeData] = useState('');
   const anchorRef = useRef(null);
-  
+
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
@@ -152,7 +152,7 @@ const ProfileSection = () => {
       if (result?.paramObjectsMap?.employeeVO?.length > 0) {
         const empData = result.paramObjectsMap.employeeVO[0];
         setEmployeeData(empData);
-        
+
         // Update state or localStorage with the fetched data
         if (empData.employeeName) {
           setEmpName(empData.employeeName);
@@ -161,6 +161,9 @@ const ProfileSection = () => {
         if (empData.designation) {
           setDesignation(empData.designation);
           localStorage.setItem('designation', empData.designation);
+        }
+        if (empData.profileImage) {
+          localStorage.setItem('profileImage', empData.profileImage);
         }
       }
 
@@ -199,7 +202,7 @@ const ProfileSection = () => {
           }
         >
           <Avatar
-            src={User1}
+            src={`data:image/png;base64,${employeeData?.profileImage}`}
             sx={{
               width: 40,
               height: 40,
@@ -254,13 +257,26 @@ const ProfileSection = () => {
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, transparent 100%)`
                   }}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      <Avatar
+                      {/* <Avatar
                         src={User1}
                         sx={{
                           width: 56,
                           height: 56,
                           border: `3px solid ${theme.palette.primary.main}`,
                           boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
+                        }}
+                      /> */}
+                      <Avatar
+                        src={`data:image/png;base64,${employeeData?.profileImage}`}
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            border: `2px solid ${theme.palette.primary.main}`,
+                            transform: 'scale(1.1)'
+                          }
                         }}
                       />
                       <Stack>

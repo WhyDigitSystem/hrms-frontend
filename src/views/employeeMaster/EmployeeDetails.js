@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField, Autocomplete } from '@mui/material';
+import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField, Autocomplete, Button } from '@mui/material';
 import apiCalls from 'apicall';
 import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
@@ -22,9 +22,15 @@ import { InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import LinearProgress from '@mui/material/LinearProgress';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 
 const EmployeeDetails = () => {
   const [showForm, setShowForm] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [data, setData] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
@@ -70,7 +76,8 @@ const EmployeeDetails = () => {
     designation: '',
     // role: '',
     active: true,
-    branchCode: ''
+    branchCode: '',
+    profileImage: ''
   });
   const [fieldErrors, setFieldErrors] = useState({
     employeeName: '',
@@ -98,9 +105,11 @@ const EmployeeDetails = () => {
     designation: '',
     // role: '',
     active: true,
-    branchCode: ''
+    branchCode: '',
+    profileImage: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [logo, setLogo] = useState('');
   const [leaveTypeTable, setLeaveTypeTable] = useState([
     {
       id: 1,
@@ -523,7 +532,8 @@ const EmployeeDetails = () => {
       designation: '',
       // role: '',
       active: true,
-      branchCode: ''
+      branchCode: '',
+      profileImage: ''
     });
     setFieldErrors({});
     setLeaveTypeTable([
@@ -674,6 +684,7 @@ const EmployeeDetails = () => {
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           handleClear();
           getAllEmployees();
+          handleImageUpload(response.paramObjectsMap.employeeVO.id)
           setIsLoading(false);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
@@ -777,6 +788,7 @@ const EmployeeDetails = () => {
         if (designationCode && gender) {
           await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
         }
+        // setSelectedImage(employeeDetailsVO.profileImage || null);
 
         // Now set the form data after fetching leave types
         setFormData({
@@ -837,11 +849,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-              ...r,
-              leaveType: newValue ? newValue.leaveType : '',
-              leaveCode: newValue ? newValue.leaveCode : '',
-              totalLeave: newValue ? newValue.totalLeave : ''
-            }
+            ...r,
+            leaveType: newValue ? newValue.leaveType : '',
+            leaveCode: newValue ? newValue.leaveCode : '',
+            totalLeave: newValue ? newValue.totalLeave : ''
+          }
           : r
       )
     );
@@ -858,6 +870,149 @@ const EmployeeDetails = () => {
     });
   };
 
+  // const handleImageChange = (event) => {
+  //   const file = event.target.files[0];
+  //   if (file) {
+  //     const reader = new FileReader();
+  //     reader.onloadend = () => {
+  //       setSelectedImage(reader.result);
+  //       setFormData((prev) => ({ ...prev, profileImage: reader.result }));
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      setLogo(file);
+    } else {
+      showToast('error', 'Please upload a valid image (PNG or JPEG).');
+    }
+  };
+
+  const handleImageUpload = async (id) => {
+    if (!logo) {
+      console.error("No image found in formData.profileImage");
+      return;
+    }
+  
+    console.log("ID:", id); // Debugging
+  
+    try {
+      setIsLoading(true);
+  
+      // Create FormData object
+      const formDataToSend = new FormData();
+      formDataToSend.append("file", logo); // Append the actual file
+  
+      const uploadResponse = await apiCalls(
+        "post",
+        `/master/uploadEmployeeImageInBloob?id=${id}`,
+        formDataToSend,
+        {},
+        { 'Content-Type': 'multipart/form-data' } // Ensure proper headers
+      );
+  
+      console.log("Upload Response:", uploadResponse); // Debugging
+  
+      if (uploadResponse?.status === true) {
+        setFormData((prev) => ({
+          ...prev,
+          profileImage:
+            uploadResponse.paramObjectsMap?.imagePath ||
+            uploadResponse.imageUrl,
+        }));
+        showToast("success", "Profile image uploaded successfully");
+      } else {
+        showToast("error", uploadResponse?.message || "Image upload failed");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      showToast(
+        "error",
+        error.response?.data?.message || "Error uploading image"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF({
+      orientation: 'landscape' // Landscape for better table layout
+    });
+
+    doc.setProperties({
+      title: 'Employee Details Report',
+      subject: 'Employee Information',
+      author: 'Your Organization Name',
+      keywords: 'employee, details, report',
+      creator: 'Your Application Name'
+    });
+
+    // Report Title
+    doc.setFontSize(16);
+    doc.setTextColor(40);
+    doc.text('EMPLOYEE DETAILS REPORT', doc.internal.pageSize.width / 2, 15, { align: 'center' });
+
+    // Prepare table data
+    const tableData = listViewData.map((employee, index) => [
+      index + 1,
+      employee.employeeName,
+      employee.employeeCode,
+      employee.branch,
+      employee.doj || employee.joiningDate,
+      employee.grade,
+      employee.team,
+      employee.department,
+      employee.designation,
+      employee.active ? 'Active' : 'Inactive'
+    ]);
+
+    // Auto Table
+    doc.autoTable({
+      head: [[
+        'S.No', 'Employee Name', 'Employee Code', 'Branch', 'Date of Join',
+        'Grade', 'Team', 'Department', 'Designation', 'Status'
+      ]],
+      body: tableData,
+      startY: 40, // Positioning below title
+      theme: 'grid', // Uses full-page width
+      styles: {
+        fontSize: 10,
+        cellPadding: 4,
+        overflow: 'linebreak',
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [103, 58, 183], // Purple header background
+        textColor: 255,
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240] // Light gray alternate row
+      },
+      margin: { top: 40, left: 5, right: 5 }, // Expands to fill the page
+      tableWidth: 'auto', // Adjusts width dynamically
+      didDrawPage: (data) => {
+        const pageCount = doc.internal.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(
+          `Page ${data.pageNumber} of ${pageCount}`,
+          doc.internal.pageSize.width - 30,
+          doc.internal.pageSize.height - 10
+        );
+      }
+    });
+
+    // Save the PDF
+    doc.save(`Employee_Details_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div>
       <ToastContainer />
@@ -866,7 +1021,15 @@ const EmployeeDetails = () => {
           {/* <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} /> */}
           <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleList} />
           <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-          <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} isLoading={isLoading} margin="0 10px 0 10px" />
+          <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} isLoading={isLoading} />
+          {!showForm && (
+            <ActionButton
+              title="Download PDF"
+              icon={PictureAsPdfIcon}  // Fixed: passing the component directly
+              onClick={handleDownloadPDF}
+              isLoading={isLoading} margin="0 10px 0 10px"
+            />
+          )}
         </div>
         {showForm ? (
           <>
@@ -1298,6 +1461,56 @@ const EmployeeDetails = () => {
                   disabled
                 />
               </div>
+
+              {/* Image Upload Section */}
+              <div className="col-md-3 mb-3">
+                <label htmlFor="image-upload">
+                  <input
+                    accept="image/*"
+                    id="image-upload"
+                    type="file"
+                    style={{ display: "none" }}
+                    onChange={(e)=>handleImageChange(e)}
+                    disabled={isLoading}
+                  />
+                  <Button
+                    variant="contained"
+                    component="span"
+                    fullWidth
+                    startIcon={<CloudUploadIcon />}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Uploading..." : "Upload Profile Image"}
+                  </Button>
+                </label>
+
+                {isLoading && (
+                  <div style={{ marginTop: 8 }}>
+                    <LinearProgress />
+                  </div>
+                )}
+
+                {(selectedImage || logo) && (
+                  <div style={{ marginTop: "10px", textAlign: "center" }}>
+                    <p><strong>Selected Image:</strong></p>
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setLogo('');
+                        }}
+                      >
+                        Remove Image
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+
               <h5 className="mb-4 mt-2">Personal Details</h5>
 
               {/* Date of Birth */}

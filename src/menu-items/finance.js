@@ -1,57 +1,39 @@
 // assets
 import {
-  IconAppWindow,
-  IconCalendarDollar,
-  IconCopyright,
-  IconFileTypeDoc,
-  IconSettingsPlus,
-  IconSquareRoundedPlus
+  IconCash,
+  IconReceipt,
+  IconFileInvoice,
+  IconWallet,
+  IconCoin
 } from '@tabler/icons-react';
 
 // constant
 const icons = {
-  IconCopyright
-};
-
-const icons1 = {
-  IconSquareRoundedPlus
-};
-const icons2 = {
-  IconSettingsPlus
-};
-
-const icons3 = {
-  IconCalendarDollar
-};
-
-const icons4 = {
-  IconFileTypeDoc
-};
-
-const icons5 = {
-  IconAppWindow
+  IconCash,
+  IconReceipt,
+  IconFileInvoice,
+  IconWallet,
+  IconCoin
 };
 
 // ==============================|| DASHBOARD MENU ITEMS ||============================== //
 
 const finance = {
   id: 'finance',
-  // title: 'Company Setup',
   type: 'group',
   children: [
     {
       id: 'finance',
       title: 'Finance',
       type: 'collapse',
-      icon: icons.IconCopyright,
-
+      icon: icons.IconCash,  // Money icon for Finance section
       children: [
         {
           id: 'createCompany',
           title: 'Payslip',
           type: 'item',
           url: '/companysetup/createcompany',
-          icon: icons1.IconSquareRoundedPlus
+          icon: icons.IconReceipt  // Receipt icon for Payslip
         }
       ]
     }
