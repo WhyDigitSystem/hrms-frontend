@@ -82,7 +82,7 @@ const ProfileSection = () => {
   const [open, setOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const [employeeData, setEmployeeData] = useState(null);
+  const [employeeData, setEmployeeData] = useState('');
   const anchorRef = useRef(null);
 
   const handleLogout = () => {
