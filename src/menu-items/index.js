@@ -50,7 +50,11 @@ const getMenuItems = () => {
       };
     case 'DEPARTMENT HEAD':
       return {
-        items: [dashboard, calendar, me, finance , team,]
+        items: [dashboard, calendar, me,finance , team,]
+      };
+    case 'TEAM LEAD':
+      return {
+        items: [dashboard, calendar, me,finance , team,]
       };
     // Add more cases as needed
     default:

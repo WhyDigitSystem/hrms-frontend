@@ -31,6 +31,11 @@ const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/Employe
 const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
 const AttendenceProcess = Loadable(lazy(() => import('views/employeeMaster/AttendenceProcess')));
 
+
+//finance
+const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
+
+
 // Leave master
 const LeaveType = Loadable(lazy(() => import('views/leaveMaster/LeaveType')));
 const LeaveProcess = Loadable(lazy(() => import('views/leaveMaster/LeaveProcess')));
@@ -135,6 +140,10 @@ const HrmsRoute = {
     {
       path: '/employeeMaster/AttendenceProcess',
       element: <AttendenceProcess />
+    },
+    {
+      path: '/finance/Payslip',
+      element: <Payslip />
     },
     {
       path: '/leaveMaster/LeaveType',

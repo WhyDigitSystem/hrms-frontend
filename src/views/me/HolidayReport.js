@@ -34,7 +34,7 @@ const getAllHolidayByOrgId = useCallback(async () => {
     }
   } catch (err) {
     console.error('Error fetching data:', err);
-    toast.error('Failed to fetch holiday data.');
+    // toast.error('Failed to fetch holiday data.');
     setListViewData([]);
   }
 }, [orgId]);

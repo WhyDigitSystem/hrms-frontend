@@ -142,7 +142,7 @@ const UpcomingHolidayCard = () => {
   };
 
   const getNextThreeHolidays = () => {
-    return activeHolidays.slice(0, 3);
+    return activeHolidays.slice(0, 2);
   };
 
   const toggleViewMore = () => {
@@ -197,7 +197,7 @@ const UpcomingHolidayCard = () => {
       <ToastContainer />
 
       {/* Summary Cards */}
-      <Grid container spacing={3} sx={{ mb: 3 }}>
+      {/* <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} md={4}>
           <Card sx={{
             p: 3,
@@ -293,6 +293,92 @@ const UpcomingHolidayCard = () => {
             </Box>
           </Card>
         </Grid>
+      </Grid> */}
+      {/* Summary Section */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={6}>
+          <Card sx={{
+            p: 3,
+            height: '100%',
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Box sx={{
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              background: 'rgba(63, 81, 181, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mr: 3
+            }}>
+              <EventIcon sx={{
+                fontSize: 30,
+                color: theme.palette.primary.main
+              }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" sx={{
+                color: theme.palette.text.secondary,
+                mb: 0.5
+              }}>
+                Total Holidays
+              </Typography>
+              <Typography variant="h4" sx={{
+                fontWeight: 'bold',
+                color: theme.palette.primary.main
+              }}>
+                {stats.totalHolidays}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card sx={{
+            p: 3,
+            height: '100%',
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+            display: 'flex',
+            alignItems: 'center'
+          }}>
+            <Box sx={{
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              background: 'rgba(76, 175, 80, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mr: 3
+            }}>
+              <CalendarMonthIcon sx={{
+                fontSize: 30,
+                color: '#4CAF50'
+              }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" sx={{
+                color: theme.palette.text.secondary,
+                mb: 0.5
+              }}>
+                Holidays This Month
+              </Typography>
+              <Typography variant="h4" sx={{
+                fontWeight: 'bold',
+                color: '#4CAF50'
+              }}>
+                {stats.holidaysThisMonth}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Holidays Section */}
@@ -305,14 +391,14 @@ const UpcomingHolidayCard = () => {
 
           <Grid container spacing={2}>
             {getNextThreeHolidays().map((holiday, index) => (
-              <Grid item xs={12} sm={4} key={index}>
+              <Grid item xs={12} sm={6} key={index}>
                 <HolidayCard holiday={holiday} isHighlighted={index === 0} />
               </Grid>
             ))}
           </Grid>
 
           {/* View More Button */}
-          {activeHolidays.length > 3 && (
+          {activeHolidays.length > 2 && (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
               <Button
                 onClick={toggleViewMore}
@@ -348,9 +434,9 @@ const UpcomingHolidayCard = () => {
         <DialogContent dividers>
           <Grid container spacing={2}>
             {activeHolidays.map((holiday, index) => (
-              <Grid item xs={12} sm={6} key={index}>
-                <HolidayCard 
-                  holiday={holiday} 
+              <Grid item xs={12} sm={3} key={index}>
+                <HolidayCard
+                  holiday={holiday}
                   isHighlighted={index === 0}
                 />
               </Grid>

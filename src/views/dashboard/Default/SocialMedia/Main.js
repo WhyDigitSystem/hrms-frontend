@@ -240,16 +240,14 @@ const Main = () => {
 
         {/* Content for POST Tab */}
         {nestedTabValue === 'POST' && (
-          <Box sx={{ mt: 3 }}>
-            {/* Removed the heading */}
+          <Box sx={{ mt: 3, minHeight: '280px' }}> {/* Fixed height */}
             <Post />
           </Box>
         )}
 
         {/* Content for POLL Tab */}
         {nestedTabValue === 'POLL' && (
-          <Box sx={{ mt: 3 }}>
-            {/* Removed the heading */}
+          <Box sx={{ mt: 3, minHeight: '280px' }}> {/* Same fixed height */}
             <Poll />
           </Box>
         )}

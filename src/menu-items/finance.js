@@ -29,10 +29,10 @@ const finance = {
       icon: icons.IconCash,  // Money icon for Finance section
       children: [
         {
-          id: 'createCompany',
+          id: 'finance',
           title: 'Payslip',
           type: 'item',
-          url: '/companysetup/createcompany',
+          url: '/finance/payslip',
           icon: icons.IconReceipt  // Receipt icon for Payslip
         }
       ]

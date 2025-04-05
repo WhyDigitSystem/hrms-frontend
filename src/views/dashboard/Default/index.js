@@ -26,6 +26,8 @@ import BirthdayNews from './BirthdayNews'
 import Main from './SocialMedia/Main'
 import Home from './Announcements/Home'
 import Pendingupload from './Pendingupload';
+import News from './News/index';
+
 
 
 // ==============================|| DEFAULT DASHBOARD ||============================== //
@@ -76,7 +78,8 @@ const Dashboard = () => {
             <Home />
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
-            <BirthdayNews isLoading={isLoading} />
+            {/* <BirthdayNews isLoading={isLoading} /> */}
+            <News isLoading={isLoading} />
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
             <Inbox isLoading={isLoading} />
