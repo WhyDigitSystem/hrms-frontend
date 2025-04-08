@@ -31,7 +31,6 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 function Announcements({ blockEdit = false, enableEditing = true }) {
   const [listViewData, setListViewData] = useState([]);
   const [openModal, setOpenModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
   const orgId = localStorage.getItem('orgId');
@@ -45,15 +44,12 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
     announcement: '',
   });
   const [editId, setEditId] = useState('');
-
   const theme = useTheme();
 
-  // Fetch all announcements on component mount
   useEffect(() => {
     GetAnnouncementByOrgId();
   }, [orgId]);
 
-  // Fetch all announcements by organization ID
   const GetAnnouncementByOrgId = async () => {
     try {
       const result = await apiCalls('get', `/basicmaster/GetAnnouncementByOrgId?orgId=${orgId}`);
@@ -69,17 +65,13 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
     }
   };
 
-  // Fetch announcement by ID for editing
   const getAnnouncementById = async (row) => {
     const postId = row.id || row.original?.id;
     if (!postId) {
-      console.error('Invalid row data (missing ID):', row);
       toast.error('Invalid row data (missing ID)');
       return;
     }
-
     setEditId(postId);
-
     try {
       const result = await apiCalls('get', `/basicmaster/GetAnnouncementById?id=${postId}`);
       if (result?.paramObjectsMap?.announcementVO) {
@@ -94,12 +86,10 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
         toast.error('Failed to fetch announcement data');
       }
     } catch (err) {
-      console.error('Error fetching announcement data:', err);
       toast.error('Failed to fetch announcement data');
     }
   };
 
-  // Handle save (create or update)
   const handleSave = async () => {
     const errors = {};
     if (!formData.topic) errors.topic = 'Topic is required';
@@ -118,7 +108,7 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
       active: formData.active,
       topic: formData.topic,
       announcement: formData.announcement,
-      orgId: orgId,
+      orgId,
       createdBy: loginUserName,
     };
 
@@ -136,43 +126,32 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
         setIsLoading(false);
       }
     } catch (err) {
-      console.log('error', err);
       toast.error('Announcement creation failed. Please check the data and try again.');
       setIsLoading(false);
     }
   };
 
-  // Close create modal and reset form
   const handleCloseCreateModal = () => {
     setOpenCreateModal(false);
     setFormData({ topic: '', announcement: '' });
     setEditId('');
   };
 
+  const displayData = listViewData.length > 0 ? [listViewData[0]] : [null];
+
   return (
     <>
-      <style>
-        {` 
-       .css-18oxjtg-MuiGrid-root>.MuiGrid-item {
-                 padding-left: 45px;
-                 padding-top: 5px;
-        }
-        .css-13v5gjb-MuiPaper-root-MuiCard-root {
-        padding:0px;
-        }
-       `}
-      </style>
+      <ToastContainer />
       <Box sx={{ p: 3 }}>
-        <ToastContainer />
-        <Grid container spacing={6} sx={{ mt: 2, position: "relative" }}>
-          {listViewData.length > 0 ? (
-            listViewData.slice(0, 2).map((item) => ( // Show first two announcements
-              <Grid item key={item.id} xs={12} md={12} lg={12} sm={12}> {/* Two announcements side by side on larger screens */}
+        <Grid container spacing={3}>
+          {displayData.map((item, index) => (
+            <Grid item key={index} xs={12}>
+              {item ? (
                 <Card
                   sx={{
                     p: 4,
                     position: "relative",
-                    bgcolor: "rgba(255, 255, 255, 0.9)", // Slight transparency
+                    bgcolor: "rgba(255, 255, 255, 0.9)",
                     boxShadow: 3,
                     borderRadius: 2,
                     overflow: "hidden",
@@ -183,10 +162,10 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
                       left: 0,
                       width: "100%",
                       height: "100%",
-                      backgroundImage: "url('/path-to-your-image.jpg')", // Replace with actual path
+                      backgroundImage: "url('/path-to-your-image.jpg')",
                       backgroundSize: "cover",
                       backgroundPosition: "center",
-                      opacity: 0.2, // Light background effect
+                      opacity: 0.2,
                       zIndex: -1,
                     },
                   }}
@@ -203,41 +182,30 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
                     </Typography>
                   </CardContent>
                 </Card>
-              </Grid>
-            ))
-          ) : (
-            <Grid item xs={12}>
-              <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                justifyContent="center"
-                sx={{ mt: 4 }}
-              >
-                <NotificationsActiveIcon sx={{ fontSize: 64, color: "text.disabled" }} />
-                <Typography variant="h6" sx={{ mt: 2, color: "text.disabled" }}>
-                  No announcements available
-                </Typography>
-              </Box>
+              ) : (
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  alignItems="center"
+                  justifyContent="center"
+                  sx={{ py: 5, border: '1px dashed grey', borderRadius: 2 }}
+                >
+                  <NotificationsActiveIcon sx={{ fontSize: 64, color: "text.disabled" }} />
+                  <Typography variant="h6" sx={{ mt: 2, color: "text.disabled" }}>
+                    No announcements available
+                  </Typography>
+                </Box>
+              )}
             </Grid>
-          )}
+          ))}
         </Grid>
 
         {listViewData.length > 0 && (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 3,
-              animation: "fadeIn 0.5s ease-in-out",
-            }}
-          >
+          <Box display="flex" justifyContent="space-between" mt={3}>
             <IconButton
               color="primary"
-              aria-label="add news"
               onClick={() => {
-                setFormData({ circularTopic: "", circularcontent: "", postImage: "" });
+                setFormData({ topic: "", announcement: "" });
                 setEditId("");
                 setOpenCreateModal(true);
               }}
@@ -251,7 +219,6 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
             >
               <AddIcon />
             </IconButton>
-
             <Button
               variant="contained"
               color="primary"
@@ -272,12 +239,11 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
 
       {/* Create/Edit Announcement Modal */}
       <Modal open={openCreateModal} onClose={handleCloseCreateModal} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box className="modal-container" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
+        <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
           <Typography variant="h6" mb={2}>{editId ? 'Edit Announcement' : 'Create Announcement'}</Typography>
           <TextField
             label="Topic"
             fullWidth
-            name="topic"
             value={formData.topic}
             onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
             error={!!fieldErrors.topic}
@@ -287,7 +253,6 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
           <TextField
             label="Content"
             fullWidth
-            name="announcement"
             multiline
             rows={3}
             value={formData.announcement}
@@ -296,9 +261,9 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
             helperText={fieldErrors.announcement}
             sx={{ mb: 2 }}
           />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button variant="contained" color="secondary" onClick={handleCloseCreateModal}>Cancel</Button>
-            <Button variant="contained" color="primary" onClick={handleSave} disabled={isLoading}>
+          <Box display="flex" justifyContent="space-between">
+            <Button variant="outlined" onClick={handleCloseCreateModal}>Cancel</Button>
+            <Button variant="contained" onClick={handleSave} disabled={isLoading}>
               {isLoading ? 'Saving...' : editId ? 'Update' : 'Post'}
             </Button>
           </Box>
@@ -307,15 +272,13 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
 
       {/* View More Modal */}
       <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box className="view-more-modal" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
+        <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
           <Typography variant="h5" mb={3}>All Announcements</Typography>
-          <List sx={{ py: 0 }}>
+          <List>
             {listViewData.map((item) => (
               <Box key={item.id}>
                 <ListItem
                   alignItems="flex-start"
-                  disableGutters
-                  sx={{ py: 1 }}
                   secondaryAction={
                     <IconButton edge="end" onClick={() => getAnnouncementById(item)}>
                       <EditIcon />
@@ -323,44 +286,28 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
                   }
                 >
                   <ListItemAvatar>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        ...theme.typography.commonAvatar,
-                        ...theme.typography.largeAvatar,
-                        backgroundColor: theme.palette.primary.light,
-                        color: theme.palette.primary.dark
-                      }}
-                    >
+                    <Avatar variant="rounded" sx={{ bgcolor: theme.palette.primary.light, color: theme.palette.primary.main }}>
                       <StorefrontTwoToneIcon />
                     </Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
-                        {item.topic}
-                      </Typography>
-                    }
+                    primary={<Typography variant="subtitle1" fontWeight="bold">{item.topic}</Typography>}
                     secondary={
                       <>
-                        <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                          {item.announcement}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mt: 0.5 }}>
+                        <Typography variant="body2">{item.announcement}</Typography>
+                        <Typography variant="caption" display="block" mt={0.5}>
                           {new Date(item.createdAt).toLocaleDateString()}
                         </Typography>
                       </>
                     }
                   />
                 </ListItem>
-                <Divider sx={{ my: 1, backgroundColor: theme.palette.divider }} />
+                <Divider />
               </Box>
             ))}
           </List>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="secondary" onClick={() => setOpenViewMoreModal(false)}>
-              Close
-            </Button>
+          <Box display="flex" justifyContent="flex-end" mt={2}>
+            <Button variant="outlined" onClick={() => setOpenViewMoreModal(false)}>Close</Button>
           </Box>
         </Box>
       </Modal>

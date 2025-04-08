@@ -3,6 +3,8 @@ import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { Box, Button, Card, Typography, Paper } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
 import apiCalls from 'apicall';
+import ActionButton from 'utils/ActionButton';
+import DownloadIcon from '@mui/icons-material/Download';
 import 'react-toastify/dist/ReactToastify.css';
 import * as XLSX from 'xlsx';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
@@ -19,25 +21,31 @@ const HolidayReport = () => {
     getAllHolidayByOrgId();
   }, []);
 
- // In your getAllHolidayByOrgId function
-const getAllHolidayByOrgId = useCallback(async () => {
-  try {
-    const result = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
-    const holidays = result?.paramObjectsMap?.holidayVO || [];
-    
-    // Reverse the array to show newest first
-    const reversedHolidays = [...holidays].reverse();
-    setListViewData(reversedHolidays);
+  // In your getAllHolidayByOrgId function
+  const getAllHolidayByOrgId = useCallback(async () => {
+    try {
+      const result = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
 
-    if (reversedHolidays.length > 0 && reversedHolidays[0].branchName) {
-      setBranchName(reversedHolidays[0].branchName);
+      const holidays = result?.paramObjectsMap?.holidayVO || [];
+
+      const reversedHolidays = [...holidays] // Optional: if you want latest first
+      setListViewData(reversedHolidays);
+
+      if (reversedHolidays.length > 0 && reversedHolidays[0].branchName) {
+        setBranchName(reversedHolidays[0].branchName);
+      }
+
+    } catch (err) {
+      console.error('Error fetching data:', err);
+
+      toast.error(`Failed to fetch holiday data: ${err?.message || 'Unknown error'}`);
+
+      // Optional fallback
+      setListViewData([]);
     }
-  } catch (err) {
-    console.error('Error fetching data:', err);
-    // toast.error('Failed to fetch holiday data.');
-    setListViewData([]);
-  }
-}, [orgId]);
+  }, [orgId]);
+
+
 
   useEffect(() => {
     getAllHolidayByOrgId();
@@ -110,11 +118,11 @@ const getAllHolidayByOrgId = useCallback(async () => {
     <>
       <Card sx={{ padding: 4, backgroundColor: '#ffffff', boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)', borderRadius: 4, maxWidth: '100%', mt: 3 }}>
         <ToastContainer position="top-right" autoClose={5000} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
             Holiday Report - {branchName ? branchName : "No branch available"} - Branch
           </Typography>
-
+          {/* 
           <Button
             variant="contained"
             startIcon={<CloudDownloadIcon />}
@@ -122,17 +130,20 @@ const getAllHolidayByOrgId = useCallback(async () => {
             onClick={handleDownloadPDF}
           >
             Download PDF
-          </Button>
+          </Button> */}
+          <ActionButton title="Download" icon={DownloadIcon} onClick={handleDownloadPDF} margin="0 10px 0 10px" />
         </Box>
         <Box sx={{ mt: 4 }}>
-          {listViewData.length > 0 ? (
+          {listViewData.length > 1 && (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit showActions={false} hideActions />
+              <CommonListViewTable
+                data={listViewData}
+                columns={listViewColumns}
+                blockEdit
+                showActions={false}
+                hideActions
+              />
             </Paper>
-          ) : (
-            <Typography variant="body1" sx={{ textAlign: 'center', fontSize: '18px', fontWeight: 700, color: 'red', mt: 4, p: 4, backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-              No holidays available
-            </Typography>
           )}
         </Box>
       </Card>
