@@ -16,13 +16,15 @@ const screenMapping = {
   "LEAVE REQUEST": 'leaveRequest',
   "HOLIDAY REPORT": 'holidayReport',
   "SWIPEIN AND SWIPEOUT": 'swipeInSwipeOut',
+  "TIME SHEET": 'timeSheet',
 };
 
 const allScreens = [
   { id: "permissionRequest", title: "Permission Request", type: "item", url: "/me/permissionRequest", icon: icons.FaUserClock },
   { id: "leaveRequest", title: "Leave Request", type: "item", url: "/me/leaveRequest", icon: icons.FaPersonWalkingLuggage },
   { id: "holidayReport", title: "Holiday Report", type: "item", url: "/me/HolidayReport", icon: icons.BeachAccessIcon },
-  { id: "swipeInSwipeOut", title: "Check In & Out", type: "item", url: "/me/SwipeInSwipeOut", icon: icons.AccessTimeIcon }
+  { id: "swipeInSwipeOut", title: "Check In & Out", type: "item", url: "/me/SwipeInSwipeOut", icon: icons.AccessTimeIcon },
+  { id: "timeSheet", title: "Time Sheet", type: "item", url: "/me/TimeSheet", icon: icons.AccessTimeIcon }
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -66,6 +68,13 @@ const me = {
           title: 'Check In & Out',
           type: 'item',
           url: '/me/SwipeInSwipeOut',
+          icon: icons.AccessTimeIcon 
+        },
+        {
+          id: 'timeSheet',
+          title: 'Time Sheet',
+          type: 'item',
+          url: '/me/TimeSheet',
           icon: icons.AccessTimeIcon 
         },
       ].filter((item) => allowedScreenIds.includes(item.id))

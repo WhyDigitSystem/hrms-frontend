@@ -43,7 +43,7 @@ const LeaveRequest = () => {
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveTypeCode: '',
-    fromDate: dayjs(),
+    fromDate: null,
     toDate: null,
     selectLeave: '',
     totalDays: '',
@@ -212,7 +212,7 @@ const LeaveRequest = () => {
   const handleClear = () => {
     setFormData({
       leaveType: '',
-      fromDate: dayjs(),
+      fromDate: null,
       toDate: null,
       selectLeave: '',
       totalDays: '',
@@ -352,27 +352,60 @@ const LeaveRequest = () => {
     setListView(!listView);
   };
 
+  // const handleLeaveTypeChange = (event, newValue) => {
+  //   if (!newValue) {
+  //     setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0 }));
+  //     return;
+  //   }
+
+  //   const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === newValue.leaveType);
+  //   if (!selectedLeave) return;
+
+  //   if (selectedLeave.leaveType !== 'LOSS OF PAY' && selectedLeave.leaveDays === '0') {
+  //     showErrorDialog(`You don't have leave in ${selectedLeave.leaveType}`);
+  //     return;
+  //   }
+
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     leaveType: newValue.leaveType,
+  //     leaveTypeCode: selectedLeave.leaveTypeCode,
+  //     availableLeaveDays: parseFloat(selectedLeave.leaveDays)
+  //   }));
+  // };
+
   const handleLeaveTypeChange = (event, newValue) => {
     if (!newValue) {
-      setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0 }));
+      setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0, effectiveFrom: null }));
       return;
     }
-
+  
     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === newValue.leaveType);
     if (!selectedLeave) return;
-
+  
     if (selectedLeave.leaveType !== 'LOSS OF PAY' && selectedLeave.leaveDays === '0') {
       showErrorDialog(`You don't have leave in ${selectedLeave.leaveType}`);
       return;
     }
-
+  
+    const effectiveFromDate = dayjs(selectedLeave.effectiveFrom);
+    const today = dayjs();
+  
+    // Show message only if the effectiveFrom date is in the future
+    if (effectiveFromDate.isAfter(today)) {
+      const formattedDate = effectiveFromDate.format('DD-MM-YYYY');
+      showErrorDialog(`You can take leave for ${selectedLeave.leaveType} from ${formattedDate} onwards only.`);
+    }
+  
     setFormData((prevData) => ({
       ...prevData,
       leaveType: newValue.leaveType,
       leaveTypeCode: selectedLeave.leaveTypeCode,
-      availableLeaveDays: parseFloat(selectedLeave.leaveDays)
+      availableLeaveDays: parseFloat(selectedLeave.leaveDays),
+      effectiveFrom: selectedLeave.effectiveFrom
     }));
-  };
+  };  
+  
 
   const handleDateChange = (name, value) => {
     setFormData((prevData) => ({
@@ -380,6 +413,20 @@ const LeaveRequest = () => {
       [name]: value || null
     }));
   };  
+
+  // const disableWeekOffDays = (date) => {
+  //   const disabledDays = {
+  //     SUNDAY: 0,
+  //     MONDAY: 1,
+  //     TUESDAY: 2,
+  //     WEDNESDAY: 3,
+  //     THURSDAY: 4,
+  //     FRIDAY: 5,
+  //     SATURDAY: 6
+  //   };
+
+  //   return weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
+  // };
 
   const disableWeekOffDays = (date) => {
     const disabledDays = {
@@ -391,9 +438,17 @@ const LeaveRequest = () => {
       FRIDAY: 5,
       SATURDAY: 6
     };
-
-    return weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
-  };
+  
+    const isWeekOff = weekOffDays.includes(
+      Object.keys(disabledDays).find((day) => disabledDays[day] === date.day())
+    );
+  
+    const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
+  
+    const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
+  
+    return isWeekOff || isBeforeEffectiveFrom;
+  };  
 
   const getCompanyWeekOff = async () => {
     try {
@@ -529,6 +584,7 @@ const LeaveRequest = () => {
                         value={formData.fromDate || null}
                         onChange={(newValue) => handleDateChange('fromDate', newValue)}
                         shouldDisableDate={disableWeekOffDays}
+                        minDate={formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null} // Prevent selecting dates before effectiveFrom
                       />
                     ) : (
                       <TextField label="From Date" size="small" value="" placeholder="Select Leave Type First" disabled />
@@ -572,9 +628,9 @@ const LeaveRequest = () => {
                       onChange={handleInputChange}
                       label="Select Leave"
                     >
-                      <MenuItem value="FIRST HALF">1st Half</MenuItem>
-                      <MenuItem value="SECOND HALF">2nd Half</MenuItem>
-                      <MenuItem value="FULL DAY">Full Day</MenuItem>
+                      <MenuItem value="HALF DAY">HALF DAY</MenuItem>
+                      {/* <MenuItem value="SECOND HALF">2nd Half</MenuItem> */}
+                      <MenuItem value="ALL DAY">ALL DAY</MenuItem>
                     </Select>
                     {fieldErrors.selectLeave && <FormHelperText>{fieldErrors.selectLeave}</FormHelperText>}
                   </FormControl>
@@ -598,7 +654,7 @@ const LeaveRequest = () => {
               {/* Notes */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Notes"
+                  label="Remarks"
                   variant="outlined"
                   size="small"
                   fullWidth

@@ -55,6 +55,7 @@ const allScreens = [
   { id: 'region', title: 'Region', type: 'item', url: '/basicMaster/RegionMaster', icon: icons7.IconMapQuestion },
   { id: 'department', title: 'Department', type: 'item', url: '/basicMaster/Department', icon: icons4.IconBuildingFactory2 },
   { id: 'designation', title: 'Designation', type: 'item', url: '/basicMaster/Designation', icon: icons6.IconIdBadge2 },
+  { id: 'projectMaster', title: 'Project Master', type: 'item', url: '/basicMaster/ProjectMaster', icon: icons6.IconIdBadge2 },
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -120,6 +121,13 @@ const basicMaster = {
           title: 'Designation',
           type: 'item',
           url: '/basicMaster/Designation',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'projectMaster',
+          title: 'Project Master',
+          type: 'item',
+          url: '/basicMaster/ProjectMaster',
           icon: icons6.IconIdBadge2
         },
       ].filter((item) => allowedScreenIds.includes(item.id))

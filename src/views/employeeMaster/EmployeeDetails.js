@@ -41,6 +41,7 @@ const EmployeeDetails = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [empCode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
   const [branchList, setBranchList] = useState([]);
@@ -155,10 +156,10 @@ const EmployeeDetails = () => {
   const columns = [
     { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
     { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
-    { accessorKey: 'branch', header: 'Branch', size: 140 },
+    // { accessorKey: 'branch', header: 'Branch', size: 140 },
     { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
-    { accessorKey: 'grade', header: 'Grade', size: 140 },
-    { accessorKey: 'team', header: 'Team', size: 140 },
+    // { accessorKey: 'grade', header: 'Grade', size: 140 },
+    // { accessorKey: 'team', header: 'Team', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
     // { accessorKey: 'role', header: 'Role', size: 140 },
@@ -210,20 +211,6 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-  // const getAllRole = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `commonmaster/getRolesByOrgId?OrgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setRoleList(response.paramObjectsMap.rolesVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
 
   const getAllEmployees = async () => {
     try {
@@ -239,38 +226,6 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-  // const getAllLeaveType = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `leaveprocess/getLeaveTypeByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  // const getAllLeaveType = async (designationCode, gender) => {
-  //   try {
-  //     const response = await apiCalls(
-  //       'get',
-  //       `master/getLeaveDetailsFromDesignationLeave?designationCode=${designationCode}&leaveApplicable=${gender}&orgId=${orgId}`
-  //     );
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setAllLeaveType(response.paramObjectsMap.leaveTypeVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
 
   const getAllLeaveType = async (designationCode, gender) => {
     try {
@@ -293,9 +248,12 @@ const EmployeeDetails = () => {
     }
   };
 
-  const getAllReportingPerson = async () => {
+  const getAllReportingPerson = async (employeeCode) => {
     try {
-      const response = await apiCalls('get', `master/getReportingNameForEmployee?orgId=${orgId}&branchCode=${branchCode}`);
+      const response = await apiCalls(
+        'get',
+        `master/getReportingNameForEmployee?orgId=${orgId}&branchCode=${branchCode}&employeeCode=${employeeCode}`
+      );
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -307,66 +265,6 @@ const EmployeeDetails = () => {
       console.error('Error fetching data:', error);
     }
   };
-  // const handleInputChange = (e) => {
-  //   const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
-  //   const nameRegex = /^[A-Za-z ]*$/;
-  //   const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-
-  //   let errorMessage = '';
-
-  //   if (name === 'employeeName' && !codeRegex.test(value)) {
-  //     errorMessage = 'Invalid Format';
-  //   } else if (name === 'employeeCode' && !codeRegex.test(value)) {
-  //     errorMessage = 'Invalid Format';
-  //   }
-
-  //   if (errorMessage) {
-  //     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
-  //   } else {
-  //     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
-
-  //     if (name === 'branch') {
-  //       const selectedBranch = branchList.find((br) => br.branch === value);
-  //       setFormData((prevData) => ({
-  //         ...prevData,
-  //         branch: value,
-  //         branchCode: selectedBranch ? selectedBranch.branchCode : ''
-  //       }));
-  //     } else if (type === 'checkbox') {
-  //       setFormData((prevData) => ({ ...prevData, [name]: checked }));
-  //     } else {
-  //       let inputValue = value;
-
-  //       if (name === 'email') {
-  //         inputValue = value.toLowerCase();
-  //       } else if (type === 'text' || type === 'textarea') {
-  //         inputValue = value.toUpperCase();
-  //       }
-
-  //       setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
-
-  //       // If reportingPerson is selected, map its role automatically.
-  //       if (name === 'reportingPerson') {
-  //         const selectedEmployee = allReportingPerson.find((emp) => emp.employeeName === value);
-  //         setFormData((prevData) => ({
-  //           ...prevData,
-  //           reportingPerson: value,
-  //           reportingRole: selectedEmployee ? selectedEmployee.role : ''
-  //         }));
-  //       }
-
-  //       // Check if input type is text or textarea before calling setSelectionRange
-  //       if (type === 'text' || type === 'textarea') {
-  //         setTimeout(() => {
-  //           const inputElement = document.getElementsByName(name)[0];
-  //           if (inputElement && inputElement.setSelectionRange) {
-  //             inputElement.setSelectionRange(selectionStart, selectionEnd);
-  //           }
-  //         }, 0);
-  //       }
-  //     }
-  //   }
-  // };
 
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
@@ -387,6 +285,10 @@ const EmployeeDetails = () => {
       } else if (value.length > 10) {
         errorMessage = 'Mobile number cannot exceed 10 digits.';
       }
+    }
+
+    if (name === 'employeeCode' && !errorMessage) {
+      getAllReportingPerson(value);
     }
 
     if (errorMessage) {
@@ -555,6 +457,7 @@ const EmployeeDetails = () => {
     ]);
     setLeaveTypeErrors('');
     setEditId('');
+    setLogo(null);
   };
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date).format('YYYY-MM-DD');
@@ -575,15 +478,11 @@ const EmployeeDetails = () => {
     if (!formData.mobileNo) errors.mobileNo = 'Mobile No is required';
     if (!formData.aadhaarNo) errors.aadhaarNo = 'Aadhaar Number is required';
     if (!formData.panNo) errors.panNo = 'Pan Number is required';
-    if (!formData.accountNo) errors.accountNo = 'Account Number is required';
-    if (!formData.accountholderName) errors.accountholderName = 'Accountholder Name is required';
-    if (!formData.ifscCode) errors.ifscCode = 'IFSC Code is required';
+    // if (!formData.accountNo) errors.accountNo = 'Account Number is required';
+    // if (!formData.accountholderName) errors.accountholderName = 'Accountholder Name is required';
+    // if (!formData.ifscCode) errors.ifscCode = 'IFSC Code is required';
     if (!formData.doj) errors.doj = 'Date of Join is required';
     if (!formData.grade) errors.grade = 'Grade is required';
-    if (!formData.team) errors.team = 'Team is required';
-    // if (!formData.reportingPerson) errors.reportingPerson = 'Reporting Person is required';
-    // if (!formData.reportingRole) errors.reportingRole = 'Reporting Role is required';
-    if (!formData.department) errors.department = 'Department is required';
     if (!formData.designation) errors.designation = 'Designation is required';
 
     if (!leaveTypeTable || !Array.isArray(leaveTypeTable) || leaveTypeTable.length === 0) {
@@ -596,30 +495,20 @@ const EmployeeDetails = () => {
           rowErrors.leaveType = 'Leave Type is required';
           detailsTableDataValid = false;
         }
-        if (!row.leaveCode) {
-          rowErrors.leaveCode = 'Leave Code is required';
-          detailsTableDataValid = false;
-        }
-        // if (!row.leaveApplicable) {
-        //   rowErrors.leaveApplicable = 'Leave Applicable is required';
-        //   detailsTableDataValid = false;
-        // }
-        // if (!row.totalLeave) {
-        //   rowErrors.totalLeave = 'Total Leave is required';
-        //   detailsTableDataValid = false;
-        // }
-        // if (!row.effective) {
-        //   rowErrors.effective = 'Effective is required';
+        // if (!row.leaveCode) {
+        //   rowErrors.leaveCode = 'Leave Code is required';
         //   detailsTableDataValid = false;
         // }
         if (!row.effectiveFrom) {
           rowErrors.effectiveFrom = 'Effective From is required';
           detailsTableDataValid = false;
         }
-        // if (!row.carryforward) {
-        //   rowErrors.carryforward = 'Carry Forward is required';
-        //   detailsTableDataValid = false;
-        // }
+        const isDuplicate = leaveTypeTable.some((r, idx) => r.leaveType === row.leaveType && idx !== index);
+
+        if (isDuplicate) {
+          rowErrors.leaveType = 'You have already selected this leave type.';
+          detailsTableDataValid = false;
+        }
         return rowErrors;
       });
       setLeaveTypeErrors(newTableErrors);
@@ -689,8 +578,9 @@ const EmployeeDetails = () => {
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           handleClear();
           getAllEmployees();
-          handleImageUpload(response.paramObjectsMap.employeeVO.id)
+          handleImageUpload(response.paramObjectsMap.employeeVO.id);
           setIsLoading(false);
+          setLogo(null);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
           setIsLoading(false);
@@ -705,76 +595,6 @@ const EmployeeDetails = () => {
     }
   };
 
-  // const getAllListOfValuesByOrgId = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
-  //     setData(result.paramObjectsMap.listOfValuesVO.reverse() || []);
-  //     showForm(true);
-  //     console.log('Test', result);
-  //   } catch (err) {
-  //     console.log('error', err);
-  //   }
-  // };
-
-  // const getEmployeeDetailsById = async (row) => {
-  //   console.log('first', row);
-  //   setShowForm(true);
-  //   try {
-  //     const result = await apiCalls('get', `/master/employee/${row.original.id}`);
-
-  //     if (result) {
-  //       const employeeDetailsVO = result.paramObjectsMap.Employee;
-  //       setEditId(row.original.id);
-
-  //       setFormData({
-  //         employeeName: employeeDetailsVO.employeeName || '',
-  //         employeeCode: employeeDetailsVO.employeeCode || '',
-  //         employeeAddress: employeeDetailsVO.employeeAddress || '',
-  //         branch: employeeDetailsVO.branch || '',
-  //         gender: employeeDetailsVO.gender || '',
-  //         email: employeeDetailsVO.email || '',
-  //         doj: employeeDetailsVO.joiningDate || '',
-  //         resignationDate: employeeDetailsVO.resignDate || '',
-  //         grade: employeeDetailsVO.grade || '',
-  //         team: employeeDetailsVO.team || '',
-  //         department: employeeDetailsVO.department || '',
-  //         designation: employeeDetailsVO.designation || '',
-  //         // role: employeeDetailsVO.role || '',
-  //         reportingPerson: employeeDetailsVO.reportnigPerson || '',
-  //         reportingRole: employeeDetailsVO.reportingRole || '',
-  //         dob: employeeDetailsVO.dateOfBirth || '',
-  //         bloodGroup: employeeDetailsVO.bloodGroup || '',
-  //         mobileNo: employeeDetailsVO.mobileNo || '',
-  //         alternativeMobile: employeeDetailsVO.alternativeMobileNo || '',
-  //         aadhaarNo: employeeDetailsVO.aadharNo || '',
-  //         panNo: employeeDetailsVO.panNo || '',
-  //         accountNo: employeeDetailsVO.accountNo || '',
-  //         accountholderName: employeeDetailsVO.accountHolderName || '',
-  //         ifscCode: employeeDetailsVO.ifscCode || '',
-  //         active: employeeDetailsVO.active === 'Active' ? true : false,
-  //         id: employeeDetailsVO.id || 0
-  //       });
-  //       setLeaveTypeTable(
-  //         employeeDetailsVO.employeeLeaveVO.map((cl) => ({
-  //           id: cl.id,
-  //           leaveType: cl.leaveType,
-  //           leaveCode: cl.leaveCode,
-  //           // leaveApplicable: cl.leaveApplicable,
-  //           totalLeave: cl.totalLeave,
-  //           // effective: cl.effective,
-  //           effectiveFrom: cl.effectiveFrom
-  //           // carryforward: cl.carryForward
-  //         }))
-  //       );
-
-  //       console.log('DataToEdit', employeeDetailsVO);
-  //     } else {
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
     setShowForm(true);
@@ -786,17 +606,15 @@ const EmployeeDetails = () => {
         const employeeDetailsVO = result.paramObjectsMap.Employee;
         setEditId(row.original.id);
 
-        // Get designationCode from the fetched employee data
         const designationCode = designationList.find((d) => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
         const gender = employeeDetailsVO.gender || '';
+        const employeeCode = employeeDetailsVO.employeeCode || '';
 
         if (designationCode && gender) {
-          await getAllLeaveType(designationCode, gender); // Ensure leave types are fetched first
+          await getAllLeaveType(designationCode, gender);
         }
-        // setSelectedImage(employeeDetailsVO.profileImage || null);
-        setLogo(result.paramObjectsMap.Employee.profileImage)
+        setLogo(result.paramObjectsMap.Employee.profileImage);
 
-        // Now set the form data after fetching leave types
         setFormData({
           employeeName: employeeDetailsVO.employeeName || '',
           employeeCode: employeeDetailsVO.employeeCode || '',
@@ -825,7 +643,6 @@ const EmployeeDetails = () => {
           id: employeeDetailsVO.id || 0
         });
 
-        // Map leave type data
         setLeaveTypeTable(
           employeeDetailsVO.employeeLeaveVO.map((cl) => ({
             id: cl.id,
@@ -835,6 +652,10 @@ const EmployeeDetails = () => {
             effectiveFrom: cl.effectiveFrom
           }))
         );
+
+        if (employeeCode) {
+          await getAllReportingPerson(employeeCode);
+        }
 
         console.log('DataToEdit', employeeDetailsVO);
       }
@@ -851,15 +672,17 @@ const EmployeeDetails = () => {
   };
 
   const handleLeaveTypeChange = (event, newValue, row, index) => {
+    const isDuplicate = leaveTypeTable.some((r, idx) => r.leaveType === newValue?.leaveType && idx !== index);
+
     setLeaveTypeTable((prev) =>
       prev.map((r) =>
         r.id === row.id
           ? {
-            ...r,
-            leaveType: newValue ? newValue.leaveType : '',
-            leaveCode: newValue ? newValue.leaveCode : '',
-            totalLeave: newValue ? newValue.totalLeave : ''
-          }
+              ...r,
+              leaveType: newValue ? newValue.leaveType : '',
+              leaveCode: newValue ? newValue.leaveCode : '',
+              totalLeave: newValue ? newValue.totalLeave : ''
+            }
           : r
       )
     );
@@ -872,21 +695,16 @@ const EmployeeDetails = () => {
         newErrors.push({});
       }
 
-      return newErrors.map((err, idx) => (idx === index ? { ...err, leaveType: '', leaveCode: '', totalLeave: '' } : err));
+      return newErrors.map((err, idx) => {
+        if (idx === index) {
+          return isDuplicate
+            ? { ...err, leaveType: 'You have already selected this leave type.' }
+            : { ...err, leaveType: '', leaveCode: '', totalLeave: '' };
+        }
+        return err;
+      });
     });
   };
-
-  // const handleImageChange = (event) => {
-  //   const file = event.target.files[0];
-  //   if (file) {
-  //     const reader = new FileReader();
-  //     reader.onloadend = () => {
-  //       setSelectedImage(reader.result);
-  //       setFormData((prev) => ({ ...prev, profileImage: reader.result }));
-  //     };
-  //     reader.readAsDataURL(file);
-  //   }
-  // };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -899,51 +717,45 @@ const EmployeeDetails = () => {
 
   const handleImageUpload = async (id) => {
     if (!logo) {
-      console.error("No image found in formData.profileImage");
+      console.error('No image found in formData.profileImage');
       return;
     }
 
-    console.log("ID:", id); // Debugging
+    console.log('ID:', id); // Debugging
 
     try {
       setIsLoading(true);
 
       // Create FormData object
       const formDataToSend = new FormData();
-      formDataToSend.append("file", logo); // Append the actual file
+      formDataToSend.append('file', logo); // Append the actual file
 
       const uploadResponse = await apiCalls(
-        "post",
+        'post',
         `/master/uploadEmployeeImageInBloob?id=${id}`,
         formDataToSend,
         {},
         { 'Content-Type': 'multipart/form-data' } // Ensure proper headers
       );
 
-      console.log("Upload Response:", uploadResponse); // Debugging
+      console.log('Upload Response:', uploadResponse); // Debugging
 
       if (uploadResponse?.status === true) {
         setFormData((prev) => ({
           ...prev,
-          profileImage:
-            uploadResponse.paramObjectsMap?.imagePath ||
-            uploadResponse.imageUrl,
+          profileImage: uploadResponse.paramObjectsMap?.imagePath || uploadResponse.imageUrl
         }));
         // showToast("success", "Profile image uploaded successfully");
       } else {
-        showToast("error", uploadResponse?.message || "Image upload failed");
+        showToast('error', uploadResponse?.message || 'Image upload failed');
       }
     } catch (error) {
-      console.error("Error uploading image:", error);
-      showToast(
-        "error",
-        error.response?.data?.message || "Error uploading image"
-      );
+      console.error('Error uploading image:', error);
+      showToast('error', error.response?.data?.message || 'Error uploading image');
     } finally {
       setIsLoading(false);
     }
   };
-
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({
@@ -979,10 +791,7 @@ const EmployeeDetails = () => {
 
     // Auto Table
     doc.autoTable({
-      head: [[
-        'S.No', 'Employee Name', 'Employee Code', 'Branch', 'Date of Join',
-        'Grade', 'Team', 'Department', 'Designation', 'Status'
-      ]],
+      head: [['S.No', 'Employee Name', 'Employee Code', 'Branch', 'Date of Join', 'Grade', 'Team', 'Department', 'Designation', 'Status']],
       body: tableData,
       startY: 40, // Positioning below title
       theme: 'grid', // Uses full-page width
@@ -1007,11 +816,7 @@ const EmployeeDetails = () => {
         const pageCount = doc.internal.getNumberOfPages();
         doc.setFontSize(10);
         doc.setTextColor(150);
-        doc.text(
-          `Page ${data.pageNumber} of ${pageCount}`,
-          doc.internal.pageSize.width - 30,
-          doc.internal.pageSize.height - 10
-        );
+        doc.text(`Page ${data.pageNumber} of ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
       }
     });
 
@@ -1031,9 +836,10 @@ const EmployeeDetails = () => {
           {!showForm && (
             <ActionButton
               title="Download PDF"
-              icon={PictureAsPdfIcon}  // Fixed: passing the component directly
+              icon={PictureAsPdfIcon} // Fixed: passing the component directly
               onClick={handleDownloadPDF}
-              isLoading={isLoading} margin="0 10px 0 10px"
+              isLoading={isLoading}
+              margin="0 10px 0 10px"
             />
           )}
         </div>
@@ -1072,36 +878,6 @@ const EmployeeDetails = () => {
                 />
               </div>
 
-              {/* Employee Address */}
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="Employee Address"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  multiline
-                  name="employeeAddress"
-                  value={formData.employeeAddress}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.employeeAddress}
-                  helperText={fieldErrors.employeeAddress}
-                />
-              </div>
-
-              {/* Branch */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.branch}>
-                  <InputLabel id="branch-label">Branch</InputLabel>
-                  <Select labelId="branch-label" label="Branch" value={formData.branch} onChange={handleInputChange} name="branch">
-                    {branchList?.map((row) => (
-                      <MenuItem key={row.id} value={row.branch}>
-                        {row.branch}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.branch && <FormHelperText>{fieldErrors.branch}</FormHelperText>}
-                </FormControl>
-              </div> */}
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={branchList}
@@ -1126,18 +902,6 @@ const EmployeeDetails = () => {
                 />
               </div>
 
-              {/* gender */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.gender}>
-                  <InputLabel id="gender-label">Gender</InputLabel>
-                  <Select labelId="gender-label" label="Gender" value={formData.gender} onChange={handleInputChange} name="gender">
-                    <MenuItem value="ALL">ALL</MenuItem>
-                    <MenuItem value="MALE">MALE</MenuItem>
-                    <MenuItem value="FEMALE">FEMALE</MenuItem>
-                  </Select>
-                  {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
-                </FormControl>
-              </div> */}
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={genderList}
@@ -1197,31 +961,23 @@ const EmployeeDetails = () => {
               </div>
               {editId && (
                 <div className="col-md-3 mb-3">
-                  <TextField
-                    label="Resignation Date"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="resignationDate"
-                    value={formData.resignationDate}
-                    onChange={handleInputChange}
-                  />
+                  <FormControl fullWidth variant="filled" size="small">
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        label="Resignation Date"
+                        value={formData.resignationDate ? dayjs(formData.resignationDate, 'YYYY-MM-DD') : null}
+                        onChange={(date) => handleDateChange('resignationDate', date)}
+                        slotProps={{
+                          textField: { size: 'small', clearable: true }
+                        }}
+                        format="DD-MM-YYYY"
+                        error={fieldErrors.resignationDate}
+                        helperText={fieldErrors.resignationDate && 'Required'}
+                      />
+                    </LocalizationProvider>
+                  </FormControl>
                 </div>
               )}
-
-              {/* Grade */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.grade}>
-                  <InputLabel id="grade-label">Grade</InputLabel>
-                  <Select labelId="grade-label" label="Grade" value={formData.grade} onChange={handleInputChange} name="grade">
-                    <MenuItem value="A GRADE">A GRADE</MenuItem>
-                    <MenuItem value="B GRADE">B GRADE</MenuItem>
-                    <MenuItem value="C GRADE">C GRADE</MenuItem>
-                    <MenuItem value="D GRADE">D GRADE</MenuItem>
-                  </Select>
-                  {fieldErrors.grade && <FormHelperText>{fieldErrors.grade}</FormHelperText>}
-                </FormControl>
-              </div> */}
 
               <div className="col-md-3 mb-3">
                 <Autocomplete
@@ -1257,33 +1013,11 @@ const EmployeeDetails = () => {
                   name="team"
                   value={formData.team}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.team}
-                  helperText={fieldErrors.team}
+                  // error={!!fieldErrors.team}
+                  // helperText={fieldErrors.team}
                 />
               </div>
 
-              {/* Department */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
-                  <InputLabel id="department-label">Department</InputLabel>
-                  <Select
-                    labelId="department-label"
-                    id="department"
-                    label="department"
-                    value={formData.department}
-                    onChange={handleInputChange}
-                    name="department"
-                  // disabled={isEditMode}
-                  >
-                    {departmentList?.map((row) => (
-                      <MenuItem key={row.id} value={row.departmentName}>
-                        {row.departmentName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
-                </FormControl>
-              </div> */}
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={departmentList}
@@ -1299,8 +1033,8 @@ const EmployeeDetails = () => {
                       {...params}
                       label="Department"
                       name="department"
-                      error={Boolean(fieldErrors.department)}
-                      helperText={fieldErrors.department || ''}
+                      // error={Boolean(fieldErrors.department)}
+                      // helperText={fieldErrors.department || ''}
                       InputProps={{
                         ...params.InputProps,
                         style: { height: 40 }
@@ -1309,29 +1043,6 @@ const EmployeeDetails = () => {
                   )}
                 />
               </div>
-
-              {/* Designation */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.designation}>
-                  <InputLabel id="designation-label">Designation</InputLabel>
-                  <Select
-                    labelId="designation-label"
-                    id="designation"
-                    label="designation"
-                    value={formData.designation}
-                    onChange={handleInputChange}
-                    name="designation"
-                  // disabled={isEditMode}
-                  >
-                    {designationList?.map((row) => (
-                      <MenuItem key={row.id} value={row.designationName}>
-                        {row.designationName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.designation && <FormHelperText>{fieldErrors.designation}</FormHelperText>}
-                </FormControl>
-              </div> */}
 
               <div className="col-md-3 mb-3">
                 <Autocomplete
@@ -1358,74 +1069,6 @@ const EmployeeDetails = () => {
                   )}
                 />
               </div>
-
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.role}>
-                  <InputLabel id="role-label">Role</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    id="role"
-                    label="Role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                    name="role"
-                    // disabled={isEditMode}
-                  >
-                    {roleList?.map((row) => (
-                      <MenuItem key={row.id} value={row.role}>
-                        {row.role}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.role && <FormHelperText>{fieldErrors.role}</FormHelperText>}
-                </FormControl>
-              </div> */}
-
-              {/* Reporting Person */}
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.reportingPerson}>
-                  <InputLabel id="reportingPerson-label">Reporting Person</InputLabel>
-                  <Select
-                    labelId="reportingPerson-label"
-                    label="Reporting Person"
-                    value={formData.reportingPerson}
-                    onChange={handleInputChange}
-                    name="reportingPerson"
-                  >
-                    {allReportingPerson?.map((row) => (
-                      <MenuItem key={row.id} value={row.employeeName}>
-                        {row.employeeName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.reportingPerson && <FormHelperText>{fieldErrors.reportingPerson}</FormHelperText>}
-                </FormControl>
-              </div> */}
-              {/* <div className="col-md-3 mb-3">
-                <Autocomplete
-                  options={designationList}
-                  getOptionLabel={(option) => option.reportingPerson || ""}
-                  sx={{ width: "100%" }}
-                  size="small"
-                  value={designationList.find((c) => c.reportingPerson === formData.employeeName) || null}
-                  onChange={(event, newValue) =>
-                    handleInputChange({ target: { name: "designation", value: newValue ? newValue.reportingPerson : "" } })
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Reporting Person"
-                      name="employeeName"
-                      error={Boolean(fieldErrors.employeeName)}
-                      helperText={fieldErrors.employeeName || ""}
-                      InputProps={{
-                        ...params.InputProps,
-                        style: { height: 40 },
-                      }}
-                    />
-                  )}
-                />
-              </div> */}
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={allReportingPerson}
@@ -1468,6 +1111,22 @@ const EmployeeDetails = () => {
                 />
               </div>
 
+              {/* Employee Address */}
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Employee Address"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  multiline
+                  name="employeeAddress"
+                  value={formData.employeeAddress}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.employeeAddress}
+                  helperText={fieldErrors.employeeAddress}
+                />
+              </div>
+
               {/* Image Upload Section */}
               <div className="col-md-3 mb-3">
                 {/* Hidden file input */}
@@ -1475,26 +1134,30 @@ const EmployeeDetails = () => {
                   accept="image/*"
                   id="image-upload"
                   type="file"
-                  style={{ display: "none" }}
+                  style={{ display: 'none' }}
                   onChange={handleImageChange}
                   disabled={isLoading}
                 />
 
                 {/* Main container */}
-                <Box sx={{
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  p: 1,
-                  backgroundColor: 'background.paper'
-                }}>
+                <Box
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    p: 1,
+                    backgroundColor: 'background.paper'
+                  }}
+                >
                   {/* Upload area */}
-                  <Box sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: selectedImage || logo ? 1 : 0
-                  }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mb: selectedImage || logo ? 1 : 0
+                    }}
+                  >
                     <label htmlFor="image-upload" style={{ flex: 1 }}>
                       <Button
                         variant="contained"
@@ -1521,7 +1184,7 @@ const EmployeeDetails = () => {
                         color="error"
                         onClick={() => {
                           setSelectedImage(null);
-                          setLogo("");
+                          setLogo('');
                         }}
                         sx={{
                           border: '1px solid',
@@ -1537,32 +1200,41 @@ const EmployeeDetails = () => {
 
                   {/* File info display */}
                   {(selectedImage || logo) && (
-                    <Box sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      p: 0.75,
-                      backgroundColor: 'action.hover',
-                      borderRadius: 0.5,
-                      cursor: 'pointer',
-                      '&:hover': { backgroundColor: 'action.selected' }
-                    }} onClick={() => {/* Add preview modal trigger here */ }}>
-                      <ImageIcon color="primary" fontSize="small" />
-                      <Typography variant="caption" sx={{
-                        flex: 1,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}>
-                        {selectedImage?.name || logo?.name || 'image.jpg'}
-                      </Typography>
-                      <Box sx={{
+                    <Box
+                      sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        color: 'text.secondary',
-                        fontSize: '0.75rem'
-                      }}>
-                      </Box>
+                        gap: 1,
+                        p: 0.75,
+                        backgroundColor: 'action.hover',
+                        borderRadius: 0.5,
+                        cursor: 'pointer',
+                        '&:hover': { backgroundColor: 'action.selected' }
+                      }}
+                      onClick={() => {
+                        /* Add preview modal trigger here */
+                      }}
+                    >
+                      <ImageIcon color="primary" fontSize="small" />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          flex: 1,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        {selectedImage?.name || logo?.name || 'image.jpg'}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: 'text.secondary',
+                          fontSize: '0.75rem'
+                        }}
+                      ></Box>
                     </Box>
                   )}
 
@@ -1576,7 +1248,6 @@ const EmployeeDetails = () => {
                   )}
                 </Box>
               </div>
-
 
               <h5 className="mb-4 mt-2">Personal Details</h5>
 
@@ -1689,8 +1360,8 @@ const EmployeeDetails = () => {
                   name="accountNo"
                   value={formData.accountNo}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.accountNo}
-                  helperText={fieldErrors.accountNo}
+                  // error={!!fieldErrors.accountNo}
+                  // helperText={fieldErrors.accountNo}
                 />
               </div>
 
@@ -1704,8 +1375,8 @@ const EmployeeDetails = () => {
                   name="accountholderName"
                   value={formData.accountholderName}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.accountholderName}
-                  helperText={fieldErrors.accountholderName}
+                  // error={!!fieldErrors.accountholderName}
+                  // helperText={fieldErrors.accountholderName}
                 />
               </div>
 
@@ -1719,8 +1390,8 @@ const EmployeeDetails = () => {
                   name="ifscCode"
                   value={formData.ifscCode}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.ifscCode}
-                  helperText={fieldErrors.ifscCode}
+                  // error={!!fieldErrors.ifscCode}
+                  // helperText={fieldErrors.ifscCode}
                 />
               </div>
 
@@ -1758,13 +1429,9 @@ const EmployeeDetails = () => {
                             <table className="table table-bordered ">
                               <thead>
                                 <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
-                                  {!editId ? (
-                                    <th className="px-2 py-2 text-center" style={{ width: '68px' }}>
-                                      Action
-                                    </th>
-                                  ) : (
-                                    ''
-                                  )}
+                                  <th className="px-2 py-2 text-center" style={{ width: '68px' }}>
+                                    Action
+                                  </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '50px' }}>
                                     S.No
                                   </th>
@@ -1786,19 +1453,15 @@ const EmployeeDetails = () => {
                               <tbody>
                                 {leaveTypeTable.map((row, index) => (
                                   <tr key={row.id}>
-                                    {!editId ? (
-                                      <td className="border px-2 py-2 text-center">
-                                        <ActionButton
-                                          title="Delete"
-                                          icon={DeleteIcon}
-                                          onClick={() =>
-                                            handleDeleteRow(row.id, leaveTypeTable, setLeaveTypeTable, leaveTypeErrors, setLeaveTypeErrors)
-                                          }
-                                        />
-                                      </td>
-                                    ) : (
-                                      ''
-                                    )}
+                                    <td className="border px-2 py-2 text-center">
+                                      <ActionButton
+                                        title="Delete"
+                                        icon={DeleteIcon}
+                                        onClick={() =>
+                                          handleDeleteRow(row.id, leaveTypeTable, setLeaveTypeTable, leaveTypeErrors, setLeaveTypeErrors)
+                                        }
+                                      />
+                                    </td>
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
                                     </td>
@@ -1839,6 +1502,7 @@ const EmployeeDetails = () => {
                                           });
                                         }}
                                         className={leaveTypeErrors[index]?.leaveCode ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {leaveTypeErrors[index]?.leaveCode && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1846,32 +1510,6 @@ const EmployeeDetails = () => {
                                         </div>
                                       )}
                                     </td>
-                                    {/* <td className="border px-2 py-2">
-                                      <input
-                                        type="text"
-                                        value={row.leaveApplicable}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setLeaveTypeTable((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, leaveApplicable: value } : r))
-                                          );
-                                          setLeaveTypeErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              leaveApplicable: !value ? 'Leave Applicable is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={leaveTypeErrors[index]?.leaveApplicable ? 'error form-control' : 'form-control'}
-                                      />
-                                      {leaveTypeErrors[index]?.leaveApplicable && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {leaveTypeErrors[index].leaveApplicable}
-                                        </div>
-                                      )}
-                                    </td> */}
                                     <td className="border px-2 py-2">
                                       <input
                                         type="text"
@@ -1889,6 +1527,7 @@ const EmployeeDetails = () => {
                                           });
                                         }}
                                         className={leaveTypeErrors[index]?.totalLeave ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {leaveTypeErrors[index]?.totalLeave && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>

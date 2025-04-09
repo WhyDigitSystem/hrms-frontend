@@ -26,13 +26,13 @@ const screenMapping = {
 };
 
 const allScreens = [
-  { 
-    id: 'employeeCodeGeneration', 
-    title: 'Employee Code Generation', 
-    type: 'item', 
-    url: '/employeeMaster/employeeCodeGeneration',
-    icon: icons.IconId  // ID icon for code generation
-  },
+  // { 
+  //   id: 'employeeCodeGeneration', 
+  //   title: 'Employee Code Generation', 
+  //   type: 'item', 
+  //   url: '/employeeMaster/employeeCodeGeneration',
+  //   icon: icons.IconId  // ID icon for code generation
+  // },
   { 
     id: 'employeeDetails', 
     title: 'Employee Details', 

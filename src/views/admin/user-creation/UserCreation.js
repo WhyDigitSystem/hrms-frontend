@@ -934,7 +934,7 @@ const UserCreation = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered table-responsive">
                                 <thead>
-                                  <tr style={{ backgroundColor: '#673AB7' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>

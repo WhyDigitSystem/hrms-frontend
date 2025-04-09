@@ -1,40 +1,18 @@
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
 import ClearIcon from '@mui/icons-material/Clear';
-import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Avatar,
-  ButtonBase,
-  FormHelperText,
-  ListItemText,
-  Tooltip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button
-} from '@mui/material';
+import { FormHelperText } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { useTheme } from '@mui/material/styles';
 import CommonListViewTable from '../basicMaster/CommonListViewTable';
-import axios from 'axios';
-import { useRef, useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import IconButton from '@mui/material/IconButton';
-import EditIcon from '@mui/icons-material/Edit';
 import Checkbox from '@mui/material/Checkbox';
-import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import { getAllActiveCitiesByState, getAllActiveCountries, getAllActiveStatesByCountry, getAllActiveCurrency } from 'utils/CommonFunctions';
@@ -43,6 +21,8 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import apiCalls from 'apicall';
 import dayjs from 'dayjs';
+import { TimePicker } from '@mui/x-date-pickers/TimePicker';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const Company = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -71,6 +51,8 @@ const Company = () => {
     autoCreditDate: null,
     leavePolicy: '',
     weekOff: '',
+    shiftIn: null,
+    shiftOut: null,
     gstRegistered: true,
     active: true
   });
@@ -91,6 +73,8 @@ const Company = () => {
     autoCreditDate: null,
     leavePolicy: '',
     weekOff: '',
+    shiftIn: null,
+    shiftOut: null,
     gstRegistered: true,
     active: true
   });
@@ -116,37 +100,23 @@ const Company = () => {
   ];
 
   const [listViewData, setListViewData] = useState([]);
-  // useEffect(() => {
-  //   getAllCountries();
-  //   getCompanyDetails();
-  //   getAllCurrency();
-  //   // getCompany();
-  //   if (formData.country) {
-  //     getAllStates();
-  //   }
-  //   if (formData.state) {
-  //     getAllCities();
-  //   }
-  // }, [formData.country, formData.state]);
-
   useEffect(() => {
     getAllCountries();
     getCompanyDetails();
     getAllCurrency();
-}, []); // Run only once on mount
+  }, []); // Run only once on mount
 
-useEffect(() => {
+  useEffect(() => {
     if (formData.country) {
-        getAllStates(); // Fetch states only when country changes
+      getAllStates(); // Fetch states only when country changes
     }
-}, [formData.country]); // Only depend on country change
+  }, [formData.country]); // Only depend on country change
 
-useEffect(() => {
+  useEffect(() => {
     if (formData.state) {
-        getAllCities(); // Fetch cities only when state changes
+      getAllCities(); // Fetch cities only when state changes
     }
-}, [formData.state]); // Only depend on state change
-
+  }, [formData.state]); // Only depend on state change
 
   const getAllCurrency = async () => {
     try {
@@ -180,7 +150,7 @@ useEffect(() => {
       console.error('Error fetching country data:', error);
     }
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value, checked, type } = e.target || e;
 
@@ -309,25 +279,6 @@ useEffect(() => {
     }
   };
 
-  // const getCompanyDetails = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `commonmaster/company`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       const particularCompany = response.paramObjectsMap.companyVO[0];
-  //       setListViewData(response.paramObjectsMap.companyVO);
-  //       console.log('THE LISTVIEW COMPANY IS:', particularCompany);
-
-  //       setFormData({ ...formData, companyCode: particularCompany.companyCode, companyName: particularCompany.companyName });
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
   const getCompanyDetails = async () => {
     try {
       const response = await apiCalls('get', `commonmaster/company`);
@@ -375,6 +326,8 @@ useEffect(() => {
       autoCreditDate: null,
       leavePolicy: '',
       weekOff: '',
+      shiftIn: null,
+      shiftOut: null,
       gstRegistered: true,
       active: true
     });
@@ -393,9 +346,12 @@ useEffect(() => {
       leaveCreditControl: '',
       autoCreditDate: null,
       leavePolicy: '',
-      weekOff: ''
+      weekOff: '',
+      shiftIn: null,
+      shiftOut: null
     });
     setEditId('');
+    getCompanyDetails();
   };
 
   const handleSave = async () => {
@@ -500,6 +456,18 @@ useEffect(() => {
         [field]: newValue
       }));
     }
+  };
+
+  const handleTimeChange = (fieldName, newValue) => {
+    if (!newValue) return;
+
+    const timeFormat = 'HH:mm';
+    const newTime = dayjs(newValue).format(timeFormat);
+
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: newTime
+    }));
   };
 
   return (
@@ -757,6 +725,44 @@ useEffect(() => {
                     ))}
                   </Select>
                   {fieldErrors.weekOff && <FormHelperText>{fieldErrors.weekOff}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <TimePicker
+                      label="Shift In"
+                      value={formData.shiftIn ? dayjs(formData.shiftIn, 'HH:mm') : null}
+                      onChange={(newValue) => handleTimeChange('shiftIn', newValue)}
+                      ampm={false} // 24-hour format
+                      slots={{
+                        openPickerIcon: AccessTimeIcon
+                      }}
+                      slotProps={{
+                        textField: { size: 'small', clearable: true }
+                      }}
+                    />
+                  </LocalizationProvider>
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <TimePicker
+                      label="Shift Out"
+                      value={formData.shiftOut ? dayjs(formData.shiftOut, 'HH:mm') : null}
+                      onChange={(newValue) => handleTimeChange('shiftOut', newValue)}
+                      ampm={false}
+                      disabled={!formData.shiftIn} 
+                      minTime={formData.shiftIn ? dayjs(formData.shiftIn, 'HH:mm') : undefined}
+                      slots={{
+                        openPickerIcon: AccessTimeIcon
+                      }}
+                      slotProps={{
+                        textField: { size: 'small', clearable: true }
+                      }}
+                    />
+                  </LocalizationProvider>
                 </FormControl>
               </div>
               <div className="col-md-3 mb-3">
