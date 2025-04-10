@@ -180,7 +180,7 @@ const PendingApproval = ({ isLoading }) => {
       setLeaveRequests(pendingRequests);
     } catch (error) {
       console.error("Error fetching leave requests:", error);
-      toast.error("Failed to load leave requests");
+      // toast.error("Failed to load leave requests");
     } finally {
       setLoading(false);
     }

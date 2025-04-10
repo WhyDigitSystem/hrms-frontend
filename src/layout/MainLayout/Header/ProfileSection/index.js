@@ -320,77 +320,124 @@ const ProfileSection = () => {
                   </Box>
 
                   {/* Menu Items */}
-                  <Box sx={{ p: 1 }}>
-                    <List disablePadding>
-
+                  <Box sx={{ p: 1.5 }}>
+                    <List disablePadding sx={{
+                      '& .MuiListItem-root': {
+                        borderRadius: `${customization.borderRadius}px`,
+                        mb: 0.75,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateX(4px)',
+                          bgcolor: alpha(theme.palette.primary.light, 0.08)
+                        }
+                      }
+                    }}>
+                      {/* My Profile Item */}
                       <ListItem disablePadding>
                         <ListItemButton
                           sx={{
-                            borderRadius: `${customization.borderRadius}px`,
-                            mb: 0.5,
-                            '&:hover': {
-                              bgcolor: alpha(theme.palette.primary.light, 0.1)
+                            py: 1.25,
+                            '&.Mui-selected': {
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              borderLeft: `2px solid ${theme.palette.primary.main}`
                             }
                           }}
                           selected={selectedIndex === 0}
                           onClick={(event) => handleListItemClick(event, 0)}
                         >
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            <IconUser size="1.2rem" />
+                          <ListItemIcon sx={{ minWidth: 38 }}>
+                            <IconUser size="1.3rem" />
                           </ListItemIcon>
                           <ListItemText
-                            primary="My Profile"
-                            primaryTypographyProps={{ fontWeight: 500 }}
+                            primary={
+                              <Typography variant="body1" fontWeight={500}>
+                                My Profile
+                              </Typography>
+                            }
                           />
                         </ListItemButton>
                       </ListItem>
 
+                      {/* Settings Item */}
                       <ListItem disablePadding>
                         <ListItemButton
                           sx={{
-                            borderRadius: `${customization.borderRadius}px`,
-                            mb: 0.5,
-                            '&:hover': {
-                              bgcolor: alpha(theme.palette.primary.light, 0.1)
+                            py: 1.25,
+                            '&.Mui-selected': {
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              borderLeft: `2px solid ${theme.palette.primary.main}`
                             }
                           }}
-                          selected={selectedIndex === 2}
-                          onClick={(event) => handleListItemClick(event, 2, '/settings')}
+                          selected={selectedIndex === 1}
+                          onClick={(event) => handleListItemClick(event, 1, '/settings')}
                         >
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            <IconSettings size="1.2rem" />
+                          <ListItemIcon sx={{ minWidth: 38 }}>
+                            <IconSettings size="1.3rem" />
                           </ListItemIcon>
                           <ListItemText
-                            primary="Settings"
-                            primaryTypographyProps={{ fontWeight: 500 }}
+                            primary={
+                              <Typography variant="body1" fontWeight={500}>
+                                Settings
+                              </Typography>
+                            }
                           />
                         </ListItemButton>
                       </ListItem>
 
+                      {/* Change Password */}
                       <ListItem disablePadding>
-                        <ChangePasswordPopup />
+                        <ChangePasswordPopup>
+                          <ListItemButton
+                            sx={{
+                              py: 1.25,
+                              '&.Mui-selected': {
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                borderLeft: `2px solid ${theme.palette.primary.main}`
+                              }
+                            }}
+                          >
+                            <ListItemIcon sx={{ minWidth: 38 }}>
+                              <IconCreditCard size="1.3rem" />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Typography variant="body1" fontWeight={500}>
+                                  Change Password
+                                </Typography>
+                              }
+                            />
+                          </ListItemButton>
+                        </ChangePasswordPopup>
                       </ListItem>
 
+                      {/* Divider */}
+                      <Divider sx={{
+                        my: 1,
+                        borderColor: alpha(theme.palette.divider, 0.1),
+                        opacity: 0.5
+                      }} />
+
+                      {/* Logout Item */}
                       <ListItem disablePadding>
                         <ListItemButton
                           sx={{
-                            borderRadius: `${customization.borderRadius}px`,
-                            bgcolor: alpha(theme.palette.error.light, 0.1),
-                            '&:hover': {
-                              bgcolor: alpha(theme.palette.error.light, 0.2)
+                            py: 1.25,
+                            '&.Mui-selected': {
+                              bgcolor: alpha(theme.palette.primary.main, 0.1),
+                              borderLeft: `2px solid ${theme.palette.primary.main}`
                             }
                           }}
                           onClick={handleLogout}
                         >
-                          <ListItemIcon sx={{ minWidth: 36 }}>
-                            <IconLogout size="1.2rem" color={theme.palette.error.main} />
+                          <ListItemIcon sx={{ minWidth: 38 }}>
+                            <IconLogout size="1.3rem" />
                           </ListItemIcon>
                           <ListItemText
-                            primary="Logout"
-                            primaryTypographyProps={{
-                              fontWeight: 500,
-                              color: theme.palette.error.main
-                            }}
+                            primary={
+                              <Typography variant="body1" fontWeight={500}>
+                                Logout
+                              </Typography>
+                            }
                           />
                         </ListItemButton>
                       </ListItem>
@@ -466,7 +513,7 @@ const ProfileSection = () => {
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <Stack spacing={3}>
-                  <Stack direction="row" spacing={2} alignItems="center">
+                  {/* <Stack direction="row" spacing={2} alignItems="center">
                     <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}>
                       <IconId color={theme.palette.primary.main} />
                     </Avatar>
@@ -478,7 +525,7 @@ const ProfileSection = () => {
                         {employeeData.employeeCode}
                       </Typography>
                     </Box>
-                  </Stack>
+                  </Stack> */}
 
                   <Stack direction="row" spacing={2} alignItems="center">
                     <Avatar sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}>
