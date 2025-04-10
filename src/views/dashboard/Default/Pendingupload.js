@@ -21,6 +21,11 @@ import MainCard from "ui-component/cards/MainCard";
 import { ThumbUp, ThumbDown, Close, ArrowForward } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 import apiCalls from "apicall";
+import emailjs from '@emailjs/browser';
+import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 
 // Background image component
 const BackgroundImage = () => {
@@ -108,7 +113,7 @@ const ActionButton = styled(Button)(({ theme, actiontype }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: actiontype === 'approve' 
+    background: actiontype === 'approve'
       ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(46, 125, 50, 0.2) 100%)'
       : 'linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(198, 40, 40, 0.2) 100%)',
     opacity: 0,
@@ -166,8 +171,13 @@ const PendingApproval = ({ isLoading }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  const [statusMap, setStatusMap] = useState({});
+  const [buttonView, setButtonView] = useState(false);
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
 
-  const orgId = localStorage.getItem("orgId");
+  // const orgId = localStorage.getItem("orgId");
   const employeeCode = localStorage.getItem("employeeCode");
 
   useEffect(() => {
@@ -188,32 +198,6 @@ const PendingApproval = ({ isLoading }) => {
     }
   };
 
-  const handleApprove = async (request) => {
-    setProcessingId(request.id);
-    try {
-      console.log("Approving:", request);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await getLeaveRequest();
-    } catch (error) {
-      console.error("Approval failed:", error);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleReject = async (request) => {
-    setProcessingId(request.id);
-    try {
-      console.log("Rejecting:", request);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await getLeaveRequest();
-    } catch (error) {
-      console.error("Rejection failed:", error);
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
   const handleOpenModal = () => {
     setOpenModal(true);
   };
@@ -223,51 +207,122 @@ const PendingApproval = ({ isLoading }) => {
     setSelectedRequest(null);
   };
 
-  const ActionButtons = ({ request }) => (
-    <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
-      <Tooltip title="Approve leave request">
-        <span>
-          <ActionButton
-            actiontype="approve"
-            variant="contained"
-            startIcon={
-              processingId === request.id ? (
-                <CircularProgress size={18} color="inherit" />
-              ) : (
-                <ThumbUp sx={{ fontSize: '18px' }} />
-              )
-            }
-            onClick={() => handleApprove(request)}
-            size="medium"
-            disabled={processingId !== null && processingId !== request.id}
-          >
-            {processingId === request.id ? 'Approving...' : 'Approve'}
-          </ActionButton>
-        </span>
-      </Tooltip>
+  const handleAction = async (request, action, formData) => {
+    setProcessingId(request.id);
 
-      <Tooltip title="Reject leave request">
-        <span>
-          <ActionButton
-            actiontype="reject"
-            variant="contained"
-            startIcon={
-              processingId === request.id ? (
-                <CircularProgress size={18} color="inherit" />
-              ) : (
-                <ThumbDown sx={{ fontSize: '18px' }} />
-              )
-            }
-            onClick={() => handleReject(request)}
-            size="medium"
-            disabled={processingId !== null && processingId !== request.id}
-          >
-            {processingId === request.id ? 'Rejecting...' : 'Reject'}
-          </ActionButton>
-        </span>
-      </Tooltip>
-    </Stack>
-  );
+    try {
+      await apiCalls(
+        'put',
+        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+      );
+
+      setStatusMap(prev => ({
+        ...prev,
+        [request.id]: action,
+      }));
+
+      // EmailJS send email logic
+      const isApproved = action === "APPROVED";
+
+      const templateParams = {
+        name: request.name,
+        from_name: employeeName,
+        leave_type: request.leaveType,
+        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+        end_date: dayjs(request.toDate).format("DD-MM-YYYY"),
+        total_days: request.totalDays,
+        status: action,
+        status_message: isApproved ? "Approved" : "Rejected",
+        status_class: isApproved ? "status-approved" : "status-rejected",
+        email: request.employeeEmail,
+      };
+
+      await emailjs.send(
+        'service_hff8dd7',
+        'template_0pmh0cu',
+        templateParams,
+        'G6cKiPBXzCvlFaOuo'
+      );
+      if (isApproved) {
+        toast.success(`Leave request approved`);
+      } else {
+        toast.error(`Leave request rejected`);
+      }
+
+
+      console.log(`Email sent for ${action} action.`);
+    } catch (error) {
+      console.error(`Failed to ${action} leave request:`, error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const ActionButtons = ({ request, formData }) => {
+    const status = statusMap[request.id];
+    const isProcessing = processingId === request.id;
+
+    const buttonView = !status;
+
+    return (
+      <Stack direction="column" spacing={1} alignItems="flex-end">
+        <Stack direction="row" spacing={2} alignItems="flex-end">
+          <Tooltip title="Approve leave request">
+            <span>
+              {buttonView && (
+                <ActionButton
+                  actiontype="approve"
+                  variant="contained"
+                  startIcon={
+                    isProcessing ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <ThumbUp sx={{ fontSize: '18px' }} />
+                    )
+                  }
+                  onClick={() => handleAction(request, "APPROVED", formData)}
+                  size="medium"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Approving...' : 'Approve'}
+                </ActionButton>
+              )}
+            </span>
+          </Tooltip>
+
+          <Tooltip title="Reject leave request">
+            <span>
+              {buttonView && (
+                <ActionButton
+                  actiontype="reject"
+                  variant="contained"
+                  startIcon={
+                    isProcessing ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : (
+                      <ThumbDown sx={{ fontSize: '18px' }} />
+                    )
+                  }
+                  onClick={() => handleAction(request, "REJECTED", formData)}
+                  size="medium"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? 'Rejecting...' : 'Reject'}
+                </ActionButton>
+              )}
+            </span>
+          </Tooltip>
+        </Stack>
+
+        {status && (
+          <span style={{ color: status === 'APPROVED' ? 'green' : 'red' }}>
+            Status: {status}
+          </span>
+        )}
+
+      </Stack>
+    );
+  };
 
   return (
     <Box sx={{ position: 'relative', height: '100%' }}>
@@ -276,7 +331,7 @@ const PendingApproval = ({ isLoading }) => {
       <StyledCard sx={{ p: 3, height: '100%' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h5" fontWeight="700" color="primary">
-            Pending Leave Approvals
+            Pending Approvals
           </Typography>
           {leaveRequests.length > 3 && (
             <ViewAllButton
@@ -326,7 +381,7 @@ const PendingApproval = ({ isLoading }) => {
                     </Box>
                   </Grid>
 
-                  <Grid item xs={12} sm={3}>
+                  {/* <Grid item xs={12} sm={3}>
                     <Chip
                       label={`${leaveRequest.totalDays || 0} day${leaveRequest.totalDays !== 1 ? 's' : ''}`}
                       color="primary"
@@ -339,13 +394,14 @@ const PendingApproval = ({ isLoading }) => {
                         }
                       }}
                     />
-                  </Grid>
+                  </Grid> */}
 
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" justifyContent="flex-end">
                       <ActionButtons request={leaveRequest} />
                     </Box>
                   </Grid>
+
                 </Grid>
               </RequestItem>
             ))}
@@ -393,7 +449,7 @@ const PendingApproval = ({ isLoading }) => {
               </Typography>
               <IconButton
                 onClick={handleCloseModal}
-                sx={{ 
+                sx={{
                   color: 'white',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.1)'
@@ -459,7 +515,7 @@ const PendingApproval = ({ isLoading }) => {
                             From Date
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
-                            {request.fromDate || '-'}
+                            {request.startDate || '-'}
                           </Typography>
                         </Grid>
                         <Grid item xs={6} sm={3}>
@@ -467,7 +523,7 @@ const PendingApproval = ({ isLoading }) => {
                             To Date
                           </Typography>
                           <Typography variant="body1" fontWeight="500">
-                            {request.toDate || '-'}
+                            {request.endDate || '-'}
                           </Typography>
                         </Grid>
                       </Grid>
@@ -485,7 +541,7 @@ const PendingApproval = ({ isLoading }) => {
                     </Grid>
                   </Grid>
 
-                  <Box mt={3} display="flex" justifyContent="flex-end">
+                  <Box mt={3} ml={2} display="flex" justifyContent="flex-end">
                     <ActionButtons request={request} />
                   </Box>
 

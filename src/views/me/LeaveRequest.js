@@ -316,7 +316,7 @@ const LeaveRequest = () => {
       const emailParams = {
         name: formData.notify,
         from_name: employeeName,
-        email: notifyEmail,
+        email: formData.notifyEmail,
         leave_type: formData.leaveType,
         start_date: dayjs(formData.fromDate).format("DD-MM-YYYY"),
         end_date: dayjs(formData.toDate).format("DD-MM-YYYY"),
