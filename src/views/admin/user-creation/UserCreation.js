@@ -1,6 +1,7 @@
 import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { Autocomplete, TextField } from "@mui/material";
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
@@ -11,7 +12,6 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
-import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
@@ -625,24 +625,31 @@ const UserCreation = () => {
             <>
               <div className="row d-flex ml">
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.employeeCode}>
-                    <InputLabel id="employeeCode-label">Employee Code</InputLabel>
-                    <Select
-                      labelId="employeeCode-label"
-                      label="Employee Code"
-                      value={formData.employeeCode}
-                      onChange={handleSelectChange}
-                      name="employeeCode"
-                    >
-                      {empList.length > 0 &&
-                        empList.map((emp, index) => (
-                          <MenuItem key={index} value={emp.employeeCode}>
-                            {emp.employeeCode} {/* Display employee code */}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                    {fieldErrors.employeeCode && <FormHelperText>{fieldErrors.employeeCode}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    size="small"
+                    options={empList}
+                    getOptionLabel={(option) => option.employeeCode || ""}
+                    value={empList.find((emp) => emp.employeeCode === formData.employeeCode) || null}
+                    onChange={(event, newValue) => {
+                      handleSelectChange({
+                        target: {
+                          name: "employeeCode",
+                          value: newValue ? newValue.employeeCode : "",
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Employee Code"
+                        variant="outlined"
+                        fullWidth
+                        error={!!fieldErrors.employeeCode}
+                        helperText={fieldErrors.employeeCode}
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) => option.employeeCode === value.employeeCode}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">

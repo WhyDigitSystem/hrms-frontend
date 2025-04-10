@@ -87,8 +87,6 @@ const Header = ({ handleLeftDrawerToggle }) => {
           </Avatar>
         </ButtonBase>
 
-        
-
         {/* Notification */}
         <NotificationSection />
 

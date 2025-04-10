@@ -68,7 +68,7 @@ const EmployeeDetails = () => {
     aadhaarNo: '',
     panNo: '',
     accountNo: '',
-    accountholderName: '',
+    bankName: '',
     ifscCode: '',
     doj: null,
     resignationDate: '',
@@ -99,7 +99,7 @@ const EmployeeDetails = () => {
     aadhaarNo: '',
     panNo: '',
     accountNo: '',
-    accountholderName: '',
+    bankName: '',
     ifscCode: '',
     doj: '',
     resignationDate: '',
@@ -427,7 +427,7 @@ const EmployeeDetails = () => {
       aadhaarNo: '',
       panNo: '',
       accountNo: '',
-      accountholderName: '',
+      bankName: '',
       ifscCode: '',
       doj: null,
       resignationDate: '',
@@ -479,7 +479,7 @@ const EmployeeDetails = () => {
     if (!formData.aadhaarNo) errors.aadhaarNo = 'Aadhaar Number is required';
     if (!formData.panNo) errors.panNo = 'Pan Number is required';
     // if (!formData.accountNo) errors.accountNo = 'Account Number is required';
-    // if (!formData.accountholderName) errors.accountholderName = 'Accountholder Name is required';
+    // if (!formData.bankName) errors.bankName = 'Accountholder Name is required';
     // if (!formData.ifscCode) errors.ifscCode = 'IFSC Code is required';
     if (!formData.doj) errors.doj = 'Date of Join is required';
     if (!formData.grade) errors.grade = 'Grade is required';
@@ -535,7 +535,7 @@ const EmployeeDetails = () => {
       const saveFormData = {
         ...(editId && { id: editId }),
         aadharNo: parseInt(formData.aadhaarNo),
-        accountHolderName: formData.accountholderName,
+        bankName: formData.bankName,
         accountNo: formData.accountNo,
         active: formData.active,
         alternativeMobileNo: parseInt(formData.alternativeMobile),
@@ -637,7 +637,7 @@ const EmployeeDetails = () => {
           aadhaarNo: employeeDetailsVO.aadharNo || '',
           panNo: employeeDetailsVO.panNo || '',
           accountNo: employeeDetailsVO.accountNo || '',
-          accountholderName: employeeDetailsVO.accountHolderName || '',
+          bankName: employeeDetailsVO.bankName || '',
           ifscCode: employeeDetailsVO.ifscCode || '',
           active: employeeDetailsVO.active === 'Active',
           id: employeeDetailsVO.id || 0
@@ -678,11 +678,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-              ...r,
-              leaveType: newValue ? newValue.leaveType : '',
-              leaveCode: newValue ? newValue.leaveCode : '',
-              totalLeave: newValue ? newValue.totalLeave : ''
-            }
+            ...r,
+            leaveType: newValue ? newValue.leaveType : '',
+            leaveCode: newValue ? newValue.leaveCode : '',
+            totalLeave: newValue ? newValue.totalLeave : ''
+          }
           : r
       )
     );
@@ -1013,8 +1013,8 @@ const EmployeeDetails = () => {
                   name="team"
                   value={formData.team}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.team}
-                  // helperText={fieldErrors.team}
+                // error={!!fieldErrors.team}
+                // helperText={fieldErrors.team}
                 />
               </div>
 
@@ -1360,23 +1360,23 @@ const EmployeeDetails = () => {
                   name="accountNo"
                   value={formData.accountNo}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.accountNo}
-                  // helperText={fieldErrors.accountNo}
+                // error={!!fieldErrors.accountNo}
+                // helperText={fieldErrors.accountNo}
                 />
               </div>
 
-              {/* Account Holder Name */}
+              {/* Bank Name */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Account Holder Name"
+                  label="Bank Name"
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="accountholderName"
-                  value={formData.accountholderName}
+                  name="bankName"
+                  value={formData.bankName}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.accountholderName}
-                  // helperText={fieldErrors.accountholderName}
+                // error={!!fieldErrors.bankName}
+                // helperText={fieldErrors.bankName}
                 />
               </div>
 
@@ -1390,8 +1390,8 @@ const EmployeeDetails = () => {
                   name="ifscCode"
                   value={formData.ifscCode}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.ifscCode}
-                  // helperText={fieldErrors.ifscCode}
+                // error={!!fieldErrors.ifscCode}
+                // helperText={fieldErrors.ifscCode}
                 />
               </div>
 

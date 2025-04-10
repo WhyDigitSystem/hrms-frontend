@@ -52,6 +52,7 @@ import {
 // Project imports
 import User1 from 'assets/images/users/user-round.svg';
 import Transitions from 'ui-component/extended/Transitions';
+import ChangePasswordPopup from 'utils/ChangePassswordPopup';
 
 // Styled component for the profile popover
 const ProfilePopper = styled(Paper)(({ theme }) => ({
@@ -321,6 +322,7 @@ const ProfileSection = () => {
                   {/* Menu Items */}
                   <Box sx={{ p: 1 }}>
                     <List disablePadding>
+
                       <ListItem disablePadding>
                         <ListItemButton
                           sx={{
@@ -364,31 +366,35 @@ const ProfileSection = () => {
                           />
                         </ListItemButton>
                       </ListItem>
-                    </List>
 
-                    <ListItem disablePadding>
-                      <ListItemButton
-                        sx={{
-                          borderRadius: `${customization.borderRadius}px`,
-                          bgcolor: alpha(theme.palette.error.light, 0.1),
-                          '&:hover': {
-                            bgcolor: alpha(theme.palette.error.light, 0.2)
-                          }
-                        }}
-                        onClick={handleLogout}
-                      >
-                        <ListItemIcon sx={{ minWidth: 36 }}>
-                          <IconLogout size="1.2rem" color={theme.palette.error.main} />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary="Logout"
-                          primaryTypographyProps={{
-                            fontWeight: 500,
-                            color: theme.palette.error.main
+                      <ListItem disablePadding>
+                        <ChangePasswordPopup />
+                      </ListItem>
+
+                      <ListItem disablePadding>
+                        <ListItemButton
+                          sx={{
+                            borderRadius: `${customization.borderRadius}px`,
+                            bgcolor: alpha(theme.palette.error.light, 0.1),
+                            '&:hover': {
+                              bgcolor: alpha(theme.palette.error.light, 0.2)
+                            }
                           }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
+                          onClick={handleLogout}
+                        >
+                          <ListItemIcon sx={{ minWidth: 36 }}>
+                            <IconLogout size="1.2rem" color={theme.palette.error.main} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary="Logout"
+                            primaryTypographyProps={{
+                              fontWeight: 500,
+                              color: theme.palette.error.main
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    </List>
                   </Box>
                 </Box>
               </ClickAwayListener>
