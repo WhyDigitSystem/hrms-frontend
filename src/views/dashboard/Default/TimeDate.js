@@ -77,7 +77,7 @@ const TimeDate = ({ isLoading }) => {
     };
 
     return (
-        <CardWrapper className='mt-lg-5 mt-4'>
+        <CardWrapper className='mt-lg-3 mt-3'>
             <Grid container spacing={2} alignItems="center">
                 <Grid item xs={12} sm={6}>
                     <Box display="flex" alignItems="center">

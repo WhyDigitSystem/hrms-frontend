@@ -214,13 +214,13 @@ const CheckinDetails = ({ isLoading }) => {
             </Typography>
           </Grid>
 
-          <CardWrapper border={false} content={false}>
+          <CardWrapper border={false} content={false} sx={{mt:4 , pt:1}}>
             <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
               <Grid container direction="column" spacing={2}>
                 {/* Profile Section */}
                 <Grid item>
                   <Box
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }} >
                       {/* <Avatar
@@ -247,7 +247,7 @@ const CheckinDetails = ({ isLoading }) => {
                       </Box>
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'start', mb: 0, pl: { lg: 5 }, ml: { lg: 5 }, }}>
                     <Button
                       variant="contained"
                       startIcon={<LoginIcon />}
@@ -287,14 +287,14 @@ const CheckinDetails = ({ isLoading }) => {
 
                 {/* Recent Activity Section */}
                 <Grid item>
-                  <Typography variant="h6" sx={{ mb: 2, color: 'secondary.light', fontSize: isMobile ? '16px' : '18px' }}>
+                  <Typography variant="h6" sx={{ mb: 0, color: 'secondary.light', fontSize: isMobile ? '15px' : '15px' }}>
                     Recent Activity
                   </Typography>
                   <List sx={{ borderRadius: '8px', p: 0, display: 'flex', flexDirection: 'column' }}>
                     <div className="d-flex ">
                       <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
+                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }} />
+                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
                           {checkInTime
                             ? `Check-In at ${checkInTime.toLocaleTimeString('en-US', {
                               hour: 'numeric',
@@ -306,8 +306,8 @@ const CheckinDetails = ({ isLoading }) => {
                         </Typography>
                       </ListItem>
                       <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
+                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }} />
+                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
                           {checkOutTime
                             ? `Check-Out at ${checkOutTime.toLocaleTimeString('en-US', {
                               hour: 'numeric',
@@ -323,9 +323,9 @@ const CheckinDetails = ({ isLoading }) => {
                       <ListItem sx={{ px: 0 }}>
                         <AccessTimeIcon
                           className="text-muted"
-                          sx={{ mr: 2, color: 'secondary.light', fontSize: isMobile ? '18px' : '24px' }}
+                          sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }}
                         />
-                        <Typography className="text-muted" sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
+                        <Typography className="text-muted" sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
                           Hours Worked: {hoursWorked}
                         </Typography>
                       </ListItem>
