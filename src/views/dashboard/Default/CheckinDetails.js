@@ -5,6 +5,9 @@ import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
 
@@ -13,7 +16,11 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   background: `linear-gradient(135deg, ${'#264952'} 30%, ${'#23869f'} 90%)`,
   color: '#fff',
   borderRadius: '16px',
-  boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.3)'
+  boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.3)',
+  transition: 'transform 0.3s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-2px)'
+  }
 }));
 
 const StyledButton = styled(Button)(({ active }) => ({
@@ -30,6 +37,27 @@ const StyledButton = styled(Button)(({ active }) => ({
     backgroundColor: '#d3d3d3',
     color: '#6c757d',
     cursor: 'not-allowed'
+  }
+}));
+const TimeDisplay = styled(Typography)(({ theme }) => ({
+  fontFamily: 'Fira Code, monospace',
+  background: 'rgba(255, 255, 255, 0.1)',
+  padding: '4px 12px',
+  borderRadius: '6px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px'
+}));
+
+const StyledListItem = styled(ListItem)(({ theme }) => ({
+  padding: '12px 16px',
+  margin: '4px 0',
+  background: 'rgba(255, 255, 255, 0.05)',
+  borderRadius: '8px',
+  transition: 'all 0.2s ease',
+  '&:hover': {
+    background: 'rgba(255, 255, 255, 0.1)',
+    transform: 'translateX(4px)'
   }
 }));
 
@@ -148,10 +176,10 @@ const CheckinDetails = ({ isLoading }) => {
     try {
       const response = await apiCalls('get', `basicmaster/chkStatus/${empcode}`);
       console.log('API Response:', response);
-  
+
       if (response.status === true) {
         const employeeStatus = response.paramObjectsMap.EmployeeStatus.status;
-        
+
         if (employeeStatus === 'In') {
           setIsCheckedIn(true);
           const now = new Date();
@@ -162,7 +190,7 @@ const CheckinDetails = ({ isLoading }) => {
           setCheckInTime(null);
           localStorage.removeItem('checkInTime');
         }
-  
+
         // showToast('success', response.paramObjectsMap.message);
       } else {
         console.error('API Error:', response);
@@ -172,7 +200,7 @@ const CheckinDetails = ({ isLoading }) => {
       console.error('Error fetching data:', error);
       // showToast('error', 'Error fetching data');
     }
-  };  
+  };
 
   return (
     <>
@@ -192,20 +220,23 @@ const CheckinDetails = ({ isLoading }) => {
                 {/* Profile Section */}
                 <Grid item>
                   <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      flexDirection: isMobile ? 'column' : 'row'
-                    }}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: isMobile ? 2 : 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }} >
                       {/* <Avatar
                         alt={empName}
                         src="/path/to/avatar.jpg"
                         sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }}
                       /> */}
-                      <Avatar alt={profileImage} src={`data:image/png;base64,${profileImage}`}sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }} />
+                      <Avatar
+                        src={`data:image/png;base64,${profileImage}`}
+                        sx={{
+                          width: isMobile ? 56 : 64,
+                          height: isMobile ? 56 : 64,
+                          border: `2px solid ${isCheckedIn ? '#4caf50' : '#f44336'}`,
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                      />
                       <Box>
                         <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
                           {empName}
@@ -215,44 +246,42 @@ const CheckinDetails = ({ isLoading }) => {
                         </Typography>
                       </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', gap: isMobile ? 1 : 2, mt: isMobile ? 2 : 0 }}>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{
-                          width: isMobile ? '100px' : '120px',
-                          fontSize: isMobile ? '12px' : '14px',
-                          backgroundColor: isCheckedIn ? '#d3d3d3' : '#007bff',
-                          color: isCheckedIn ? '#6c757d' : 'white',
-                          cursor: isCheckedIn ? 'not-allowed' : 'pointer',
-                          '&:hover': {
-                            backgroundColor: isCheckedIn ? '#d3d3d3' : '#0056b3'
-                          }
-                        }}
-                        onClick={handleCheckIn}
-                        disabled={isCheckedIn}
-                      >
-                        Check-In
-                      </Button>
-                      <Button
-                        variant="contained"
-                        color="secondary"
-                        sx={{
-                          width: isMobile ? '100px' : '120px',
-                          fontSize: isMobile ? '12px' : '14px',
-                          backgroundColor: isCheckedIn ? '#ba3a5a' : '#ba3a5a',
-                          color: isCheckedIn ? 'white' : '#6c757d',
-                          cursor: isCheckedIn ? 'pointer' : 'not-allowed',
-                          '&:hover': {
-                            backgroundColor: isCheckedIn ? '#bf5d75' : '#d3d3d3'
-                          }
-                        }}
-                        onClick={handleCheckOut}
-                        disabled={!isCheckedIn}
-                      >
-                        Check-Out
-                      </Button>
-                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 1 }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<LoginIcon />}
+                      color="primary"
+                      sx={{
+                        minWidth: 120,
+                        py: 1,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        bgcolor: isCheckedIn ? 'grey.300' : 'success.main',
+                        '&:hover': { bgcolor: isCheckedIn ? 'grey.300' : 'success.dark' }
+                      }}
+                      onClick={handleCheckIn}
+                      disabled={isCheckedIn}
+                    >
+                      Check-In
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<LogoutIcon />}
+                      color="secondary"
+                      sx={{
+                        minWidth: 120,
+                        py: 1,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        bgcolor: !isCheckedIn ? 'grey.300' : 'error.main',
+                        '&:hover': { bgcolor: !isCheckedIn ? 'grey.300' : 'error.dark' }
+                      }}
+                      onClick={handleCheckOut}
+                      disabled={!isCheckedIn}
+                    >
+                      Check-Out
+                    </Button>
                   </Box>
                 </Grid>
 
@@ -268,11 +297,11 @@ const CheckinDetails = ({ isLoading }) => {
                         <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
                           {checkInTime
                             ? `Check-In at ${checkInTime.toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: 'numeric',
-                                second: 'numeric',
-                                hour12: true
-                              })}`
+                              hour: 'numeric',
+                              minute: 'numeric',
+                              second: 'numeric',
+                              hour12: true
+                            })}`
                             : `No Check-In Recorded `}
                         </Typography>
                       </ListItem>
@@ -281,11 +310,11 @@ const CheckinDetails = ({ isLoading }) => {
                         <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '14px' }}>
                           {checkOutTime
                             ? `Check-Out at ${checkOutTime.toLocaleTimeString('en-US', {
-                                hour: 'numeric',
-                                minute: 'numeric',
-                                second: 'numeric',
-                                hour12: true
-                              })}`
+                              hour: 'numeric',
+                              minute: 'numeric',
+                              second: 'numeric',
+                              hour12: true
+                            })}`
                             : 'No Check-Out Recorded'}
                         </Typography>
                       </ListItem>
