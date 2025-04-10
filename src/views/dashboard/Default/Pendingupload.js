@@ -95,51 +95,19 @@ const RequestItem = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(Button)(({ theme, actiontype }) => ({
-  borderRadius: '8px',
-  minWidth: '120px',
-  height: '40px',
-  textTransform: 'none',
-  fontWeight: 600,
-  letterSpacing: '0.5px',
-  fontSize: '0.875rem',
-  boxShadow: 'none',
-  position: 'relative',
-  overflow: 'hidden',
-  '&:before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: actiontype === 'approve'
-      ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.2) 0%, rgba(46, 125, 50, 0.2) 100%)'
-      : 'linear-gradient(135deg, rgba(244, 67, 54, 0.2) 0%, rgba(198, 40, 40, 0.2) 100%)',
-    opacity: 0,
-    transition: 'opacity 0.3s ease'
-  },
-  background: actiontype === 'approve'
-    ? theme.palette.success.main
-    : theme.palette.error.main,
+const IconButtonStyled = styled(IconButton)(({ theme, actiontype }) => ({
+  width: 40,
+  height: 40,
+  backgroundColor: actiontype === 'approve' ? theme.palette.success.main : theme.palette.error.main,
   color: theme.palette.common.white,
   '&:hover': {
-    transform: 'translateY(-1px)',
-    boxShadow: actiontype === 'approve'
-      ? '0 4px 12px rgba(76, 175, 80, 0.3)'
-      : '0 4px 12px rgba(244, 67, 54, 0.3)',
-    background: actiontype === 'approve'
-      ? theme.palette.success.dark
-      : theme.palette.error.dark,
-    '&:before': {
-      opacity: 1
-    }
+    backgroundColor: actiontype === 'approve' ? theme.palette.success.dark : theme.palette.error.dark,
+    transform: 'scale(1.1)',
+    boxShadow: theme.shadows[2]
   },
   '&.Mui-disabled': {
-    background: theme.palette.action.disabledBackground,
-    color: theme.palette.action.disabled,
-    transform: 'none',
-    boxShadow: 'none'
+    backgroundColor: theme.palette.action.disabledBackground,
+    color: theme.palette.action.disabled
   }
 }));
 
@@ -171,8 +139,6 @@ const PendingApproval = ({ isLoading }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
-  const [statusMap, setStatusMap] = useState({});
-  const [buttonView, setButtonView] = useState(false);
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -184,15 +150,37 @@ const PendingApproval = ({ isLoading }) => {
     getLeaveRequest();
   }, [orgId, employeeCode]);
 
+  // useEffect(() => {
+  //   return () => {
+  //     if (processingId) {
+  //       // If component unmounts during processing, refresh data when mounted again
+  //       getLeaveRequest();
+  //     }
+  //   };
+  // }, [processingId]);
+
   const getLeaveRequest = async () => {
     try {
       const response = await apiCalls(
         "get",
         `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}`
       );
-      setLeaveRequests(response.paramObjectsMap.leaveRequestVO || []);
+
+      // Handle single object or array response
+      let requests = response.paramObjectsMap?.leaveRequestVO || [];
+      if (!Array.isArray(requests)) {
+        requests = [requests];
+      }
+
+      // Filter to only show requests with no status or pending status
+      const pendingRequests = requests.filter(request =>
+        !request.approveStatus || request.approveStatus === 'PENDING'
+      );
+
+      setLeaveRequests(pendingRequests);
     } catch (error) {
       console.error("Error fetching leave requests:", error);
+      toast.error("Failed to load leave requests");
     } finally {
       setLoading(false);
     }
@@ -207,25 +195,22 @@ const PendingApproval = ({ isLoading }) => {
     setSelectedRequest(null);
   };
 
-  const handleAction = async (request, action, formData) => {
+  const handleAction = async (request, action) => {
     setProcessingId(request.id);
 
     try {
+      // 1. Make API call to approve/reject
       await apiCalls(
         'put',
         `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
       );
 
-      setStatusMap(prev => ({
-        ...prev,
-        [request.id]: action,
-      }));
+      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
 
-      // EmailJS send email logic
       const isApproved = action === "APPROVED";
 
       const templateParams = {
-        name: request.name,
+        name: request.employeeName,
         from_name: employeeName,
         leave_type: request.leaveType,
         start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
@@ -234,92 +219,91 @@ const PendingApproval = ({ isLoading }) => {
         status: action,
         status_message: isApproved ? "Approved" : "Rejected",
         status_class: isApproved ? "status-approved" : "status-rejected",
+        remarks: request.remarks || "N/A",
         email: request.employeeEmail,
       };
 
+      // 3. Send email notification
       await emailjs.send(
         'service_hff8dd7',
         'template_0pmh0cu',
         templateParams,
         'G6cKiPBXzCvlFaOuo'
       );
-      if (isApproved) {
-        toast.success(`Leave request approved`);
-      } else {
-        toast.error(`Leave request rejected`);
-      }
 
+      toast.success(`Request ${action.toLowerCase()} successfully`, {
+        autoClose: 3000,
+      });
 
-      console.log(`Email sent for ${action} action.`);
     } catch (error) {
-      console.error(`Failed to ${action} leave request:`, error);
+      console.error(`Error ${action.toLowerCase()}ing request:`, error);
+
+      // Revert UI if error occurs
+      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+
+      toast.error(`Failed to ${action.toLowerCase()} request`, {
+        autoClose: 3000,
+      });
     } finally {
       setProcessingId(null);
     }
   };
 
-  const ActionButtons = ({ request, formData }) => {
-    const status = statusMap[request.id];
+  const ActionButtons = ({ request }) => {
     const isProcessing = processingId === request.id;
+    const isPending = !request.approveStatus || request.approveStatus === 'PENDING';
 
-    const buttonView = !status;
+    if (!isPending) {
+      return (
+        <Chip
+          label={request.approveStatus}
+          size="small"
+          sx={{
+            fontWeight: 600,
+            backgroundColor: request.approveStatus === 'APPROVED'
+              ? 'rgba(76, 175, 80, 0.1)'
+              : 'rgba(244, 67, 54, 0.1)',
+            color: request.approveStatus === 'APPROVED'
+              ? theme.palette.success.dark
+              : theme.palette.error.dark
+          }}
+        />
+      );
+    }
 
     return (
-      <Stack direction="column" spacing={1} alignItems="flex-end">
-        <Stack direction="row" spacing={2} alignItems="flex-end">
-          <Tooltip title="Approve leave request">
-            <span>
-              {buttonView && (
-                <ActionButton
-                  actiontype="approve"
-                  variant="contained"
-                  startIcon={
-                    isProcessing ? (
-                      <CircularProgress size={18} color="inherit" />
-                    ) : (
-                      <ThumbUp sx={{ fontSize: '18px' }} />
-                    )
-                  }
-                  onClick={() => handleAction(request, "APPROVED", formData)}
-                  size="medium"
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Approving...' : 'Approve'}
-                </ActionButton>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Tooltip title="Approve leave request">
+          <span>
+            <IconButtonStyled
+              actiontype="approve"
+              onClick={() => handleAction(request, "APPROVED")}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <ThumbUp fontSize="small" />
               )}
-            </span>
-          </Tooltip>
-
-          <Tooltip title="Reject leave request">
-            <span>
-              {buttonView && (
-                <ActionButton
-                  actiontype="reject"
-                  variant="contained"
-                  startIcon={
-                    isProcessing ? (
-                      <CircularProgress size={18} color="inherit" />
-                    ) : (
-                      <ThumbDown sx={{ fontSize: '18px' }} />
-                    )
-                  }
-                  onClick={() => handleAction(request, "REJECTED", formData)}
-                  size="medium"
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? 'Rejecting...' : 'Reject'}
-                </ActionButton>
-              )}
-            </span>
-          </Tooltip>
-        </Stack>
-
-        {status && (
-          <span style={{ color: status === 'APPROVED' ? 'green' : 'red' }}>
-            Status: {status}
+            </IconButtonStyled>
           </span>
-        )}
+        </Tooltip>
 
+        <Tooltip title="Reject leave request">
+          <span>
+            <IconButtonStyled
+              actiontype="reject"
+              onClick={() => handleAction(request, "REJECTED")}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <ThumbDown fontSize="small" />
+              )}
+            </IconButtonStyled>
+          </span>
+        </Tooltip>
       </Stack>
     );
   };
@@ -355,7 +339,7 @@ const PendingApproval = ({ isLoading }) => {
             {leaveRequests.slice(0, 3).map((leaveRequest, index) => (
               <RequestItem key={index}>
                 <Grid container alignItems="center" spacing={2}>
-                  <Grid item xs={12} sm={5}>
+                  <Grid item xs={12} sm={8}>
                     <Box display="flex" alignItems="center">
                       <Avatar
                         sx={{
@@ -381,27 +365,11 @@ const PendingApproval = ({ isLoading }) => {
                     </Box>
                   </Grid>
 
-                  {/* <Grid item xs={12} sm={3}>
-                    <Chip
-                      label={`${leaveRequest.totalDays || 0} day${leaveRequest.totalDays !== 1 ? 's' : ''}`}
-                      color="primary"
-                      variant="outlined"
-                      sx={{
-                        fontWeight: 600,
-                        borderWidth: '2px',
-                        '& .MuiChip-label': {
-                          px: 1.5
-                        }
-                      }}
-                    />
-                  </Grid> */}
-
                   <Grid item xs={12} sm={4}>
                     <Box display="flex" justifyContent="flex-end">
                       <ActionButtons request={leaveRequest} />
                     </Box>
                   </Grid>
-
                 </Grid>
               </RequestItem>
             ))}
@@ -541,7 +509,7 @@ const PendingApproval = ({ isLoading }) => {
                     </Grid>
                   </Grid>
 
-                  <Box mt={3} ml={2} display="flex" justifyContent="flex-end">
+                  <Box mt={3} display="flex" justifyContent="flex-end">
                     <ActionButtons request={request} />
                   </Box>
 
