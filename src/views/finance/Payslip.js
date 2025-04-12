@@ -17,19 +17,445 @@ import LogoImage from '../../assets/images/HRMS_Logo.png';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
-const Container = styled.div`
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 65px auto;
-  max-width: 750px; 
+const Payslip = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [orgId] = useState(localStorage.getItem('orgId') || '');
+    const [employeeCode] = useState(localStorage.getItem('employeeCode') || '');
+    const [employeeDetails, setEmployeeDetails] = useState(null);
+    const [earningsData, setEarningsData] = useState([]);
+    const [totalEarningRow, setTotalEarningRow] = useState(null);
+    const [deductionsData, setDeductionsData] = useState([]);
+    const [totalEarnings, setTotalEarnings] = useState(0);
+    const [showPayslip, setShowPayslip] = useState(false);
+    const [selectedMonth, setSelectedMonth] = useState(null);
+    const [selectedYear, setSelectedYear] = useState(null);
+    const [errors, setErrors] = useState({ month: '', year: '' });
+    const [noDataFound, setNoDataFound] = useState(false);
+
+    useEffect(() => {
+        if (showPayslip && selectedMonth && selectedYear) {
+            fetchPayslipData();
+        }
+    }, [selectedMonth, selectedYear, showPayslip]);
+
+    const validateForm = () => {
+        let valid = true;
+        const newErrors = { month: '', year: '' };
+        const currentYear = dayjs().year();
+        const currentMonth = dayjs().month() + 1;
+
+        if (!selectedMonth || !selectedYear) {
+            newErrors.month = 'Month is required';
+            newErrors.year = 'Year is required';
+            valid = false;
+        } else {
+            const selectedDate = dayjs(`${selectedYear}-${selectedMonth}-01`);
+            if (selectedDate.isAfter(dayjs(), 'month')) {
+                newErrors.month = 'Future month not allowed';
+                valid = false;
+            }
+        }
+
+        if (!selectedYear) {
+            newErrors.year = 'Year is required';
+            valid = false;
+        } else if (selectedYear > currentYear) {
+            newErrors.year = 'Future year not allowed';
+            valid = false;
+        }
+
+        setErrors(newErrors);
+        return valid;
+    };
+
+    const fetchPayslipData = async () => {
+        setIsLoading(true);
+        setNoDataFound(false);
+        setEmployeeDetails(null);
+        setEarningsData([]);
+        setDeductionsData([]);
+        setTotalEarningRow(null);
+        setTotalEarnings(0);
+
+        try {
+            const [employeeRes, earningsRes, deductionsRes] = await Promise.all([
+                apiCalls('get', `/basicmaster/getpayslipemployeedetails?Employeecode=${employeeCode}&orgId=${orgId}`),
+                apiCalls('get', `/basicmaster/getpayslipearningdetails?Employeecode=${employeeCode}&Month=${selectedMonth}&orgId=${orgId}&year=${selectedYear}`),
+                apiCalls('get', `/basicmaster/getpayslipdeductiondetails?Employeecode=${employeeCode}&Month=${selectedMonth}&orgId=${orgId}&year=${selectedYear}`)
+            ]);
+
+            // Handle API errors
+            const handleApiError = (response, defaultMessage) => {
+                if (!response?.status) {
+                    const errorMsg = response?.paramObjectsMap?.errorMessage || defaultMessage;
+                    showToast(errorMsg, 'error');
+                    throw new Error(errorMsg);
+                }
+            };
+
+            handleApiError(employeeRes, 'Failed to fetch employee details');
+            handleApiError(earningsRes, 'Failed to fetch earnings details');
+            handleApiError(deductionsRes, 'Failed to fetch deduction details');
+
+            // Process data
+            const hasEarnings = earningsRes.paramObjectsMap?.employee?.length > 0;
+            const hasDeductions = deductionsRes.paramObjectsMap?.employee?.length > 0;
+
+            if (!hasEarnings && !hasDeductions) {
+                setNoDataFound(true);
+                showToast(`No payslip found for ${monthName} ${selectedYear}`, 'warning');
+                return;
+            }
+
+            // Employee details
+            if (employeeRes.paramObjectsMap.employee?.length > 0) {
+                setEmployeeDetails(employeeRes.paramObjectsMap.employee[0]);
+            }
+
+            // Earnings processing
+            if (hasEarnings) {
+                const processedEarnings = processEarningsData(earningsRes.paramObjectsMap.employee);
+                setEarningsData(processedEarnings.rows);
+                setTotalEarningRow(processedEarnings.total);
+                setTotalEarnings(processedEarnings.total.amount);
+            }
+
+            // Deductions processing
+            if (hasDeductions) {
+                const filteredDeductions = deductionsRes.paramObjectsMap.employee
+                    .filter(item => item.heading !== 'Total Deduction')
+                    .map(item => ({
+                        ...item,
+                        amount: parseFloat((item.amount || '0').replace(/,/g, '')) || 0
+                    }));
+                setDeductionsData(filteredDeductions);
+            }
+
+        } catch (error) {
+            console.error('Payslip fetch error:', error);
+            setNoDataFound(true);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const processEarningsData = (data) => {
+        const merged = data.reduce((acc, item) => {
+            const key = item.heading;
+            const amount = parseFloat((item.amount || '0').replace(/,/g, '')) || 0;
+            const actuals = parseFloat((item.actuals || '0').replace(/,/g, '')) || 0;
+
+            if (!acc[key]) {
+                acc[key] = { ...item, amount, actuals };
+            } else {
+                acc[key].amount += amount;
+                acc[key].actuals += actuals;
+            }
+            return acc;
+        }, {});
+
+        const mergedArray = Object.values(merged);
+        const total = mergedArray.find(item => item.heading === 'Total Earnings') || { amount: 0, actuals: 0 };
+
+        return {
+            rows: mergedArray.filter(item => item.heading !== 'Total Earnings'),
+            total
+        };
+    };
+
+    const handleSearch = () => {
+        if (!validateForm()) {
+            setShowPayslip(false);
+            return;
+        }
+        setShowPayslip(true);
+    };
+
+    const handleClear = () => {
+        setSelectedMonth(null);
+        setSelectedYear(null);
+        setShowPayslip(false);
+        setEmployeeDetails(null);
+        setEarningsData([]);
+        setDeductionsData([]);
+        setTotalEarningRow(null);
+        setTotalEarnings(0);
+        setErrors({ month: '', year: '' });
+        setNoDataFound(false);
+    };
+
+    const handleDownload = () => {
+        if (!showPayslip || !employeeDetails || noDataFound) {
+            showToast('Please generate a valid payslip first', 'warning');
+            return;
+        }
+
+        const input = document.getElementById('payslip-container');
+        html2canvas(input, {
+            scale: 2,
+            useCORS: true,
+            logging: false
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'pt', 'a4');
+            const imgWidth = pdf.internal.pageSize.getWidth();
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+            pdf.save(`Payslip_${employeeDetails.employeecode}_${selectedMonth}_${selectedYear}.pdf`);
+        }).catch(error => {
+            console.error('PDF generation failed:', error);
+            showToast('Failed to generate PDF', 'error');
+        });
+    };
+
+    const totalDeductions = useMemo(() => (
+        deductionsData.reduce((sum, item) => sum + item.amount, 0)
+    ), [deductionsData]);
+
+    const netPay = useMemo(() => totalEarnings - totalDeductions, [totalEarnings, totalDeductions]);
+
+    const monthName = useMemo(() => (
+        selectedMonth ? dayjs().month(selectedMonth - 1).format('MMMM') : ''
+    ), [selectedMonth]);
+
+    return (
+        <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
+            <div className="row d-flex ml">
+                <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
+                    <ActionButton
+                        title="Search"
+                        icon={SearchIcon}
+                        onClick={handleSearch}
+                        disabled={isLoading}
+                    />
+                    <ActionButton
+                        title="Clear"
+                        icon={ClearIcon}
+                        onClick={handleClear}
+                        disabled={isLoading}
+                    />
+                    <ActionButton
+                        title="Download"
+                        icon={DownloadIcon}
+                        onClick={handleDownload}
+                        margin="0 10px"
+                        disabled={!showPayslip || isLoading || noDataFound}
+                    />
+                </div>
+            </div>
+
+            <div className="row">
+                <div className="col-md-3 mb-3">
+                    <FormControl fullWidth error={!!errors.month}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                label="Month"
+                                views={['month']}
+                                openTo="month"
+                                format="MMMM"
+                                slotProps={{ textField: { size: 'small', error: !!errors.month } }}
+                                value={selectedMonth ? dayjs().month(selectedMonth - 1) : null}
+                                onChange={(newValue) => {
+                                    if (newValue) {
+                                        setSelectedMonth(newValue.month() + 1);
+                                        setErrors({ ...errors, month: '' });
+                                    } else {
+                                        setSelectedMonth(null);
+                                    }
+                                    setShowPayslip(false);
+                                }}
+                            />
+                        </LocalizationProvider>
+                        {errors.month && <ErrorText>{errors.month}</ErrorText>}
+                    </FormControl>
+                </div>
+
+                <div className="col-md-3 mb-3">
+                    <FormControl fullWidth error={!!errors.year}>
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                            <DatePicker
+                                label="Year"
+                                views={['year']}
+                                openTo="year"
+                                format="YYYY"
+                                slotProps={{ textField: { size: 'small', error: !!errors.year } }}
+                                value={selectedYear ? dayjs(`${selectedYear}-01-01`) : null}
+                                onChange={(date) => {
+                                    const year = date ? dayjs(date).format('YYYY') : null;
+                                    setSelectedYear(year);
+                                    setErrors({ ...errors, year: '' });
+                                    setShowPayslip(false);
+                                }}
+                            />
+                        </LocalizationProvider>
+                        {errors.year && <ErrorText>{errors.year}</ErrorText>}
+                    </FormControl>
+                </div>
+            </div>
+
+            {isLoading && <LoadingContainer>Loading payslip data...</LoadingContainer>}
+
+            {showPayslip && noDataFound && !isLoading && (
+                <NoDataMessage>
+                    {selectedMonth && selectedYear
+                        ? `No payslip found for ${monthName} ${selectedYear}`
+                        : 'Please select month and year to generate payslip'}
+                </NoDataMessage>
+            )}
+
+            {showPayslip && !noDataFound && employeeDetails && !isLoading && (
+                <Container id="payslip-container" className='w-100'>
+                    <Header className='p-3'>
+                        <LogoContainer>
+                            <Logo src={LogoImage} alt="Company Logo" />
+                            <CompanyInfo>
+                                <CompanyName>WHY DIGIT SYSTEMS PRIVATE LIMITED</CompanyName>
+                                <CompanyAddress>
+                                    23/1 T.C PALAYA MAIN ROAD, HOYSALA NAGAR BANGALORE – 560016
+                                </CompanyAddress>
+                            </CompanyInfo>
+                        </LogoContainer>
+                        <PayslipTitle>
+                            PAY SLIP FOR THE MONTH OF {monthName.toUpperCase()} {selectedYear}
+                        </PayslipTitle>
+                    </Header>
+
+                    {/* Employee Info Section */}
+                    <EmployeeInfo>
+                        <InfoColumn>
+                            <p><strong>Name:</strong> {employeeDetails.employee} [{employeeDetails.employeecode}]</p>
+                            <p><strong>Join Date:</strong> {dayjs(employeeDetails.joiningdate).format('DD MMM YYYY')}</p>
+                            <p><strong>Designation:</strong> {employeeDetails.designation}</p>
+                            <p><strong>Location:</strong> {employeeDetails.branch}</p>
+                            <p><strong>Effective Work Days:</strong> {employeeDetails.effectiveworkingdays}</p>
+                            <p><strong>Days In Month:</strong> {employeeDetails.totalworkingdays}</p>
+                        </InfoColumn>
+                        <Divider />
+                        <InfoColumn>
+                            <p><strong>Bank Name:</strong> {employeeDetails.bankname}</p>
+                            <p><strong>Account No:</strong> {employeeDetails.accountno}</p>
+                            <p><strong>UAN:</strong> {employeeDetails.uanno}</p>
+                            <p><strong>PAN No:</strong> {employeeDetails.panno}</p>
+                            <p><strong>LOP:</strong> {employeeDetails.lopDays || '0'}</p>
+                        </InfoColumn>
+                    </EmployeeInfo>
+
+                    <DividerLine />
+
+                    {/* Earnings and Deductions */}
+                    <TableSection>
+                        <EarningsTable>
+                            <thead>
+                                <tr>
+                                    <th style={thStyle}>Earnings</th>
+                                    <th style={thStyle}>Full</th>
+                                    <th style={thStyle}>Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {earningsData.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td style={tdStyle}>{item.heading}</td>
+                                        <td style={tdRight}>{item.amount.toFixed(2)}</td>
+                                        <td style={tdRight}>{item.actuals.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td style={{ ...tdStyle, fontWeight: 'bold' }}>Total Earnings: Rs.</td>
+                                    <td style={tdRight}>{totalEarningRow?.amount.toFixed(2)}</td>
+                                    <td style={tdRight}>{totalEarningRow?.actuals?.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </EarningsTable>
+
+                        <DeductionsTable>
+                            <thead>
+                                <tr>
+                                    <th style={thStyle}>Deductions</th>
+                                    <th style={thRight}>Actual</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {deductionsData.map((item, idx) => (
+                                    <tr key={idx}>
+                                        <td style={tdStyle}>{item.heading}</td>
+                                        <td style={tdRight}>{item.amount.toFixed(2)}</td>
+                                    </tr>
+                                ))}
+                                <tr>
+                                    <td style={{ ...tdStyle, fontWeight: 'bold' }}>Total Deductions: Rs.</td>
+                                    <td style={tdRight}>{totalDeductions.toFixed(2)}</td>
+                                </tr>
+                            </tbody>
+                        </DeductionsTable>
+                    </TableSection>
+
+
+                    {/* Net Pay */}
+                    <div style={{ marginTop: '20px', padding: '10px' }}>
+                        <p><strong>Net Pay for the month ( Total Earnings - Total Deductions): Rs. {netPay.toFixed(2)}</strong></p>
+                        <p style={{ fontStyle: 'italic' }}>(Rupees __________ Only)</p>
+                    </div>
+
+                    {/* Footer */}
+                    <p style={{ fontSize: '12px', textAlign: 'center', marginTop: '20px' }}>
+                        This is a system-generated payslip and does not require signature.
+                    </p>
+                </Container>
+            )}
+        </div>
+    );
+};
+
+const ErrorText = styled.div`
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+`;
+
+const LoadingContainer = styled.div`
+  text-align: center;
   padding: 20px;
-  border: 2px solid #000;
-  background: #fff;
-  border-radius: 8px;
-  box-sizing: border-box; 
+  font-size: 16px;
+  color: #888;
+`;
+
+const NoDataMessage = styled.div`
+  text-align: center;
+  padding: 20px;
+  font-size: 16px;
+  color: #888;
+  border: 1px dashed #ccc;
+  margin-top: 20px;
+  background-color: #f9f9f9;
+`;
+
+const Wrapper = styled.div`
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  padding: 20px;
+`;
+
+const PayslipBox = styled.div`
+  border: 2px solid #2d2c2c;
+  padding: 0px;
+  width: 70%;
+  margin: auto;
 `;
 
 const Header = styled.div`
   padding-bottom: 15px;
+`;
+const Container = styled.div`
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: auto;
+  max-width: 750px; 
+  padding: 0px;
+  border: 2px solid #000;
+  background: #fff;
+  border-radius: 8px;
+  box-sizing: border-box; 
 `;
 
 const LogoContainer = styled.div`
@@ -65,529 +491,66 @@ const PayslipTitle = styled.div`
   margin: 15px 0;
 `;
 
-const EmployeeTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
- 
-  td {
-    padding: 8px 10px;
-    border: 1px solid #000;
-    font-size: 14px;
-  }
+const EmployeeInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+`;
+
+const InfoColumn = styled.div`
+  width: 50%;
+  padding-top: 0px;
+`;
+
+const Divider = styled.div`
+  width: 1px;
+  background-color: black;
+  margin: 0 11px;
+`;
+
+const DividerLine = styled.hr`
+  border: 1.5px solid black;
+  margin-top: -20px;
+`;
+
+const TableSection = styled.div`
+  display: flex;
+  padding: 0 10px;
 `;
 
 const EarningsTable = styled.table`
-  width: 100%;
+  width: 50%;
   border-collapse: collapse;
-
-  th, td {
-    padding: 10px;
-    border: 1px solid #000;
-    font-size: 14px;
-    text-align: left;
-  }
-
-  th {
-    background-color: #f0f0f0;
-  }
 `;
 
-const TotalRow = styled.tr`
-  font-weight: bold;
-  background-color: #e9e9e9;
+const DeductionsTable = styled.table`
+  width: 50%;
+  border-collapse: collapse;
 `;
 
-const NetPay = styled.div`
-  font-weight: bold;
-  margin-top: 10px;
-  font-size: 16px;
-`;
-
-const Footer = styled.div`
-  margin-top: 40px;
-  font-size: 12px;
-  text-align: center;
-  color: #555;
-  border-top: 1px dashed #ccc;
-  padding-top: 10px;
-`;
-
-const ErrorText = styled.div`
-  color: red;
-  font-size: 12px;
-  margin-top: 5px;
-`;
-
-const NoDataMessage = styled.div`
-  text-align: center;
-  padding: 20px;
-  font-size: 16px;
-  color: #888;
-  border: 1px dashed #ccc;
-  margin-top: 20px;
-  background-color: #f9f9f9;
-`;
-
-const LoadingContainer = styled.div`
-  text-align: center;
-  padding: 20px;
-  font-size: 16px;
-  color: #888;
-`;
-
-const Payslip = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [orgId] = useState(localStorage.getItem('orgId') || '');
-    const [employeeCode] = useState(localStorage.getItem('employeeCode') || '');
-    const [employeeDetails, setEmployeeDetails] = useState(null);
-    const [earningsData, setEarningsData] = useState([]);
-    const [totalEarningRow, setTotalEarningRow] = useState(null);
-    const [deductionsData, setDeductionsData] = useState([]);
-    const [totalEarnings, setTotalEarnings] = useState(0);
-    const [showPayslip, setShowPayslip] = useState(false);
-    const [selectedMonth, setSelectedMonth] = useState(null);
-    const [selectedYear, setSelectedYear] = useState(null);
-    const [errors, setErrors] = useState({ month: '', year: '' });
-    const [noDataFound, setNoDataFound] = useState(false);
-
-    useEffect(() => {
-        if (showPayslip && selectedMonth && selectedYear) {
-            fetchPayslipData();
-        }
-    }, [selectedMonth, selectedYear, showPayslip]);
-
-    const validateForm = () => {
-        let valid = true;
-        const newErrors = { month: '', year: '' };
-        const currentYear = dayjs().year();
-        const currentMonth = dayjs().month() + 1; // 1-12
-
-        if (!selectedMonth || !selectedYear) {
-            newErrors.month = 'Month is required';
-            newErrors.year = 'Year is required';
-            valid = false;
-        } else {
-            const selectedDate = dayjs(`${selectedYear}-${selectedMonth}-01`);
-            if (selectedDate.isAfter(dayjs(), 'month')) {
-                newErrors.month = 'Future month not allowed';
-                valid = false;
-            }
-        }
-
-        if (!selectedYear) {
-            newErrors.year = 'Year is required';
-            valid = false;
-        } else if (selectedYear > currentYear) {
-            newErrors.year = 'Future year not allowed';
-            valid = false;
-        }
-
-        setErrors(newErrors);
-        return valid;
-    };
-
-    const fetchPayslipData = async () => {
-        setIsLoading(true);
-        setNoDataFound(false);
-
-        setEmployeeDetails(null);
-        setEarningsData([]);
-        setDeductionsData([]);
-        setTotalEarningRow(null);
-        setTotalEarnings(0);
-
-        try {
-            const [employeeRes, earningsRes, deductionsRes] = await Promise.all([
-                apiCalls('get', `/basicmaster/getpayslipemployeedetails?Employeecode=${employeeCode}&orgId=${orgId}`),
-                apiCalls('get', `/basicmaster/getpayslipearningdetails?Employeecode=${employeeCode}&Month=${selectedMonth}&orgId=${orgId}&year=${selectedYear}`),
-                apiCalls('get', `/basicmaster/getpayslipdeductiondetails?Employeecode=${employeeCode}&Month=${selectedMonth}&orgId=${orgId}&year=${selectedYear}`)
-            ]);
-
-            // Check if we have any payslip data
-            const hasEarnings = earningsRes?.status && earningsRes?.paramObjectsMap?.employee?.length > 0;
-            const hasDeductions = deductionsRes?.status && deductionsRes?.paramObjectsMap?.employee?.length > 0;
-
-            if (!hasEarnings && !hasDeductions) {
-                setNoDataFound(true);
-                return;
-            }
-
-            // Process employee details only if we have payslip data
-            if (employeeRes?.status && employeeRes?.paramObjectsMap?.employee?.length > 0) {
-                setEmployeeDetails(employeeRes.paramObjectsMap.employee[0]);
-            }
-
-            // Process earnings
-            if (hasEarnings) {
-                const processedEarnings = processEarningsData(earningsRes.paramObjectsMap.employee);
-                setEarningsData(processedEarnings.rows);
-                setTotalEarningRow(processedEarnings.total);
-                setTotalEarnings(processedEarnings.total.amount);
-            }
-
-            // Process deductions
-            if (hasDeductions) {
-                const filteredDeductions = deductionsRes.paramObjectsMap.employee
-                    .filter(item => item.heading !== 'Total Deduction')
-                    .map(processDeductionData);
-                setDeductionsData(filteredDeductions);
-            }
-
-        } catch (error) {
-            console.error('Error fetching payslip data:', error);
-            showToast('Failed to fetch payslip data. Please try again.', 'error');
-            setNoDataFound(true);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const processEarningsData = (data) => {
-        const merged = mergeDuplicateRows(data);
-        const total = merged.find(item => item.heading === 'Total Earnings') || { amount: 0, actuals: 0 };
-        const rows = merged.filter(item => item.heading !== 'Total Earnings');
-        return { rows, total };
-    };
-
-    const processDeductionData = (item) => ({
-        ...item,
-        amount: parseFloat((item.amount || '0').replace(/,/g, '')) || 0
-    });
-
-    const EmployeeDetails = async () => {
-        try {
-            const res = await apiCalls('get', `/basicmaster/getpayslipemployeedetails?Employeecode=${employeeCode}&orgId=${orgId}`);
-            if (res?.status && res?.paramObjectsMap?.employee?.length > 0) {
-                setEmployeeDetails(res.paramObjectsMap.employee[0]);
-                setNoDataFound(false);
-            } else {
-                showToast('No employee data found.', 'warning');
-                setNoDataFound(true);
-            }
-        } catch (error) {
-            console.error('Error fetching employee details:', error);
-            showToast('Failed to fetch employee details.', 'error');
-            setNoDataFound(true);
-        }
-    };
-
-    const getPayslipEarningDetails = async (month, year) => {
-        try {
-            const res = await apiCalls('get',
-                `/basicmaster/getpayslipearningdetails?Employeecode=${employeeCode}&Month=${month}&orgId=${orgId}&year=${year}`
-            );
-            if (res?.status && res?.paramObjectsMap?.employee?.length > 0) {
-                // Process each item to parse amounts correctly
-                const data = res.paramObjectsMap.employee.map(item => ({
-                    ...item,
-                    amount: parseFloat((item.amount || '0').replace(/,/g, '')) || 0,
-                    actuals: parseFloat((item.actuals || '0').replace(/,/g, '')) || 0,
-                }));
-                const earnings = mergeDuplicateRows(data);
-                // Rest of the function remains the same
-                // ...
-            }
-        } catch (error) {
-            // Handle error
-        }
-    };
-
-    const getPayslipDeductionDetails = async (month, year) => {
-        try {
-            const res = await apiCalls('get',
-                `/basicmaster/getpayslipdeductiondetails?Employeecode=${employeeCode}&Month=${month}&orgId=${orgId}&year=${year}`
-            );
-            if (res?.status && res?.paramObjectsMap?.employee?.length > 0) {
-                // Process each item to parse amounts correctly
-                const filtered = res.paramObjectsMap.employee
-                    .filter(item => item.heading !== 'Total Deduction')
-                    .map(item => ({
-                        ...item,
-                        amount: parseFloat((item.amount || '0').replace(/,/g, '')) || 0,
-                    }));
-                setDeductionsData(filtered);
-                setNoDataFound(false);
-            } else {
-                // Handle no data
-            }
-        } catch (error) {
-            // Handle error
-        }
-    };
-
-    const handleSearch = () => {
-        if (!validateForm()) {
-            setShowPayslip(false);
-            return;
-        }
-        setShowPayslip(true);
-    };
-
-    const handleClear = () => {
-        setSelectedMonth(null);
-        setSelectedYear(null);
-        setShowPayslip(false);
-        setEmployeeDetails(null);
-        setEarningsData([]);
-        setDeductionsData([]);
-        setTotalEarningRow(null);
-        setTotalEarnings(0);
-        setErrors({ month: '', year: '' });
-        setNoDataFound(false);
-    };
-
-    const mergeDuplicateRows = (data) => {
-        const map = {};
-
-        data.forEach(item => {
-            const key = item.heading;
-            // Remove commas and parse the amount and actuals
-            const amountStr = (item.amount || '0').replace(/,/g, '');
-            const actualsStr = (item.actuals || '0').replace(/,/g, '');
-            const amount = parseFloat(amountStr) || 0;
-            const actuals = parseFloat(actualsStr) || 0;
-
-            if (!map[key]) {
-                map[key] = { ...item, amount, actuals };
-            } else {
-                map[key].amount += amount;
-                map[key].actuals += actuals;
-            }
-        });
-
-        return Object.values(map);
-    };
-
-
-
-    const handleDownload = () => {
-        if (!showPayslip || !employeeDetails || noDataFound) {
-            showToast('Please generate a valid payslip first', 'warning');
-            return;
-        }
-
-        const input = document.getElementById('payslip-container');
-        if (!input) {
-            showToast('Payslip content not found', 'error');
-            return;
-        }
-
-        const clone = input.cloneNode(true);
-        clone.style.margin = '0';
-        clone.style.width = '750px';
-        document.body.appendChild(clone);
-
-        html2canvas(clone, {
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            windowWidth: 750,
-            width: 750,
-            height: clone.scrollHeight,
-        }).then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF('p', 'pt', 'a4');
-            const imgWidth = pdf.internal.pageSize.getWidth();
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-            pdf.save(`Payslip_${employeeDetails.employeecode}_${selectedMonth}_${selectedYear}.pdf`);
-            clone.remove();
-        }).catch(error => {
-            console.error('Error generating PDF:', error);
-            clone.remove();
-            showToast('Failed to generate PDF', 'error');
-        });
-    };
-
-    const totalDeductions = useMemo(() => (
-        deductionsData.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
-    ), [deductionsData]);
-
-    const netPay = useMemo(() => totalEarnings - totalDeductions, [totalEarnings, totalDeductions]);
-
-    const monthName = useMemo(() => (
-        selectedMonth ? dayjs().month(selectedMonth - 1).format('MMMM') : ''
-    ), [selectedMonth]);
-
-
-    return (
-        <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
-            <div className="row d-flex ml">
-                <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-                    <ActionButton title="Search" icon={SearchIcon} onClick={handleSearch} disabled={isLoading} />
-                    <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} disabled={isLoading} />
-                    <ActionButton
-                        title="Download"
-                        icon={DownloadIcon}
-                        onClick={handleDownload}
-                        margin="0 10px"
-                        disabled={!showPayslip || isLoading || noDataFound}
-                    />
-                </div>
-            </div>
-
-            <div className="row">
-                <div className="col-md-3 mb-3">
-                    <FormControl fullWidth error={!!errors.month}>
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker
-                                label="Month"
-                                views={['month']}
-                                openTo="month"
-                                format="MMMM"
-                                slotProps={{ textField: { size: 'small', error: !!errors.month } }}
-                                value={selectedMonth ? dayjs().month(selectedMonth - 1) : null}
-                                onChange={(newValue) => {
-                                    if (newValue) {
-                                        const monthNumber = newValue.month() + 1;
-                                        setSelectedMonth(monthNumber);
-                                    } else {
-                                        setSelectedMonth(null);
-                                    }
-                                    setErrors({ ...errors, month: '' });
-                                    setShowPayslip(false); // Hide existing data
-                                }}
-                            />
-                        </LocalizationProvider>
-                        {errors.month && <ErrorText>{errors.month}</ErrorText>}
-                    </FormControl>
-                </div>
-
-                <div className="col-md-3 mb-3">
-                    <FormControl fullWidth error={!!errors.year}>
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker
-                                label="Year"
-                                views={['year']}
-                                openTo="year"
-                                format="YYYY"
-                                slotProps={{ textField: { size: 'small', error: !!errors.year } }}
-                                value={selectedYear ? dayjs(`${selectedYear}-01-01`) : null}
-                                onChange={(date) => {
-                                    const year = date ? dayjs(date).format('YYYY') : null;
-                                    setSelectedYear(year);
-                                    setErrors({ ...errors, year: '' });
-                                    setShowPayslip(false);
-                                }}
-                            />
-                        </LocalizationProvider>
-                        {errors.year && <ErrorText>{errors.year}</ErrorText>}
-                    </FormControl>
-                </div>
-            </div>
-
-            {isLoading && <LoadingContainer>Loading payslip data...</LoadingContainer>}
-
-            {showPayslip && noDataFound && !isLoading && (
-                <NoDataMessage>
-                    No payslip data found for {monthName} {selectedYear}
-                </NoDataMessage>
-            )}
-
-            {showPayslip && !noDataFound && employeeDetails && !isLoading && (
-                <Container id="payslip-container">
-                    <Header>
-                        <LogoContainer>
-                            <Logo src={LogoImage} alt="logo" />
-                            <CompanyInfo>
-                                <CompanyName>WHY DIGIT SYSTEMS PRIVATE LIMITED</CompanyName>
-                                <CompanyAddress>
-                                    23/1 T.C PALAYA MAIN ROAD, HOYSALA NAGAR BANGALORE – 560016
-                                </CompanyAddress>
-                            </CompanyInfo>
-                        </LogoContainer>
-                        <PayslipTitle>
-                            PAY SLIP FOR THE MONTH OF {monthName.toUpperCase()} {selectedYear}
-                        </PayslipTitle>
-                    </Header>
-
-                    <EmployeeTable>
-                        <tbody>
-                            <tr>
-                                <td>Name:</td>
-                                <td>{employeeDetails.employee} [{employeeDetails.employeecode}]</td>
-                                <td>Bank Name:</td>
-                                <td>{employeeDetails.bankname || '-'}</td>
-                            </tr>
-                            <tr>
-                                <td>Joining Date:</td>
-                                <td>{dayjs(employeeDetails.joiningdate).format('DD-MM-YYYY')}</td>
-                                {/* <td>
-                                    {employeeDetails.joiningdate ?
-                                        dayjs(employeeDetails.joiningdate).isValid() ?
-                                            dayjs(employeeDetails.joiningdate).format('DD-MM-YYYY') :
-                                            'Invalid Date'
-                                        : '-'}
-                                </td> */}
-                                <td>Account No:</td>
-                                <td>{employeeDetails.accountno}</td>
-                            </tr>
-                            <tr>
-                                <td>Designation:</td>
-                                <td>{employeeDetails.designation}</td>
-                                <td>UAN:</td>
-                                <td>{employeeDetails.uanno}</td>
-                            </tr>
-                            <tr>
-                                <td>Location:</td>
-                                <td>{employeeDetails.branch}</td>
-                                <td>PAN No:</td>
-                                <td>{employeeDetails.panno}</td>
-                            </tr>
-                            <tr>
-                                <td>Effective Working Days:</td>
-                                <td>{employeeDetails.effectiveworkingdays}</td>
-                                <td>LOP:</td>
-                                <td>{employeeDetails.lopDays || 'N/A'}</td>
-                            </tr>
-                            <tr>
-                                <td>Total Working Days:</td>
-                                <td>{employeeDetails.totalworkingdays}</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </EmployeeTable>
-
-                    <EarningsTable>
-                        <thead>
-                            <tr>
-                                <th>Earnings</th>
-                                <th>Amount</th>
-                                <th>Actuals</th>
-                                <th>Deductions</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.from({ length: Math.max(earningsData.length, deductionsData.length) }).map((_, index) => (
-                                <tr key={index}>
-                                    <td>{earningsData[index]?.heading || ''}</td>
-                                    <td>{earningsData[index] ? parseFloat(earningsData[index].amount || 0).toFixed(2) : ''}</td>
-                                    <td>{earningsData[index] ? parseFloat(earningsData[index].actuals || 0).toFixed(2) : ''}</td>
-                                    <td>{deductionsData[index]?.heading || ''}</td>
-                                    <td>{deductionsData[index] ? parseFloat(deductionsData[index].amount || 0).toFixed(2) : ''}</td>
-                                </tr>
-                            ))}
-                            <TotalRow>
-                                <td>Total Earnings</td>
-                                <td>{totalEarningRow ? parseFloat(totalEarningRow.amount).toFixed(2) : totalEarnings.toFixed(2)}</td>
-                                <td>{totalEarningRow ? parseFloat(totalEarningRow.actuals).toFixed(2) : totalEarnings.toFixed(2)}</td>
-                                <td>Total Deductions</td>
-                                <td>{totalDeductions.toFixed(2)}</td>
-                            </TotalRow>
-                        </tbody>
-                    </EarningsTable>
-
-                    <NetPay>Net Pay for the month (Total Earnings - Total Deductions): Rs. {netPay.toFixed(2)}</NetPay>
-                    <div>(Rupees Only)</div>
-
-                    <Footer>This is a system-generated payslip and does not require a signature.</Footer>
-                </Container>
-            )}
-        </div>
-    );
+const thStyle = {
+    border: '1px solid black',
+    padding: '6px',
+    textAlign: 'left'
 };
+
+const thRight = {
+    border: '1px solid black',
+    padding: '6px',
+    textAlign: 'right'
+};
+
+const tdStyle = {
+    border: '1px solid black',
+    padding: '6px',
+    textAlign: 'left'
+};
+
+const tdRight = {
+    border: '1px solid black',
+    padding: '6px',
+    textAlign: 'right'
+};
+
 
 export default Payslip;

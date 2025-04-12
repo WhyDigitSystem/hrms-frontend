@@ -82,7 +82,7 @@ const Dashboard = () => {
             <News isLoading={isLoading} />
           </Grid>
           <Grid item lg={6} md={12} sm={12} xs={12}>
-            <Inbox isLoading={isLoading} />
+            <Pendingupload isLoading={isLoading} />
           </Grid>
         </Grid>
       </Grid>
@@ -90,7 +90,7 @@ const Dashboard = () => {
         <Grid container spacing={gridSpacing} sx={{ pt: { lg: 2, xs: 0 } }}>
           <Grid item lg={6} md={12} sm={12} xs={12} >
             {/* <BirthdayNews isLoading={isLoading} /> */}
-            <Pendingupload isLoading={isLoading} />
+            {/* <Inbox isLoading={isLoading} /> */}
           </Grid>
           <Grid item sm={12} xs={12} md={12} lg={6}>
             {/* <Organization isLoading={isLoading} /> */}

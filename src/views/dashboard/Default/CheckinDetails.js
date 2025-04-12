@@ -214,7 +214,7 @@ const CheckinDetails = ({ isLoading }) => {
             </Typography>
           </Grid>
 
-          <CardWrapper border={false} content={false} sx={{mt:4 , pt:1}}>
+          <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
             <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
               <Grid container direction="column" spacing={2}>
                 {/* Profile Section */}
@@ -247,85 +247,127 @@ const CheckinDetails = ({ isLoading }) => {
                       </Box>
                     </Box>
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'start', mb: 0, pl: { lg: 5 }, ml: { lg: 5 }, }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      justifyContent: { xs: 'center', lg: 'flex-start' },
+                      flexDirection: { xs: 'row', sm: 'row' },
+                      mb: 0,
+                      pl: { lg: 5 },
+                      ml: { lg: 5 },
+                      width: '100%'
+                    }}
+                  >
                     <Button
                       variant="contained"
                       startIcon={<LoginIcon />}
                       color="primary"
                       sx={{
-                        minWidth: 120,
+                        minWidth: isMobile ? 48 : 120,
+                        px: isMobile ? 1.5 : 2,
                         py: 1,
                         borderRadius: '10px',
                         textTransform: 'none',
                         bgcolor: isCheckedIn ? 'grey.300' : 'success.main',
-                        '&:hover': { bgcolor: isCheckedIn ? 'grey.300' : 'success.dark' }
+                        '&:hover': {
+                          bgcolor: isCheckedIn ? 'grey.300' : 'success.dark'
+                        }
                       }}
                       onClick={handleCheckIn}
                       disabled={isCheckedIn}
                     >
-                      Check-In
+                      {!isMobile && 'Check-In'}
                     </Button>
+
                     <Button
                       variant="contained"
                       startIcon={<LogoutIcon />}
                       color="secondary"
                       sx={{
-                        minWidth: 120,
+                        minWidth: isMobile ? 48 : 120,
+                        px: isMobile ? 1.5 : 2,
                         py: 1,
                         borderRadius: '10px',
                         textTransform: 'none',
                         bgcolor: !isCheckedIn ? 'grey.300' : 'error.main',
-                        '&:hover': { bgcolor: !isCheckedIn ? 'grey.300' : 'error.dark' }
+                        '&:hover': {
+                          bgcolor: !isCheckedIn ? 'grey.300' : 'error.dark'
+                        }
                       }}
                       onClick={handleCheckOut}
                       disabled={!isCheckedIn}
                     >
-                      Check-Out
+                      {!isMobile && 'Check-Out'}
                     </Button>
                   </Box>
+
                 </Grid>
 
                 {/* Recent Activity Section */}
-                <Grid item>
-                  <Typography variant="h6" sx={{ mb: 0, color: 'secondary.light', fontSize: isMobile ? '15px' : '15px' }}>
+                <Grid item xs={12}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      mb: 0,
+                      color: 'secondary.light',
+                      fontSize: { xs: '14px', sm: '15px' },
+                    }}
+                  >
                     Recent Activity
                   </Typography>
-                  <List sx={{ borderRadius: '8px', p: 0, display: 'flex', flexDirection: 'column' }}>
-                    <div className="d-flex ">
-                      <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
+
+                  <List
+                    sx={{
+                      borderRadius: '8px',
+                      p: 0,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: { xs: 1, sm: 0 },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        gap: { xs: '8px', sm: '16px' },
+                        p: { xs: '8px', sm: '0' },
+                        borderRadius: { xs: '8px', sm: '0' },
+                      }}
+                    >
+                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
+                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
+                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
                           {checkInTime
                             ? `Check-In at ${checkInTime.toLocaleTimeString('en-US', {
                               hour: 'numeric',
                               minute: 'numeric',
                               second: 'numeric',
-                              hour12: true
+                              hour12: true,
                             })}`
-                            : `No Check-In Recorded `}
+                            : `No Check-In Recorded`}
                         </Typography>
                       </ListItem>
-                      <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
+
+                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
+                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
+                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
                           {checkOutTime
                             ? `Check-Out at ${checkOutTime.toLocaleTimeString('en-US', {
                               hour: 'numeric',
                               minute: 'numeric',
                               second: 'numeric',
-                              hour12: true
+                              hour12: true,
                             })}`
                             : 'No Check-Out Recorded'}
                         </Typography>
                       </ListItem>
-                    </div>
+                    </Box>
+
                     {hoursWorked && (
-                      <ListItem sx={{ px: 0 }}>
-                        <AccessTimeIcon
-                          className="text-muted"
-                          sx={{ mr: 1, color: 'secondary.light', fontSize: isMobile ? '15px' : '20px' }}
-                        />
-                        <Typography className="text-muted" sx={{ color: 'secondary.light', fontSize: isMobile ? '12px' : '13px' }}>
+                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
+                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
+                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
                           Hours Worked: {hoursWorked}
                         </Typography>
                       </ListItem>
