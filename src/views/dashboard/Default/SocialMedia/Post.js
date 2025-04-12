@@ -32,6 +32,7 @@ import { useTheme } from '@mui/material/styles';
 import apiCalls from 'apicall';
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import { showToast } from 'utils/toast-component';
 
 function Post({ blockEdit = false, enableEditing = true }) {
   const [listViewData, setListViewData] = useState([]);
@@ -39,11 +40,15 @@ function Post({ blockEdit = false, enableEditing = true }) {
   const [selectedImage, setSelectedImage] = useState(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
-  const orgId = localStorage.getItem('orgId');
-  const id = localStorage.getItem('id');
+  // const id = localStorage.getItem('id');
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const loginUserName = localStorage.getItem('userName');
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [department, setDepartment] = useState(localStorage.getItem('department'));
+  const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,6 +56,8 @@ function Post({ blockEdit = false, enableEditing = true }) {
     circularTopic: '',
     circularcontent: '',
     postImage: '',
+    circularId: '',
+    liked: 'YES'
   });
 
 
@@ -58,56 +65,103 @@ function Post({ blockEdit = false, enableEditing = true }) {
 
   const theme = useTheme();
 
-  // Add this function near your other handler functions
-  const handleLike = () => {
-    if (isLiked) {
-      setLikes(likes - 1);
-    } else {
-      setLikes(likes + 1);
+  const handleLike = async (circular) => {
+    const updatedLikedState = !isLiked;
+    setIsLiked(updatedLikedState);
+  
+    const currentCircularId = circular.id;
+    const currentFinYear = circular.finYear;
+    const currentCircularTopic = circular.circularTopic;
+  
+    const saveData = {
+      ...(editId && { id: editId }),
+      branchCode,
+      branchName: branch,
+      circularId: currentCircularId,
+      department,
+      finYear: currentFinYear,
+      liked: updatedLikedState ? 'YES' : 'NO',
+      orgId,
+      userName: loginUserName,
+      circularTopic: currentCircularTopic,
+    };
+  
+    console.log("🔎 Save Data being sent to API:", saveData);
+  
+    try {
+      const response = await apiCalls('put', '/basicmaster/createUpdatePraise', saveData);
+  
+      if (response.status === true) {
+        const praise = await getCountOfPraise(currentCircularId);
+  
+        if (praise) {
+          setListViewData((prevData) =>
+            prevData.map((item) =>
+              item.id === currentCircularId ? { ...item, likes: praise.likes } : item
+            )
+          );
+        }
+      } else {
+        setIsLiked(!updatedLikedState);
+        toast.error('Failed to update like');
+      }
+    } catch (error) {
+      console.error('Error liking post:', error);
+      setIsLiked(!updatedLikedState);
+      toast.error('Network error while updating like');
     }
-    setIsLiked(!isLiked);
-  };
-
+  };  
 
   // Fetch all circulars on component mount
   useEffect(() => {
     getAllCircularByOrgId();
-    getLeaveProcessByOrgId();
+    // getCountOfPraise();
   }, [orgId]);
-
-  const getLeaveProcessByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${id}&orgId=${orgId}`);
-      if (result && result.paramObjectsMap && result.paramObjectsMap.leaveProcessVO.reverse()) {
-        setListViewData(result.paramObjectsMap.leaveProcessVO.reverse());
-      } else {
-        setListViewData([]);
-      }
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setListViewData([]);
-    }
-  };
-
 
   // Fetch all circulars by organization ID
   const getAllCircularByOrgId = async () => {
     try {
       const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?orgId=${orgId}`);
       if (result?.paramObjectsMap?.circularVO) {
-        const formattedData = result.paramObjectsMap.circularVO
-          .map((item, index) => ({
-            id: item.circularId || index,
-            ...item,
-          }))
-          .reverse();
-        setListViewData(formattedData);
+        const circulars = result.paramObjectsMap.circularVO.reverse();
+
+        // Fetch praise count for each circular
+        const circularsWithLikes = await Promise.all(
+          circulars.map(async (item) => {
+            const praise = await getCountOfPraise(item.id);
+            return {
+              ...item,
+              likes: praise?.likes || 0, // Assume praiseVO contains `likes`
+            };
+          })
+        );
+
+        setListViewData(circularsWithLikes);
+        console.log("Circular with likes", circularsWithLikes);
       } else {
         setListViewData([]);
       }
     } catch (err) {
-      console.error('Error fetching data:', err);
+      console.error('Error fetching circular data:', err);
       setListViewData([]);
+    }
+  };
+
+  const getCountOfPraise = async (circularId) => {
+    try {
+      const result = await apiCalls(
+        'get',
+        `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${circularId}&orgId=${orgId}`
+      );
+
+      if (result?.paramObjectsMap?.praiseVO) {
+        return result.paramObjectsMap.praiseVO[0];
+      } else {
+        return null; // Return null if no praise found
+      }
+    } catch (err) {
+      console.error(`Error fetching praise count for circularId ${circularId}:`, err);
+      return null;
     }
   };
 
@@ -344,6 +398,8 @@ function Post({ blockEdit = false, enableEditing = true }) {
                     >
                       {listViewData[0].circularTopic}
                     </Typography>
+
+                    {/* Likes */}
                     <CardActions sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <IconButton
                         aria-label="like"
@@ -358,7 +414,10 @@ function Post({ blockEdit = false, enableEditing = true }) {
                         {isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
                       </IconButton>
                       <Typography variant="body2" color="text.secondary">
-                        {likes}
+                        <Typography variant="body2" color="text.secondary">
+                          <div>{likes?.Count}</div>
+                        </Typography>
+
                       </Typography>
                     </CardActions>
                   </div>
@@ -470,6 +529,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
             helperText={fieldErrors.circularTopic}
             sx={{ mb: 2 }}
           />
+
           <TextField
             label="Content"
             fullWidth
@@ -504,9 +564,26 @@ function Post({ blockEdit = false, enableEditing = true }) {
                   disableGutters
                   sx={{ py: 1 }}
                   secondaryAction={
-                    <IconButton edge="end" onClick={() => getCircularById(item)}>
-                      <EditIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        {item.likes?.Count}
+                      </Typography>
+                      <IconButton
+                        aria-label="like"
+                        onClick={() => handleLike(item.id)} // Ensure this function receives item id or the whole item if needed
+                        sx={{
+                          color: item.isLiked ? theme.palette.primary.main : 'inherit',
+                          '&:hover': {
+                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
+                          }
+                        }}
+                      >
+                        {item.isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
+                      </IconButton>
+                      <IconButton edge="end" onClick={() => getCircularById(item)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Box>
                   }
                 >
                   <ListItemAvatar>
