@@ -115,7 +115,7 @@ const EmployeeDetails = () => {
     profileImage: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [logo, setLogo] = useState('');
+  const [logo, setLogo] = useState(null);
   const [leaveTypeTable, setLeaveTypeTable] = useState([
     {
       id: 1,
@@ -578,9 +578,14 @@ const EmployeeDetails = () => {
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           handleClear();
           getAllEmployees();
-          handleImageUpload(response.paramObjectsMap.employeeVO.id);
-          setIsLoading(false);
-          setLogo(null);
+          const generatedId = response.paramObjectsMap.employeeVO.id;
+          if (generatedId && typeof logo === 'object') {
+            handleImageUpload(generatedId);
+          }
+          else{
+            setLogo(null);
+          }
+          setIsLoading(false); 
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
           setIsLoading(false);
@@ -594,6 +599,12 @@ const EmployeeDetails = () => {
       setFieldErrors(errors);
     }
   };
+
+  // Helper function to convert image URL to a File
+  const blobToFile = (theBlob, fileName) => {
+    return new File([theBlob], fileName, { type: theBlob.type });
+  };
+
 
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
@@ -613,7 +624,6 @@ const EmployeeDetails = () => {
         if (designationCode && gender) {
           await getAllLeaveType(designationCode, gender);
         }
-        setLogo(result.paramObjectsMap.Employee.profileImage);
 
         setFormData({
           employeeName: employeeDetailsVO.employeeName || '',
@@ -652,6 +662,12 @@ const EmployeeDetails = () => {
             effectiveFrom: cl.effectiveFrom
           }))
         );
+
+        const profileImageBlob = result.paramObjectsMap.Employee.profileImage;
+        // const fileProfileImage = blobToFile(profileImageBlob, "profile_image.jpg");
+        setLogo(profileImageBlob);
+
+
 
         if (employeeCode) {
           await getAllReportingPerson(employeeCode);
@@ -709,6 +725,7 @@ const EmployeeDetails = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      console.log("Handle==>", file)
       setLogo(file);
     } else {
       showToast('error', 'Please upload a valid image (PNG or JPEG).');
@@ -717,23 +734,19 @@ const EmployeeDetails = () => {
 
   const handleImageUpload = async (id) => {
     if (!logo) {
-      console.error('No image found in formData.profileImage');
+      console.error('No image found');
       return;
     }
-
-    console.log('ID:', id); // Debugging
-
+    console.log('ID:', id);
     try {
       setIsLoading(true);
-
-      // Create FormData object
       const formDataToSend = new FormData();
       formDataToSend.append('file', logo); // Append the actual file
 
+      console.log("Test==>", logo)
+
       const uploadResponse = await apiCalls(
-        'post',
-        `/master/uploadEmployeeImageInBloob?id=${id}`,
-        formDataToSend,
+        'post', `/master/uploadEmployeeImageInBloob?id=${id}`, formDataToSend,
         {},
         { 'Content-Type': 'multipart/form-data' } // Ensure proper headers
       );
