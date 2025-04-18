@@ -783,3 +783,28 @@
   background: #d8f3f1 !important;
   color: #10413d !important;
 }
+
+.react-calendar {
+  width: 100% !important;
+}
+
+.react-calendar__tile {
+  width: 100% !important;
+  max-width: none !important;
+}
+.react-calendar__navigation__label {
+  font-size: 24px !important;
+}
+
+/* Increase size of weekday headers (Mon, Tue, etc.) */
+.react-calendar__month-view__weekdays {
+  font-size: 1rem !important;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Increase size of the day numbers (1, 2, etc.) */
+.react-calendar__tile {
+  font-size: 1.1rem;
+  font-weight: 500;
+}

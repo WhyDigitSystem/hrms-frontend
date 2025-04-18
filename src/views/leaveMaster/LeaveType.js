@@ -107,21 +107,62 @@ const LeaveType = () => {
   ];
 
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+
+  //   let updatedValue = type === 'checkbox' ? checked : value;
+
+  //   setFormData((prevFormData) => ({
+  //     ...prevFormData,
+  //     [name]: updatedValue
+  //   }));
+
+  //   setFieldErrors((prevErrors) => ({
+  //     ...prevErrors,
+  //     [name]: ''
+  //   }));
+
+  //   if (type === 'text' || type === 'email' || type === 'textarea') {
+  //     setTimeout(() => {
+  //       const inputElement = document.getElementsByName(name)[0];
+  //       if (inputElement) {
+  //         inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //       }
+  //     }, 0);
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
     let updatedValue = type === 'checkbox' ? checked : value;
-
+  
+    // Update form data
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: updatedValue
     }));
-
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: ''
-    }));
-
+  
+    // Validation logic for 'leaveType'
+    if (name === 'leaveType') {
+      if (updatedValue.length < 3) {
+        setFieldErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: 'Minimum 3 characters required'
+        }));
+      } else {
+        setFieldErrors((prevErrors) => ({
+          ...prevErrors,
+          [name]: ''
+        }));
+      }
+    } else {
+      setFieldErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: ''
+      }));
+    }
+  
+    // Maintain cursor position
     if (type === 'text' || type === 'email' || type === 'textarea') {
       setTimeout(() => {
         const inputElement = document.getElementsByName(name)[0];
@@ -130,7 +171,7 @@ const LeaveType = () => {
         }
       }, 0);
     }
-  };
+  };  
 
   const handleClear = () => {
     setFormData({

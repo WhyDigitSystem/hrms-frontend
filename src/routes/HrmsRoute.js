@@ -25,16 +25,12 @@ const Region = Loadable(lazy(() => import('views/basicMaster/RegionMaster')));
 const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
 const ScreenNames = Loadable(lazy(() => import('views/basicMaster/ScreenNames')));
 const LeaveAssigned = Loadable(lazy(() => import('views/basicMaster/leaveAssigned')));
+const ProjectMaster = Loadable(lazy(() => import('views/basicMaster/ProjectMaster')));
 
 // Employee Master
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
 const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
 const AttendenceProcess = Loadable(lazy(() => import('views/employeeMaster/AttendenceProcess')));
-
-
-//finance
-const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
-
 
 // Leave master
 const LeaveType = Loadable(lazy(() => import('views/leaveMaster/LeaveType')));
@@ -53,6 +49,8 @@ const PermissionRequest = Loadable(lazy(() => import('views/me/PermissionRequest
 const LeaveRequest = Loadable(lazy(() => import('views/me/LeaveRequest')));
 const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')));
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
+const TimeSheet = Loadable(lazy(() => import('views/me/TimeSheet')));
+const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
 
 //team
 const LeaveApproval = Loadable(lazy(() => import('views/team/LeaveApproval')));
@@ -118,6 +116,10 @@ const HrmsRoute = {
       element: <Designation />
     },
     {
+      path: '/basicMaster/ProjectMaster',
+      element: <ProjectMaster />
+    },
+    {
       path: '/basicMaster/roles',
       element: <Roles />
     },
@@ -140,10 +142,6 @@ const HrmsRoute = {
     {
       path: '/employeeMaster/AttendenceProcess',
       element: <AttendenceProcess />
-    },
-    {
-      path: '/finance/Payslip',
-      element: <Payslip />
     },
     {
       path: '/leaveMaster/LeaveType',
@@ -192,6 +190,14 @@ const HrmsRoute = {
     {
       path: '/me/SwipeInSwipeOut',
       element: <SwipeInSwipeOut />
+    },
+    {
+      path: '/me/TimeSheet',
+      element: <TimeSheet />
+    },
+    {
+      path: '/finance/Payslip',
+      element: <Payslip />
     },
     // Team path
     {

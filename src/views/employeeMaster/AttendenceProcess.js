@@ -3,7 +3,6 @@ import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBullete
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import FormControl from '@mui/material/FormControl';
-import Button from '@mui/material/Button';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
@@ -23,6 +22,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
 
 const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +42,10 @@ const AttendenceProcess = () => {
   const [fieldErrors, setFieldErrors] = useState({
     fromDate: null,
     toDate: null
+  });
+  const [errorDialog, setErrorDialog] = useState({
+    open: false,
+    message: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -96,18 +100,52 @@ const AttendenceProcess = () => {
   //   }
   // };
 
+  // const getAllLeaveProcess = async () => {
+  //   if (!formData.fromDate || !formData.toDate) {
+  //     setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
+  //     );
+
+  //     if (response.status === true && Array.isArray(response.paramObjectsMap.leaveProcessVO)) {
+  //       const formattedData = response.paramObjectsMap.leaveProcessVO.map((item) => ({
+  //         ...item,
+  //         totalLeave: parseFloat(item.totalLeave).toString(),
+  //         lopLeave: parseFloat(item.lopLeave).toString(),
+  //         empSalaryDays: parseFloat(item.empSalaryDays).toString(),
+  //         empTotalWorkingDays: parseFloat(item.empTotalWorkingDays).toString()
+  //       }));
+
+  //       setAllLeave(formattedData);
+  //       setListViewData(formattedData);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
   const getAllLeaveProcess = async () => {
     if (!formData.fromDate || !formData.toDate) {
-      setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
+      setFieldErrors({
+        fromDate: !formData.fromDate ? 'From Date is required' : '',
+        toDate: !formData.toDate ? 'To Date is required' : ''
+      });
       return;
     }
-
+  
     try {
       const response = await apiCalls(
         'get',
         `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
       );
-
+  
       if (response.status === true && Array.isArray(response.paramObjectsMap.leaveProcessVO)) {
         const formattedData = response.paramObjectsMap.leaveProcessVO.map((item) => ({
           ...item,
@@ -116,14 +154,20 @@ const AttendenceProcess = () => {
           empSalaryDays: parseFloat(item.empSalaryDays).toString(),
           empTotalWorkingDays: parseFloat(item.empTotalWorkingDays).toString()
         }));
-
+  
         setAllLeave(formattedData);
         setListViewData(formattedData);
       } else {
-        console.error('API Error:', response);
+        setFieldErrors({
+          fromDate: '',
+          toDate: response.paramObjectsMap?.errorMessage || 'No leave data found'
+        });
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      setFieldErrors({
+        fromDate: '',
+        toDate: 'Failed to fetch leave details. Please try again later.'
+      });
     }
   };
 
@@ -157,12 +201,15 @@ const AttendenceProcess = () => {
   const handleSave = async () => {
     const errors = {};
 
-    // Validate required fields
     if (!formData.fromDate) {
       errors.fromDate = 'From Date is required';
     }
     if (!formData.toDate) {
       errors.toDate = 'To Date is required';
+    }
+
+    if (allLeave.length === 0) {
+      errors.table = 'No data available in the table. Please add employees before saving.';
     }
 
     if (Object.keys(errors).length === 0) {
@@ -241,7 +288,7 @@ const AttendenceProcess = () => {
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-            <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
+            <ActionButton title="Search" icon={SearchIcon} onClick={getAllLeaveProcess} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
@@ -252,7 +299,7 @@ const AttendenceProcess = () => {
             <CommonListViewTable
               data={listViewData}
               columns={listViewColumns}
-              blockEdit={true} // Disable modal if true
+              blockEdit={true}
               toEdit={true}
               enableEditing={true}
             />
@@ -269,9 +316,13 @@ const AttendenceProcess = () => {
                       value={formData.fromDate ? dayjs(formData.fromDate) : null}
                       onChange={(date) => handleDateChange('fromDate', date)}
                       format="DD-MM-YYYY"
-                      slotProps={{ textField: { size: 'small', clearable: true } }}
-                      error={fieldErrors.fromDate}
-                      helperText={fieldErrors.fromDate ? 'This field is required' : ''}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          error: !!fieldErrors.fromDate,
+                          helperText: fieldErrors.fromDate
+                        }
+                      }}
                     />
                   </LocalizationProvider>
                 </FormControl>
@@ -285,16 +336,23 @@ const AttendenceProcess = () => {
                       value={formData.toDate ? dayjs(formData.toDate) : null}
                       onChange={(date) => handleDateChange('toDate', date)}
                       format="DD-MM-YYYY"
-                      slotProps={{ textField: { size: 'small', clearable: true } }}
-                      error={fieldErrors.toDate}
-                      helperText={fieldErrors.toDate ? 'This field is required' : ''}
+                      minDate={formData.fromDate ? dayjs(formData.fromDate) : null}
+                      disabled={!formData.fromDate}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          error: !!fieldErrors.toDate,
+                          helperText: fieldErrors.toDate
+                        }
+                      }}
                     />
                   </LocalizationProvider>
                 </FormControl>
               </div>
             </div>
+
             <div className="row mt-3">
-              <div className="col-md-2">
+              {/* <div className="col-md-2">
                 <Button
                   variant="contained"
                   color="primary"
@@ -304,8 +362,8 @@ const AttendenceProcess = () => {
                 >
                   Search
                 </Button>
-              </div>
-              <div className="col-md-2">
+              </div> */}
+              {/* <div className="col-md-2">
                 <Button
                   variant="contained"
                   color="secondary"
@@ -318,7 +376,7 @@ const AttendenceProcess = () => {
                 >
                   Cancel
                 </Button>
-              </div>
+              </div> */}
               <div className="col-md-3">
                 <Box
                   sx={{
@@ -446,6 +504,17 @@ const AttendenceProcess = () => {
           </>
         )}
       </div>
+      <Dialog open={errorDialog.open} onClose={() => setErrorDialog({ open: false, message: '' })}>
+        <DialogTitle>Error</DialogTitle>
+        <DialogContent>
+          <DialogContentText>{errorDialog.message}</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setErrorDialog({ open: false, message: '' })} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <ToastContainer />
     </>

@@ -19,7 +19,7 @@ import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Autocomplete } from '@mui/material';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
 
 const PermissionRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +30,7 @@ const PermissionRequest = () => {
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
+  const [shiftTime, setShiftTime] = useState({ shiftIn: '', shiftOut: '' });
   const [errorDialog, setErrorDialog] = useState({
     open: false,
     message: ''
@@ -68,6 +69,7 @@ const PermissionRequest = () => {
   useEffect(() => {
     getAllPermissionRequestByOrgId();
     getNotifyList();
+    getCompanyDetails();
     setFormData((prev) => ({
       ...prev,
       formDate: dayjs()
@@ -107,6 +109,19 @@ const PermissionRequest = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const getCompanyDetails = async () => {
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const companyData = result.paramObjectsMap.companyVO[0];
+      setShiftTime({
+        shiftIn: companyData.shiftIn, // e.g., "10:00:00"
+        shiftOut: companyData.shiftOut // e.g., "19:30:00"
+      });
+    } catch (error) {
+      console.error('Error', error);
     }
   };
 
@@ -172,7 +187,7 @@ const PermissionRequest = () => {
   const handleClear = () => {
     // Reset the form data state
     setFormData({
-      formDate: null,
+      formDate: dayjs(),
       fromTime: null,
       toTime: null,
       totalHours: '',
@@ -308,55 +323,6 @@ const PermissionRequest = () => {
     setFieldErrors((prev) => ({ ...prev, formDate: '' }));
   };
 
-  // const handleTimeChange = (field, newValue) => {
-  //   setFormData((prev) => {
-  //     const updatedFormData = { ...prev, [field]: newValue };
-
-  //     // When both fromTime and toTime are present, calculate totalHours
-  //     if (updatedFormData.fromTime && updatedFormData.toTime) {
-  //       const fromTime = dayjs(updatedFormData.fromTime);
-  //       const toTime = dayjs(updatedFormData.toTime);
-
-  //       // Check if toTime is after fromTime
-  //       if (toTime.isAfter(fromTime)) {
-  //         const durationInMinutes = toTime.diff(fromTime, 'minute'); // Get the duration in minutes
-
-  //         // Check if the duration exceeds 2 hours (120 minutes)
-  //         if (durationInMinutes > 120) {
-  //           // Set an error message for totalHours
-  //           setFieldErrors((prevErrors) => ({
-  //             ...prevErrors,
-  //             totalHours: 'Permission request cannot exceed 2 hours.',
-  //           }));
-  //           updatedFormData.totalHours = '00:00'; // Reset totalHours if the duration is invalid
-  //         } else {
-  //           // Clear the error message if the duration is valid
-  //           setFieldErrors((prevErrors) => ({
-  //             ...prevErrors,
-  //             totalHours: '',
-  //           }));
-
-  //           // Format the total hours as HH:mm
-  //           const totalHoursFormatted = dayjs()
-  //             .startOf('day') // Start from 00:00
-  //             .add(durationInMinutes, 'minute') // Add the duration in minutes
-  //             .format('HH:mm'); // Format as HH:mm
-  //           updatedFormData.totalHours = totalHoursFormatted;
-  //         }
-  //       } else {
-  //         // If toTime is earlier than fromTime, set an error
-  //         setFieldErrors((prevErrors) => ({
-  //           ...prevErrors,
-  //           totalHours: 'To Time must be after From Time.',
-  //         }));
-  //         updatedFormData.totalHours = '00:00'; // Reset totalHours
-  //       }
-  //     }
-
-  //     return updatedFormData;
-  //   });
-  // };
-
   const handleTimeChange = (fieldName, newValue) => {
     if (!newValue) return;
 
@@ -414,6 +380,7 @@ const PermissionRequest = () => {
     setFormData((prevData) => ({
       ...prevData,
       toTime: null,
+      totalHours: ""
     }));
   };
 
@@ -460,15 +427,15 @@ const PermissionRequest = () => {
 
               {/* From Time */}
               <div className="col-md-3 mb-3">
-                {' '}
-                {/* From Time */}
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <TimePicker
                       label="From Time"
                       value={formData.fromTime ? dayjs(formData.fromTime, 'HH:mm') : null}
                       onChange={(newValue) => handleTimeChange('fromTime', newValue)}
-                      ampm={false} // 24-hour format
+                      ampm={false}
+                      minTime={dayjs(shiftTime.shiftIn, 'HH:mm:ss')}
+                      maxTime={dayjs(shiftTime.shiftOut, 'HH:mm:ss')}
                       slots={{
                         openPickerIcon: AccessTimeIcon
                       }}
@@ -490,7 +457,9 @@ const PermissionRequest = () => {
                       label="To Time"
                       value={formData.toTime ? dayjs(formData.toTime, 'HH:mm') : null}
                       onChange={(newValue) => handleTimeChange('toTime', newValue)}
-                      ampm={false} // 24-hour format
+                      ampm={false}
+                      minTime={dayjs(shiftTime.shiftIn, 'HH:mm:ss')}
+                      maxTime={dayjs(shiftTime.shiftOut, 'HH:mm:ss')}
                       slots={{
                         openPickerIcon: AccessTimeIcon
                       }}

@@ -26,16 +26,12 @@ const getMenuItems = () => {
     ...companySetup,
     children: companySetup.children.map((child) => ({
       ...child,
-      children: child.children.filter(
-        (item) => item.id === 'company'
-      )
+      children: child.children.filter((item) => item.id === 'company')
     }))
   };
-  
 
   const defaultMenuItems = {
-    items: localStorageValue === 'SADMIN'
-      && [filteredCompanySetup] // Show only filteredCompanySetup for SADMIN
+    items: localStorageValue === 'SADMIN' && [filteredCompanySetup] // Show only filteredCompanySetup for SADMIN
   };
 
   // Define menu items based on localStorage value
@@ -46,19 +42,18 @@ const getMenuItems = () => {
       };
     case 'USER':
       return {
-        items: [dashboard, calendar, me,finance]
+        items: [dashboard, calendar, me, finance]
       };
     case 'DEPARTMENT HEAD':
       return {
-        items: [dashboard, calendar, me,finance , team,]
+        items: [dashboard, calendar, me, finance, team]
       };
     case 'TEAM LEAD':
       return {
-        items: [dashboard, calendar, me,finance , team,]
+        items: [dashboard, calendar, me, finance, team]
       };
-    // Add more cases as needed
     default:
-      return defaultMenuItems; // Return default menu items if no match is found
+      return defaultMenuItems;
   }
 };
 
