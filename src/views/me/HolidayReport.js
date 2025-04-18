@@ -82,7 +82,7 @@ const HolidayReport = () => {
       doc.setTextColor(100);
       doc.text(`Generated on: ${formatDate(new Date())}`, 105, 29, { align: "center" });
 
-      const headers = [["No.", "Date", "Day", "Holidays"]];
+      const headers = [["S.No", "Date", "Day", "Holidays"]];
       const data = listViewData.map((item, index) => [
         index + 1,
         formatDate(item.holidayDate),
@@ -97,7 +97,7 @@ const HolidayReport = () => {
         theme: "grid",
         styles: { fontSize: 9, cellPadding: 3, overflow: "linebreak" },
         headStyles: { fillColor: [63, 81, 181], textColor: 255, fontSize: 10, halign: "center" },
-        columnStyles: { 0: { cellWidth: 10, halign: "center" } },
+        columnStyles: { 0: { cellWidth: 20, halign: "center" } },
       });
 
       doc.save("holidays_report.pdf");

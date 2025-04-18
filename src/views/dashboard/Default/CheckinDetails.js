@@ -115,7 +115,8 @@ const CheckinDetails = ({ isLoading }) => {
       status: true,
       orgId: orgId,
       branch: branch,
-      empcode: empcode
+      empcode: empcode,
+      empName:empName
     };
 
     try {
@@ -142,7 +143,8 @@ const CheckinDetails = ({ isLoading }) => {
       status: false,
       orgId: orgId,
       branch: branch,
-      empcode: empcode
+      empcode: empcode,
+      empName:empName
     };
 
     try {
