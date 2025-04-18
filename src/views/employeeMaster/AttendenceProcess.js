@@ -55,6 +55,7 @@ const AttendenceProcess = () => {
     { accessorKey: 'totalLeave', header: 'Total Leave', size: 140 },
     { accessorKey: 'empTotalWorkingDays', header: 'Emp Total Working Days', size: 140 },
     { accessorKey: 'empSalaryDays', header: 'Emp Salary Days', size: 140 },
+    { accessorKey: 'month', header: 'Month', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
   const [allLeave, setAllLeave] = useState([]);
