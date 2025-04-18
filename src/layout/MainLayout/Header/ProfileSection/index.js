@@ -642,10 +642,10 @@ const ProfileSection = () => {
                     </Avatar>
                     <Box>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Account Holder Name
+                        Bank Name
                       </Typography>
                       <Typography variant="h6">
-                        {employeeData.accountHolderName || 'N/A'}
+                        {employeeData.bankName || 'N/A'}
                       </Typography>
                     </Box>
                   </Stack>

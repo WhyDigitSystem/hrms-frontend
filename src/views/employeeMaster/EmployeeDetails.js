@@ -50,6 +50,11 @@ const EmployeeDetails = () => {
   // const [roleList, setRoleList] = useState([]);
   const [allleaveType, setAllLeaveType] = useState([]);
   const [allReportingPerson, setAllReportingPerson] = useState([]);
+  const aadhaarRegex = /^\d{12}$/;
+  const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+  const accountRegex = /^\d{9,18}$/;
+  const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+  const mobileRegex = /^[6-9]\d{9}$/;
   const theme = useTheme();
   const anchorRef = useRef(null);
   const [listViewData, setListViewData] = useState([]);
@@ -270,10 +275,50 @@ const EmployeeDetails = () => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
     const nameRegex = /^[A-Za-z ]*$/;
     const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
-
     const numberRegex = /^[0-9]*$/;
 
     let errorMessage = '';
+    let inputValue = value;
+
+    switch (name) {
+      case 'aadhaarNo':
+      case 'accountNo':
+      case 'mobileNo':
+      case 'altMobileNo':
+        inputValue = value.replace(/\D/g, ''); // Only digits
+        break;
+      case 'panNo':
+      case 'ifscCode':
+        inputValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        break;
+      default:
+        break;
+    }
+
+    // Sanitize inputs based on field type
+    if (name === 'aadhaarNo') {
+      if (!aadhaarRegex.test(inputValue)) {
+        errorMessage = 'Aadhaar must be 12 digits';
+      }
+    } else if (name === 'panNo') {
+      if (inputValue.length === 10 && !panRegex.test(inputValue)) {
+        errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
+      }
+    } else if (name === 'accountNo') {
+      if (!accountRegex.test(inputValue)) {
+        errorMessage = 'Account must be 9-18 digits';
+      }
+    } else if (name === 'ifscCode') {
+      if (inputValue.length === 11 && !ifscRegex.test(inputValue)) {
+        errorMessage = 'Invalid IFSC format (e.g., SBIN0123456)';
+      }
+    } else if (name === 'mobileNo' || name === 'altMobileNo') {
+      if (inputValue.length === 10 && !mobileRegex.test(inputValue)) {
+        errorMessage = 'Invalid Mobile Number';
+      } else if (inputValue.length > 0 && inputValue.length !== 10) {
+        errorMessage = 'Mobile number must be 10 digits';
+      }
+    }
 
     if (name === 'employeeName' && !codeRegex.test(value)) {
       errorMessage = 'Invalid Format';
@@ -286,6 +331,23 @@ const EmployeeDetails = () => {
         errorMessage = 'Mobile number cannot exceed 10 digits.';
       }
     }
+    // Validation logic
+    if (name === 'aadhaarNo') {
+      if (!aadhaarRegex.test(inputValue)) {
+        errorMessage = 'Aadhaar must be 12 digits';
+      }
+    } else if (name === 'panNo') {
+      if (inputValue.length === 10 && !panRegex.test(inputValue)) {
+        errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
+      }
+    } else if (name === 'accountNo') {
+      if (!accountRegex.test(inputValue)) {
+        errorMessage = 'Account must be 9-18 digits';
+      }
+    }
+
+    setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
 
     if (name === 'employeeCode' && !errorMessage) {
       getAllReportingPerson(value);
@@ -582,10 +644,10 @@ const EmployeeDetails = () => {
           if (generatedId && typeof logo === 'object') {
             handleImageUpload(generatedId);
           }
-          else{
+          else {
             setLogo(null);
           }
-          setIsLoading(false); 
+          setIsLoading(false);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Employee Details creation failed');
           setIsLoading(false);
@@ -1299,24 +1361,27 @@ const EmployeeDetails = () => {
                 />
               </div>
 
-              {/* Mobile No */}
+              {/* Mobile Number */}
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Mobile No"
                   variant="outlined"
                   size="small"
-                  type="text"
                   fullWidth
                   name="mobileNo"
                   value={formData.mobileNo}
                   onChange={handleInputChange}
                   error={!!fieldErrors.mobileNo}
                   helperText={fieldErrors.mobileNo}
+                  inputProps={{
+                    maxLength: 10,
+                    inputMode: 'numeric'
+                  }}
                 />
               </div>
 
               {/* Alternative Mobile No */}
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <TextField
                   label="Alternative Mobile No"
                   variant="outlined"
@@ -1328,6 +1393,23 @@ const EmployeeDetails = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.alternativeMobile}
                   helperText={fieldErrors.alternativeMobile}
+                />
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Alternative Mobile No"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="alternativeMobile"
+                  value={formData.alternativeMobile}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.alternativeMobile}
+                  helperText={fieldErrors.alternativeMobile}
+                  inputProps={{
+                    maxLength: 10,
+                    inputMode: 'numeric'
+                  }}
                 />
               </div>
 
@@ -1343,6 +1425,10 @@ const EmployeeDetails = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.aadhaarNo}
                   helperText={fieldErrors.aadhaarNo}
+                  inputProps={{
+                    maxLength: 12,
+                    inputMode: 'numeric'
+                  }}
                 />
               </div>
 
@@ -1357,7 +1443,11 @@ const EmployeeDetails = () => {
                   value={formData.panNo}
                   onChange={handleInputChange}
                   error={!!fieldErrors.panNo}
-                  helperText={fieldErrors.panNo}
+                  helperText={fieldErrors.panNo || 'Format: ABCDE1234F'}
+                  inputProps={{
+                    maxLength: 10,
+                    style: { textTransform: 'uppercase' }
+                  }}
                 />
               </div>
 
@@ -1373,8 +1463,12 @@ const EmployeeDetails = () => {
                   name="accountNo"
                   value={formData.accountNo}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.accountNo}
-                // helperText={fieldErrors.accountNo}
+                  error={!!fieldErrors.accountNo}
+                  helperText={fieldErrors.accountNo}
+                  inputProps={{
+                    inputMode: 'numeric',
+                    maxLength: 18
+                  }}
                 />
               </div>
 
@@ -1403,10 +1497,15 @@ const EmployeeDetails = () => {
                   name="ifscCode"
                   value={formData.ifscCode}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.ifscCode}
-                // helperText={fieldErrors.ifscCode}
+                  error={!!fieldErrors.ifscCode}
+                  helperText={fieldErrors.ifscCode || 'Format: SBIN0123456'}
+                  inputProps={{
+                    maxLength: 11,
+                    style: { textTransform: 'uppercase' }
+                  }}
                 />
               </div>
+
 
               {/* Active */}
               <div className="col-md-3 mb-3">

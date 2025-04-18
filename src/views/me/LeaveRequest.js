@@ -70,7 +70,9 @@ const LeaveRequest = () => {
     { accessorKey: 'toDate', header: 'To Date', size: 140 },
     { accessorKey: 'totalDays', header: 'Total Days', size: 140 },
     { accessorKey: 'notes', header: 'Notes', size: 140 },
-    { accessorKey: 'notify', header: 'Notify', size: 140 }
+    { accessorKey: 'notify', header: 'Notify', size: 140 },
+    { accessorKey: 'approveStatus', header: 'Status', size: 140 }
+
   ];
   const [listViewData, setListViewData] = useState([]);
   const [errorDialog, setErrorDialog] = useState({
