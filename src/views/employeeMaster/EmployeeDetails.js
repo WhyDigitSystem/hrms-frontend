@@ -159,8 +159,8 @@ const EmployeeDetails = () => {
   ];
 
   const columns = [
-    { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
-    { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
+    { accessorKey: 'employeeName', header: 'Name', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Code', size: 140 },
     // { accessorKey: 'branch', header: 'Branch', size: 140 },
     { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
     // { accessorKey: 'grade', header: 'Grade', size: 140 },
@@ -643,8 +643,7 @@ const EmployeeDetails = () => {
           const generatedId = response.paramObjectsMap.employeeVO.id;
           if (generatedId && typeof logo === 'object') {
             handleImageUpload(generatedId);
-          }
-          else {
+          } else {
             setLogo(null);
           }
           setIsLoading(false);
@@ -666,7 +665,6 @@ const EmployeeDetails = () => {
   const blobToFile = (theBlob, fileName) => {
     return new File([theBlob], fileName, { type: theBlob.type });
   };
-
 
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
@@ -702,6 +700,8 @@ const EmployeeDetails = () => {
           designation: employeeDetailsVO.designation || '',
           reportingPerson: employeeDetailsVO.reportnigPerson || '',
           reportingRole: employeeDetailsVO.reportingRole || '',
+          reportingPersonEmail: employeeDetailsVO.reportnigPersonEmail || '',
+          reportingPersonCode: employeeDetailsVO.reportningPersonCode || '',
           dob: employeeDetailsVO.dateOfBirth || '',
           bloodGroup: employeeDetailsVO.bloodGroup || '',
           mobileNo: employeeDetailsVO.mobileNo || '',
@@ -729,8 +729,6 @@ const EmployeeDetails = () => {
         // const fileProfileImage = blobToFile(profileImageBlob, "profile_image.jpg");
         setLogo(profileImageBlob);
 
-
-
         if (employeeCode) {
           await getAllReportingPerson(employeeCode);
         }
@@ -756,11 +754,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-            ...r,
-            leaveType: newValue ? newValue.leaveType : '',
-            leaveCode: newValue ? newValue.leaveCode : '',
-            totalLeave: newValue ? newValue.totalLeave : ''
-          }
+              ...r,
+              leaveType: newValue ? newValue.leaveType : '',
+              leaveCode: newValue ? newValue.leaveCode : '',
+              totalLeave: newValue ? newValue.totalLeave : ''
+            }
           : r
       )
     );
@@ -787,7 +785,7 @@ const EmployeeDetails = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
-      console.log("Handle==>", file)
+      console.log('Handle==>', file);
       setLogo(file);
     } else {
       showToast('error', 'Please upload a valid image (PNG or JPEG).');
@@ -805,10 +803,12 @@ const EmployeeDetails = () => {
       const formDataToSend = new FormData();
       formDataToSend.append('file', logo); // Append the actual file
 
-      console.log("Test==>", logo)
+      console.log('Test==>', logo);
 
       const uploadResponse = await apiCalls(
-        'post', `/master/uploadEmployeeImageInBloob?id=${id}`, formDataToSend,
+        'post',
+        `/master/uploadEmployeeImageInBloob?id=${id}`,
+        formDataToSend,
         {},
         { 'Content-Type': 'multipart/form-data' } // Ensure proper headers
       );
@@ -926,7 +926,7 @@ const EmployeeDetails = () => {
               {/* Employee Name */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Employee Name"
+                  label="Name"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -941,7 +941,7 @@ const EmployeeDetails = () => {
               {/* Employee Code */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Employee Code"
+                  label="Code"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1088,8 +1088,8 @@ const EmployeeDetails = () => {
                   name="team"
                   value={formData.team}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.team}
-                // helperText={fieldErrors.team}
+                  // error={!!fieldErrors.team}
+                  // helperText={fieldErrors.team}
                 />
               </div>
 
@@ -1381,23 +1381,9 @@ const EmployeeDetails = () => {
               </div>
 
               {/* Alternative Mobile No */}
-              {/* <div className="col-md-3 mb-3">
-                <TextField
-                  label="Alternative Mobile No"
-                  variant="outlined"
-                  size="small"
-                  type="text"
-                  fullWidth
-                  name="alternativeMobile"
-                  value={formData.alternativeMobile}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.alternativeMobile}
-                  helperText={fieldErrors.alternativeMobile}
-                />
-              </div> */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Alternative Mobile No"
+                  label="Emergency Mobile No"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -1482,8 +1468,8 @@ const EmployeeDetails = () => {
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.bankName}
-                // helperText={fieldErrors.bankName}
+                  // error={!!fieldErrors.bankName}
+                  // helperText={fieldErrors.bankName}
                 />
               </div>
 
@@ -1505,7 +1491,6 @@ const EmployeeDetails = () => {
                   }}
                 />
               </div>
-
 
               {/* Active */}
               <div className="col-md-3 mb-3">
