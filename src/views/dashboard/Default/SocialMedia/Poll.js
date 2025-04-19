@@ -32,75 +32,108 @@ import axios from 'axios';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 
-function Poll({}) {
+function Poll({ }) {
   const theme = useTheme();
   const [polls, setPolls] = useState([]);
   const [listViewData, setListViewData] = useState([]);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState({});
+  const [editId, setEditId] = useState('');
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [department, setDepartment] = useState(localStorage.getItem('department'));
   const [newPoll, setNewPoll] = useState({
     question: '',
-    options: ['', ''],
     expiresAt: '',
     maxSelection: 1,
     multiSelect: false
   });
+  const [pollDetails, setPollDetails] = useState(["", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  const getAllPollsByOrgId = useCallback(async () => {
-    setIsLoading(true);
+  useEffect(() => {
+    getAllPolls();
+  }, []);
+
+  // const getAllPollsByOrgId = useCallback(async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const response = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
+  //     console.log('API response:', response.data);
+
+  //     const pollsVO = response.data?.paramObjectsMap?.pollsVO;
+
+  //     if (Array.isArray(pollsVO) && pollsVO.length > 0) {
+  //       const pollsData = pollsVO.map(poll => {
+  //         const pollOptions = poll.pollDetailsVO || [];
+
+  //         return {
+  //           id: poll.id,
+  //           question: poll.question,
+  //           options: pollOptions.map(option => ({
+  //             id: option.id,
+  //             text: option.options || '',
+  //             votes: option.votes || 0
+  //           })),
+  //           totalVotes: pollOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0),
+  //           hasVoted: poll.hasVoted || false,
+  //           expiresAt: poll.expiresAt || '',
+  //           maxSelection: poll.maxSelection || 1,
+  //           multiSelect: poll.multiSelect || false,
+  //           createdDate: poll.createdDate || ''
+  //         };
+  //       });
+
+  //       setPolls(pollsData);
+  //       setListViewData(pollsData);
+  //       setFetchError(null);
+  //     } else {
+  //       setFetchError('No polls data available');
+  //       setPolls([]);
+  //       setListViewData([]);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching polls:', error);
+  //     setFetchError('Failed to load polls. Please try again.');
+  //     setPolls([]);
+  //     setListViewData([]);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // }, [orgId]);
+
+  const getAllPolls = async () => {
     try {
-      const response = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
-      console.log('API response:', response.data);
-
-      const pollsVO = response.data?.paramObjectsMap?.pollsVO;
-
-      if (Array.isArray(pollsVO) && pollsVO.length > 0) {
-        const pollsData = pollsVO.map(poll => {
-          const pollOptions = poll.pollDetailsVO || [];
-          
-          return {
-            id: poll.id,
-            question: poll.question,
-            options: pollOptions.map(option => ({
-              id: option.id,
-              text: option.options || '',
-              votes: option.votes || 0
-            })),
-            totalVotes: pollOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0),
-            hasVoted: poll.hasVoted || false,
-            expiresAt: poll.expiresAt || '',
-            maxSelection: poll.maxSelection || 1,
-            multiSelect: poll.multiSelect || false,
-            createdDate: poll.createdDate || ''
-          };
-        });
-
-        setPolls(pollsData);
-        setListViewData(pollsData);
-        setFetchError(null);
-      } else {
-        setFetchError('No polls data available');
-        setPolls([]);
-        setListViewData([]);
+      const result = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
+      if (result && result.paramObjectsMap.pollsVO) {
+        const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
+          ...poll,
+          options: poll.pollDetailsVO.map(option => ({
+            id: option.id,
+            text: option.options, // backend uses `options` for label, frontend expects `text`
+            votes: option.votes || 0 // defaulting in case backend adds votes later
+          }))
+        }));
+        setPolls(transformed);
+        setListViewData(transformed);
       }
     } catch (error) {
-      console.error('Error fetching polls:', error);
-      setFetchError('Failed to load polls. Please try again.');
-      setPolls([]);
-      setListViewData([]);
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching data:', error);
     }
-  }, [orgId]);
+  };
 
-  useEffect(() => {
-    if (orgId) {
-      getAllPollsByOrgId();
-    }
-  }, [orgId, getAllPollsByOrgId]);
+  // const getAllPollsByOrgId = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
+  //     setPolls(result.paramObjectsMap.pollsVO);
+  //     console.log('Test', result);
+  //   } catch (err) {
+  //     console.log('error', err);
+  //   }
+  // };
 
   const handleVote = async (pollId) => {
     const selectedOption = selectedOptions[pollId];
@@ -145,68 +178,108 @@ function Poll({}) {
     }
   };
 
-  const handleSave = async () => {
-    if (!newPoll.question || newPoll.options.some(opt => !opt.trim())) {
-      toast.error('Question and all options are required');
-      return;
-    }
+  // const handleSave = async () => {
+  //   if (!newPoll.question || newPoll.options.some(opt => !opt.trim())) {
+  //     toast.error('Question and all options are required');
+  //     return;
+  //   }
 
-    setIsLoading(true);
-    try {
-      const pollDetailsDTO = newPoll.options.map(opt => ({ options: opt }));
-      const payload = {
-        question: newPoll.question,
-        expiresAt: newPoll.expiresAt,
+  //   setIsLoading(true);
+  //   try {
+  //     const pollDetailsDTO = newPoll.options.map(opt => ({ options: opt }));
+  //     const payload = {
+  //       question: newPoll.question,
+  //       expiresAt: newPoll.expiresAt,
+  //       maxSelection: newPoll.maxSelection,
+  //       multiSelect: newPoll.multiSelect,
+  //       pollDetailsDTO,
+  //       orgId
+  //     };
+
+  //     const response = await apiCalls('put', '/basicmaster/createUpdatepolls', payload);
+  //     if (response?.status) {
+  //       showToast('success', 'Poll created successfully');
+  //       setOpenCreateModal(false);
+  //       setNewPoll({
+  //         question: '',
+  //         options: ['', ''],
+  //         expiresAt: '',
+  //         maxSelection: 1,
+  //         multiSelect: false
+  //       });
+  //       getAllPollsByOrgId(); // refresh
+  //     } else {
+  //       showToast('error', response?.message || 'Poll creation failed');
+  //     }
+  //   } catch (error) {
+  //     showToast('error', 'Poll creation failed');
+  //     console.error('Poll creation error:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  const handleSave = async () => {
+    const errors = {};
+
+    if (Object.keys(errors).length === 0) {
+      setIsLoading(true);
+
+      const pollDetailsVo = pollDetails.map((opt) => ({
+        options: opt
+      }));
+
+      const saveData = {
+        ...(editId && { id: editId }),
+        active: true,
+        branchCode: branchCode,
+        branchName: branch,
+        createdBy: loginUserName,
+        department: department,
         maxSelection: newPoll.maxSelection,
         multiSelect: newPoll.multiSelect,
-        pollDetailsDTO,
-        orgId
+        orgId: orgId,
+        pollDetailsDTO: pollDetailsVo,
+        question: newPoll.question,
+        updatedBy: loginUserName
       };
 
-      const response = await apiCalls('put', '/basicmaster/createUpdatepolls', payload);
-      if (response?.status) {
-        showToast('success', 'Poll created successfully');
-        setOpenCreateModal(false);
-        setNewPoll({
-          question: '',
-          options: ['', ''],
-          expiresAt: '',
-          maxSelection: 1,
-          multiSelect: false
-        });
-        getAllPollsByOrgId(); // refresh
-      } else {
-        showToast('error', response?.message || 'Poll creation failed');
+      console.log('DATA TO SAVE IS:', saveData);
+
+      try {
+        const response = await apiCalls('put', '/basicmaster/createUpdatepolls', saveData);
+
+        if (response.status === true) {
+          console.log('Response:', response);
+          showToast('success', editId ? 'Polls Updated Successfully' : 'Polls created successfully');
+          getAllPolls();
+          setIsLoading(false);
+        } else {
+          showToast('error', response.paramObjectsMap.errorMessage || 'Polls creation failed');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'polls creation failed');
+        setIsLoading(false);
       }
-    } catch (error) {
-      showToast('error', 'Poll creation failed');
-      console.error('Poll creation error:', error);
-    } finally {
-      setIsLoading(false);
+    } else {
     }
   };
 
   const handleOptionChange = (index, value) => {
-    const newOptions = [...newPoll.options];
-    newOptions[index] = value;
-    setNewPoll({ ...newPoll, options: newOptions });
-  };
-
-  const addOptionField = () => {
-    if (newPoll.options.length >= 10) {
-      toast.warning('Maximum 10 options allowed');
-      return;
-    }
-    setNewPoll(prev => ({ ...prev, options: [...prev.options, ''] }));
+    const updated = [...pollDetails];
+    updated[index] = value;
+    setPollDetails(updated);
   };
 
   const removeOption = (index) => {
-    if (newPoll.options.length <= 2) {
-      toast.warning('Poll must have at least 2 options');
-      return;
-    }
-    const newOptions = newPoll.options.filter((_, idx) => idx !== index);
-    setNewPoll({ ...newPoll, options: newOptions });
+    const updated = pollDetails.filter((_, i) => i !== index);
+    setPollDetails(updated);
+  };
+
+  const addOptionField = () => {
+    setPollDetails([...pollDetails, '']);
   };
 
   const formatDate = (dateString) => {
@@ -222,6 +295,8 @@ function Poll({}) {
       </Box>
     );
   }
+
+  console.log("Listview", polls)
 
   return (
     <Box sx={{ p: 2 }}>
@@ -250,7 +325,7 @@ function Poll({}) {
           <CardContent>
             <Typography color="error">{fetchError}</Typography>
             <Button
-              onClick={getAllPollsByOrgId}
+              onClick={getAllPolls}
               variant="outlined"
               color="error"
               sx={{ mt: 1 }}
@@ -261,15 +336,17 @@ function Poll({}) {
         </Card>
       )}
 
+
       <Grid container spacing={3}>
         {listViewData.length > 0 ? (
           listViewData.map(poll => (
             <Grid item xs={12} md={6} lg={4} key={poll.id}>
-              <Card 
-                variant="outlined" 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
+              <Card
+                variant="outlined"
+                sx={{
+                  height: '100%',
+                  width: '500px',
+                  display: 'flex',
                   flexDirection: 'column',
                   borderColor: poll.hasVoted ? theme.palette.success.light : theme.palette.primary.light,
                   boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.1)',
@@ -282,9 +359,9 @@ function Poll({}) {
               >
                 <CardContent sx={{ flexGrow: 1 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Chip 
-                      label={poll.hasVoted ? 'Voted' : 'Active'} 
-                      size="small" 
+                    <Chip
+                      label={poll.hasVoted ? 'Voted' : 'Active'}
+                      size="small"
                       color={poll.hasVoted ? 'success' : 'primary'}
                       variant="outlined"
                     />
@@ -292,13 +369,13 @@ function Poll({}) {
                       {formatDate(poll.createdDate)}
                     </Typography>
                   </Box>
-                  
+
                   <Typography variant="h6" fontWeight={600} sx={{ mb: 1.5 }}>
                     {poll.question}
                   </Typography>
-                  
+
                   <Divider sx={{ my: 1 }} />
-                  
+
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, gap: 2 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                       <PeopleIcon fontSize="small" color="action" sx={{ mr: 0.5 }} />
@@ -329,8 +406,8 @@ function Poll({}) {
                           <LinearProgress
                             variant="determinate"
                             value={(option.votes / (poll.totalVotes || 1)) * 100}
-                            sx={{ 
-                              height: 8, 
+                            sx={{
+                              height: 8,
                               borderRadius: 4,
                               backgroundColor: theme.palette.grey[200],
                               '& .MuiLinearProgress-bar': {
@@ -378,7 +455,7 @@ function Poll({}) {
                         size="medium"
                         startIcon={<HowToVoteIcon />}
                         onClick={() => handleVote(poll.id)}
-                        sx={{ 
+                        sx={{
                           mt: 1,
                           width: '100%',
                           backgroundColor: theme.palette.primary.main,
@@ -398,19 +475,19 @@ function Poll({}) {
           ))
         ) : !fetchError ? (
           <Grid item xs={12}>
-            <Card 
-              variant="outlined" 
-              sx={{ 
-                p: 4, 
+            <Card
+              variant="outlined"
+              sx={{
+                p: 4,
                 textAlign: 'center',
                 backgroundColor: theme.palette.background.paper,
                 border: '2px dashed',
                 borderColor: theme.palette.divider
               }}
             >
-              <PollIcon sx={{ 
-                fontSize: 60, 
-                mb: 2, 
+              <PollIcon sx={{
+                fontSize: 60,
+                mb: 2,
                 color: theme.palette.text.secondary,
                 opacity: 0.5
               }} />
@@ -423,7 +500,7 @@ function Poll({}) {
                 variant="contained"
                 onClick={() => setOpenCreateModal(true)}
                 startIcon={<AddIcon />}
-                sx={{ 
+                sx={{
                   mt: 1,
                   backgroundColor: theme.palette.primary.main,
                   '&:hover': {
@@ -455,8 +532,8 @@ function Poll({}) {
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
             <Typography variant="h6" fontWeight="bold">Create New Poll</Typography>
-            <IconButton 
-              onClick={() => setOpenCreateModal(false)} 
+            <IconButton
+              onClick={() => setOpenCreateModal(false)}
               disabled={isLoading}
               sx={{
                 '&:hover': {
@@ -480,40 +557,41 @@ function Poll({}) {
           />
 
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 500 }}>Options *</Typography>
-          {newPoll.options.map((opt, idx) => (
-            <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <TextField
-                fullWidth
-                label={`Option ${idx + 1}`}
-                value={opt}
-                onChange={(e) => handleOptionChange(idx, e.target.value)}
-                sx={{ mr: 1 }}
-                disabled={isLoading}
-                variant="outlined"
-                size="small"
-              />
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => removeOption(idx)}
-                disabled={newPoll.options.length <= 2 || isLoading}
-                sx={{
-                  '&:hover': {
-                    backgroundColor: theme.palette.error.light
-                  }
-                }}
-              >
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          ))}
+          {Array.isArray(pollDetails) &&
+            pollDetails.map((opt, idx) => (
+              <Box key={idx} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <TextField
+                  fullWidth
+                  label={`Option ${idx + 1}`}
+                  value={opt}
+                  onChange={(e) => handleOptionChange(idx, e.target.value)}
+                  sx={{ mr: 1 }}
+                  disabled={isLoading}
+                  variant="outlined"
+                  size="small"
+                />
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => removeOption(idx)}
+                  disabled={pollDetails.length <= 2 || isLoading}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: theme.palette.error.light
+                    }
+                  }}
+                >
+                  <CloseIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
 
           <Button
             onClick={addOptionField}
             size="small"
             startIcon={<AddIcon />}
             sx={{ mb: 2 }}
-            disabled={isLoading || newPoll.options.length >= 10}
+            // disabled={isLoading || newPoll.options.length >= 10}
             variant="outlined"
           >
             Add Option
