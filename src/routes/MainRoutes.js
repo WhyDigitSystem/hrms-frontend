@@ -3,9 +3,11 @@ import { lazy } from 'react';
 // project imports
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
+import MinimalLayout from 'layout/MinimalLayout';
 
 // dashboard routing
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
+const AuthLogin3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Login3')));
 
 // utilities routing
 const UtilsTypography = Loadable(lazy(() => import('views/utilities/Typography')));
@@ -21,14 +23,15 @@ const SamplePage = Loadable(lazy(() => import('views/sample-page')));
 
 const MainRoutes = {
   path: '/',
-  element: <MainLayout />,
+  element: <MinimalLayout />,
   children: [
     {
       path: '/',
-      element: <DashboardDefault />
+      element: <AuthLogin3 />
     },
     {
       path: 'dashboard',
+      element: <MainLayout />,
       children: [
         {
           path: 'default',
@@ -36,6 +39,7 @@ const MainRoutes = {
         }
       ]
     },
+    
     {
       path: 'utils',
       children: [
@@ -88,4 +92,4 @@ const MainRoutes = {
   ]
 };
 
-export default MainRoutes;
+export default MainRoutes;
