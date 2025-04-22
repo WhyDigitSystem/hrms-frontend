@@ -1,18 +1,15 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
-import { Avatar, Box, Grid, Typography, List, ListItem, Button, useMediaQuery } from '@mui/material';
+import { Avatar, Box, Grid, Typography, Button, useMediaQuery } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LoginIcon from '@mui/icons-material/Login';
 import LogoutIcon from '@mui/icons-material/Logout';
-import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
-import ToastComponent, { showToast } from 'utils/toast-component';
+import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
 
 const CardWrapper = styled(MainCard)(({ theme }) => ({
-  // background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
   background: `linear-gradient(135deg, ${'#264952'} 30%, ${'#23869f'} 90%)`,
   color: '#fff',
   borderRadius: '16px',
@@ -23,115 +20,77 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   }
 }));
 
-const StyledButton = styled(Button)(({ active }) => ({
-  width: '130px',
-  padding: '10px 20px',
-  fontSize: '16px',
-  borderRadius: '8px',
-  backgroundColor: active ? '#ff3d00' : '#007bff',
-  color: '#fff',
-  '&:hover': {
-    backgroundColor: active ? '#d32f2f' : '#0056b3'
-  },
-  '&:disabled': {
-    backgroundColor: '#d3d3d3',
-    color: '#6c757d',
-    cursor: 'not-allowed'
-  }
-}));
-const TimeDisplay = styled(Typography)(({ theme }) => ({
-  fontFamily: 'Fira Code, monospace',
-  background: 'rgba(255, 255, 255, 0.1)',
-  padding: '4px 12px',
-  borderRadius: '6px',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '8px'
-}));
-
-const StyledListItem = styled(ListItem)(({ theme }) => ({
-  padding: '12px 16px',
-  margin: '4px 0',
-  background: 'rgba(255, 255, 255, 0.05)',
-  borderRadius: '8px',
-  transition: 'all 0.2s ease',
-  '&:hover': {
-    background: 'rgba(255, 255, 255, 0.1)',
-    transform: 'translateX(4px)'
-  }
-}));
-
 const CheckinDetails = ({ isLoading }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Detect mobile devices
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [branch, setBranch] = useState(localStorage.getItem('branch'));
-  const [empcode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
-  const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
-  const [designation, setDesignation] = useState(localStorage.getItem('designation'));
-  const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [orgId] = useState(localStorage.getItem('orgId'));
+  const [branch] = useState(localStorage.getItem('branch'));
+  const [empcode] = useState(localStorage.getItem('employeeCode'));
+  const [empName] = useState(localStorage.getItem('employeeName'));
+  const [designation] = useState(localStorage.getItem('designation'));
+  // const [profileImage] = useState(localStorage.getItem('profileImage'));
+  // const [profileImage, setProfileImage] = useState(localStorage.getItem('profileImage') || '');
+  const [profileImage, setProfileImage] = useState('');
   const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const [checkInTime, setCheckInTime] = useState(null); // State to store check-in time
-  const [checkOutTime, setCheckOutTime] = useState(null); // State to store check-out time
-  const [hoursWorked, setHoursWorked] = useState(null); // State to store hours worked
-  const [currentTime, setCurrentTime] = useState(new Date()); // State to store current time
+  const [checkInTime, setCheckInTime] = useState(null);
+  const [checkOutTime, setCheckOutTime] = useState(null);
+  const [hoursWorked, setHoursWorked] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update current time every second
+  useEffect(() => {
+    const storedImage = localStorage.getItem('profileImage');
+    if (storedImage) {
+      setProfileImage(storedImage);
+    }
+
+    const handleImageUpdate = () => {
+      const updatedImage = localStorage.getItem('profileImage');
+      if (updatedImage) {
+        setProfileImage(updatedImage);
+      }
+    };
+
+    window.addEventListener('profileImageUpdated', handleImageUpdate);
+
+    return () => {
+      window.removeEventListener('profileImageUpdated', handleImageUpdate);
+    };
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount
-  }, []);
-
-  // Update check-in time every second after check-in
-  useEffect(() => {
-    let interval;
-    if (isCheckedIn) {
-      interval = setInterval(() => {
-        setCheckInTime((prevTime) => new Date(prevTime.getTime() + 1000)); // Increment time by 1 second
-      }, 1000);
-    }
-
-    return () => clearInterval(interval); // Cleanup interval on component unmount or check-out
-  }, [isCheckedIn]);
-
-  // Retrieve check-in time from localStorage when component mounts
-  useEffect(() => {
-    const storedCheckInTime = localStorage.getItem('checkInTime');
-    if (storedCheckInTime) {
-      setCheckInTime(new Date(storedCheckInTime));
-      setIsCheckedIn(true);
-    }
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     getCheckInOutStatus();
-  }, [])
+  }, []);
 
   const handleCheckIn = async () => {
+    const now = new Date(); // Freeze current time
     const saveCheckIN = {
       status: true,
-      orgId: orgId,
-      branch: branch,
-      empcode: empcode,
-      empName:empName
+      orgId,
+      branch,
+      empcode,
+      empName
     };
 
     try {
       const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
-
       if (result.status === true) {
         showToast('success', 'Check-In Success');
-        const now = new Date();
-        setCheckInTime(now); // Set check-in time
-        localStorage.setItem('checkInTime', now.toISOString()); // Save check-in time to localStorage
-        setIsCheckedIn(true); // Enable Check-Out, Disable Check-In
-        setCheckOutTime(null); // Reset check-out time
-        setHoursWorked(null); // Reset hours worked
+
+        setCheckInTime(now); // Freeze and store time
+        localStorage.setItem('checkInTime', now.toISOString()); // Persist
+
+        setIsCheckedIn(true);
+        setCheckOutTime(null); // Clear old checkout
+        setHoursWorked(null); // Clear old duration
       } else {
-        showToast('error', result.paramObjectsMap.errorMessage || 'Check-In Failed');
+        showToast('error', result.paramObjectsMap?.errorMessage || 'Check-In Failed');
       }
     } catch (err) {
       showToast('error', 'Check-In Failed');
@@ -139,35 +98,35 @@ const CheckinDetails = ({ isLoading }) => {
   };
 
   const handleCheckOut = async () => {
+    const checkOut = new Date(); // Freeze current time
     const saveCheckIN = {
       status: false,
-      orgId: orgId,
-      branch: branch,
-      empcode: empcode,
-      empName:empName
+      orgId,
+      branch,
+      empcode,
+      empName
     };
 
     try {
       const result = await apiCalls('put', `basicmaster/createCheckInOut`, saveCheckIN);
-
       if (result.status === true) {
         showToast('success', 'Check-Out Success');
-        setIsCheckedIn(false); // Disable Check-Out, Enable Check-In
-        const checkOut = new Date(); // Get current time for check-out
-        setCheckOutTime(checkOut);
 
-        // Calculate hours worked
+        setIsCheckedIn(false);
+        setCheckOutTime(checkOut); // Freeze and store
+
         if (checkInTime) {
-          const timeDiff = checkOut - checkInTime; // Difference in milliseconds
-          const hours = Math.floor(timeDiff / (1000 * 60 * 60)); // Convert to hours
-          const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-          setHoursWorked(`${hours} hours ${minutes} minutes`); // Set hours worked
+          const start = new Date(checkInTime);
+          const diffMs = checkOut - start;
+
+          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+          const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          setHoursWorked(`${hours} hours ${minutes} minutes`);
         }
 
-        // Clear check-in time from localStorage
-        localStorage.removeItem('checkInTime');
+        localStorage.removeItem('checkInTime'); // Clean up
       } else {
-        showToast('error', result.paramObjectsMap.errorMessage || 'Check-Out Failed');
+        showToast('error', result.paramObjectsMap?.errorMessage || 'Check-Out Failed');
       }
     } catch (err) {
       showToast('error', 'Check-Out Failed');
@@ -177,211 +136,191 @@ const CheckinDetails = ({ isLoading }) => {
   const getCheckInOutStatus = async () => {
     try {
       const response = await apiCalls('get', `basicmaster/chkStatus/${empcode}`);
-      console.log('API Response:', response);
-
       if (response.status === true) {
-        const employeeStatus = response.paramObjectsMap.EmployeeStatus.status;
+        const employeeStatus = response.paramObjectsMap.EmployeeStatus;
+        const status = employeeStatus.status;
 
-        if (employeeStatus === 'In') {
+        const today = new Date().toISOString().split('T')[0]; // Get YYYY-MM-DD
+        const inTime = new Date(`${today}T${employeeStatus.latestIn}`);
+        const outTime = new Date(`${today}T${employeeStatus.latestOut}`);
+
+        if (status === 'In') {
           setIsCheckedIn(true);
-          const now = new Date();
-          setCheckInTime(now);
-          localStorage.setItem('checkInTime', now.toISOString());
-        } else if (employeeStatus === 'Out') {
+          setCheckInTime(inTime);
+          localStorage.setItem('checkInTime', inTime.toISOString());
+        } else {
           setIsCheckedIn(false);
-          setCheckInTime(null);
+          setCheckInTime(inTime);
+          setCheckOutTime(outTime);
           localStorage.removeItem('checkInTime');
         }
-
-        // showToast('success', response.paramObjectsMap.message);
-      } else {
-        console.error('API Error:', response);
-        // showToast('error', 'Failed to retrieve employee status');
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
-      // showToast('error', 'Error fetching data');
+      console.error('Error fetching status:', error);
     }
   };
 
-  return (
-    <>
-      {isLoading ? (
-        <SkeletonEarningCard />
-      ) : (
-        <div>
-          <Grid item>
-            <Typography variant="h6" sx={{ mb: 1, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
-              Quick Access
-            </Typography>
+  return isLoading ? (
+    <SkeletonEarningCard />
+  ) : (
+    <Box>
+      <Grid item>
+        <Typography variant="h6" sx={{ mb: 1, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
+          Quick Access
+        </Typography>
+      </Grid>
+
+      <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
+        <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
+          <Grid container direction="column" spacing={2}>
+            <Grid item>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Avatar
+                    src={`data:image/png;base64,${profileImage}`}
+                    sx={{
+                      width: isMobile ? 56 : 64,
+                      height: isMobile ? 56 : 64,
+                      border: `2px solid ${isCheckedIn ? '#4caf50' : '#f44336'}`,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                  <Box>
+                    <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
+                      {empName}
+                    </Typography>
+                    <Typography variant="body2" color="secondary.light" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
+                      {empcode} - {designation}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: { xs: 'center', lg: 'flex-start' },
+                  flexDirection: { xs: 'row', sm: 'row' },
+                  mb: 2,
+                  pl: { lg: 5 },
+                  ml: { lg: 5 },
+                  width: '100%'
+                }}
+              >
+                {!isCheckedIn && !checkInTime ? (
+                  <Button
+                    variant="contained"
+                    startIcon={<LoginIcon />}
+                    color="primary"
+                    sx={{
+                      minWidth: isMobile ? 48 : 120,
+                      px: isMobile ? 1.5 : 2,
+                      py: 1,
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      bgcolor: 'success.main',
+                      '&:hover': {
+                        bgcolor: 'success.dark'
+                      }
+                    }}
+                    onClick={handleCheckIn}
+                  >
+                    {!isMobile && 'Check-In'}
+                  </Button>
+                ) : checkInTime instanceof Date && isCheckedIn ? (
+                  <Box
+                    sx={{
+                      minWidth: isMobile ? 48 : 120,
+                      px: 2,
+                      py: 1,
+                      borderRadius: '10px',
+                      bgcolor: 'grey.300'
+                    }}
+                  >
+                    <Typography variant="body2" align="center">
+                      <LoginIcon /> In at {checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Button
+                    variant="contained"
+                    startIcon={<LoginIcon />}
+                    color="primary"
+                    sx={{
+                      minWidth: isMobile ? 48 : 120,
+                      px: isMobile ? 1.5 : 2,
+                      py: 1,
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      bgcolor: 'success.main',
+                      '&:hover': {
+                        bgcolor: 'success.dark'
+                      }
+                    }}
+                    onClick={handleCheckIn}
+                  >
+                    {!isMobile && 'Check-In'}
+                  </Button>
+                )}
+
+                {isCheckedIn ? (
+                  <Button
+                    variant="contained"
+                    startIcon={<LogoutIcon />}
+                    color="secondary"
+                    sx={{
+                      minWidth: isMobile ? 48 : 120,
+                      px: isMobile ? 1.5 : 2,
+                      py: 1,
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      bgcolor: 'error.main',
+                      '&:hover': {
+                        bgcolor: 'error.dark'
+                      }
+                    }}
+                    onClick={handleCheckOut}
+                  >
+                    {!isMobile && 'Check-Out'}
+                  </Button>
+                ) : checkOutTime instanceof Date ? (
+                  <Box
+                    sx={{
+                      minWidth: isMobile ? 48 : 120,
+                      px: 2,
+                      py: 1,
+                      borderRadius: '10px',
+                      bgcolor: 'grey.300'
+                    }}
+                  >
+                    <Typography variant="body2" align="center">
+                      <LogoutIcon /> Out at {checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Typography>
+                  </Box>
+                ) : null}
+              </Box>
+
+              {/* <List sx={{ color: '#fff', pl: { lg: 5 }, ml: { lg: 5 } }}>
+                {checkInTime && (
+                  <ListItem>
+                    <AccessTimeIcon sx={{ mr: 1 }} />
+                    Checked In At: {checkInTime.toLocaleTimeString()}
+                  </ListItem>
+                )}
+                {checkOutTime && (
+                  <ListItem>
+                    <AccessTimeFilledIcon sx={{ mr: 1 }} />
+                    Checked Out At: {checkOutTime.toLocaleTimeString()}
+                  </ListItem>
+                )}
+                {hoursWorked && <ListItem>⏱ Total Time Worked: {hoursWorked}</ListItem>}
+              </List> */}
+            </Grid>
           </Grid>
-
-          <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
-            <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
-              <Grid container direction="column" spacing={2}>
-                {/* Profile Section */}
-                <Grid item>
-                  <Box
-                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }} >
-                      {/* <Avatar
-                        alt={empName}
-                        src="/path/to/avatar.jpg"
-                        sx={{ width: isMobile ? 50 : 60, height: isMobile ? 50 : 60, mr: 2 }}
-                      /> */}
-                      <Avatar
-                        src={`data:image/png;base64,${profileImage}`}
-                        sx={{
-                          width: isMobile ? 56 : 64,
-                          height: isMobile ? 56 : 64,
-                          border: `2px solid ${isCheckedIn ? '#4caf50' : '#f44336'}`,
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                        }}
-                      />
-                      <Box>
-                        <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
-                          {empName}
-                        </Typography>
-                        <Typography variant="body2" color="secondary.light" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
-                          {empcode} - {designation}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      gap: 2,
-                      justifyContent: { xs: 'center', lg: 'flex-start' },
-                      flexDirection: { xs: 'row', sm: 'row' },
-                      mb: 0,
-                      pl: { lg: 5 },
-                      ml: { lg: 5 },
-                      width: '100%'
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      startIcon={<LoginIcon />}
-                      color="primary"
-                      sx={{
-                        minWidth: isMobile ? 48 : 120,
-                        px: isMobile ? 1.5 : 2,
-                        py: 1,
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        bgcolor: isCheckedIn ? 'grey.300' : 'success.main',
-                        '&:hover': {
-                          bgcolor: isCheckedIn ? 'grey.300' : 'success.dark'
-                        }
-                      }}
-                      onClick={handleCheckIn}
-                      disabled={isCheckedIn}
-                    >
-                      {!isMobile && 'Check-In'}
-                    </Button>
-
-                    <Button
-                      variant="contained"
-                      startIcon={<LogoutIcon />}
-                      color="secondary"
-                      sx={{
-                        minWidth: isMobile ? 48 : 120,
-                        px: isMobile ? 1.5 : 2,
-                        py: 1,
-                        borderRadius: '10px',
-                        textTransform: 'none',
-                        bgcolor: !isCheckedIn ? 'grey.300' : 'error.main',
-                        '&:hover': {
-                          bgcolor: !isCheckedIn ? 'grey.300' : 'error.dark'
-                        }
-                      }}
-                      onClick={handleCheckOut}
-                      disabled={!isCheckedIn}
-                    >
-                      {!isMobile && 'Check-Out'}
-                    </Button>
-                  </Box>
-
-                </Grid>
-
-                {/* Recent Activity Section */}
-                <Grid item xs={12}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      mb: 0,
-                      color: 'secondary.light',
-                      fontSize: { xs: '14px', sm: '15px' },
-                    }}
-                  >
-                    Recent Activity
-                  </Typography>
-
-                  <List
-                    sx={{
-                      borderRadius: '8px',
-                      p: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: { xs: 1, sm: 0 },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
-                        gap: { xs: '8px', sm: '16px' },
-                        p: { xs: '8px', sm: '0' },
-                        borderRadius: { xs: '8px', sm: '0' },
-                      }}
-                    >
-                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
-                          {checkInTime
-                            ? `Check-In at ${checkInTime.toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              second: 'numeric',
-                              hour12: true,
-                            })}`
-                            : `No Check-In Recorded`}
-                        </Typography>
-                      </ListItem>
-
-                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
-                          {checkOutTime
-                            ? `Check-Out at ${checkOutTime.toLocaleTimeString('en-US', {
-                              hour: 'numeric',
-                              minute: 'numeric',
-                              second: 'numeric',
-                              hour12: true,
-                            })}`
-                            : 'No Check-Out Recorded'}
-                        </Typography>
-                      </ListItem>
-                    </Box>
-
-                    {hoursWorked && (
-                      <ListItem sx={{ px: 0, py: { xs: 0, sm: 1 } }}>
-                        <AccessTimeIcon sx={{ mr: 1, color: 'secondary.light', fontSize: { xs: '18px', sm: '20px' } }} />
-                        <Typography sx={{ color: 'secondary.light', fontSize: { xs: '12px', sm: '13px' } }}>
-                          Hours Worked: {hoursWorked}
-                        </Typography>
-                      </ListItem>
-                    )}
-                  </List>
-                </Grid>
-              </Grid>
-            </Box>
-          </CardWrapper>
-        </div>
-      )}
-    </>
+        </Box>
+      </CardWrapper>
+    </Box>
   );
 };
 

@@ -430,6 +430,28 @@ const LeaveRequest = () => {
   //   return weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
   // };
 
+  // const disableWeekOffDays = (date) => {
+  //   const disabledDays = {
+  //     SUNDAY: 0,
+  //     MONDAY: 1,
+  //     TUESDAY: 2,
+  //     WEDNESDAY: 3,
+  //     THURSDAY: 4,
+  //     FRIDAY: 5,
+  //     SATURDAY: 6
+  //   };
+  
+  //   const isWeekOff = weekOffDays.includes(
+  //     Object.keys(disabledDays).find((day) => disabledDays[day] === date.day())
+  //   );
+  
+  //   const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
+  
+  //   const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
+  
+  //   return isWeekOff || isBeforeEffectiveFrom;
+  // };
+
   const disableWeekOffDays = (date) => {
     const disabledDays = {
       SUNDAY: 0,
@@ -446,11 +468,25 @@ const LeaveRequest = () => {
     );
   
     const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
-  
     const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
   
-    return isWeekOff || isBeforeEffectiveFrom;
+    const sevenDaysAgo = dayjs().subtract(7, 'day');
+    const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
+  
+    return isWeekOff || isBeforeEffectiveFrom || isBefore7Days;
   };  
+
+  const getMinSelectableDate = () => {
+    const sevenDaysAgo = dayjs().subtract(7, 'day');
+    const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
+  
+    // Return the later date between sevenDaysAgo and effectiveFrom
+    if (effectiveFromDate && effectiveFromDate.isAfter(sevenDaysAgo)) {
+      return effectiveFromDate;
+    }
+    return sevenDaysAgo;
+  };
+  
 
   const getCompanyWeekOff = async () => {
     try {
@@ -586,7 +622,8 @@ const LeaveRequest = () => {
                         value={formData.fromDate || null}
                         onChange={(newValue) => handleDateChange('fromDate', newValue)}
                         shouldDisableDate={disableWeekOffDays}
-                        minDate={formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null} // Prevent selecting dates before effectiveFrom
+                        // minDate={formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null} // Prevent selecting dates before effectiveFrom
+                        minDate={getMinSelectableDate()}
                       />
                     ) : (
                       <TextField label="From Date" size="small" value="" placeholder="Select Leave Type First" disabled />
