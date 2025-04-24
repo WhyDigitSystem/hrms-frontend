@@ -1,55 +1,51 @@
 import React, { useState } from 'react';
-import { Avatar, Box, Card, CardContent, Grid, Typography, Divider, Tabs, Tab, IconButton } from '@mui/material';
+import {
+    Box,
+    Card,
+    CardContent,
+    Divider,
+    Tabs,
+    Tab,
+    Typography,
+    Paper,
+} from '@mui/material';
 import CakeIcon from '@mui/icons-material/Cake';
 import PeopleIcon from '@mui/icons-material/People';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import CommentIcon from '@mui/icons-material/Comment';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import Birthday from './Birthday';
-import WorkAnniversaries from './workAnniversaries';  
+import WorkAnniversaries from './workAnniversaries';
 import NewJoiner from './NewJoiner';
 
 const Index = () => {
     const [tabValue, setTabValue] = useState(0);
-    const [wishesCount, setWishesCount] = useState(0);
-    const [commentsCount, setCommentsCount] = useState(0);
 
     const handleChange = (event, newValue) => {
         setTabValue(newValue);
     };
 
-    const handleWish = () => {
-        setWishesCount(wishesCount + 1);
-    };
-
-    const handleComment = () => {
-        setCommentsCount(commentsCount + 1);
-    };
-
-    // Sample data (Replace with API data)
-    const todayBirthdays = [
-        { name: 'Dinesh', initials: 'D', employeeId: 'EMP123', role: 'Software Engineer' },
-    ];
-
-    const upcomingBirthdays = [
-        { name: 'Mani', date: '09 March', image: 'https://via.placeholder.com/40' },
-        { name: 'Karthi', date: '10 March', image: 'https://via.placeholder.com/40' },
-        { name: 'Sasi', date: '11 March', image: 'https://via.placeholder.com/40' },
-    ];
-
-    const workAnniversaries = [
-        { name: 'Ramesh', years: '5', image: 'https://via.placeholder.com/40', employeeId: 'EMP789', role: 'Team Lead' },
-        { name: 'Sneha', years: '2', image: 'https://via.placeholder.com/40', employeeId: 'EMP101', role: 'UX Designer' },
-    ];
+    const renderSectionHeader = (icon, text) => (
+        <Box display="flex" alignItems="center" mb={2}>
+            {icon}
+            <Typography variant="h6" ml={1.5} fontWeight="bold" color="primary.dark">
+                {text}
+            </Typography>
+        </Box>
+    );
 
     return (
-        <Card style={{
-            borderRadius: '16px',
-            boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
-            width: '100%',
-            background: 'linear-gradient(145deg, #ffffff, #f0f0f0)',
-            overflow: 'hidden',
-        }}>
-            <CardContent>
+        <Card
+            sx={{
+                borderRadius: 4,
+                boxShadow: 6,
+                width: '100%',
+                background: 'linear-gradient(to bottom, #f3f4f6, #e5e7eb)',
+                p: 3,
+                border: '1px solid #d1d5db',
+                borderLeft: '4px solid #264952',
+            }}
+        >
+
+            <CardContent sx={{ p: 0 }}>
                 <Tabs
                     value={tabValue}
                     onChange={handleChange}
@@ -57,36 +53,78 @@ const Index = () => {
                     TabIndicatorProps={{
                         style: { backgroundColor: '#1976d2', height: '3px' },
                     }}
-                    textColor="primary"
+                    sx={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: 2,
+                        mb: 2,
+                        boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.05)',
+                        '& .MuiTab-root': {
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            py: 1.5,
+                        },
+                    }}
                 >
                     <Tab
-                        label="Birthdays"
-                        icon={<CakeIcon style={{ color: tabValue === 0 ? '#1976d2' : '#757575' }} />}
-                        style={{ fontWeight: tabValue === 0 ? 'bold' : 'normal', color: tabValue === 0 ? '#1976d2' : '#757575' }}
+                        label="Birthday"
+                        icon={<CakeIcon />}
+                        iconPosition="start"
+                        sx={{
+                            color: tabValue === 0 ? '#1976d2' : '#6b7280',
+                            backgroundColor: tabValue === 0 ? '#e3f2fd' : 'transparent',
+                        }}
                     />
                     <Tab
                         label="Work Anniversaries"
-                        icon={<PeopleIcon style={{ color: tabValue === 1 ? '#1976d2' : '#757575' }} />}
-                        style={{ fontWeight: tabValue === 1 ? 'bold' : 'normal', color: tabValue === 1 ? '#1976d2' : '#757575' }}
+                        icon={<PeopleIcon />}
+                        iconPosition="start"
+                        sx={{
+                            color: tabValue === 1 ? '#1976d2' : '#6b7280',
+                            backgroundColor: tabValue === 1 ? '#e3f2fd' : 'transparent',
+                        }}
                     />
                     <Tab
-                        label="0 New Joiners"
-                        style={{ fontWeight: tabValue === 2 ? 'bold' : 'normal', color: tabValue === 2 ? '#1976d2' : '#757575' }}
+                        label="New Joiners"
+                        icon={<PersonAddIcon />}
+                        iconPosition="start"
+                        sx={{
+                            color: tabValue === 2 ? '#1976d2' : '#6b7280',
+                            backgroundColor: tabValue === 2 ? '#e3f2fd' : 'transparent',
+                        }}
                     />
                 </Tabs>
-                <Divider style={{ margin: '16px 0', backgroundColor: '#e0e0e0' }} />
 
-                {tabValue === 0 && (
-                    <Birthday />
-                )}
+                <Divider sx={{ my: 2, backgroundColor: '#cbd5e1' }} />
 
-                {tabValue === 1 && (
-                  <workAnniversaries />
-                )}
-
-                {tabValue === 2 && (
-                    <NewJoiner />
-                )}
+                <Paper
+                    elevation={2}
+                    sx={{
+                        p: 3,
+                        background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)', // Corrected this line
+                        borderRadius: 3,
+                        border: '1px solid #e0e0e0',
+                    }}
+                >
+                    {tabValue === 0 && (
+                        <>
+                            {renderSectionHeader(<CakeIcon color="primary" />, 'Birthday Today')}
+                            <Birthday />
+                        </>
+                    )}
+                    {tabValue === 1 && (
+                        <>
+                            {renderSectionHeader(<PeopleIcon color="primary" />, 'Work Anniversaries')}
+                            <WorkAnniversaries />
+                        </>
+                    )}
+                    {tabValue === 2 && (
+                        <>
+                            {renderSectionHeader(<PersonAddIcon color="primary" />, 'New Joiners')}
+                            <NewJoiner />
+                        </>
+                    )}
+                </Paper>
             </CardContent>
         </Card>
     );

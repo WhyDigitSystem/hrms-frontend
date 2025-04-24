@@ -21,6 +21,7 @@ import {
 } from '@mui/material';
 import PollIcon from '@mui/icons-material/Poll';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import PeopleIcon from '@mui/icons-material/People';
@@ -58,53 +59,6 @@ function Poll({ }) {
     getAllPolls();
   }, []);
 
-  // const getAllPollsByOrgId = useCallback(async () => {
-  //   setIsLoading(true);
-  //   try {
-  //     const response = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
-  //     console.log('API response:', response.data);
-
-  //     const pollsVO = response.data?.paramObjectsMap?.pollsVO;
-
-  //     if (Array.isArray(pollsVO) && pollsVO.length > 0) {
-  //       const pollsData = pollsVO.map(poll => {
-  //         const pollOptions = poll.pollDetailsVO || [];
-
-  //         return {
-  //           id: poll.id,
-  //           question: poll.question,
-  //           options: pollOptions.map(option => ({
-  //             id: option.id,
-  //             text: option.options || '',
-  //             votes: option.votes || 0
-  //           })),
-  //           totalVotes: pollOptions.reduce((sum, opt) => sum + (opt.votes || 0), 0),
-  //           hasVoted: poll.hasVoted || false,
-  //           expiresAt: poll.expiresAt || '',
-  //           maxSelection: poll.maxSelection || 1,
-  //           multiSelect: poll.multiSelect || false,
-  //           createdDate: poll.createdDate || ''
-  //         };
-  //       });
-
-  //       setPolls(pollsData);
-  //       setListViewData(pollsData);
-  //       setFetchError(null);
-  //     } else {
-  //       setFetchError('No polls data available');
-  //       setPolls([]);
-  //       setListViewData([]);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching polls:', error);
-  //     setFetchError('Failed to load polls. Please try again.');
-  //     setPolls([]);
-  //     setListViewData([]);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // }, [orgId]);
-
   const getAllPolls = async () => {
     try {
       const result = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
@@ -124,17 +78,6 @@ function Poll({ }) {
       console.error('Error fetching data:', error);
     }
   };
-
-  // const getAllPollsByOrgId = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
-  //     setPolls(result.paramObjectsMap.pollsVO);
-  //     console.log('Test', result);
-  //   } catch (err) {
-  //     console.log('error', err);
-  //   }
-  // };
-
   const handleVote = async (pollId) => {
     const selectedOption = selectedOptions[pollId];
     if (!selectedOption) {
@@ -177,47 +120,6 @@ function Poll({ }) {
       setSelectedOptions(prev => ({ ...prev, [pollId]: null }));
     }
   };
-
-  // const handleSave = async () => {
-  //   if (!newPoll.question || newPoll.options.some(opt => !opt.trim())) {
-  //     toast.error('Question and all options are required');
-  //     return;
-  //   }
-
-  //   setIsLoading(true);
-  //   try {
-  //     const pollDetailsDTO = newPoll.options.map(opt => ({ options: opt }));
-  //     const payload = {
-  //       question: newPoll.question,
-  //       expiresAt: newPoll.expiresAt,
-  //       maxSelection: newPoll.maxSelection,
-  //       multiSelect: newPoll.multiSelect,
-  //       pollDetailsDTO,
-  //       orgId
-  //     };
-
-  //     const response = await apiCalls('put', '/basicmaster/createUpdatepolls', payload);
-  //     if (response?.status) {
-  //       showToast('success', 'Poll created successfully');
-  //       setOpenCreateModal(false);
-  //       setNewPoll({
-  //         question: '',
-  //         options: ['', ''],
-  //         expiresAt: '',
-  //         maxSelection: 1,
-  //         multiSelect: false
-  //       });
-  //       getAllPollsByOrgId(); // refresh
-  //     } else {
-  //       showToast('error', response?.message || 'Poll creation failed');
-  //     }
-  //   } catch (error) {
-  //     showToast('error', 'Poll creation failed');
-  //     console.error('Poll creation error:', error);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const handleSave = async () => {
     const errors = {};
@@ -301,42 +203,6 @@ function Poll({ }) {
   return (
     <Box sx={{ p: 2 }}>
       <ToastContainer position="top-right" autoClose={5000} />
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">Polls</Typography>
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenCreateModal(true)}
-          disabled={isLoading}
-          sx={{
-            backgroundColor: theme.palette.primary.main,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.dark
-            }
-          }}
-        >
-          Create Poll
-        </Button>
-      </Box>
-
-      {fetchError && (
-        <Card variant="outlined" sx={{ mb: 3, borderColor: 'error.main', backgroundColor: theme.palette.error.light }}>
-          <CardContent>
-            <Typography color="error">{fetchError}</Typography>
-            <Button
-              onClick={getAllPolls}
-              variant="outlined"
-              color="error"
-              sx={{ mt: 1 }}
-            >
-              Retry
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-
       <Grid container spacing={3}>
         {listViewData.length > 0 ? (
           listViewData.map(poll => (
@@ -345,7 +211,7 @@ function Poll({ }) {
                 variant="outlined"
                 sx={{
                   height: '100%',
-                  width: '500px',
+                  width: '600px',
                   display: 'flex',
                   flexDirection: 'column',
                   borderColor: poll.hasVoted ? theme.palette.success.light : theme.palette.primary.light,
@@ -429,26 +295,30 @@ function Poll({ }) {
                           setSelectedOptions(prev => ({ ...prev, [poll.id]: e.target.value }))
                         }
                       >
-                        {poll.options.map(option => (
-                          <FormControlLabel
-                            key={option.id}
-                            value={option.id}
-                            control={<Radio color="primary" />}
-                            label={
-                              <Typography variant="body2">
-                                {option.text}
-                              </Typography>
-                            }
-                            sx={{
-                              mb: 1,
-                              borderRadius: 1,
-                              padding: '4px 8px',
-                              '&:hover': {
-                                backgroundColor: theme.palette.action.hover
-                              }
-                            }}
-                          />
-                        ))}
+                        <Grid container spacing={1}>
+                          {poll.options.map(option => (
+                            <Grid item xs={12} sm={4} key={option.id}>
+                              <FormControlLabel
+                                value={option.id}
+                                control={<Radio color="primary" />}
+                                label={
+                                  <Typography variant="body2">
+                                    {option.text}
+                                  </Typography>
+                                }
+                                sx={{
+                                  mb: 1,
+                                  borderRadius: 1,
+                                  padding: '4px 8px',
+                                  width: '100%',
+                                  '&:hover': {
+                                    backgroundColor: theme.palette.action.hover
+                                  }
+                                }}
+                              />
+                            </Grid>
+                          ))}
+                        </Grid>
                       </RadioGroup>
                       <Button
                         variant="contained"
@@ -457,7 +327,7 @@ function Poll({ }) {
                         onClick={() => handleVote(poll.id)}
                         sx={{
                           mt: 1,
-                          width: '100%',
+                          width: '30%',
                           backgroundColor: theme.palette.primary.main,
                           '&:hover': {
                             backgroundColor: theme.palette.primary.dark
@@ -495,25 +365,53 @@ function Poll({ }) {
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                 Create a new poll to gather opinions from your organization
               </Typography>
-              <Button
-                size="medium"
-                variant="contained"
-                onClick={() => setOpenCreateModal(true)}
-                startIcon={<AddIcon />}
-                sx={{
-                  mt: 1,
-                  backgroundColor: theme.palette.primary.main,
-                  '&:hover': {
-                    backgroundColor: theme.palette.primary.dark
-                  }
-                }}
-              >
-                Create New Poll
-              </Button>
             </Card>
           </Grid>
         ) : null}
       </Grid>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mt: 3,
+          animation: "fadeIn 0.5s ease-in-out",
+        }}
+      >
+        <IconButton
+          color="primary"
+          aria-label="add news"
+          onClick={() => {
+            setNewPoll({ circularTopic: "", circularcontent: "", postImage: "" });
+            setEditId("");
+            setOpenCreateModal(true);
+          }}
+          sx={{
+            background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+            color: "white",
+            "&:hover": {
+              background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+            },
+          }}
+        >
+          <AddIcon />
+        </IconButton>
+
+        <Button
+          variant="contained"
+          color="primary"
+          endIcon={<MoreHorizIcon />}
+          // onClick={() => setOpenViewMoreModal(true)}
+          sx={{
+            background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+            "&:hover": {
+              background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+            },
+          }}
+        >
+          View More
+        </Button>
+      </Box>
 
       {/* Create Poll Modal */}
       <Modal open={openCreateModal} onClose={() => !isLoading && setOpenCreateModal(false)}>

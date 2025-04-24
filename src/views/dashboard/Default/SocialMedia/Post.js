@@ -51,7 +51,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
   const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({ 
     active: true,
     circularTopic: '',
     circularcontent: '',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Avatar, Typography, Grid } from '@mui/material';
+import { Avatar, Typography, Grid, Card, CardContent } from '@mui/material';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 import dayjs from 'dayjs';
@@ -54,10 +54,10 @@ function WorkAnniversaries() {
 
     return (
         <>
-            <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
+            {/* <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
                 🎖️ Today's Work Anniversaries
             </Typography>
-            
+             */}
             {isLoading ? (
                 <Typography variant="body2" style={{ textAlign: 'center' }}>Loading...</Typography>
             ) : todayAnniversaries.length > 0 ? (
@@ -68,29 +68,50 @@ function WorkAnniversaries() {
                             key={index}
                             xs={6}
                             sm={6}
+                            md={4}
                             style={{
                                 display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                backgroundColor: '#f5f5f5',
+                                justifyContent: 'center',
+                                marginBottom: '16px'
                             }}
                         >
-                            {person.image ? (
-                                <Avatar src={person.image} alt={person.name} style={{ marginBottom: '8px', border: '2px solid #1976d2' }} />
-                            ) : (
-                                <Avatar style={{ marginBottom: '8px', border: '2px solid #1976d2', backgroundColor: '#1976d2' }}>
-                                    {person.initials}
-                                </Avatar>
-                            )}
-                            <Typography variant="body2" align="center" style={{ fontWeight: 'bold' }}>{person.name}</Typography>
-                            <Typography variant="caption" style={{ color: '#757575' }} align="center">
-                                {person.employeeId} | {person.role}
-                            </Typography>
-                            <Typography variant="caption" style={{ color: '#1976d2', fontWeight: 'bold' }} align="center">
-                                {person.years} Years
-                            </Typography>
+                            <Card
+                                style={{
+                                    width: '100%',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#f5f5f5',
+                                    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                                    '&:hover': {
+                                        transform: 'scale(1.05)',
+                                        boxShadow: '0 8px 12px rgba(0, 0, 0, 0.2)',
+                                    }
+                                }}
+                            >
+                                <CardContent
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        padding: '16px'
+                                    }}
+                                >
+                                    {person.image ? (
+                                        <Avatar src={person.image} alt={person.name} style={{ marginBottom: '8px', border: '2px solid #1976d2' }} />
+                                    ) : (
+                                        <Avatar style={{ marginBottom: '8px', border: '2px solid #1976d2', backgroundColor: '#1976d2' }}>
+                                            {person.initials}
+                                        </Avatar>
+                                    )}
+                                    <Typography variant="body2" align="center" style={{ fontWeight: 'bold' }}>{person.name}</Typography>
+                                    <Typography variant="caption" style={{ color: '#757575' }} align="center">
+                                        {person.employeeId} | {person.role}
+                                    </Typography>
+                                    <Typography variant="caption" style={{ color: '#1976d2', fontWeight: 'bold' }} align="center">
+                                        {person.years} Years
+                                    </Typography>
+                                </CardContent>
+                            </Card>
                         </Grid>
                     ))}
                 </Grid>

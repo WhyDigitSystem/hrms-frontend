@@ -28,7 +28,9 @@ const CardWrapper = styled(Box)(({ theme }) => ({
   },
   '&:after': { top: -85, right: -95 },
   '&:before': { top: -125, right: -15 },
+  borderLeft: '4px solid #364152', // Left border color added here
 }));
+
 
 // Modal Style
 const modalStyle = {
@@ -252,12 +254,7 @@ const Main = () => {
           </Box>
         )}
 
-        {/* Content for PRAISE Tab */}
-        {/* {nestedTabValue === 'PRAISE' && (
-          <Box sx={{ mt: 3 }}>
-            <Praise />
-          </Box>
-        )} */}
+
       </CardWrapper>
 
       {/* Modals */}

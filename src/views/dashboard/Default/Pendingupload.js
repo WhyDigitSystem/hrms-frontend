@@ -75,6 +75,7 @@ const StyledCard = styled(MainCard)(({ theme }) => ({
   position: "relative",
   overflow: "hidden",
   border: `1px solid rgba(255, 255, 255, 0.3)`,
+  borderLeft: `4px solid #364152`, // Added left border color
   "&:hover": {
     boxShadow: "0px 15px 35px rgba(0, 0, 0, 0.15)",
     transform: "translateY(-2px)"
@@ -89,11 +90,13 @@ const RequestItem = styled(Box)(({ theme }) => ({
   boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.05)",
   transition: "all 0.2s ease",
   border: `1px solid ${theme.palette.divider}`,
+  borderLeft: `4px solid #364152`, // Added left border color
   "&:hover": {
     transform: "translateY(-3px)",
     boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.1)",
   },
 }));
+
 
 const IconButtonStyled = styled(IconButton)(({ theme, actiontype }) => ({
   width: 40,

@@ -1,17 +1,35 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
-import { Box, Typography, Grid, useMediaQuery, Paper } from '@mui/material';
+import {
+    Box,
+    Typography,
+    Grid,
+    useMediaQuery,
+    Paper,
+    Chip,
+    Divider
+} from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import WbSunnyIcon from '@mui/icons-material/WbSunny';
 
 const CardWrapper = styled(Paper)(({ theme }) => ({
-    padding: theme.spacing(3),
+    padding: theme.spacing(4),
+    [theme.breakpoints.down('sm')]: {
+        padding: theme.spacing(2),
+    },
     borderRadius: theme.shape.borderRadius * 2,
-    background: `linear-gradient(135deg, ${'#e1efef'} 30%, ${'#239f9d'} 90%)`,
+    background: `linear-gradient(135deg, #d0f0f0 30%, #239f9d 90%)`,
     color: theme.palette.common.white,
-    boxShadow: theme.shadows[4]
+    boxShadow: theme.shadows[6],
+    transition: 'transform 0.3s ease',
+    '&:hover': {
+        transform: 'scale(1.01)',
+        boxShadow: theme.shadows[10]
+    },
+    position: 'relative',
+    overflow: 'hidden'
 }));
 
 const TimeDate = ({ isLoading }) => {
@@ -77,35 +95,89 @@ const TimeDate = ({ isLoading }) => {
     };
 
     return (
-        <CardWrapper className='mt-lg-3 mt-3'>
-            <Grid container spacing={2} alignItems="center">
+        <CardWrapper className="mt-lg-3 mt-3">
+            <Grid container spacing={3} alignItems="center" direction={isMobile ? 'column' : 'row'}>
                 <Grid item xs={12} sm={6}>
-                    <Box display="flex" alignItems="center">
-                        <AccessTimeIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.info.light }} />
-                        <Typography variant={isMobile ? 'h5' : 'h4'}>{getGreeting()}</Typography>
+                    <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-start'} textAlign={isMobile ? 'center' : 'left'}>
+                        <Box display="flex" alignItems="center" mb={1}>
+                            <AccessTimeIcon sx={{ fontSize: isMobile ? 32 : 44, mr: 1, color: theme.palette.info.light }} />
+                            <Typography
+                                variant={isMobile ? 'h6' : 'h4'}
+                                sx={{
+                                    background: 'linear-gradient(to right, #00c6ff, #0072ff)',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                    fontWeight: 700
+                                }}
+                            >
+                                {getGreeting()}
+                            </Typography>
+                        </Box>
+
+                        <Typography
+                            variant={isMobile ? 'h5' : 'h3'}
+                            sx={{ fontWeight: 'bold', color: theme.palette.common.white }}
+                        >
+                            {formattedTime}
+                        </Typography>
+
+                        <Typography variant="subtitle1" sx={{ mt: 1, opacity: 0.9 }}>
+                            {formattedDate}
+                        </Typography>
                     </Box>
-                    <Typography variant={isMobile ? 'h6' : 'h3'} sx={{ mt: 1, fontWeight: 'bold' }}>
-                        {formattedTime}
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ mt: 1 }}>
-                        {formattedDate}
-                    </Typography>
                 </Grid>
 
                 <Grid item xs={12} sm={6}>
-                    <Box display="flex" alignItems="center" justifyContent={isMobile ? 'flex-start' : 'flex-end'}>
-                        <LocationOnIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.success.light }} />
-                        <Typography variant="h6">{location.city}, {location.country}</Typography>
-                    </Box>
-                    <Typography variant="subtitle2" align={isMobile ? 'left' : 'right'}>
-                        Time Zone: {timeZone}
-                    </Typography>
-                    <Box display="flex" alignItems="center" justifyContent={isMobile ? 'flex-start' : 'flex-end'} sx={{ mt: 1 }}>
-                        <WbSunnyIcon sx={{ fontSize: 24, color: theme.palette.warning.light, mr: 1 }} />
-                        <Typography variant="subtitle1">{weather.temperature} | {weather.condition}</Typography>
+                    <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-end'} textAlign={isMobile ? 'center' : 'right'}>
+                        <Box display="flex" alignItems="center" mb={1}>
+                            <LocationOnIcon sx={{ fontSize: isMobile ? 32 : 44, mr: 1, color: theme.palette.success.light }} />
+                            <Typography variant="h6">
+                                {location.city}, {location.country}
+                            </Typography>
+                        </Box>
+
+                        <Divider sx={{ my: 1, bgcolor: 'rgba(255,255,255,0.3)', width: isMobile ? '80%' : '100%' }} />
+
+                        <Box display="flex" justifyContent={isMobile ? 'center' : 'flex-end'} flexWrap="wrap" gap={1}>
+                            <Chip
+                                icon={<AccessTimeIcon />}
+                                label={`Time Zone: ${timeZone}`}
+                                sx={{
+                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                    color: theme.palette.common.white,
+                                    borderRadius: 2,
+                                    fontSize: isMobile ? '0.75rem' : 'inherit'
+                                }}
+                            />
+                            <Chip
+                                icon={<WbSunnyIcon />}
+                                label={`${weather.temperature} | ${weather.condition}`}
+                                sx={{
+                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                    color: theme.palette.common.white,
+                                    borderRadius: 2,
+                                    fontSize: isMobile ? '0.75rem' : 'inherit'
+                                }}
+                            />
+                        </Box>
                     </Box>
                 </Grid>
             </Grid>
+
+            {/* Decorative background icon */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    bottom: -10,
+                    right: -10,
+                    fontSize: 160,
+                    opacity: 0.05,
+                    color: theme.palette.common.white,
+                    pointerEvents: 'none'
+                }}
+            >
+                <WbSunnyIcon fontSize="inherit" />
+            </Box>
         </CardWrapper>
     );
 };

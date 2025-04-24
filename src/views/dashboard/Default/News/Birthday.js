@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Avatar, Box, Typography, Divider, Grid
+    Avatar, Box, Typography, Divider, Paper
 } from '@mui/material';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import apiCalls from 'apicall';
-import { showToast } from 'utils/toast-component';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
 
@@ -61,87 +62,86 @@ function Birthday() {
 
                 setTodayBirthdays(todayList);
                 setUpcomingBirthdays(upcomingList);
-            } else {
-               
             }
         } catch (error) {
             console.error('Error fetching birthday data:', error);
-            
         }
     };
 
+    const BirthdayCard = ({ person, icon, isToday }) => (
+        <Paper
+            elevation={3}
+            sx={{
+                p: 2,
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                borderLeft: isToday ? '6px solid #1976d2' : '6px solid #ffa726',
+                borderRadius: 2,
+                background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)', // Gradient background
+                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                transition: 'background-color 0.3s ease', // Smooth transition effect
+                '&:hover': {
+                    background: 'linear-gradient(to right, #f3e5f5, #e2d1c3)', // Hover gradient
+                }
+            }}
+        >
+            <Avatar
+                src={person.image || ''}
+                sx={{
+                    bgcolor: isToday ? '#1976d2' : '#fb8c00',
+                    color: '#fff',
+                    width: 56,
+                    height: 56,
+                    fontSize: 22,
+                    mr: 2
+                }}
+            >
+                {person.name[0]}
+            </Avatar>
+            <Box sx={{ flexGrow: 1 }}>
+                <Typography fontWeight="bold">{person.name}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                    {person.employeeId}
+                </Typography>
+            </Box>
+            <Box>
+                <Typography variant="caption" color={isToday ? '#1976d2' : '#fb8c00'}>
+                    {isToday ? 'Today 🎉' : person.date}
+                </Typography>
+            </Box>
+        </Paper>
+    );
+
     return (
-        <>
-            <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
-                🎉 Birthdays Today
-            </Typography>
+        <Box sx={{ p: 3 }}>
+            {/* Birthdays Today */}
             {todayBirthdays.length > 0 ? (
-                todayBirthdays.map((person, index) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                        <Avatar sx={{ backgroundColor: '#1976d2', color: '#fff' }}>{person.initials}</Avatar>
-                        <Box>
-                            <Typography sx={{ fontWeight: 'bold' }}>{person.name}</Typography>
-                            <Typography variant="caption" sx={{ color: '#757575' }}>
-                                {person.employeeId} | {person.role}
-                            </Typography>
-                        </Box>
-                    </Box>
+                todayBirthdays.map((person, idx) => (
+                    <BirthdayCard key={idx} person={person} isToday />
                 ))
             ) : (
-                <Typography variant="body2" style={{ color: '#757575' }}>
+                <Typography variant="body2" sx={{ color: '#888', mb: 2 }}>
                     No birthdays today.
                 </Typography>
             )}
 
-            <Divider style={{ margin: '16px 0', backgroundColor: '#e0e0e0' }} />
+            <Divider sx={{ my: 3 }} />
 
-            <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
-                🗓️ Upcoming Birthdays
+            {/* Upcoming Birthdays */}
+            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: '#fb8c00' }}>
+                <CalendarMonthIcon /> Upcoming Birthdays
             </Typography>
             {upcomingBirthdays.length > 0 ? (
-                <Grid container spacing={2}>
-                    {upcomingBirthdays.map((person, index) => (
-                        <Grid
-                            item
-                            key={index}
-                            xs={6}
-                            sm={4}
-                            md={3}
-                            style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                backgroundColor: '#f5f5f5',
-                            }}
-                        >
-                            <Avatar
-                                alt={person.name}
-                                src={person.image || ''}
-                                style={{
-                                    marginBottom: '8px',
-                                    backgroundColor: '#1976d2',
-                                    color: '#fff',
-                                }}
-                            >
-                                {person.name[0]}
-                            </Avatar>
-                            <Typography variant="body2" align="center" style={{ fontWeight: 'bold' }}>
-                                {person.name}
-                            </Typography>
-                            <Typography variant="caption" align="center" style={{ color: '#757575' }}>
-                                {person.date}
-                            </Typography>
-                        </Grid>
-                    ))}
-                </Grid>
+                upcomingBirthdays.map((person, idx) => (
+                    <BirthdayCard key={idx} person={person} isToday={false} />
+                ))
             ) : (
-                <Typography variant="body2" style={{ color: '#757575' }}>
+                <Typography variant="body2" sx={{ color: '#888' }}>
                     No upcoming birthdays in the next 7 days.
                 </Typography>
             )}
-        </>
+        </Box>
     );
 }
 

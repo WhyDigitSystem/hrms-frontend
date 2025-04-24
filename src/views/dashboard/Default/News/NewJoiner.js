@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Avatar, Box, Typography, Divider, Grid
+    Avatar, Box, Typography, Divider, Grid, Card, CardContent
 } from '@mui/material';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
@@ -62,28 +62,31 @@ function NewJoiner() {
     };
 
     return (
-        <>
-            <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
+        <Box sx={{ padding: '16px' }}>
+            {/* New Joiners Today Section */}
+            {/* <Typography variant="h6" style={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
                 🎉 New Joiners Today
-            </Typography>
+            </Typography> */}
             {todayJoiners.length > 0 ? (
                 todayJoiners.map((person, index) => (
-                    <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px' }}>
-                        <Avatar sx={{ backgroundColor: '#1976d2', color: '#fff' }}>{person.initials}</Avatar>
+                    <Card key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
+                        <Avatar sx={{ backgroundColor: '#1976d2', color: '#fff', border: '2px solid #fff' }}>{person.initials}</Avatar>
                         <Box>
-                            <Typography sx={{ fontWeight: 'bold' }}>{person.name}</Typography>
+                            <Typography sx={{ fontWeight: 'bold', color: '#333' }}>{person.name}</Typography>
                             <Typography variant="caption" sx={{ color: '#757575' }}>
                                 {person.employeeId} | {person.role}
                             </Typography>
                         </Box>
-                    </Box>
+                    </Card>
                 ))
             ) : (
                 <Typography variant="body2" style={{ color: '#757575' }}>
                     No new joiners today.
                 </Typography>
             )}
-        </>
+
+            <Divider sx={{ margin: '16px 0' }} />
+        </Box>
     );
 }
 
