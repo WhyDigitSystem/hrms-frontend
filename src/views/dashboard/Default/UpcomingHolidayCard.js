@@ -187,17 +187,32 @@ const UpcomingHolidayCard = () => {
 
       {activeHolidays.length > 0 && (
         <Card sx={{ mb: 3, p: 3, borderRadius: 3, boxShadow: 3, borderLeft: '4px solid #264952' }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 2, display: 'flex', alignItems: 'center' }}>
-            <EventIcon sx={{ fontSize: 30, mr: 1, color: '#264952' }} />
-            Upcoming Holiday
-            <Button onClick={handleViewMoreOpen} variant="outlined" sx={{ textTransform: 'none', borderRadius: 20, marginLeft: 'auto', display: 'flex', alignItems: 'center' }} endIcon={<ExpandMoreIcon />}>
+          <Box sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'flex-start', display :'flex' }}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+              <EventIcon sx={{ fontSize: 30, mr: 1, color: '#264952' }} />
+              Upcoming Holiday
+            </Typography>
+            <Button
+              onClick={handleViewMoreOpen}
+              variant="outlined"
+              sx={{
+                textTransform: 'none',
+                borderRadius: 10,
+                marginLeft: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.875rem', // optional for smaller screens
+              }}
+              endIcon={<ExpandMoreIcon />}
+            >
               View More
             </Button>
-          </Typography>
+          </Box>
 
-          <Grid container spacing={3}>
+
+          <Grid container spacing={3} className='mt-3'>
             {activeHolidays.slice(0, 2).map((holiday, index) => (
-              <Grid item xs={12} sm={10} md={6} key={index}>
+              <Grid item xs={12} sm={10} md={6} key={index} className='mt-3'>
                 <Box
                   sx={{
                     p: 3,
