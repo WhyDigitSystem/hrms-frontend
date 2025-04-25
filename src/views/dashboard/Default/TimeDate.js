@@ -17,19 +17,14 @@ import WbSunnyIcon from '@mui/icons-material/WbSunny';
 const CardWrapper = styled(Paper)(({ theme }) => ({
     padding: theme.spacing(4),
     [theme.breakpoints.down('sm')]: {
-        padding: theme.spacing(2),
+        padding: theme.spacing(3),
     },
-    borderRadius: theme.shape.borderRadius * 2,
-    background: `linear-gradient(135deg, #d0f0f0 30%, #239f9d 90%)`,
+    borderRadius: theme.shape.borderRadius * 3,
+    background: `linear-gradient(135deg, #4f9fa6 30%, #1a6e6a 90%)`, // Updated for a darker feel
     color: theme.palette.common.white,
-    boxShadow: theme.shadows[6],
-    transition: 'transform 0.3s ease',
-    '&:hover': {
-        transform: 'scale(1.01)',
-        boxShadow: theme.shadows[10]
-    },
+    boxShadow: 'none', // Removed shadow for simplicity
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
 }));
 
 const TimeDate = ({ isLoading }) => {
@@ -99,15 +94,17 @@ const TimeDate = ({ isLoading }) => {
             <Grid container spacing={3} alignItems="center" direction={isMobile ? 'column' : 'row'}>
                 <Grid item xs={12} sm={6}>
                     <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-start'} textAlign={isMobile ? 'center' : 'left'}>
-                        <Box display="flex" alignItems="center" mb={1}>
-                            <AccessTimeIcon sx={{ fontSize: isMobile ? 32 : 44, mr: 1, color: theme.palette.info.light }} />
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <AccessTimeIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.info.light }} />
                             <Typography
-                                variant={isMobile ? 'h6' : 'h4'}
+                                variant={isMobile ? 'h5' : 'h3'}
                                 sx={{
                                     background: 'linear-gradient(to right, #00c6ff, #0072ff)',
                                     WebkitBackgroundClip: 'text',
                                     WebkitTextFillColor: 'transparent',
-                                    fontWeight: 700
+                                    fontWeight: 700,
+                                    color: isMobile ? 'white' : 'transparent',
+                                    letterSpacing: 2 // Added spacing for emphasis
                                 }}
                             >
                                 {getGreeting()}
@@ -115,8 +112,13 @@ const TimeDate = ({ isLoading }) => {
                         </Box>
 
                         <Typography
-                            variant={isMobile ? 'h5' : 'h3'}
-                            sx={{ fontWeight: 'bold', color: theme.palette.common.white }}
+                            variant={isMobile ? 'h4' : 'h2'}
+                            sx={{
+                                fontWeight: 'bold',
+                                color: theme.palette.common.white,
+                                textShadow: '1px 1px 5px rgba(0,0,0,0.3)',
+                                mb: isMobile ? 2 : 0, // Adjusting margin on mobile for better spacing
+                            }}
                         >
                             {formattedTime}
                         </Typography>
@@ -129,9 +131,9 @@ const TimeDate = ({ isLoading }) => {
 
                 <Grid item xs={12} sm={6}>
                     <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-end'} textAlign={isMobile ? 'center' : 'right'}>
-                        <Box display="flex" alignItems="center" mb={1}>
-                            <LocationOnIcon sx={{ fontSize: isMobile ? 32 : 44, mr: 1, color: theme.palette.success.light }} />
-                            <Typography variant="h6">
+                        <Box display="flex" alignItems="center" mb={2}>
+                            <LocationOnIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.success.light }} />
+                            <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold' }}>
                                 {location.city}, {location.country}
                             </Typography>
                         </Box>
@@ -143,20 +145,30 @@ const TimeDate = ({ isLoading }) => {
                                 icon={<AccessTimeIcon />}
                                 label={`Time Zone: ${timeZone}`}
                                 sx={{
-                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                    bgcolor: 'rgba(255,255,255,0.25)',
                                     color: theme.palette.common.white,
                                     borderRadius: 2,
-                                    fontSize: isMobile ? '0.75rem' : 'inherit'
+                                    fontSize: isMobile ? '0.85rem' : 'inherit',
+                                    padding: isMobile ? '4px 8px' : '6px 12px', // Adjust padding on mobile
+                                    transition: 'background-color 0.3s ease',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(255,255,255,0.4)',
+                                    }
                                 }}
                             />
                             <Chip
                                 icon={<WbSunnyIcon />}
                                 label={`${weather.temperature} | ${weather.condition}`}
                                 sx={{
-                                    bgcolor: 'rgba(255,255,255,0.15)',
+                                    bgcolor: 'rgba(255,255,255,0.25)',
                                     color: theme.palette.common.white,
                                     borderRadius: 2,
-                                    fontSize: isMobile ? '0.75rem' : 'inherit'
+                                    fontSize: isMobile ? '0.85rem' : 'inherit',
+                                    padding: isMobile ? '4px 8px' : '6px 12px', // Adjust padding on mobile
+                                    transition: 'background-color 0.3s ease',
+                                    '&:hover': {
+                                        bgcolor: 'rgba(255,255,255,0.4)',
+                                    }
                                 }}
                             />
                         </Box>
@@ -171,9 +183,9 @@ const TimeDate = ({ isLoading }) => {
                     bottom: -10,
                     right: -10,
                     fontSize: 160,
-                    opacity: 0.05,
+                    opacity: 0.1,
                     color: theme.palette.common.white,
-                    pointerEvents: 'none'
+                    pointerEvents: 'none',
                 }}
             >
                 <WbSunnyIcon fontSize="inherit" />

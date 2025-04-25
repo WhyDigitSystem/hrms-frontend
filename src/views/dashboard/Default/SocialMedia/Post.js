@@ -51,7 +51,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
   const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
-  const [formData, setFormData] = useState({ 
+  const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
     circularcontent: '',
@@ -68,11 +68,11 @@ function Post({ blockEdit = false, enableEditing = true }) {
   const handleLike = async (circular) => {
     const updatedLikedState = !isLiked;
     setIsLiked(updatedLikedState);
-  
+
     const currentCircularId = circular.id;
     const currentFinYear = circular.finYear;
     const currentCircularTopic = circular.circularTopic;
-  
+
     const saveData = {
       ...(editId && { id: editId }),
       branchCode,
@@ -85,19 +85,19 @@ function Post({ blockEdit = false, enableEditing = true }) {
       userName: loginUserName,
       circularTopic: currentCircularTopic,
     };
-  
+
     console.log("🔎 Save Data being sent to API:", saveData);
-  
+
     try {
       const response = await apiCalls('put', '/basicmaster/createUpdatePraise', saveData);
-  
+
       if (response.status === true) {
         const praise = await getCountOfPraise(currentCircularId);
-  
+
         if (praise) {
-          setListViewData((prevData) =>
-            prevData.map((item) =>
-              item.id === currentCircularId ? { ...item, likes: praise.likes } : item
+          setListViewData(prevData =>
+            prevData.map(item =>
+              item.id === currentCircularId ? { ...item, likes: praise?.likes || 0 } : item
             )
           );
         }
@@ -110,7 +110,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
       setIsLiked(!updatedLikedState);
       toast.error('Network error while updating like');
     }
-  };  
+  };
 
   // Fetch all circulars on component mount
   useEffect(() => {
@@ -517,7 +517,17 @@ function Post({ blockEdit = false, enableEditing = true }) {
 
       {/* Create Post Modal */}
       <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box className="modal-container" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
+        <Box
+          className="modal-container"
+          sx={{
+            bgcolor: 'white',
+            p: 3,
+            borderRadius: 2,
+            width: { xs: '90%', sm: 400 }, // 90% width on small screens, 400px on larger screens
+            mx: 'auto',
+            mt: '10%',
+          }}
+        >
           <Typography variant="h6" mb={2}>{editId ? 'Edit Post' : 'Create Post'}</Typography>
           <TextField
             label="Topic"
@@ -552,6 +562,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
         </Box>
       </Modal>
 
+
       {/* View More Modal */}
       <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
         <Box className="view-more-modal" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
@@ -566,7 +577,7 @@ function Post({ blockEdit = false, enableEditing = true }) {
                   secondaryAction={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant="body2" color="text.secondary">
-                        {item.likes?.Count}
+                        {likes?.Count || 0}
                       </Typography>
                       <IconButton
                         aria-label="like"

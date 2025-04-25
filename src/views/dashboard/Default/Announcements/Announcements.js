@@ -16,14 +16,11 @@ import {
   ListItemAvatar,
   ListItemText,
   Divider,
-  Fade,
-  Tooltip,
   useMediaQuery,
 } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
@@ -33,22 +30,16 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
 function Announcements({ blockEdit = false, enableEditing = true }) {
   const [listViewData, setListViewData] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
   const orgId = localStorage.getItem('orgId');
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const loginUserName = localStorage.getItem('userName');
-
-  
-  const [formData, setFormData] = useState({
-    active: true,
-    topic: '',
-    announcement: '',
-  });
+  const [formData, setFormData] = useState({ active: true, topic: '', announcement: '' });
   const [editId, setEditId] = useState('');
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     GetAnnouncementByOrgId();
@@ -243,7 +234,18 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
 
       {/* Create/Edit Announcement Modal */}
       <Modal open={openCreateModal} onClose={handleCloseCreateModal} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: 400, mx: 'auto', mt: '10%' }}>
+        <Box
+          sx={{
+            bgcolor: 'white',
+            p: 3,
+            borderRadius: 2,
+            width: isMobile ? '90vw' : 400,
+            mx: 'auto',
+            mt: isMobile ? '20%' : '10%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+          }}
+        >
           <Typography variant="h6" mb={2}>{editId ? 'Edit Announcement' : 'Create Announcement'}</Typography>
           <TextField
             label="Topic"
@@ -276,7 +278,18 @@ function Announcements({ blockEdit = false, enableEditing = true }) {
 
       {/* View More Modal */}
       <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
+        <Box
+          sx={{
+            bgcolor: 'white',
+            p: 3,
+            borderRadius: 2,
+            width: isMobile ? '95vw' : '80%',
+            mx: 'auto',
+            mt: isMobile ? '10%' : '5%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+          }}
+        >
           <Typography variant="h5" mb={3}>All Announcements</Typography>
           <List>
             {listViewData.map((item) => (
