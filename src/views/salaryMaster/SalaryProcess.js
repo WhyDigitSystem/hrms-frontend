@@ -278,12 +278,13 @@ const SalaryProcess = () => {
         const response = await apiCalls('put', '/employeemaster/createUpdateSalaryProcess', saveDataArray);
 
         if (response.status === true) {
-          const successMsg =
-            response.paramObjectsMap?.message ||
-            response.paramObjectsMap?.salaryProcessVO?.message ||
-            'Salary Process created successfully';
+          // const successMsg =
+          //   response.paramObjectsMap?.message ||
+          //   response.paramObjectsMap?.salaryProcessVO?.message ||
+          //   'Salary Process created successfully';
 
-          showToast(successMsg);
+          // showToast(successMsg);
+          showToast('success', ' Salary Process created successfully');
           handleCancel();
         } else {
           const errorMsg = response.paramObjectsMap?.errorMessage || 'Salary Process creation failed';
@@ -463,9 +464,9 @@ const SalaryProcess = () => {
               </div>
             </div>
           </div>
+          <ToastContainer />
         </>
       </div>
-      <ToastContainer />
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>Select Employees</DialogTitle>
         <DialogContent>

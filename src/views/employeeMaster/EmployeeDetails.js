@@ -32,9 +32,12 @@ import ImageIcon from '@mui/icons-material/Image';
 import { Typography } from '@mui/material';
 import { IconButton } from '@mui/material';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
+import CircularProgress from '@mui/material/CircularProgress';
+import { useNavigate } from 'react-router-dom';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 const EmployeeDetails = () => {
-  const [showForm, setShowForm] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [data, setData] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
@@ -58,7 +61,10 @@ const EmployeeDetails = () => {
   const theme = useTheme();
   const anchorRef = useRef(null);
   const [listViewData, setListViewData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const maxDate = dayjs().subtract(18, 'years');
+  const navigate = useNavigate();
+  const [isViewMode, setIsViewMode] = useState(false);
   const [formData, setFormData] = useState({
     employeeName: '',
     employeeCode: '',
@@ -158,16 +164,39 @@ const EmployeeDetails = () => {
     { label: 'D GRADE', value: 'D GRADE' }
   ];
 
+  const navigateToPayslip = (employeeCode) => {
+    navigate(`/finance/payslip`, { state: { employeeCode } });
+  };
+
   const columns = [
-    { accessorKey: 'employeeName', header: 'Name', size: 140 },
+
+    {
+      accessorKey: 'payslip',
+      header: 'Payslip',
+      size: 100,
+      Cell: ({ row }) => (
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <DescriptionIcon
+            style={{ color: '#388e3c', cursor: 'pointer' }}
+            onClick={() => navigateToPayslip(row.original.employeeCode)}
+          />
+        </div>
+      )
+    },
+    {
+      accessorKey: 'employeeName',
+      header: 'Name',
+      size: 140,
+      Cell: ({ row }) => (
+        <span style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => getEmployeeDetailsById(row)}>
+          {row.original.employeeName}
+        </span>
+      )
+    },
     { accessorKey: 'employeeCode', header: 'Code', size: 140 },
-    // { accessorKey: 'branch', header: 'Branch', size: 140 },
     { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
-    // { accessorKey: 'grade', header: 'Grade', size: 140 },
-    // { accessorKey: 'team', header: 'Team', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
-    // { accessorKey: 'role', header: 'Role', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
@@ -217,18 +246,32 @@ const EmployeeDetails = () => {
     }
   };
 
+  // const getAllEmployees = async () => {
+  //   try {
+  //     const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
+  //     console.log('API Response:', response);
+
+  //     if (response.status === true) {
+  //       setListViewData(response.paramObjectsMap.employeeVO);
+  //     } else {
+  //       console.error('API Error:', response);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching data:', error);
+  //   }
+  // };
+
   const getAllEmployees = async () => {
     try {
+      setLoading(true); // show loader
       const response = await apiCalls('get', `master/getAllEmployeeByOrgId?orgId=${orgId}`);
-      console.log('API Response:', response);
-
       if (response.status === true) {
         setListViewData(response.paramObjectsMap.employeeVO);
-      } else {
-        console.error('API Error:', response);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false); // hide loader
     }
   };
 
@@ -661,13 +704,9 @@ const EmployeeDetails = () => {
     }
   };
 
-  // Helper function to convert image URL to a File
-  const blobToFile = (theBlob, fileName) => {
-    return new File([theBlob], fileName, { type: theBlob.type });
-  };
-
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
+    setIsViewMode(true);
     setShowForm(true);
 
     try {
@@ -935,6 +974,7 @@ const EmployeeDetails = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.employeeName}
                   helperText={fieldErrors.employeeName}
+                  disabled={isViewMode}
                 />
               </div>
 
@@ -950,6 +990,7 @@ const EmployeeDetails = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.employeeCode}
                   helperText={fieldErrors.employeeCode}
+                  disabled={isViewMode}
                 />
               </div>
 
@@ -1676,13 +1717,17 @@ const EmployeeDetails = () => {
               </Box>
             </div>
           </>
+        ) : loading ? (
+          <div className="d-flex justify-content-center align-items-center" style={{ height: '50px' }}>
+            <CircularProgress />
+          </div>
         ) : (
           <CommonListViewTable
             data={listViewData}
             columns={columns}
             blockEdit={true}
             toEdit={getEmployeeDetailsById}
-            enableEditing={true}
+            enableEditing={false}
           />
         )}
       </div>

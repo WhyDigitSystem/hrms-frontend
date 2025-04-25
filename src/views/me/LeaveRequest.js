@@ -39,7 +39,7 @@ const LeaveRequest = () => {
   const [leaveTypeList, setLeaveTypeList] = useState([]);
   const [weekOffDays, setWeekOff] = useState([]);
   const [totalLeaveDays, setTotalLeaveDays] = useState([]);
-  const [notifyEmail, setNotifyEmail] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState('');
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveTypeCode: '',
@@ -51,6 +51,7 @@ const LeaveRequest = () => {
     notify: '',
     notifyEmail: '',
     notifyCode: '',
+    compOffDate: null
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -60,7 +61,8 @@ const LeaveRequest = () => {
     selectLeave: '',
     totalDays: '',
     notes: '',
-    notify: ''
+    notify: '',
+    compOffDate: null
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -72,7 +74,6 @@ const LeaveRequest = () => {
     { accessorKey: 'notes', header: 'Notes', size: 140 },
     { accessorKey: 'notify', header: 'Notify', size: 140 },
     { accessorKey: 'approveStatus', header: 'Status', size: 140 }
-
   ];
   const [listViewData, setListViewData] = useState([]);
   const [errorDialog, setErrorDialog] = useState({
@@ -134,25 +135,22 @@ const LeaveRequest = () => {
   // getNotifyList
   const getNotifyList = async () => {
     try {
-      const result = await apiCalls(
-        "get",
-        `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`
-      );
+      const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`);
 
       if (result?.paramObjectsMap?.PermisionRequestVO) {
-        const notifyList = result.paramObjectsMap.PermisionRequestVO.map(person => ({
-          reportingPersonCode: person.reportingPersonCode,  // Ensure notifyCode is included
+        const notifyList = result.paramObjectsMap.PermisionRequestVO.map((person) => ({
+          reportingPersonCode: person.reportingPersonCode, // Ensure notifyCode is included
           reportingPerson: person.reportingPerson,
-          notifyEmail: person.email,
+          notifyEmail: person.email
         }));
 
-        console.log("🔍 Notify List:", notifyList);
+        console.log('🔍 Notify List:', notifyList);
         setCompanyList(notifyList);
       } else {
-        console.error("❌ No reporting persons found");
+        console.error('❌ No reporting persons found');
       }
     } catch (error) {
-      console.error("❌ Error fetching reporting persons:", error);
+      console.error('❌ Error fetching reporting persons:', error);
     }
   };
 
@@ -160,7 +158,7 @@ const LeaveRequest = () => {
     try {
       const result = await apiCalls('get', `leaveprocess/getAllLeaveTypeFromLeaveMaster?employeeCode=${employeeCode}&orgId=${orgId}`);
 
-      const formattedLeaveList = result.paramObjectsMap.leaveRequestVO.map(leave => ({
+      const formattedLeaveList = result.paramObjectsMap.leaveRequestVO.map((leave) => ({
         ...leave,
         leaveDays: parseFloat(leave.leaveDays).toString()
       }));
@@ -191,7 +189,8 @@ const LeaveRequest = () => {
           selectLeave: leaveRequestDetails.selectLeave,
           totalDays: leaveRequestDetails.totalDays,
           notes: leaveRequestDetails.notes || '',
-          notify: leaveRequestDetails.notify || ''
+          notify: leaveRequestDetails.notify || '',
+          compOffDate: leaveRequestDetails.compOffDate || ''
         });
 
         setListView(false); // Switch back to form view
@@ -219,7 +218,8 @@ const LeaveRequest = () => {
       selectLeave: '',
       totalDays: '',
       notes: '',
-      notify: ''
+      notify: '',
+      compOffDate: null
     });
 
     setFieldErrors({
@@ -229,7 +229,8 @@ const LeaveRequest = () => {
       selectLeave: '',
       totalDays: '',
       notes: '',
-      notify: ''
+      notify: '',
+      compOffDate: null
     });
 
     setEditId('');
@@ -249,14 +250,14 @@ const LeaveRequest = () => {
       errors.totalDays = 'Total Days is required';
     }
     if (!formData.notes) {
-      errors.notes = 'Notes is required';
+      errors.notes = 'Remarks is required';
     }
     if (!formData.leaveType) {
       errors.leaveType = 'Leave Type is required';
     }
-    // if (!formData.notify) {
-    //   errors.notify = 'Notify is required';
-    // }
+    if (!formData.notify) {
+      errors.notify = 'Notify is required';
+    }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
@@ -276,7 +277,8 @@ const LeaveRequest = () => {
         notes: formData.notes,
         notify: formData.notify,
         notifyEmail: formData.notifyEmail,
-        notifyCode: formData.notifyCode,  // Ensure notifyCode is included here
+        notifyCode: formData.notifyCode, // Ensure notifyCode is included here
+        compOffDate: formData.compOffDate,
         orgId: orgId,
         branchCode: branchCode,
         branch: branch,
@@ -320,33 +322,28 @@ const LeaveRequest = () => {
         from_name: employeeName,
         email: formData.notifyEmail,
         leave_type: formData.leaveType,
-        start_date: dayjs(formData.fromDate).format("DD-MM-YYYY"),
-        end_date: dayjs(formData.toDate).format("DD-MM-YYYY"),
+        start_date: dayjs(formData.fromDate).format('DD-MM-YYYY'),
+        end_date: dayjs(formData.toDate).format('DD-MM-YYYY'),
         total_days: formData.totalDays,
         message: formData.notes,
         approve_link: `/team/LeaveApproval/{leave_request_id}`
       };
 
-      console.log("Email Params:", emailParams);
+      console.log('Email Params:', emailParams);
 
       if (!emailParams.email) {
-        console.error("Error: Recipient email is missing!");
-        showToast("error", "Recipient email is missing!");
+        console.error('Error: Recipient email is missing!');
+        showToast('error', 'Recipient email is missing!');
         return;
       }
 
-      await emailjs.send(
-        "service_hff8dd7",
-        "template_bs08toa",
-        emailParams,
-        "G6cKiPBXzCvlFaOuo"
-      );
+      await emailjs.send('service_hff8dd7', 'template_bs08toa', emailParams, 'G6cKiPBXzCvlFaOuo');
 
       // showToast("success", "Email notification sent successfully!");
-      console.log("Email Sent Successfully");
+      console.log('Email Sent Successfully');
     } catch (error) {
-      console.error("Email Sending Failed:", error);
-      showToast("error", "Failed to send email notification. Please try again.");
+      console.error('Email Sending Failed:', error);
+      showToast('error', 'Failed to send email notification. Please try again.');
     }
   };
 
@@ -356,7 +353,7 @@ const LeaveRequest = () => {
 
   // const handleLeaveTypeChange = (event, newValue) => {
   //   if (!newValue) {
-  //     setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0 }));
+  //     setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0, effectiveFrom: null }));
   //     return;
   //   }
 
@@ -368,11 +365,21 @@ const LeaveRequest = () => {
   //     return;
   //   }
 
+  //   const effectiveFromDate = dayjs(selectedLeave.effectiveFrom);
+  //   const today = dayjs();
+
+  //   // Show message only if the effectiveFrom date is in the future
+  //   if (effectiveFromDate.isAfter(today)) {
+  //     const formattedDate = effectiveFromDate.format('DD-MM-YYYY');
+  //     showErrorDialog(`You can take leave for ${selectedLeave.leaveType} from ${formattedDate} onwards only.`);
+  //   }
+
   //   setFormData((prevData) => ({
   //     ...prevData,
   //     leaveType: newValue.leaveType,
   //     leaveTypeCode: selectedLeave.leaveTypeCode,
-  //     availableLeaveDays: parseFloat(selectedLeave.leaveDays)
+  //     availableLeaveDays: parseFloat(selectedLeave.leaveDays),
+  //     effectiveFrom: selectedLeave.effectiveFrom
   //   }));
   // };
 
@@ -381,24 +388,26 @@ const LeaveRequest = () => {
       setFormData((prevData) => ({ ...prevData, leaveType: '', leaveTypeCode: '', totalDays: 0, effectiveFrom: null }));
       return;
     }
-  
+
     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === newValue.leaveType);
     if (!selectedLeave) return;
-  
-    if (selectedLeave.leaveType !== 'LOSS OF PAY' && selectedLeave.leaveDays === '0') {
-      showErrorDialog(`You don't have leave in ${selectedLeave.leaveType}`);
-      return;
+
+    // Skip checks if leave type is COMPENSATORY OFF
+    if (selectedLeave.leaveType !== 'COMPENSATORY OFF') {
+      if (selectedLeave.leaveType !== 'LOSS OF PAY' && selectedLeave.leaveDays === '0') {
+        showErrorDialog(`You don't have leave in ${selectedLeave.leaveType}`);
+        return;
+      }
+
+      const effectiveFromDate = dayjs(selectedLeave.effectiveFrom);
+      const today = dayjs();
+
+      if (effectiveFromDate.isAfter(today)) {
+        const formattedDate = effectiveFromDate.format('DD-MM-YYYY');
+        showErrorDialog(`You can take leave for ${selectedLeave.leaveType} from ${formattedDate} onwards only.`);
+      }
     }
-  
-    const effectiveFromDate = dayjs(selectedLeave.effectiveFrom);
-    const today = dayjs();
-  
-    // Show message only if the effectiveFrom date is in the future
-    if (effectiveFromDate.isAfter(today)) {
-      const formattedDate = effectiveFromDate.format('DD-MM-YYYY');
-      showErrorDialog(`You can take leave for ${selectedLeave.leaveType} from ${formattedDate} onwards only.`);
-    }
-  
+
     setFormData((prevData) => ({
       ...prevData,
       leaveType: newValue.leaveType,
@@ -406,51 +415,31 @@ const LeaveRequest = () => {
       availableLeaveDays: parseFloat(selectedLeave.leaveDays),
       effectiveFrom: selectedLeave.effectiveFrom
     }));
-  };  
-  
+  };
+
+  // const handleDateChange = (name, value) => {
+  //   setFormData((prevData) => ({
+  //     ...prevData,
+  //     [name]: value || null
+  //   }));
+  // };
 
   const handleDateChange = (name, value) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value || null
-    }));
+    const formattedValue = value || null;
+  
+    if (name === 'fromDate' && formData.leaveType === 'COMPENSATORY OFF') {
+      setFormData((prevData) => ({
+        ...prevData,
+        fromDate: formattedValue,
+        toDate: formattedValue
+      }));
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: formattedValue
+      }));
+    }
   };  
-
-  // const disableWeekOffDays = (date) => {
-  //   const disabledDays = {
-  //     SUNDAY: 0,
-  //     MONDAY: 1,
-  //     TUESDAY: 2,
-  //     WEDNESDAY: 3,
-  //     THURSDAY: 4,
-  //     FRIDAY: 5,
-  //     SATURDAY: 6
-  //   };
-
-  //   return weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
-  // };
-
-  // const disableWeekOffDays = (date) => {
-  //   const disabledDays = {
-  //     SUNDAY: 0,
-  //     MONDAY: 1,
-  //     TUESDAY: 2,
-  //     WEDNESDAY: 3,
-  //     THURSDAY: 4,
-  //     FRIDAY: 5,
-  //     SATURDAY: 6
-  //   };
-  
-  //   const isWeekOff = weekOffDays.includes(
-  //     Object.keys(disabledDays).find((day) => disabledDays[day] === date.day())
-  //   );
-  
-  //   const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
-  
-  //   const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
-  
-  //   return isWeekOff || isBeforeEffectiveFrom;
-  // };
 
   const disableWeekOffDays = (date) => {
     const disabledDays = {
@@ -462,31 +451,28 @@ const LeaveRequest = () => {
       FRIDAY: 5,
       SATURDAY: 6
     };
-  
-    const isWeekOff = weekOffDays.includes(
-      Object.keys(disabledDays).find((day) => disabledDays[day] === date.day())
-    );
-  
+
+    const isWeekOff = weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
+
     const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
     const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
-  
+
     const sevenDaysAgo = dayjs().subtract(7, 'day');
     const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
-  
+
     return isWeekOff || isBeforeEffectiveFrom || isBefore7Days;
-  };  
+  };
 
   const getMinSelectableDate = () => {
     const sevenDaysAgo = dayjs().subtract(7, 'day');
     const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
-  
+
     // Return the later date between sevenDaysAgo and effectiveFrom
     if (effectiveFromDate && effectiveFromDate.isAfter(sevenDaysAgo)) {
       return effectiveFromDate;
     }
     return sevenDaysAgo;
   };
-  
 
   const getCompanyWeekOff = async () => {
     try {
@@ -497,6 +483,43 @@ const LeaveRequest = () => {
       console.error('Error', error);
     }
   };
+
+  // const getTotalLeave = async (fromDate, toDate, selectLeave) => {
+  //   try {
+  //     const formattedFromDate = dayjs(fromDate).format('YYYY-MM-DD');
+  //     const formattedToDate = dayjs(toDate).format('YYYY-MM-DD');
+
+  //     const leaveType = dayjs(fromDate).isSame(dayjs(toDate), 'day') ? selectLeave : null;
+
+  //     const result = await apiCalls(
+  //       'get',
+  //       `leaveprocess/calculateLeavedays?fromDate=${formattedFromDate}&orgId=${orgId}&selectLeave=${leaveType || ''}&toDate=${formattedToDate}`
+  //     );
+
+  //     const workingDays = result.workingDays || 0;
+  //     const selectedLeave = leaveTypeList.find((leave) => leave.leaveType === formData.leaveType);
+
+  //     if (selectedLeave) {
+  //       const availableLeaveDays = parseFloat(selectedLeave.leaveDays);
+
+  //       if (workingDays > availableLeaveDays && formData.leaveType !== 'LOSS OF PAY') {
+  //         showErrorDialog(`You have only ${availableLeaveDays} day available for ${formData.leaveType}.`);
+  //         setFormData((prevData) => ({
+  //           ...prevData,
+  //           totalDays: 0
+  //         }));
+  //         return;
+  //       }
+  //     }
+
+  //     setFormData((prevData) => ({
+  //       ...prevData,
+  //       totalDays: workingDays
+  //     }));
+  //   } catch (error) {
+  //     console.error('Error fetching leave data:', error);
+  //   }
+  // };
 
   const getTotalLeave = async (fromDate, toDate, selectLeave) => {
     try {
@@ -516,7 +539,7 @@ const LeaveRequest = () => {
       if (selectedLeave) {
         const availableLeaveDays = parseFloat(selectedLeave.leaveDays);
 
-        if (workingDays > availableLeaveDays && formData.leaveType !== 'LOSS OF PAY') {
+        if (workingDays > availableLeaveDays && formData.leaveType !== 'LOSS OF PAY' && formData.leaveType !== 'COMPENSATORY OFF') {
           showErrorDialog(`You have only ${availableLeaveDays} day available for ${formData.leaveType}.`);
           setFormData((prevData) => ({
             ...prevData,
@@ -567,7 +590,7 @@ const LeaveRequest = () => {
               columns={listViewColumns}
               blockEdit={false}
               toEdit={getLeaveRequestById}
-            // enableEditing={true}
+              // enableEditing={true}
             />
           </div>
         ) : (
@@ -751,6 +774,23 @@ const LeaveRequest = () => {
                     />
                   )}
                 />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth>
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    {formData.leaveType?.toUpperCase() === 'COMPENSATORY OFF' && (
+                      <DatePicker
+                        label="Compensatory Off Date"
+                        format="DD-MM-YYYY"
+                        slotProps={{
+                          textField: { size: 'small', clearable: true }
+                        }}
+                        value={formData.compOffDate || null}
+                        onChange={(newValue) => handleDateChange('compOffDate', newValue)}
+                      />
+                    )}
+                  </LocalizationProvider>
+                </FormControl>
               </div>
             </div>
           </>

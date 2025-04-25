@@ -8,6 +8,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import ActionButton from 'utils/ActionButton';
 import apiCalls from 'apicall';
 import { useEffect } from 'react';
+import { ToastContainer } from 'react-toastify';
+import { showToast } from 'utils/toast-component';
+import dayjs from 'dayjs';
+import { FaWhatsapp } from 'react-icons/fa';
+import Button from '@mui/material/Button';
 
 const TimeSheet = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -16,14 +21,139 @@ const TimeSheet = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [alProject, setAllProject] = useState([]);
-  const [formData, setFormData] = useState({
-    projectName: '',
-    description: ''
-  });
+  const [timeSheetData, setTimeSheetData] = useState({});
+  const [userName, setUserName] = useState(localStorage.getItem('userName'));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode'));
+  const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+
+  const [loading, setLoading] = useState(false);
+  const [weekOff, setWeekOff] = useState([]);
+  const [formRows, setFormRows] = useState([{ projectName: '', fromTime: '', toTime: '', description: '' }]);
+  const handleAddRow = () => {
+    setFormRows([...formRows, { projectName: '', fromTime: '', toTime: '', description: '' }]);
+  };
+
+  const handleDeleteRow = (index) => {
+    const updatedRows = formRows.filter((_, i) => i !== index);
+    setFormRows(updatedRows);
+  };
+
+  const handleRowChange = (index, field, value) => {
+    const updatedRows = [...formRows];
+    updatedRows[index][field] = value;
+    setFormRows(updatedRows);
+  };
 
   useEffect(() => {
     getAllProject();
+    getAllSwipeInandOut();
+    getCompanyWeekOff();
   }, []);
+
+  // const renderTimeInputs = (date) => {
+  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+  //   if (weekOff.includes(dayName)) return null;
+
+  //   const dateKey = date.toDateString();
+  //   const data = timeSheetData[dateKey] || {};
+
+  //   if (data.status === 'LEAVE') {
+  //     return (
+  //       <div
+  //         style={{
+  //           marginTop: '4px',
+  //           fontSize: '12px',
+  //           fontWeight: 'bold',
+  //           color: '#b91c1c', // dark red
+  //           backgroundColor: '#fee2e2', // light red
+  //           padding: '4px 8px',
+  //           borderRadius: '4px',
+  //           textAlign: 'center'
+  //         }}
+  //       >
+  //         On Leave 🏖️
+  //       </div>
+  //     );
+  //   }
+
+  //   const formatTime = (timeStr) => {
+  //     if (!timeStr || typeof timeStr !== 'string') return '0:00';
+  //     const parts = timeStr.split(':');
+  //     if (parts.length >= 2) {
+  //       const [hour, minute] = parts;
+  //       return `${hour}:${minute}`;
+  //     } else {
+  //       return `${timeStr}:00`;
+  //     }
+  //   };
+
+  //   return (
+  //     <div className="mt-1 text-xs text-left">
+  //       {data.checkIn && (
+  //         <div>
+  //           {formatTime(data.checkIn)}
+  //           {data.checkOut && ` | ${formatTime(data.checkOut)}`}
+  //         </div>
+  //       )}
+  //       <div>Total: {formatTime(data.totalHours)} hrs</div>
+  //     </div>
+  //   );
+  // };
+
+  const renderTimeInputs = (date) => {
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  
+    if (weekOff.includes(dayName)) return null;
+  
+    const dateKey = date.toDateString();
+    const data = timeSheetData[dateKey] || {};
+  
+    if (data.status === 'LEAVE') {
+      return (
+        <div
+          style={{
+            marginTop: '4px',
+            fontSize: '12px',
+            fontWeight: 'bold',
+            color: '#b91c1c',
+            backgroundColor: '#fee2e2',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            textAlign: 'center',
+          }}
+        >
+          On Leave 🏖️
+        </div>
+      );
+    }
+  
+    const formatTime = (timeStr) => {
+      if (!timeStr || typeof timeStr !== 'string') return '0:00';
+      const parts = timeStr.split(':');
+      if (parts.length >= 2) {
+        const [hour, minute] = parts;
+        return `${hour}:${minute}`;
+      } else {
+        return `${timeStr}:00`;
+      }
+    };
+  
+    return (
+      <div className="mt-1 text-xs text-left">
+        {data.checkIn && (
+          <div>
+            {formatTime(data.checkIn)}
+            {data.checkOut && ` | ${formatTime(data.checkOut)}`}
+          </div>
+        )}
+        <div>Total: {formatTime(data.totalHours)} hrs</div>
+      </div>
+    );
+  };
 
   const getAllProject = async () => {
     try {
@@ -35,19 +165,144 @@ const TimeSheet = () => {
     }
   };
 
-  const handleDateClick = (date) => {
+  // const handleDateClick = (date) => {
+  //   const dateKey = date.toDateString();
+  //   const data = timeSheetData[dateKey];
+  //   if (data?.status === 'LEAVE') {
+  //     return;
+  //   }
+  //   setSelectedDate(date);
+  //   setModalOpen(true);
+  // };
+
+  const handleDateClick = async (date) => {
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+    // Check for week off
+    if (weekOff.includes(dayName)) return;
+
+    const dateKey = date.toDateString();
+    const timeSheetStatus = timeSheetData[dateKey];
+
+    // Check if the selected date is marked as LEAVE
+    if (timeSheetStatus?.status === 'LEAVE') return;
+
+    const formattedDate = dayjs(date).format('YYYY-MM-DD');
     setSelectedDate(date);
-    setModalOpen(true);
+
+    try {
+      const response = await apiCalls(
+        'get',
+        `/leaveprocess/getTimeSheetByOrgId?date=${formattedDate}&empCode=${employeeCode}&orgId=${orgId}`
+      );
+
+      if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
+        const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
+
+        const mergedDetails = allTimeSheetEntries.flatMap((entry) => entry.timeSheetDetailsVO || []);
+
+        const formattedRows = mergedDetails.map((item) => ({
+          projectName: item.projectName || '',
+          fromTime: item.fromTime || '',
+          toTime: item.toTime || '',
+          description: item.description || ''
+        }));
+
+        setFormRows(
+          formattedRows.length > 0
+            ? formattedRows
+            : [
+                {
+                  projectName: '',
+                  fromTime: '',
+                  toTime: '',
+                  description: ''
+                }
+              ]
+        );
+      } else {
+        setFormRows([
+          {
+            projectName: '',
+            fromTime: '',
+            toTime: '',
+            description: ''
+          }
+        ]);
+      }
+
+      setModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching timesheet:', error);
+      showToast('error', 'Failed to fetch timesheet data');
+      setFormRows([
+        {
+          projectName: '',
+          fromTime: '',
+          toTime: '',
+          description: ''
+        }
+      ]);
+      setModalOpen(true);
+    }
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleSubmit = async () => {
+    const errors = {};
 
-  const handleSubmit = () => {
-    console.log('Submitted Data:', { date: selectedDate, ...formData });
-    setModalOpen(false);
-    setFormData({ projectName: '', description: '' });
+    if (formRows.length === 0) {
+      errors.formRows = 'At least one entry is required';
+    } else {
+      formRows.forEach((row, index) => {
+        if (!row.projectName || !row.fromTime || !row.toTime || !row.description) {
+          errors[`row${index}`] = `All fields are required in row ${index + 1}`;
+        }
+      });
+    }
+
+    if (Object.keys(errors).length === 0) {
+      setIsLoading(true);
+
+      const formattedDate = dayjs(selectedDate).isValid() ? dayjs(selectedDate).format('YYYY-MM-DD') : null;
+
+      const saveData = {
+        active: true,
+        branch,
+        branchCode,
+        createdBy: loginUserName,
+        date: formattedDate,
+        employeeCode,
+        employeeName,
+        orgId: parseInt(orgId),
+        timeSheetDetailsDTO: formRows.map((row) => ({
+          description: row.description,
+          fromTime: row.fromTime,
+          projectName: row.projectName,
+          toTime: row.toTime
+        }))
+      };
+
+      try {
+        const response = await apiCalls('put', 'leaveprocess/createUpdateTimeSheet', saveData);
+
+        if (response.status === true) {
+          showToast('success', 'TimeSheet submitted successfully');
+          setModalOpen(false);
+          setFormRows([{ projectName: '', fromTime: '', toTime: '', description: '' }]);
+          setSelectedDate(null);
+        } else {
+          const errorMsg = response.paramObjectsMap?.errorMessage || 'TimeSheet submission failed';
+          showToast('error', errorMsg);
+        }
+      } catch (error) {
+        console.error('Submission Error:', error);
+        showToast('error', 'Something went wrong while submitting');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      showToast('error', 'Please fill all required fields.');
+    }
   };
 
   const handleView = () => {
@@ -57,18 +312,100 @@ const TimeSheet = () => {
   const handleClear = () => {
     setSelectedDate(null);
     setModalOpen(false);
-    setFormData({
-      projectName: '',
-      description: ''
-    });
+    setFormRows([
+      {
+        projectName: '',
+        fromTime: '',
+        toTime: '',
+        description: ''
+      }
+    ]);
+  };
+
+  const getAllSwipeInandOut = async () => {
+    setLoading(true);
+    try {
+      const today = new Date(); // Current date
+      console.log('bbhd', today);
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 1st of current month
+      console.log('efeef', startOfMonth);
+      const formattedData = {};
+
+      // Loop from startOfMonth to today
+      for (let d = new Date(startOfMonth); d <= today; d.setDate(d.getDate() + 1)) {
+        const loopDate = new Date(d); // Create a new date instance to avoid mutation
+        console.log('loopDate', loopDate);
+
+        // const loopDateStr = loopDate.toISOString().split('T')[0]; // yyyy-mm-dd format
+        const loopDateStr = new Date(loopDate.getTime() - loopDate.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+        console.log('loopDateStr', loopDateStr);
+
+        const response = await apiCalls(
+          'get',
+          `leaveprocess/getApprovedLeaveForTimeSheet?date=${loopDateStr}&employeeCode=${userName}&orgId=${orgId}`
+        );
+
+        const entries = response?.paramObjectsMap?.timeSheetVO || [];
+        const dateKey = loopDate.toDateString();
+
+        if (entries.length > 0) {
+          const entry = entries[0];
+          if (entry.employeeStatus === 'PRESENT') {
+            formattedData[dateKey] = {
+              checkIn: entry.checkIn,
+              checkOut: entry.checkOut,
+              totalHours: entry.totalHours?.trim() || '0:00',
+              status: 'PRESENT'
+            };
+          } else if (entry.employeeStatus === 'LEAVE') {
+            formattedData[dateKey] = {
+              leave: true,
+              status: 'LEAVE'
+            };
+          }
+        }
+      }
+
+      setTimeSheetData((prev) => ({ ...prev, ...formattedData }));
+    } catch (err) {
+      console.error('Error fetching time sheet entries:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCompanyWeekOff = async () => {
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
+      setWeekOff(weekOffDays);
+    } catch (error) {
+      console.error('Error', error);
+    }
   };
 
   const handleModalClear = () => {
-    setFormData({
-      projectName: '',
-      description: ''
-    });
+    setFormRows([
+      {
+        projectName: '',
+        fromTime: '',
+        toTime: '',
+        description: ''
+      }
+    ]);
   };
+
+  const handleShareWhatsApp = () => {
+    const message = encodeURIComponent(
+      formRows.map(row =>
+        `Project: ${row.projectName}\nFrom: ${row.fromTime}\nTo: ${row.toTime}\nDescription: ${row.description}`
+      ).join('\n\n')
+    );
+    // const url = `https://wa.me/?text=${message}`;
+    // window.open(url, '_blank');
+    window.location.href = `whatsapp://send?text=${message}`;
+  };  
 
   return (
     <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -86,46 +423,103 @@ const TimeSheet = () => {
           />
         </div>
       </div>
-      <div className="d-flex justify-content-center">
-        <div className="calendar-wrapper shadow p-4 rounded bg-white">
-          <Calendar onClickDay={handleDateClick} />
+      <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
+        <div className="p-6 bg-white rounded-lg shadow-md w-full">
+          <Calendar
+            onClickDay={(value, e) => {
+              const dayName = value.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+              if (!weekOff.includes(dayName)) {
+                handleDateClick(value);
+              }
+            }}
+            tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
+          />
         </div>
       </div>
 
-      {/* Bootstrap Modal */}
       {modalOpen && (
         <div className="modal show fade d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
             <div className="modal-content shadow-lg">
               <div className="modal-header">
                 <h5 className="modal-title">Add Entry for {selectedDate.toDateString()}</h5>
                 <button type="button" className="btn-close" onClick={() => setModalOpen(false)}></button>
               </div>
+
               <div className="modal-body">
-                <div className="mb-3">
-                  <label className="form-label">Project Name</label>
-                  <select name="projectName" value={formData.projectName} onChange={handleChange} className="form-select">
-                    <option value="">Select Project</option>
-                    {alProject.map((project) => (
-                      <option key={project.id} value={project.projectCode}>
-                        {project.projectCode} - {project.projectName}
-                      </option>
-                    ))}
-                  </select>
+                <div className="table-responsive">
+                  <table className="table table-bordered">
+                    <thead className="table-light">
+                      <tr>
+                        <th>Action</th>
+                        <th>Project Name</th>
+                        <th>From Time</th>
+                        <th>To Time</th>
+                        <th>Description</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {formRows.map((row, index) => (
+                        <tr key={index}>
+                          <td>
+                            <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRow(index)}>
+                              Delete
+                            </button>
+                          </td>
+                          <td>
+                            <select
+                              name="projectName"
+                              value={row.projectName}
+                              onChange={(e) => handleRowChange(index, 'projectName', e.target.value)}
+                              className="form-select form-select-sm w-100"
+                            >
+                              <option value="">Select Project</option>
+                              {alProject.map((project) => (
+                                <option key={project.id} value={project.projectCode}>
+                                  {project.projectCode} - {project.projectName}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="time"
+                              value={row.fromTime}
+                              onChange={(e) => handleRowChange(index, 'fromTime', e.target.value)}
+                              className="form-control form-control-sm"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="time"
+                              value={row.toTime}
+                              onChange={(e) => handleRowChange(index, 'toTime', e.target.value)}
+                              className="form-control form-control-sm"
+                            />
+                          </td>
+                          <td>
+                            <input
+                              type="text"
+                              value={row.description}
+                              onChange={(e) => handleRowChange(index, 'description', e.target.value)}
+                              className="form-control form-control-sm"
+                              placeholder="Enter description"
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Comments</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    className="form-control"
-                    rows="3"
-                    placeholder="Enter comments"
-                  ></textarea>
+
+                <div className="text-end mt-2">
+                  <button className="btn btn-sm btn-success" onClick={handleAddRow}>
+                    + Add Row
+                  </button>
                 </div>
               </div>
-              <div className="modal-footer">
+
+              <div className="modal-footer d-flex flex-wrap justify-content-between gap-2">
                 <button className="btn btn-secondary" onClick={() => setModalOpen(false)}>
                   Cancel
                 </button>
@@ -135,11 +529,17 @@ const TimeSheet = () => {
                 <button className="btn btn-primary" onClick={handleSubmit}>
                   Save Entry
                 </button>
+
+                <Button onClick={handleShareWhatsApp}>
+                  <FaWhatsapp style={{ marginRight: '5px' }} />
+                  Share on WhatsApp
+                </Button>
               </div>
             </div>
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 };
