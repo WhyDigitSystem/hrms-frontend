@@ -165,7 +165,7 @@ const CheckinDetails = ({ isLoading }) => {
   ) : (
     <Box>
       <Grid item>
-        <Typography variant="h6" sx={{ mb: 1, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
+        <Typography variant="h6" sx={{ mb: 0, mt:2, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
           Quick Access
         </Typography>
       </Grid>
@@ -200,6 +200,7 @@ const CheckinDetails = ({ isLoading }) => {
                 sx={{
                   display: 'flex',
                   gap: 2,
+                  mt:2,
                   justifyContent: { xs: 'center', lg: 'flex-start' },
                   flexDirection: { xs: 'row', sm: 'row' },
                   mb: 2,
