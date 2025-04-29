@@ -20,6 +20,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { Autocomplete } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import emailjs from '@emailjs/browser';
 
 const PermissionRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,8 @@ const PermissionRequest = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
+  const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode'));
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
@@ -42,6 +45,8 @@ const PermissionRequest = () => {
     totalHours: '',
     notes: '',
     notify: '',
+    notifyEmail: '',
+    notifyCode: '',
     permissionType: ''
   });
 
@@ -128,9 +133,21 @@ const PermissionRequest = () => {
   const getNotifyList = async () => {
     try {
       const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${loginUserName}&orgId=${orgId}`);
-      setCompanyList(result.paramObjectsMap.PermisionRequestVO);
+
+      if (result?.paramObjectsMap?.PermisionRequestVO) {
+        const notifyList = result.paramObjectsMap.PermisionRequestVO.map((person) => ({
+          reportingPersonCode: person.reportingPersonCode, // Ensure notifyCode is included
+          reportingPerson: person.reportingPerson,
+          notifyEmail: person.email
+        }));
+
+        console.log('🔍 Notify List:', notifyList);
+        setCompanyList(notifyList);
+      } else {
+        console.error('❌ No reporting persons found');
+      }
     } catch (error) {
-      console.error('Error', error);
+      console.error('❌ Error fetching reporting persons:', error);
     }
   };
 
@@ -215,93 +232,129 @@ const PermissionRequest = () => {
   const handleSave = async () => {
     const errors = {};
 
-    // Check if totalHours exceeds 2 hours
+    // Validation
     if (formData.totalHours && formData.totalHours !== '00:00') {
       const [hours, minutes] = formData.totalHours.split(':').map(Number);
       const totalMinutes = hours * 60 + minutes;
-
       if (totalMinutes > 120) {
         errors.totalHours = 'Permission request cannot exceed 2 hours.';
       }
     }
 
-    // Existing validation rules
-    if (!formData.formDate) {
-      errors.formDate = 'Date is required';
-    }
-    if (!formData.totalHours || formData.totalHours === '00:00') {
-      errors.totalHours = 'Total Hours is required';
-    }
-    if (!formData.notes) {
-      errors.notes = 'Notes is required';
-    }
-    if (!formData.fromTime) {
-      errors.fromTime = 'From Time is required';
-    }
-    if (!formData.toTime) {
-      errors.toTime = 'To Time is required';
-    }
+    if (!formData.formDate) errors.formDate = 'Date is required';
+    if (!formData.totalHours || formData.totalHours === '00:00') errors.totalHours = 'Total Hours is required';
+    if (!formData.notes) errors.notes = 'Notes is required';
+    if (!formData.fromTime) errors.fromTime = 'From Time is required';
+    if (!formData.toTime) errors.toTime = 'To Time is required';
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
-      // Ensure totalHours is a string before using .replace()
-      let sanitizedTotalHours = formData.totalHours;
-      if (typeof sanitizedTotalHours !== 'string') {
-        sanitizedTotalHours = sanitizedTotalHours.toString(); // Convert number to string
-      }
-      sanitizedTotalHours = sanitizedTotalHours.replace(/[^0-9.]/g, ''); // Clean out non-numeric characters
-
-      setFormData({
-        ...formData,
-        totalHours: sanitizedTotalHours // Update formData with sanitized value
-      });
-
-      console.log('Sanitized Total Hours:', sanitizedTotalHours);
-
-      // Handle date formatting or null case
       const formattedDate =
         formData.formDate && dayjs(formData.formDate).isValid()
-          ? dayjs(formData.formDate).format('YYYY-MM-DD') // Convert the date to 'YYYY-MM-DD' format
-          : null; // If formDate is invalid, set it as null
+          ? dayjs(formData.formDate).format('YYYY-MM-DD')
+          : null;
+
+      // Format fromTime and toTime properly (safe parsing)
+      const fromTimeFormatted = formData.fromTime
+        ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : null;
+
+      const toTimeFormatted = formData.toTime
+        ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : null;
+
+      // Convert totalHours from "01:00" -> 1 (or 1.5 if needed)
+      let totalHoursNumber = 0;
+      if (formData.totalHours && formData.totalHours.includes(':')) {
+        const [h, m] = formData.totalHours.split(':').map(Number);
+        totalHoursNumber = h + m / 60;
+      }
 
       const saveData = {
         ...(editId && { id: editId }),
-        active: formData.active,
-        date: formattedDate, // Save formatted date or null
-        fromTime: formData.fromTime ? dayjs(formData.fromTime, 'HH:mm').format('HH:mm') : null,
-        toTime: formData.toTime ? dayjs(formData.toTime, 'HH:mm').format('HH:mm') : null,
-        totalHours: parseFloat(sanitizedTotalHours), // Use sanitized totalHours
+        branch,
+        branchCode,
+        createdBy: loginUserName,
+        date: formattedDate,
+        employeeCode,
+        employeeName,
+        fromTime: fromTimeFormatted,
         notes: formData.notes,
         notify: formData.notify,
-        orgId: orgId,
-        createdBy: loginUserName
+        notifyCode: formData.notifyCode,
+        orgId: Number(orgId),
+        toTime: toTimeFormatted,
+        totalHours: totalHoursNumber,  // Important: send number not string
       };
 
       console.log('DATA TO SAVE IS:', saveData);
 
-      // Save API call
       try {
         const response = await apiCalls('put', '/employeemaster/createUpdatePermissionRequest', saveData);
 
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Permission Request Updated Successfully' : 'Permission Request created successfully');
-
+          showToast('success', editId ? 'Permission Request Updated Successfully' : 'Permission Request created successfully');
+          await sendEmailNotification(formData);
           handleClear();
           getAllPermissionRequestByOrgId();
-          setIsLoading(false);
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Permission Request creation failed');
-          setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
         showToast('error', 'Permission Request creation failed');
+      } finally {
         setIsLoading(false);
       }
     } else {
       setFieldErrors(errors);
+    }
+  };
+
+  const sendEmailNotification = async (formData) => {
+    try {
+      const fromTimeFormatted = formData.fromTime
+        ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : '';
+
+      const toTimeFormatted = formData.toTime
+        ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : '';
+
+      // Format totalHours properly
+      let totalHoursFormatted = formData.totalHours || '';
+      if (totalHoursFormatted.length === 4 && !totalHoursFormatted.includes(':')) {
+        // e.g., "0100" => "01:00"
+        totalHoursFormatted = `${totalHoursFormatted.slice(0, 2)}:${totalHoursFormatted.slice(2)}`;
+      }
+
+      const emailParams = {
+        name: formData.notify,
+        from_name: employeeName,
+        email: formData.notifyEmail,
+        date: formData.formDate ? dayjs(formData.formDate).format('YYYY-MM-DD') : '',
+        from_time: fromTimeFormatted,
+        to_time: toTimeFormatted,
+        total_hours: totalHoursFormatted,
+        message: formData.notes,
+        // approve_link: `/team/LeaveApproval/${leave_request_id}`
+      };
+
+      console.log('Email Params:', emailParams);
+
+      if (!emailParams.email) {
+        console.error('Error: Recipient email is missing!');
+        showToast('error', 'Recipient email is missing!');
+        return;
+      }
+
+      await emailjs.send('service_9ucz1v3', 'template_iwypnsq', emailParams, 'Opp4e1xb0JkW0bocB');
+      console.log('Email Sent Successfully');
+    } catch (error) {
+      console.error('Email Sending Failed:', error);
+      showToast('error', 'Failed to send email notification. Please try again.');
     }
   };
 
@@ -504,18 +557,33 @@ const PermissionRequest = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   disablePortal
-                  options={companyList.map((option, index) => ({ ...option, key: index }))}
-                  getOptionLabel={(option) => option.notify || ''}
+                  options={companyList}
+                  getOptionLabel={(option) => option.reportingPerson || ''}
                   sx={{ width: '100%' }}
                   size="small"
-                  value={companyList.find((c) => c.notify === formData.notify) || null}
+                  value={companyList.find((c) => c.reportingPerson === formData.notify) || null}
                   onChange={(event, newValue) => {
-                    handleInputChange({
-                      target: {
-                        name: 'notify',
-                        value: newValue ? newValue.notify : ''
-                      }
-                    });
+                    if (newValue) {
+                      handleInputChange({
+                        target: { name: 'notify', value: newValue.reportingPerson }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyCode', value: newValue.reportingPersonCode }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyEmail', value: newValue.notifyEmail }
+                      });
+                    } else {
+                      handleInputChange({
+                        target: { name: 'notify', value: '' }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyCode', value: '' }
+                      });
+                      handleInputChange({
+                        target: { name: 'notifyEmail', value: '' }
+                      });
+                    }
                   }}
                   renderInput={(params) => (
                     <TextField

@@ -138,11 +138,13 @@ const ViewAllButton = styled(Button)(({ theme }) => ({
 const PendingApproval = ({ isLoading }) => {
   const theme = useTheme();
   const [leaveRequests, setLeaveRequests] = useState([]);
+  const [screenNames, setScreenNames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
 
@@ -150,7 +152,7 @@ const PendingApproval = ({ isLoading }) => {
   const employeeCode = localStorage.getItem("employeeCode");
 
   useEffect(() => {
-    getLeaveRequest();
+    getAllRequests();
   }, [orgId, employeeCode]);
 
   // useEffect(() => {
@@ -162,32 +164,47 @@ const PendingApproval = ({ isLoading }) => {
   //   };
   // }, [processingId]);
 
-  const getLeaveRequest = async () => {
+  const getAllRequests = async () => {
     try {
-      const response = await apiCalls(
-        "get",
-        `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}`
-      );
+      setLoading(true);
 
-      // Handle single object or array response
-      let requests = response.paramObjectsMap?.leaveRequestVO || [];
-      if (!Array.isArray(requests)) {
-        requests = [requests];
+      const [leaveResponse, permissionResponse] = await Promise.all([
+        apiCalls("get", `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`),
+        apiCalls("get", `employeemaster/getPendingPermissionRequest?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`)
+      ]);
+
+      // Extract leave requests
+      let leaveRequests = leaveResponse.paramObjectsMap?.leaveRequestVO || [];
+      if (!Array.isArray(leaveRequests)) {
+        leaveRequests = [leaveRequests];
       }
 
-      // Filter to only show requests with no status or pending status
-      const pendingRequests = requests.filter(request =>
-        !request.approveStatus || request.approveStatus === 'PENDING'
-      );
+      // Extract permission requests
+      let permissionRequests = permissionResponse.paramObjectsMap?.permissionRequestVO || [];
+      if (!Array.isArray(permissionRequests)) {
+        permissionRequests = [permissionRequests];
+      }
 
-      setLeaveRequests(pendingRequests);
+      // Filter both to only pending or no status
+      const pendingLeaveRequests = leaveRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
+      const pendingPermissionRequests = permissionRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
+
+      // Merge both lists
+      const combinedRequests = [...pendingLeaveRequests, ...pendingPermissionRequests];
+
+      // Set into state
+      setLeaveRequests(combinedRequests);
+      setScreenNames(combinedRequests.map(item => item.screenName));
+
     } catch (error) {
-      console.error("Error fetching leave requests:", error);
-      // toast.error("Failed to load leave requests");
+      console.error("Error fetching combined leave and permission requests:", error);
+      // toast.error("Failed to load leave and permission requests");
     } finally {
       setLoading(false);
     }
   };
+
+  console.log('Permission', screenNames)
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -198,7 +215,7 @@ const PendingApproval = ({ isLoading }) => {
     setSelectedRequest(null);
   };
 
-  const handleAction = async (request, action) => {
+  const handleActionLeave = async (request, action) => {
     setProcessingId(request.id);
 
     try {
@@ -252,6 +269,74 @@ const PendingApproval = ({ isLoading }) => {
     }
   };
 
+  const handleActionPermission = async (request, action) => {
+    setProcessingId(request.id);
+
+    try {
+      // 1. Make API call to approve/reject
+      await apiCalls(
+        'put',
+        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+      );
+
+      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+
+      const isApproved = action === "APPROVED";
+
+      const fromTimeFormatted = request.fromTime
+        ? dayjs(request.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : '';
+
+      const toTimeFormatted = request.toTime
+        ? dayjs(request.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
+        : '';
+
+      let totalHoursFormatted = request.totalHours || '';
+      if (totalHoursFormatted.length === 4 && !totalHoursFormatted.includes(':')) {
+        // e.g., "0100" => "01:00"
+        totalHoursFormatted = `${totalHoursFormatted.slice(0, 2)}:${totalHoursFormatted.slice(2)}`;
+      }
+
+      const templateParams = {
+        name: request.employeeName,
+        from_name: employeeName,
+        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+        from_time: fromTimeFormatted,
+        to_time: toTimeFormatted,
+        total_hours: totalHoursFormatted,
+        status: action,
+        status_message: isApproved ? "Approved" : "Rejected",
+        status_class: isApproved ? "status-approved" : "status-rejected",
+        remarks: request.remarks || "N/A",
+        email: request.employeeEmail,
+      };
+
+      // 3. Send email notification
+      await emailjs.send(
+        'service_9ucz1v3',
+        'template_om3wfui',
+        templateParams,
+        'Opp4e1xb0JkW0bocB'
+      );
+
+      toast.success(`Request ${action.toLowerCase()} successfully`, {
+        autoClose: 3000,
+      });
+
+    } catch (error) {
+      console.error(`Error ${action.toLowerCase()}ing request:`, error);
+
+      // Revert UI if error occurs
+      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+
+      toast.error(`Failed to ${action.toLowerCase()} request`, {
+        autoClose: 3000,
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const ActionButtons = ({ request }) => {
     const isProcessing = processingId === request.id;
     const isPending = !request.approveStatus || request.approveStatus === 'PENDING';
@@ -280,7 +365,14 @@ const PendingApproval = ({ isLoading }) => {
           <span>
             <IconButtonStyled
               actiontype="approve"
-              onClick={() => handleAction(request, "APPROVED")}
+              onClick={() => {
+                if (request.screenName === "LEAVE REQUEST") {
+                  handleActionLeave(request, "APPROVED");
+                } else {
+                  handleActionPermission(request, "APPROVED"); // You can customize this if you need different logic
+                }
+              }}
+              // onClick={() => handleAction(request, "APPROVED")}
               disabled={isProcessing}
             >
               {isProcessing ? (
@@ -296,7 +388,14 @@ const PendingApproval = ({ isLoading }) => {
           <span>
             <IconButtonStyled
               actiontype="reject"
-              onClick={() => handleAction(request, "REJECTED")}
+              onClick={() => {
+                if (request.screenName === "LEAVE REQUEST") {
+                  handleActionLeave(request, "APPROVED");
+                } else {
+                  handleActionPermission(request, "APPROVED"); // You can customize this if you need different logic
+                }
+              }}
+              // onClick={() => handleAction(request, "REJECTED")}
               disabled={isProcessing}
             >
               {isProcessing ? (
@@ -362,7 +461,7 @@ const PendingApproval = ({ isLoading }) => {
                           {leaveRequest.employeeName || 'Unknown Employee'}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {leaveRequest.leaveType || 'No type specified'}
+                          {leaveRequest.screenName || 'No type specified'}
                         </Typography>
                       </Box>
                     </Box>
