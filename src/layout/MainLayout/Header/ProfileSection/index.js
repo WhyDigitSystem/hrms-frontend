@@ -93,7 +93,7 @@ const ProfileSection = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('pages/login/login3');
+    navigate('/pages/login/login3');
   };
 
   const handleClose = (event) => {

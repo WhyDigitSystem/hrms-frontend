@@ -97,7 +97,7 @@ const FirebaseLogin = ({ ...others }) => {
         // localStorage.setItem('userType', response.data.paramObjectsMap.userVO.roleVO[0].role);
         localStorage.setItem('employeeCode', response.data.paramObjectsMap.userVO.employeeCode);
         localStorage.setItem('employeeName', response.data.paramObjectsMap.userVO.employeeName);
-        localStorage.setItem('branch', response.data.paramObjectsMap.userVO.branch); 
+        localStorage.setItem('branch', response.data.paramObjectsMap.userVO.branch);
         localStorage.setItem('branchCode', response.data.paramObjectsMap.userVO.branchCode);
         localStorage.setItem('department', response.data.paramObjectsMap.userVO.department);
         localStorage.setItem('designation', response.data.paramObjectsMap.userVO.designation);
@@ -258,19 +258,34 @@ const FirebaseLogin = ({ ...others }) => {
             )}
 
             <AnimateButton>
-              <Button
-                disableElevation
-                disabled={isSubmitting}
-                fullWidth
-                size="large"
-                type="submit"
-                variant="contained"
-                color="primary"
-                style={{ backgroundColor: '#673AB7' }}
-              >
-                Sign in
-              </Button>
+              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+                <Button
+                  disableElevation
+                  disabled={isSubmitting}
+                  fullWidth
+                  size="large"
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    background: 'linear-gradient(135deg, #7B1FA2 0%, #512DA8 100%)', // gradient background
+                    borderRadius: '20px', // more rounded
+                    transition: 'all 0.4s ease',
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)', // initial shadow
+                    fontWeight: 'bold',
+                    letterSpacing: '1px',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #512DA8 0%, #7B1FA2 100%)', // reverse gradient on hover
+                      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)', // stronger shadow on hover
+                      transform: 'translateY(-3px)', // move up slightly
+                    }
+                  }}
+                >
+                  Sign in
+                </Button>
+              </Box>
             </AnimateButton>
+
           </form>
         )}
       </Formik>

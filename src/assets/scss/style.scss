@@ -860,3 +860,69 @@
     overflow-x: auto;
   }
 }
+
+.css-u1tokn-MuiDrawer-docked .MuiDrawer-paper {
+  width: 180px !important;
+}
+.css-rs0zx6 {
+  width: 190px;
+}
+.css-h4y409-MuiList-root {
+  padding-top: 10px !important;
+  padding-bottom: 0px !important;
+}
+.css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root { 
+  // padding-left: -2px;
+  padding-left: 18px !important;
+}
+.css-17h5y47-MuiSvgIcon-root {
+  fill: #ffffff !important;
+  padding-left: 5px;
+}
+.css-vghtuh-MuiModal-root-MuiDrawer-root .MuiDrawer-paper {
+  width: 260px;
+  background: linear-gradient(193deg, #009d90 30%, #7bb9b4 90%) !important;
+  color: #364152;
+  border-right: none;
+}
+.css-11ezxrp {
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+}
+
+
+@keyframes animate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.css-1arlb8v {
+   padding: 7px !important; 
+  padding-left: 1rem !important;
+}
+@media (min-width: 1536px) {
+  .css-1arlb8v {
+      padding: 0px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .css-1u3fpgy-MuiPaper-root-MuiCard-root {
+      max-width: 380px;
+  }
+}
+@media (min-width: 900px) {
+  .css-1u3fpgy-MuiPaper-root-MuiCard-root {
+      margin: 30px;
+  }
+}
+.css-aqwttb-MuiPaper-root {
+  padding: 30px;
+  margin-bottom: -25px;
+}
