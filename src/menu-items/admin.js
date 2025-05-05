@@ -49,7 +49,7 @@ const admin = {
   children: [
     {
       id: 'admin',
-      title: 'User Management',
+      title: 'User',
       type: 'collapse',
       icon: icons.IconShield, // Using shield icon for User Management
 

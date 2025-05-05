@@ -10,7 +10,8 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
-  Divider
+  Divider,
+  useMediaQuery, useTheme
 } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +22,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
 
+
 const UpcomingHolidayCard = () => {
   const [allHolidays, setAllHolidays] = useState([]);
   const [activeHolidays, setActiveHolidays] = useState([]);
@@ -28,6 +30,9 @@ const UpcomingHolidayCard = () => {
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [viewMoreDialogOpen, setViewMoreDialogOpen] = useState(false);
   const [leaveInfo, setLeaveInfo] = useState([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
 
   const [stats, setStats] = useState({
     totalHolidays: 0,
@@ -187,28 +192,43 @@ const UpcomingHolidayCard = () => {
 
       {activeHolidays.length > 0 && (
         <Card sx={{ mb: 3, p: 3, borderRadius: 3, boxShadow: 3, borderLeft: '4px solid #264952' }}>
-          <Box sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'flex-start', display :'flex' }}>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center' }}>
+          <Box
+            sx={{
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: 'flex-start',
+              display: 'flex',
+            }}
+          >
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
               <EventIcon sx={{ fontSize: 30, mr: 1, color: '#264952' }} />
               Upcoming Holiday
             </Typography>
             <Button
-              onClick={handleViewMoreOpen}
-              variant="outlined"
-              sx={{
-                textTransform: 'none',
-                borderRadius: 10,
-                marginLeft: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '0.875rem', // optional for smaller screens
-              }}
+              variant="contained"
+              color="primary"
               endIcon={<ExpandMoreIcon />}
+              onClick={handleViewMoreOpen}
+              sx={{
+                background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+                borderRadius: 10,
+                textTransform: 'none',
+                marginLeft: { xs: 0, sm: 'auto' },
+                mt: { xs: 1, sm: 0 },
+                "&:hover": {
+                  background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+                },
+              }}
             >
               View More
             </Button>
           </Box>
-
 
           <Grid container spacing={3} className='mt-3'>
             {activeHolidays.slice(0, 2).map((holiday, index) => (

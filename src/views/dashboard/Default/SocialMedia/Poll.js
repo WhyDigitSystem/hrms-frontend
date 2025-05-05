@@ -95,7 +95,7 @@ function Poll() {
     }
     try {
       setIsLoading(true);
-      const response = await apiCalls('post', '/basicmaster/submitVote',  {
+      const response = await apiCalls('post', '/basicmaster/submitVote', {
         pollId,
         optionId: selectedOption,
         orgId
@@ -255,16 +255,29 @@ function Poll() {
                         </RadioGroup>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
 
-                        <Button
-                         
-                          variant="contained"
-                    
-                          startIcon={<HowToVoteIcon />}
-                          onClick={() => handleVote(poll.id)}
-                          sx={{ mt: 2,width: '50%' }}
-                        >
-                          Submit Vote
-                        </Button>
+                          <Button
+                            variant="contained"
+                            startIcon={<HowToVoteIcon sx={{ fontSize: 20 }} />}
+                            onClick={() => handleVote(poll.id)}
+                            sx={{
+                              mt: 2,
+                              width: { xs: '90%', sm: '30%' },
+                              fontWeight: 'bold',
+                              borderRadius: 2,
+                              background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
+                              color: 'white',
+                              boxShadow: '0 3px 5px 2px rgba(63, 81, 181, .3)',
+                              transition: 'all 0.3s ease-in-out',
+                              '&:hover': {
+                                background: 'linear-gradient(45deg, #2196f3, #3f51b5)',
+                                boxShadow: '0 6px 10px 4px rgba(33, 150, 243, .3)',
+                                transform: 'scale(1.03)'
+                              }
+                            }}
+                          >
+                            Submit Vote
+                          </Button>
+
                         </Box>
                       </FormControl>
                     )}
@@ -294,26 +307,32 @@ function Poll() {
             setOpenCreateModal(true);
           }}
           sx={{
+            p: 1.5, // increase padding
             background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
             color: 'white',
-            '&:hover': { background: 'linear-gradient(45deg, #2196f3, #3f51b5)' }
+            '&:hover': {
+              background: 'linear-gradient(45deg, #2196f3, #3f51b5)'
+            }
           }}
         >
           <AddIcon />
         </IconButton>
 
-        <IconButton
-          size="large"
+
+        <Button
+          variant="contained"
           color="primary"
+          endIcon={<MoreHorizIcon />}
           onClick={() => setViewAllModalOpen(true)}
           sx={{
-            background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
-            color: 'white',
-            '&:hover': { background: 'linear-gradient(45deg, #2196f3, #3f51b5)' }
+            background: "linear-gradient(45deg, #3f51b5, #2196f3)",
+            "&:hover": {
+              background: "linear-gradient(45deg, #2196f3, #3f51b5)",
+            },
           }}
         >
-          <VisibilityIcon />
-        </IconButton>
+          View More
+        </Button>
       </div>
 
       {/* Edit Poll Modal */}
@@ -327,7 +346,7 @@ function Poll() {
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          width: '500px',
+          width: { xs: '90vw', sm: '500px' },
         }}>
           <Typography variant="h6" mb={2}>{editId ? 'Edit Poll' : 'Create Poll'}</Typography>
 
@@ -393,7 +412,7 @@ function Poll() {
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          width: '600px',
+          width: { xs: '90vw', sm: '500px' },
           maxHeight: '80vh',
           overflow: 'auto'
         }}>
