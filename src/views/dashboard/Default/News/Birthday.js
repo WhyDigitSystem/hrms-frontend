@@ -27,35 +27,39 @@ function Birthday() {
             const result = await apiCalls('get', `/basicmaster/getEmpDob?orgId=${orgId}`);
             if (result?.status && result?.paramObjectsMap?.empDob?.length > 0) {
                 const allBirthdays = result.paramObjectsMap.empDob;
-                const today = dayjs();
+                const today = dayjs().startOf('day');
+                const endDate = today.add(7, 'day');
                 const todayFormatted = today.format('MM-DD');
 
                 const todayList = [];
                 const upcomingList = [];
 
                 allBirthdays.forEach(emp => {
-                    const birthDate = dayjs(emp.dob);
+                    const birthDate = dayjs(emp.dob, ['YYYY-MM-DD', 'YYYY/MM/DD', 'DD-MM-YYYY']);
                     let birthdayThisYear = dayjs(`${today.year()}-${birthDate.format('MM-DD')}`);
 
+                    // If birthday already occurred this year, consider next year's
                     if (birthdayThisYear.isBefore(today, 'day')) {
                         birthdayThisYear = birthdayThisYear.add(1, 'year');
                     }
 
-                    const diffDays = birthdayThisYear.diff(today, 'day');
-
+                    // Check if today is the birthday
                     if (birthDate.format('MM-DD') === todayFormatted) {
                         todayList.push({
                             name: emp.empCode,
                             initials: emp.empCode[0],
                             employeeId: emp.empName,
                             role: 'Employee',
+                            image: '', // Optional: Add image if available
                         });
-                    } else if (diffDays > 0 && diffDays <= 7) {
+                    }
+                    // Check if upcoming within next 7 days
+                    else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(endDate)) {
                         upcomingList.push({
                             name: emp.empCode,
                             employeeId: emp.empName,
                             date: birthdayThisYear.format('MMM DD'),
-                            image: '',
+                            image: '', // Optional: Add image if available
                         });
                     }
                 });
@@ -68,7 +72,7 @@ function Birthday() {
         }
     };
 
-    const BirthdayCard = ({ person, icon, isToday }) => (
+    const BirthdayCard = ({ person, isToday }) => (
         <Paper
             elevation={3}
             sx={{
@@ -78,11 +82,11 @@ function Birthday() {
                 alignItems: 'center',
                 borderLeft: isToday ? '6px solid #1976d2' : '6px solid #ffa726',
                 borderRadius: 2,
-                background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)', // Gradient background
+                background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                transition: 'background-color 0.3s ease', // Smooth transition effect
+                transition: 'background-color 0.3s ease',
                 '&:hover': {
-                    background: 'linear-gradient(to right, #f3e5f5, #e2d1c3)', // Hover gradient
+                    background: 'linear-gradient(to right, #f3e5f5, #e2d1c3)',
                 }
             }}
         >
@@ -129,7 +133,16 @@ function Birthday() {
             <Divider sx={{ my: 3 }} />
 
             {/* Upcoming Birthdays */}
-            <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: '#fb8c00' }}>
+            <Typography
+                variant="h6"
+                sx={{
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    color: '#fb8c00'
+                }}
+            >
                 <CalendarMonthIcon /> Upcoming Birthdays
             </Typography>
             {upcomingBirthdays.length > 0 ? (

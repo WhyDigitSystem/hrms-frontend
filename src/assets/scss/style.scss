@@ -302,7 +302,7 @@
 }
 
 .css-kvip5o-MuiToolbar-root {
-  padding: 10px 25px 3px;
+  padding: 10px 20px 3px !important;
 }
 
 .css-126euq6-MuiButtonBase-root-MuiListItemButton-root.Mui-selected {
@@ -861,12 +861,12 @@
   }
 }
 
-// .css-u1tokn-MuiDrawer-docked .MuiDrawer-paper {
-//   width: 180px !important;
-// }
-// .css-rs0zx6 {
-//   width: 190px;
-// }
+.css-u1tokn-MuiDrawer-docked .MuiDrawer-paper {
+  width: 180px !important;
+}
+.css-rs0zx6 {
+  width: 190px;
+}
 .css-h4y409-MuiList-root {
   padding-top: 10px !important;
   padding-bottom: 0px !important;
@@ -928,4 +928,15 @@
 }
 .css-19kzrtu {
   padding: 1px !important;
+}
+/* Default for desktop (md and up) */
+.css-x5zaxz {
+  width: 142px !important;
+}
+
+/* Mobile view (up to 768px or 'md' in MUI terms) */
+@media (max-width: 768px) {
+  .css-x5zaxz {
+    width: 45px !important;
+  }
 }
