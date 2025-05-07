@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { ToastContainer, toast } from 'react-toastify';
 import apiCalls from 'apicall';
 import { styled, useTheme, alpha } from '@mui/material/styles';
+import Fade from '@mui/material/Fade';
+import Slide from '@mui/material/Slide';
 import {
   Avatar,
   Box,
@@ -73,6 +74,68 @@ const ProfilePopper = styled(Paper)(({ theme }) => ({
     background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
   }
 }));
+
+const FloatingAvatar = styled(Avatar)({
+  animation: 'float 3s ease-in-out infinite',
+  '@keyframes float': {
+    '0%, 100%': { transform: 'translateY(0)' },
+    '50%': { transform: 'translateY(-8px)' }
+  }
+});
+
+const PulseBadge = styled(Box)(({ theme }) => ({
+  width: 14,
+  height: 14,
+  borderRadius: '50%',
+  backgroundColor: theme.palette.success.main,
+  border: `2px solid ${theme.palette.background.paper}`,
+  boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0.5)}`,
+  animation: 'pulse 2s infinite',
+  '@keyframes pulse': {
+    '0%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0.5)}` },
+    '70%': { boxShadow: `0 0 0 10px ${alpha(theme.palette.success.main, 0)}` },
+    '100%': { boxShadow: `0 0 0 0 ${alpha(theme.palette.success.main, 0)}` }
+  }
+}));
+
+const UnderlineAnimation = styled(Box)({
+  position: 'relative',
+  '&:after': {
+    content: '""',
+    position: 'absolute',
+    width: '0',
+    height: 2,
+    bottom: 0,
+    left: 0,
+    backgroundColor: 'currentColor',
+    transition: 'width 0.3s ease'
+  },
+  '&:hover:after': {
+    width: '100%'
+  }
+});
+
+const ShakeButton = styled(IconButton)(({ theme }) => ({
+  '&:hover': {
+    animation: 'shake 0.5s',
+    animationIterationCount: 1,
+    color: theme.palette.error.main,
+    '@keyframes shake': {
+      '0%': { transform: 'translate(1px, 1px) rotate(0deg)' },
+      '10%': { transform: 'translate(-1px, -2px) rotate(-1deg)' },
+      '20%': { transform: 'translate(-3px, 0px) rotate(1deg)' },
+      '30%': { transform: 'translate(3px, 2px) rotate(0deg)' },
+      '40%': { transform: 'translate(1px, -1px) rotate(1deg)' },
+      '50%': { transform: 'translate(-1px, 2px) rotate(-1deg)' },
+      '60%': { transform: 'translate(-3px, 1px) rotate(0deg)' },
+      '70%': { transform: 'translate(3px, 1px) rotate(-1deg)' },
+      '80%': { transform: 'translate(-1px, -1px) rotate(1deg)' },
+      '90%': { transform: 'translate(1px, 2px) rotate(0deg)' },
+      '100%': { transform: 'translate(1px, -2px) rotate(-1deg)' }
+    }
+  }
+}));
+
 
 const ProfileSection = () => {
   const theme = useTheme();
@@ -190,28 +253,18 @@ const ProfileSection = () => {
         <Badge
           overlap="circular"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          badgeContent={
-            <Box
-              sx={{
-                width: 14,
-                height: 14,
-                borderRadius: '50%',
-                bgcolor: 'success.main',
-                border: `2px solid ${theme.palette.background.paper}`,
-              }}
-            />
-          }
+          badgeContent={<PulseBadge />}
         >
-          <Avatar
+          <FloatingAvatar
             src={`data:image/png;base64,${employeeData?.profileImage}`}
             sx={{
-              width: 40,
-              height: 40,
+              width: 48,
+              height: 48,
               border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
               transition: 'all 0.3s ease',
               '&:hover': {
-                border: `2px solid ${theme.palette.primary.main}`,
-                transform: 'scale(1.1)'
+                transform: 'rotate(5deg) scale(1.1)',
+                border: `2px solid ${theme.palette.primary.main}`
               }
             }}
           />
@@ -234,50 +287,27 @@ const ProfileSection = () => {
         role={undefined}
         transition
         disablePortal
-        modifiers={[
-          {
-            name: 'offset',
-            options: {
-              offset: [0, 12]
-            }
-          }
-        ]}
-        sx={{
-          zIndex: 1300
-        }}
+        modifiers={[{ name: 'offset', options: { offset: [0, 12] } }]}
+        sx={{ zIndex: 1300 }}
       >
         {({ TransitionProps }) => (
           <Transitions type="grow" position="top-right" in={open} {...TransitionProps}>
             <ProfilePopper>
               <ClickAwayListener onClickAway={handleClose}>
                 <Box>
-                  {/* Header with user info */}
                   <Box sx={{
                     p: 2,
                     pb: 1.5,
                     background: `linear-gradient(135deg, ${alpha(theme.palette.primary.light, 0.1)} 0%, transparent 100%)`
                   }}>
                     <Stack direction="row" spacing={1.5} alignItems="center">
-                      {/* <Avatar
-                        src={User1}
+                      <FloatingAvatar
+                        src={`data:image/png;base64,${employeeData?.profileImage}`}
                         sx={{
                           width: 56,
                           height: 56,
                           border: `3px solid ${theme.palette.primary.main}`,
                           boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`
-                        }}
-                      /> */}
-                      <Avatar
-                        src={`data:image/png;base64,${employeeData?.profileImage}`}
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          border: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            border: `2px solid ${theme.palette.primary.main}`,
-                            transform: 'scale(1.1)'
-                          }
                         }}
                       />
                       <Stack>
@@ -298,9 +328,7 @@ const ProfileSection = () => {
                           borderRadius: 4,
                           bgcolor: alpha(theme.palette.primary.light, 0.1),
                           color: theme.palette.text.primary,
-                          maxWidth: '100%',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          maxWidth: '100%'
                         }}
                       />
                       <Chip
@@ -319,7 +347,6 @@ const ProfileSection = () => {
                     </Stack>
                   </Box>
 
-                  {/* Menu Items */}
                   <Box sx={{ p: 1.5 }}>
                     <List disablePadding sx={{
                       '& .MuiListItem-root': {
@@ -332,113 +359,69 @@ const ProfileSection = () => {
                         }
                       }
                     }}>
-                      {/* My Profile Item */}
                       <ListItem disablePadding>
                         <ListItemButton
-                          sx={{
-                            py: 1.25,
-                            '&.Mui-selected': {
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              borderLeft: `2px solid ${theme.palette.primary.main}`
-                            }
-                          }}
+                          sx={{ py: 1.25 }}
                           selected={selectedIndex === 0}
                           onClick={(event) => handleListItemClick(event, 0)}
                         >
                           <ListItemIcon sx={{ minWidth: 38 }}>
                             <IconUser size="1.3rem" />
                           </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body1" fontWeight={500}>
-                                My Profile
-                              </Typography>
-                            }
-                          />
+                          <UnderlineAnimation>
+                            <ListItemText
+                              primary={<Typography variant="body1" fontWeight={500}>My Profile</Typography>}
+                            />
+                          </UnderlineAnimation>
                         </ListItemButton>
                       </ListItem>
 
-                      {/* Settings Item */}
                       <ListItem disablePadding>
                         <ListItemButton
-                          sx={{
-                            py: 1.25,
-                            '&.Mui-selected': {
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              borderLeft: `2px solid ${theme.palette.primary.main}`
-                            }
-                          }}
+                          sx={{ py: 1.25 }}
                           selected={selectedIndex === 1}
                           onClick={(event) => handleListItemClick(event, 1, '/settings')}
                         >
                           <ListItemIcon sx={{ minWidth: 38 }}>
                             <IconSettings size="1.3rem" />
                           </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body1" fontWeight={500}>
-                                Settings
-                              </Typography>
-                            }
-                          />
+                          <UnderlineAnimation>
+                            <ListItemText
+                              primary={<Typography variant="body1" fontWeight={500}>Settings</Typography>}
+                            />
+                          </UnderlineAnimation>
                         </ListItemButton>
                       </ListItem>
 
-                      {/* Change Password */}
                       <ListItem disablePadding>
                         <ChangePasswordPopup>
-                          <ListItemButton
-                            sx={{
-                              py: 1.25,
-                              '&.Mui-selected': {
-                                bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                borderLeft: `2px solid ${theme.palette.primary.main}`
-                              }
-                            }}
-                          >
+                          <ListItemButton sx={{ py: 1.25 }}>
                             <ListItemIcon sx={{ minWidth: 38 }}>
                               <IconCreditCard size="1.3rem" />
                             </ListItemIcon>
-                            <ListItemText
-                              primary={
-                                <Typography variant="body1" fontWeight={500}>
-                                  Change Password
-                                </Typography>
-                              }
-                            />
+                            <UnderlineAnimation>
+                              <ListItemText
+                                primary={<Typography variant="body1" fontWeight={500}>Change Password</Typography>}
+                              />
+                            </UnderlineAnimation>
                           </ListItemButton>
                         </ChangePasswordPopup>
                       </ListItem>
 
-                      {/* Divider */}
-                      <Divider sx={{
-                        my: 1,
-                        borderColor: alpha(theme.palette.divider, 0.1),
-                        opacity: 0.5
-                      }} />
+                      <Divider sx={{ my: 1, borderColor: alpha(theme.palette.divider, 0.1) }} />
 
-                      {/* Logout Item */}
                       <ListItem disablePadding>
-                        <ListItemButton
-                          sx={{
-                            py: 1.25,
-                            '&.Mui-selected': {
-                              bgcolor: alpha(theme.palette.primary.main, 0.1),
-                              borderLeft: `2px solid ${theme.palette.primary.main}`
-                            }
-                          }}
-                          onClick={handleLogout}
-                        >
+                        <ListItemButton sx={{ py: 1.25 }} onClick={handleLogout}>
                           <ListItemIcon sx={{ minWidth: 38 }}>
-                            <IconLogout size="1.3rem" />
+                            <ShakeButton>
+                              <IconLogout size="1.3rem" />
+                            </ShakeButton>
                           </ListItemIcon>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body1" fontWeight={500}>
-                                Logout
-                              </Typography>
-                            }
-                          />
+                          <UnderlineAnimation>
+                            <ListItemText
+                              primary={<Typography variant="body1" fontWeight={500}>Logout</Typography>}
+                            />
+                          </UnderlineAnimation>
                         </ListItemButton>
                       </ListItem>
                     </List>

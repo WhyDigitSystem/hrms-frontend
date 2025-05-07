@@ -32,7 +32,7 @@ const notifications = [
   // Add more notifications as needed
 ];
 
-const NotificationSection = () => {
+const Index = () => {
   const theme = useTheme();
   const matchesXs = useMediaQuery(theme.breakpoints.down('md'));
   const [open, setOpen] = useState(false);
@@ -181,4 +181,4 @@ const NotificationSection = () => {
   );
 };
 
-export default NotificationSection;
+export default Index;

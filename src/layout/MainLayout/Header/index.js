@@ -34,7 +34,13 @@ const Header = ({ handleLeftDrawerToggle }) => {
         <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
           <LogoSection />
         </Box>
-        <ButtonBase sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+        <ButtonBase
+          sx={{
+            borderRadius: '12px',
+            overflow: 'hidden',
+            display: { xs: 'inline-flex', sm: 'none' } // Visible only on xs (mobile), hidden on sm and up
+          }}
+        >
           <Avatar
             variant="rounded"
             sx={{
@@ -54,6 +60,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
             <IconMenu2 stroke={1.5} size="1.3rem" />
           </Avatar>
         </ButtonBase>
+
       </Box>
 
       {/* header search */}

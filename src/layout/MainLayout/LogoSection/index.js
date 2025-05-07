@@ -14,13 +14,13 @@ const LogoSection = () => {
   const defaultId = useSelector((state) => state.customization.defaultId);
   const dispatch = useDispatch();
   return (
-    <ButtonBase disableRipple onClick={() => dispatch({ type: MENU_OPEN, id: defaultId })} component={Link} className='ps--lg-5 ps-0'>
+    <ButtonBase disableRipple onClick={() => dispatch({ type: MENU_OPEN, id: defaultId })} component={Link} className='ps-lg-3 ps-0'>
       {/* <Logo /> */}
       <img
         src={LogoImage}
         alt="logo"
         style={{
-          width: '110px',
+          width: '100px',
           height: '75px'
         }}
       ></img>
