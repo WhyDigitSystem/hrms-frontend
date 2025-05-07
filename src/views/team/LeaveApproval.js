@@ -1,76 +1,79 @@
-import ToastComponent, { showToast } from 'utils/toast-component';
-import 'react-tabs/style/react-tabs.css';
-import 'react-toastify/dist/ReactToastify.css';
-import SaveIcon from '@mui/icons-material/Save';
-import SearchIcon from '@mui/icons-material/Search';
-import FormControl from '@mui/material/FormControl';
-import dayjs from 'dayjs';
-import CommonListViewTable from '../basicMaster/CommonListViewTable';
+import React, { useState, useEffect, useCallback } from 'react';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import { Box, Button, Card, Typography, Paper } from '@mui/material';
+import { ToastContainer, toast } from 'react-toastify';
 import apiCalls from 'apicall';
-import { useEffect, useRef, useState } from 'react';
+import 'react-toastify/dist/ReactToastify.css';
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+
 const LeaveApproval = () => {
-    const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-    const listViewColumns = [
-      { accessorKey: 'Date', header: 'Date', size: 140 },
-      { accessorKey: 'Date', header: 'IN Time', size: 140 },
-      { accessorKey: 'Date', header: 'Out Time', size: 140 },
-      { accessorKey: 'Date', header: 'Worked Hours', size: 140 },
-    ];
-    const [listViewData, setListViewData] = useState([]);
-  
-    useEffect(() => {
-      getAllHolidayReport();
-    }, []);
-  const getAllHolidayReport = async () => {
+  const [listViewData, setListViewData] = useState([]);
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const orgId = localStorage.getItem('orgId');
+  const employeeCode = localStorage.getItem("employeeCode");
+
+  useEffect(() => {
+    getAllApprovedLeaveForTeam();
+  }, []);
+
+  // In your getAllHolidayByOrgId function
+  const getAllApprovedLeaveForTeam = useCallback(async () => {
     try {
-      const result = await apiCalls('get', `commonmaster/getDepartmentByOrgId?orgid=${orgId}`);
-      setListViewData(result.paramObjectsMap.departmentVO.reverse());
-      console.log('Test', result);
-    } catch (err) {
-      console.log('error', err);
-    }
-  
-    // 
-     const getAllHolidayByOrgId = async () => {
-    try {
-      const response = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
-  
-      if (response.status === true) {
-        const formattedData = response.paramObjectsMap.holidayVO.map((holiday) => ({
-          ...holiday,
-          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '', 
-        }));
-  
-        setListViewData(formattedData);
-      } else {
-        console.error('API Error:', response);
+      // Fetching approved leaves for the team
+      const result = await apiCalls('get', `/leaveprocess/getAllApprovedLeaveForTeam?branchCode=${branchCode}&orgId=${orgId}&reportingPersonCode=${employeeCode}`);
+
+      const approvedLeaves = result?.paramObjectsMap?.leaveRequestVO || [];
+
+      // Optionally reverse the list if you want the latest leaves first
+      const reversedApprovedLeaves = [...approvedLeaves];
+      setListViewData(reversedApprovedLeaves);
+
+      if (reversedApprovedLeaves.length > 0 && reversedApprovedLeaves[0].branchCode) {
+        setBranchCode(reversedApprovedLeaves[0].branchCode);
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+
+    } catch (err) {
+      console.error('Error fetching data:', err);
     }
-  };
-  };
-  
+  }, [branchCode, orgId, employeeCode]);
+
+  const listViewColumns = [
+    { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
+    { accessorKey: 'employeeEmail', header: 'Employee Email', size: 140 },
+    { accessorKey: 'reason', header: 'Reason', size: 140 },
+    { accessorKey: 'leaveType', header: 'Leave Type', size: 140 },
+    { accessorKey: 'totalDays', header: 'Total Days', size: 140 },
+    { accessorKey: 'startDate', header: 'Start Date', size: 140 },
+    { accessorKey: 'endDate', header: 'End Date', size: 140 },
+    { accessorKey: 'screenName', header: 'Screen Name', size: 140 },
+  ];
+
   return (
     <>
-       <div className="card w-full p-6 bg-base-100 shadow-xl mb-3" style={{ padding: '20px' }}>
-          <div className=".d-flex flex-wrap justify-content-start mb-4">
-            {/* <div> */}
+      <Card sx={{ padding: 4, backgroundColor: '#ffffff', boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)', borderRadius: 4, maxWidth: '100%', mt: 3 }}>
+        <ToastContainer position="top-right" autoClose={5000} />
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          {/* <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
+          Leave Approval- {branchName ? branchName : "No branch available"} - Branch
+          </Typography> */}
+        </Box>
+        <Box sx={{ mt: 4 }}>
+          {listViewData.length > 1 && (
+            <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
               <CommonListViewTable
                 data={listViewData}
                 columns={listViewColumns}
-                blockEdit={true} // DISAPLE THE MODAL IF TRUE
-                toEdit={getAllHolidayReport}
-                enableEditing={true}
+                blockEdit
+                showActions={false}
+                hideActions
               />
-            {/* </div> */}
-          </div>
-        <ToastComponent />
-      </div>
+            </Paper>
+          )}
+        </Box>
+      </Card>
     </>
-  )
-}
+  );
+};
 
-export default LeaveApproval
-
-
+export default LeaveApproval;
