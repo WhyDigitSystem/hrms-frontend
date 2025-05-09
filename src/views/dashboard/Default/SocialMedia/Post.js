@@ -1,232 +1,161 @@
 import React, { useState, useEffect } from 'react';
+import CampaignIcon from "@mui/icons-material/Campaign";
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import {
   Box,
   Typography,
-  Card,
-  CardMedia,
-  CardContent,
-  CardActions,
-  Grid,
   Modal,
   IconButton,
   Button,
   TextField,
-} from '@mui/material';
-import {
+  Avatar,
   List,
   ListItem,
   ListItemAvatar,
-  Avatar,
-  ListItemText
+  ListItemText,
+  Divider,
+  useMediaQuery,
+  keyframes,
+  Tooltip
 } from '@mui/material';
-import StorefrontTwoToneIcon from '@mui/icons-material/StorefrontTwoTone';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import Divider from '@mui/material/Divider';
-import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
-import CloseIcon from '@mui/icons-material/Close';
+import { toast } from 'react-toastify';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import { useTheme } from '@mui/material/styles';
 import apiCalls from 'apicall';
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
-import { showToast } from 'utils/toast-component';
+import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
-function Post({ blockEdit = false, enableEditing = true }) {
+const Post = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [listViewData, setListViewData] = useState([]);
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [praiseCounts, setPraiseCounts] = useState({});
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
-  // const id = localStorage.getItem('id');
+  const [orgId] = useState(localStorage.getItem('orgId'));
+  const [branchCode] = useState(localStorage.getItem('branchCode'));
+  const [branchName] = useState(localStorage.getItem('branch'));
+  const [department] = useState(localStorage.getItem('department'));
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
-  const [branch, setBranch] = useState(localStorage.getItem('branch'));
-  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-  const [department, setDepartment] = useState(localStorage.getItem('department'));
-  const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
-  const [likes, setLikes] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
+  const loginUserName = localStorage.getItem('userName');
   const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
     circularcontent: '',
-    postImage: '',
-    circularId: '',
-    liked: 'YES'
+    expiresDate: '',
+    imageUrl: ''
   });
-
-
+  const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState('');
+  const [viewAllCirculars, setViewAllCirculars] = useState([]);
 
-  const theme = useTheme();
+  const glow = keyframes`
+    0% { box-shadow: 0 0 5px ${theme.palette.primary.main}; }
+    50% { box-shadow: 0 0 20px ${theme.palette.primary.main}, 0 0 30px ${theme.palette.secondary.main}; }
+    100% { box-shadow: 0 0 5px ${theme.palette.primary.main}; }
+  `;
 
-  const handleLike = async (circular) => {
-    const updatedLikedState = !isLiked;
-    setIsLiked(updatedLikedState);
-
-    const currentCircularId = circular.id;
-    const currentFinYear = circular.finYear;
-    const currentCircularTopic = circular.circularTopic;
-
-    const saveData = {
-      ...(editId && { id: editId }),
-      branchCode,
-      branchName: branch,
-      circularId: currentCircularId,
-      department,
-      finYear: currentFinYear,
-      liked: updatedLikedState ? 'YES' : 'NO',
-      orgId,
-      userName: loginUserName,
-      circularTopic: currentCircularTopic,
-    };
-
-    console.log("🔎 Save Data being sent to API:", saveData);
-
-    try {
-      const response = await apiCalls('put', '/basicmaster/createUpdatePraise', saveData);
-
-      if (response.status === true) {
-        const praise = await getCountOfPraise(currentCircularId);
-
-        if (praise) {
-          setListViewData(prevData =>
-            prevData.map(item =>
-              item.id === currentCircularId ? { ...item, likes: praise?.likes || 0 } : item
-            )
-          );
-        }
-      } else {
-        setIsLiked(!updatedLikedState);
-        toast.error('Failed to update like');
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
-      setIsLiked(!updatedLikedState);
-      toast.error('Network error while updating like');
-    }
-  };
-
-  // Fetch all circulars on component mount
   useEffect(() => {
-    getAllCircularByOrgId();
-    // getCountOfPraise();
+    GetCircularByOrgId();
   }, [orgId]);
 
-  // Fetch all circulars by organization ID
-  const getAllCircularByOrgId = async () => {
+  const GetCircularByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?orgId=${orgId}`);
+      const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}`);
       if (result?.paramObjectsMap?.circularVO) {
-        const circulars = result.paramObjectsMap.circularVO.reverse();
-
-        // Fetch praise count for each circular
-        const circularsWithLikes = await Promise.all(
-          circulars.map(async (item) => {
-            const praise = await getCountOfPraise(item.id);
-            return {
-              ...item,
-              likes: praise?.likes || 0, // Assume praiseVO contains `likes`
-            };
-          })
-        );
-
-        setListViewData(circularsWithLikes);
-        console.log("Circular with likes", circularsWithLikes);
+        const formattedData = result.paramObjectsMap.circularVO.reverse();
+        setListViewData(formattedData);
+        fetchAllPraiseCounts(formattedData);
       } else {
         setListViewData([]);
       }
     } catch (err) {
-      console.error('Error fetching circular data:', err);
+      console.error('Error fetching circulars:', err);
       setListViewData([]);
     }
   };
 
-  const getCountOfPraise = async (circularId) => {
+  const uploadImageToBlob = async (file) => {
     try {
-      const result = await apiCalls(
-        'get',
-        `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${circularId}&orgId=${orgId}`
-      );
-
-      if (result?.paramObjectsMap?.praiseVO) {
-        return result.paramObjectsMap.praiseVO[0];
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await apiCalls("post", "/basicmaster/uploadPostImageInBloob", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      if (result?.paramObjectsMap?.fileUrl) {
+        return result.paramObjectsMap.fileUrl;
       } else {
-        return null; // Return null if no praise found
+        throw new Error('Image upload failed');
       }
     } catch (err) {
-      console.error(`Error fetching praise count for circularId ${circularId}:`, err);
-      return null;
+      toast.error("Image upload failed");
+      console.error("Image upload error:", err);
+      return ""; // Return an empty string on error
     }
   };
 
-  // Handle image click to open modal
-  const handleImageClick = (image) => {
-    setSelectedImage(image);
-    setOpenModal(true);
+  const getCircularById = (circular) => {
+    setFormData({
+      circularTopic: circular.circularTopic,
+      circularcontent: circular.circularcontent,
+      expiresDate: circular.expiresDate,
+      imageUrl: circular.imageUrl,
+      active: circular.active,
+    });
+    setEditId(circular.id);
+    setOpenCreateModal(true);
   };
 
-  // Close the image modal
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedImage(null);
+  const fetchAllPraiseCounts = async (circulars) => {
+    const counts = {};
+    for (let circular of circulars) {
+      const count = await getPraiseCount(circular.id);
+      counts[circular.id] = count;
+    }
+    setPraiseCounts(counts);
   };
 
-  // Handle image upload
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, postImage: reader.result }));
+  const getPraiseCount = async (circularId) => {
+    try {
+      const res = await apiCalls('get', `/basicmaster/GetCountOfPraiseByOrgIdAndCircularId?circularid=${circularId}&orgId=${orgId}`);
+      return res?.paramObjectsMap?.praiseVO?.[0]?.Count || "0";
+    } catch (err) {
+      console.error("Error fetching praise count:", err);
+      return "0";
+    }
+  };
+
+  const handlePraise = async (circularId) => {
+    try {
+      const payload = {
+        circularId,
+        orgId,
+        userName: loginUserName,
+        department,
+        branchCode,
+        branchName,
+        liked: "Yes"
       };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // Fetch circular by ID for editing
-  const getCircularById = async (row) => {
-    const postId = row.id || row.original?.id;
-    if (!postId) {
-      console.error('Invalid row data (missing ID):', row);
-      toast.error('Invalid row data (missing ID)');
-      return;
-    }
-
-    setEditId(postId);
-
-    try {
-      const result = await apiCalls('get', `/basicmaster/getCircularById?id=${postId}`);
-      if (result?.paramObjectsMap?.circularVO) {
-        const circularData = result.paramObjectsMap.circularVO;
-        setFormData({
-          active: circularData.active === 'Active',
-          circularTopic: circularData.circularTopic,
-          circularcontent: circularData.circularcontent,
-          postImage: circularData.postImage,
-        });
-        setOpenCreateModal(true);
+      const result = await apiCalls('put', '/basicmaster/createUpdatePraise', payload);
+      if (result?.status === true) {
+        toast.success('Praised successfully');
+        const updatedCount = await getPraiseCount(circularId);
+        setPraiseCounts(prev => ({ ...prev, [circularId]: updatedCount }));
       } else {
-        toast.error('Failed to fetch circular data');
+        toast.error('Failed to register praise');
       }
-    } catch (err) {
-      console.error('Error fetching circular data:', err);
-      toast.error('Failed to fetch circular data');
+    } catch (error) {
+      toast.error('Praise action failed');
     }
   };
 
-  // Handle save or update of a circular
   const handleSave = async () => {
     const errors = {};
-    if (!formData.circularTopic) errors.circularTopic = 'Circular Topic is required';
+    if (!formData.circularTopic) errors.circularTopic = 'Circular topic is required';
     if (!formData.circularcontent) errors.circularcontent = 'Circular content is required';
-    if (!orgId) errors.orgId = 'Organization ID is required';
-    if (!loginUserName) errors.createdBy = 'Created By is required';
+    if (!formData.expiresDate) errors.expiresDate = 'Expiration date is required';
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -234,413 +163,244 @@ function Post({ blockEdit = false, enableEditing = true }) {
     }
 
     setIsLoading(true);
+    let imageUrl = formData.imageUrl;
+    if (imageFile) {
+      imageUrl = await uploadImageToBlob(imageFile);
+    }
+
     const saveFormData = {
       ...(editId && { id: editId }),
       active: formData.active,
       circularTopic: formData.circularTopic,
       circularcontent: formData.circularcontent,
-      postImage: formData.postImage || null,
-      orgId: orgId,
+      expiresDate: formData.expiresDate,
+      orgId,
       createdBy: loginUserName,
+      branchCode,
+      branchName,
+      department,
+      imageUrl,
     };
 
     try {
       const result = await apiCalls('put', `/basicmaster/createUpdateCircular`, saveFormData);
       if (result.status === true) {
-        toast.success(editId ? 'Post Updated Successfully' : 'Post created successfully');
-        setIsLoading(false);
+        toast.success(editId ? 'Circular Updated Successfully' : 'Circular created successfully');
         setOpenCreateModal(false);
-        getAllCircularByOrgId();
-        setFormData({ circularTopic: '', circularcontent: '', postImage: '' });
+        GetCircularByOrgId();
+        setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
+        setImageFile(null);
         setEditId('');
       } else {
-        toast.error(result.paramObjectsMap?.errorMessage || 'Post creation failed');
-        setIsLoading(false);
+        toast.error(result.paramObjectsMap?.errorMessage || 'Circular creation failed');
       }
     } catch (err) {
-      console.log('error', err);
-      toast.error('Post creation failed. Please check the data and try again.');
+      toast.error('Circular creation failed. Please check the data and try again.');
+    } finally {
       setIsLoading(false);
     }
   };
 
+  const handleCloseCreateModal = () => {
+    setOpenCreateModal(false);
+    setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
+    setImageFile(null);
+    setEditId('');
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file); // Store the file for preview
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setFormData((prev) => ({ ...prev, imageUrl: '' })); // Reset the form data's image URL to empty
+  };
+
+  const cardStyle = {
+    position: 'relative',
+    margin: 2,
+    minHeight: 200,
+    background: `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
+    borderRadius: 4,
+    color: theme.palette.common.white,
+    overflow: 'hidden',
+    '&:hover': { animation: `${glow} 2s infinite` },
+  };
+
+  const announcementStyle = {
+    background: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 3,
+    padding: isMobile ? 2 : 3,
+    backdropFilter: 'blur(5px)',
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    position: 'relative',
+    minHeight: 150,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  };
+
   return (
-    <>
-      <style>
-        {`
-        .css-vh9s07{
-        padding: 10px;
-        }
-        .css-19h80yh-MuiGrid-root>.MuiGrid-item {
-        padding-top: 0px;
-        }
-          .css-19kzrtu {
-            padding: 0px !important;
-          }
-          .css-aqz1n5-MuiGrid-root {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-          .css-11l5t4l-MuiGrid-root {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-         
-          .view-more-modal {
-            overflow-y: auto;
-            max-height: 80vh;
-            padding: 16px;
-          }
-          .modal-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            outline: none;
-          }
-          .modal-image {
-            max-width: 100%;
-            max-height: 80vh;
-            border-radius: 8px;
-          }
-          .modal-close-button {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-          }
-            .css-g0x6gi-MuiGrid-root{
-                 margin-left:0px;
-            }
-          .css-g0x6gi-MuiGrid-root>.MuiGrid-item {
-    padding-left: 0px;
-         padding-left: 0px;
-              padding-top: 0px;
-}
-              .css-1139et6-MuiCardContent-root:last-child {
-    padding-bottom: 0px;
-}
-    
-.css-1w25cgw-MuiCardActions-root {
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex
-;
-    -webkit-align-items: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    padding: 8px;
-    padding: 0px;
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex
-;
-    -webkit-align-items: center;
-    -webkit-box-align: center;
-    -ms-flex-align: center;
-    align-items: center;
-    gap: 0px;
-}
-    
-        `}
-      </style>
-      <Box sx={{ p: 4, background: "linear-gradient(45deg, #f3f4f6, #e5e7eb)" }}>
-        <ToastContainer />
-        <Grid container spacing={4} sx={{ mt: 2 }}>
+    <Box sx={cardStyle}>
+      <Box sx={{ position: 'relative', padding: isMobile ? 3 : 4, zIndex: 1 }}>
+        <Box sx={announcementStyle}>
           {listViewData.length > 0 ? (
-            <Grid item xs={12}>
-              <Card
-                className="post-card"
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  transition: "transform 0.3s, box-shadow 0.3s",
-                  "&:hover": {
-                    transform: "translateY(-5px)",
-                    boxShadow: 6,
-                  },
-                }}
-              >
-                {listViewData[0].postImage && (
-                  <CardMedia
-                    component="img"
-                    height="300"
-                    image={listViewData[0].postImage}
-                    alt="Post Image"
-                    onClick={() => handleImageClick(listViewData[0].postImage)}
-                    sx={{
-                      cursor: "pointer",
-                      borderTopLeftRadius: 8,
-                      borderTopRightRadius: 8,
-                      objectFit: "cover",
-                    }}
-                  />
-                )}
-
-                <CardContent sx={{ p: 4 }}>
-                  <div className='d-flex justify-content-between align-items-baseline'>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 600,
-                        mb: 2,
-                        color: "text.primary",
-                        fontFamily: "'Merriweather', serif",
-                      }}
-                    >
-                      {listViewData[0].circularTopic}
-                    </Typography>
-
-                    {/* Likes */}
-                    <CardActions sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <IconButton
-                        aria-label="like"
-                        onClick={handleLike}
-                        sx={{
-                          color: isLiked ? theme.palette.primary.main : 'inherit',
-                          '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                          }
-                        }}
-                      >
-                        {isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
-                      </IconButton>
-                      <Typography variant="body2" color="text.secondary">
-                        <Typography variant="body2" color="text.secondary">
-                          <div>{likes?.Count}</div>
-                        </Typography>
-
-                      </Typography>
-                    </CardActions>
-                  </div>
-
-                  <Divider sx={{ my: 2 }} />
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: "text.secondary",
-                      fontSize: "1rem",
-                      lineHeight: 1.6,
-                      fontFamily: "'Open Sans', sans-serif",
-                    }}
-                  >
-                    {listViewData[0].circularcontent}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-          ) : (
-            <Grid item xs={12} sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Typography
-                variant="body1"
-                sx={{
-                  textAlign: "center",
-                  color: "text.secondary",
-                  fontSize: "1.125rem",
-                  fontStyle: "italic",
-                  p: 3,
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  background: "rgba(255, 255, 255, 0.8)",
-                }}
-              >
-                No circulars available
+            <Box>
+              <Typography variant="h6" gutterBottom>{listViewData[0].circularTopic}</Typography>
+              <Typography variant="body1" sx={{ lineHeight: 1.6 }}>{listViewData[0].circularcontent}</Typography>
+              <Tooltip title="Praise this circular">
+                <IconButton onClick={() => handlePraise(listViewData[0].id)} color="secondary">
+                  <ThumbUpAltIcon />
+                </IconButton>
+              </Tooltip>
+              <Typography variant="caption">
+                {praiseCounts[listViewData[0].id] || "0"}
               </Typography>
-            </Grid>
+            </Box>
+          ) : (
+            <Box sx={{ textAlign: 'center' }}>
+              <NotificationsActiveIcon sx={{ fontSize: 48, opacity: 0.3 }} />
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>No circulars available</Typography>
+            </Box>
           )}
-        </Grid>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mt: 3,
-            animation: "fadeIn 0.5s ease-in-out",
-          }}
-        >
-          <IconButton
-            color="primary"
-            aria-label="add news"
-            onClick={() => {
-              setFormData({ circularTopic: "", circularcontent: "", postImage: "" });
-              setEditId("");
-              setOpenCreateModal(true);
-            }}
-            sx={{
-              background: "linear-gradient(45deg, #3f51b5, #2196f3)",
-              color: "white",
-              "&:hover": {
-                background: "linear-gradient(45deg, #2196f3, #3f51b5)",
-              },
-            }}
-          >
-            <AddIcon />
-          </IconButton>
-
-          <Button
-            variant="contained"
-            color="primary"
-            endIcon={<MoreHorizIcon />}
-            onClick={() => setOpenViewMoreModal(true)}
-            sx={{
-              background: "linear-gradient(45deg, #3f51b5, #2196f3)",
-              "&:hover": {
-                background: "linear-gradient(45deg, #2196f3, #3f51b5)",
-              },
-            }}
-          >
-            View More
-          </Button>
         </Box>
-        {/* Debugging: Log listViewData */}
-        {console.log("listViewData:", listViewData)}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2 }}>
+          <IconButton color="primary" onClick={() => setOpenCreateModal(true)}><AddIcon /></IconButton>
+          <IconButton color="inherit" onClick={() => { setViewAllCirculars(listViewData); setOpenViewMoreModal(true); }}><VisibilityIcon /></IconButton>
+        </Box>
       </Box>
 
-      {/* Image Modal */}
-      <Modal open={openModal} onClose={handleCloseModal} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box className="modal-container">
-          <IconButton className="modal-close-button" onClick={handleCloseModal}>
-            <CloseIcon />
-          </IconButton>
-          {selectedImage && <img src={selectedImage} alt="Full View" className="modal-image" />}
-        </Box>
-      </Modal>
 
-      {/* Create Post Modal */}
-      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box
-          className="modal-container"
-          sx={{
-            bgcolor: 'white',
-            p: 3,
-            borderRadius: 2,
-            width: { xs: '90%', sm: 400 }, // 90% width on small screens, 400px on larger screens
-            mx: 'auto',
-            mt: '10%',
-          }}
-        >
-          <Typography variant="h6" mb={2}>{editId ? 'Edit Post' : 'Create Post'}</Typography>
+
+      {/* Create/Edit Modal */}
+      <Modal open={openCreateModal} onClose={handleCloseCreateModal}>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          bgcolor: theme.palette.background.paper,
+          borderRadius: 2,
+          p: isMobile ? 2 : 4,
+          width: isMobile ? '90%' : 400,
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          outline: 'none'
+        }}>
+          <Typography variant="h6" gutterBottom>
+            {editId ? 'Edit Circular' : 'Create New Circular'}
+          </Typography>
           <TextField
-            label="Topic"
             fullWidth
-            name="circularTopic"
+            label="Circular Topic"
             value={formData.circularTopic}
             onChange={(e) => setFormData({ ...formData, circularTopic: e.target.value })}
             error={!!fieldErrors.circularTopic}
             helperText={fieldErrors.circularTopic}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           />
-
           <TextField
-            label="Content"
             fullWidth
-            name="circularcontent"
             multiline
-            rows={3}
+            rows={4}
+            label="Circular Content"
             value={formData.circularcontent}
             onChange={(e) => setFormData({ ...formData, circularcontent: e.target.value })}
             error={!!fieldErrors.circularcontent}
             helperText={fieldErrors.circularcontent}
-            sx={{ mb: 2 }}
+            sx={{ mb: 3 }}
           />
-          <input type="file" accept="image/*" name="postImage" onChange={handleImageUpload} style={{ marginBottom: '16px' }} />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button variant="contained" color="secondary" onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-            <Button variant="contained" color="primary" onClick={handleSave} disabled={isLoading}>
-              {isLoading ? 'Saving...' : editId ? 'Update' : 'Post'}
+          <TextField
+            fullWidth
+            type="date"
+            label="Expiration Date"
+            InputLabelProps={{ shrink: true }}
+            value={formData.expiresDate}
+            onChange={(e) => setFormData({ ...formData, expiresDate: e.target.value })}
+            error={!!fieldErrors.expiresDate}
+            helperText={fieldErrors.expiresDate}
+            sx={{ mb: 3 }}
+          />
+          <Button variant="outlined" component="label" sx={{ mb: 2 }}>
+            Upload Image
+            <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+          </Button>
+          {(imageFile || formData.imageUrl) && (
+            <Box sx={{ mb: 2 }}>
+              <img
+                src={imageFile ? URL.createObjectURL(imageFile) : formData.imageUrl}
+                alt="Circular Preview"
+                style={{ width: '100%', maxHeight: 200, objectFit: 'cover' }}
+              />
+              <Button onClick={handleRemoveImage} color="error" fullWidth sx={{ mt: 1 }}>Remove Image</Button>
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button onClick={handleCloseCreateModal} color="secondary">Cancel</Button>
+            <Button onClick={handleSave} variant="contained" color="primary" disabled={isLoading}>
+              {isLoading ? 'Saving...' : 'Save'}
             </Button>
           </Box>
         </Box>
       </Modal>
 
-
-      {/* View More Modal */}
-      <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)} BackdropProps={{ style: { backdropFilter: 'blur(4px)' } }}>
-        <Box className="view-more-modal" sx={{ bgcolor: 'white', p: 3, borderRadius: 2, width: '80%', mx: 'auto', mt: '5%' }}>
-          <Typography variant="h5" mb={3}>All Post</Typography>
-          <List sx={{ py: 0 }}>
-            {listViewData.map((item) => (
-              <Box key={item.id}>
-                <ListItem
-                  alignItems="flex-start"
-                  disableGutters
-                  sx={{ py: 1 }}
-                  secondaryAction={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        {likes?.Count || 0}
-                      </Typography>
-                      <IconButton
-                        aria-label="like"
-                        onClick={() => handleLike(item.id)} // Ensure this function receives item id or the whole item if needed
-                        sx={{
-                          color: item.isLiked ? theme.palette.primary.main : 'inherit',
-                          '&:hover': {
-                            backgroundColor: 'rgba(25, 118, 210, 0.08)'
-                          }
-                        }}
-                      >
-                        {item.isLiked ? <ThumbUpIcon /> : <ThumbUpOutlinedIcon />}
-                      </IconButton>
-                      <IconButton edge="end" onClick={() => getCircularById(item)}>
-                        <EditIcon />
-                      </IconButton>
-                    </Box>
-                  }
-                >
+      {/* View All Circulars Modal */}
+      <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)}>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          bgcolor: theme.palette.background.paper,
+          borderRadius: 2,
+          p: isMobile ? 2 : 4,
+          width: isMobile ? '90%' : '80%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          outline: 'none'
+        }}>
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+            All Circulars ({viewAllCirculars.length})
+          </Typography>
+          <Typography variant="body2" sx={{ opacity: 0.7, mb: 2 }}>
+            Total Posts: {viewAllCirculars.length}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+          <List>
+            {viewAllCirculars.map((circular, idx) => (
+              <React.Fragment key={circular.id || idx}>
+                <ListItem alignItems="flex-start" secondaryAction={
+                  <IconButton edge="end" onClick={() => getCircularById(circular)}>
+                    <EditIcon />
+                  </IconButton>
+                }>
                   <ListItemAvatar>
-                    <Avatar
-                      variant="rounded"
-                      sx={{
-                        ...theme.typography.commonAvatar,
-                        ...theme.typography.largeAvatar,
-                        backgroundColor: theme.palette.primary.light,
-                        color: theme.palette.primary.dark
-                      }}
-                    >
-                      <StorefrontTwoToneIcon />
-                    </Avatar>
+                    <Avatar><CampaignIcon /></Avatar>
                   </ListItemAvatar>
                   <ListItemText
-                    primary={
-                      <Typography variant="subtitle1" sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
-                        {item.topic}
-                      </Typography>
-                    }
+                    primary={<Typography variant="h6" sx={{ fontWeight: 'bold' }}>{circular.circularTopic}</Typography>}
                     secondary={
                       <>
-                        <Typography variant="body2" sx={{ color: theme.palette.text.secondary }}>
-                          {item.circularTopic}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: theme.palette.text.secondary, display: 'block', mt: 0.5 }}>
-                          {new Date(item.circularcontent).toLocaleDateString()}
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-line' }}>{circular.circularcontent}</Typography>
+                        <Typography variant="caption" sx={{ display: 'block', mt: 1, opacity: 0.6 }}>
+                          Expires: {new Date(circular.expiresDate).toLocaleDateString()}
                         </Typography>
                       </>
                     }
                   />
                 </ListItem>
-                <Divider sx={{ my: 1, backgroundColor: theme.palette.divider }} />
-              </Box>
+                <Divider variant="inset" component="li" />
+              </React.Fragment>
             ))}
           </List>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="secondary" onClick={() => setOpenViewMoreModal(false)}>
-              Close
-            </Button>
-          </Box>
         </Box>
       </Modal>
-    </>
+    </Box>
   );
-}
+};
 
 export default Post;

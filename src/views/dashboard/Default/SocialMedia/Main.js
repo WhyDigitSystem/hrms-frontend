@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Modal, TextField } from '@mui/material';
+import { Box, Typography, Button, Modal, TextField, Fab, Tooltip } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import PostIcon from '@mui/icons-material/PostAdd'; // Icon for POST
 import PollIcon from '@mui/icons-material/Poll'; // Icon for POLL
-import PraiseIcon from '@mui/icons-material/ThumbUp'; // Icon for PRAISE
+import AddIcon from '@mui/icons-material/Add'; // FAB icon
 import Post from './Post';
 import Poll from './Poll'; // Ensure this import is correct
-import Praise from './Praise';
 
 // Styled Components
 const CardWrapper = styled(Box)(({ theme }) => ({
@@ -16,6 +15,7 @@ const CardWrapper = styled(Box)(({ theme }) => ({
   position: 'relative',
   borderRadius: '12px',
   padding: '16px',
+  boxShadow: theme.shadows[3],
   transition: 'background-color 0.5s ease',
   '&:after, &:before': {
     content: '""',
@@ -30,7 +30,6 @@ const CardWrapper = styled(Box)(({ theme }) => ({
   '&:before': { top: -125, right: -15 },
   borderLeft: '4px solid #364152', // Left border color added here
 }));
-
 
 // Modal Style
 const modalStyle = {
@@ -99,7 +98,7 @@ const CreatePostModal = ({ open, handleClose, handleCreatePost, postContent, isE
 const Main = () => {
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0); // Main tab state (Organization or IT)
-  const [nestedTabValue, setNestedTabValue] = useState('POST'); // Nested tab state (POST, POLL, PRAISE)
+  const [nestedTabValue, setNestedTabValue] = useState('POST'); // Nested tab state (POST, POLL)
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false); // Post modal state
   const [isEditPostModalOpen, setIsEditPostModalOpen] = useState(false); // Edit post modal state
   const [organizationPosts, setOrganizationPosts] = useState([]); // Organization posts
@@ -200,76 +199,41 @@ const Main = () => {
 
       {/* Content for Organization or IT Tab */}
       <CardWrapper>
-        {/* Nested Tabs for POST, POLL, PRAISE */}
-        <Box sx={{ display: 'flex', gap: 2, mt: 3, justifyContent: 'flex-start' }}>
-          <Box
-            onClick={() => setNestedTabValue('POST')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              color: nestedTabValue === 'POST' ? theme.palette.primary.main : theme.palette.text.secondary,
-              fontWeight: 600,
-              '&:hover': {
-                color: theme.palette.primary.main,
-              },
-            }}
-          >
-            <PostIcon />
-            <Typography variant="h6" style={{ fontSize: '14px' }}>POST</Typography>
-          </Box>
-          <Box
-            onClick={() => setNestedTabValue('POLL')}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              cursor: 'pointer',
-              color: nestedTabValue === 'POLL' ? theme.palette.primary.main : theme.palette.text.secondary,
-              fontWeight: 600,
-              '&:hover': {
-                color: theme.palette.primary.main,
-              },
-            }}
-          >
-            <PollIcon />
-            <Typography variant="h6" style={{ fontSize: '14px' }}>POLL</Typography>
-          </Box>
-
-
+        {/* Nested Tabs for POST, POLL */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 3, justifyContent: 'flex-start' }}>
+          {['POST', 'POLL'].map((tab) => (
+            <Button
+              key={tab}
+              startIcon={tab === 'POST' ? <PostIcon /> : <PollIcon />}
+              onClick={() => setNestedTabValue(tab)}
+              variant={nestedTabValue === tab ? 'contained' : 'outlined'}
+              size="small"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 500,
+                borderRadius: '20px',
+              }}
+            >
+              {tab}
+            </Button>
+          ))}
         </Box>
 
         {/* Content for POST Tab */}
         {nestedTabValue === 'POST' && (
-          <Box sx={{ mt: 3, minHeight: '280px' }}> {/* Fixed height */}
+          <Box sx={{ mt: 3, minHeight: '280px' }}>
             <Post />
           </Box>
         )}
 
         {/* Content for POLL Tab */}
         {nestedTabValue === 'POLL' && (
-          <Box sx={{ mt: 3, minHeight: '280px' }}> {/* Same fixed height */}
+          <Box sx={{ mt: 3, minHeight: '280px' }}>
             <Poll />
           </Box>
         )}
-
-
       </CardWrapper>
 
-      {/* Modals */}
-      <CreatePostModal
-        open={isCreatePostModalOpen || isEditPostModalOpen}
-        handleClose={() => {
-          setIsCreatePostModalOpen(false);
-          setIsEditPostModalOpen(false);
-          setPostToEdit(null);
-        }}
-        handleCreatePost={handleCreatePost}
-        handleEditPost={handleEditPost}
-        postContent={postToEdit !== null ? (tabValue === 0 ? organizationPosts[postToEdit] : itPosts[postToEdit]) : null}
-        isEdit={isEditPostModalOpen}
-      />
     </Box>
   );
 };

@@ -47,7 +47,7 @@ function Poll() {
   const [fetchError, setFetchError] = useState(null);
   const [newPoll, setNewPoll] = useState({
     question: '',
-    expiresAt: '',
+    expiresDate: '',
     maxSelection: 1,
     multiSelect: false
   });
@@ -55,9 +55,9 @@ function Poll() {
 
   const orgId = localStorage.getItem('orgId');
   const branchCode = localStorage.getItem('branchCode');
-  const branch = localStorage.getItem('branch');
-  const loginUserName = localStorage.getItem('userName');
+  const branchName = localStorage.getItem('branch');
   const department = localStorage.getItem('department');
+  const loginUserName = localStorage.getItem('userName');
 
   useEffect(() => {
     getAllPolls();
@@ -66,7 +66,7 @@ function Poll() {
   const getAllPolls = async () => {
     try {
       setIsLoading(true);
-      const result = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?orgId=${orgId}`);
+      const result = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}`);
       if (result && result.paramObjectsMap.pollsVO) {
         const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
           ...poll,
@@ -137,7 +137,7 @@ function Poll() {
       ...(editId && { id: editId }),
       active: true,
       branchCode,
-      branchName: branch,
+      branchName,
       createdBy: loginUserName,
       department,
       maxSelection: newPoll.maxSelection,
@@ -145,7 +145,7 @@ function Poll() {
       orgId,
       pollDetailsDTO: pollDetails.map(opt => ({ options: opt })),
       question: newPoll.question,
-      expiresAt: newPoll.expiresAt,
+      expiresDate: newPoll.expiresDate,
       updatedBy: loginUserName
     };
 
@@ -186,7 +186,6 @@ function Poll() {
       </Box>
     );
   }
-
   return (
     <Box sx={{ p: 3 }}>
       <ToastContainer position="top-right" autoClose={5000} />
@@ -220,7 +219,7 @@ function Poll() {
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <AccessTimeIcon fontSize="small" />
-                        <Typography variant="caption" sx={{ ml: 0.5 }}>{poll.expiresAt ? `Ends ${formatDate(poll.expiresAt)}` : 'No deadline'}</Typography>
+                        <Typography variant="caption" sx={{ ml: 0.5 }}>{poll.expiresDate ? `Ends ${formatDate(poll.expiresDate)}` : 'No deadline'}</Typography>
                       </Box>
                     </Box>
 
@@ -301,7 +300,7 @@ function Poll() {
           size="large"
           color="primary"
           onClick={() => {
-            setNewPoll({ question: '', expiresAt: '', maxSelection: 1, multiSelect: false });
+            setNewPoll({ question: '', expiresDate: '', maxSelection: 1, multiSelect: false });
             setPollDetails(["", ""]);
             setEditId('');
             setOpenCreateModal(true);
@@ -363,8 +362,8 @@ function Poll() {
             label="Expires At"
             type="date"
             fullWidth
-            value={newPoll.expiresAt}
-            onChange={(e) => setNewPoll({ ...newPoll, expiresAt: e.target.value })}
+            value={newPoll.expiresDate}
+            onChange={(e) => setNewPoll({ ...newPoll, expiresDate: e.target.value })}
             InputLabelProps={{ shrink: true }}
             sx={{ mb: 2 }}
           />

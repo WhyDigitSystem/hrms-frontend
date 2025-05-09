@@ -41,7 +41,7 @@ const HeaderBox = styled(Box)(({ theme }) => ({
     alignItems: 'center',
     gap: theme.spacing(1),
     marginBottom: theme.spacing(3),
-    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+    background: `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
     padding: '10px 16px',
     borderRadius: '8px',
     color: theme.palette.background.paper,
@@ -70,7 +70,7 @@ const Home = () => {
                     </Typography>
                 </HeaderBox>
                 <StyledDivider />
-                <Box sx={{ mt: 1 }}>
+                <Box sx={{ mt: 0}}>
                     <Announcements />
                 </Box>
             </CardWrapper>
