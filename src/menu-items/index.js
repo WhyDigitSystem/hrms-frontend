@@ -38,7 +38,7 @@ const getMenuItems = () => {
   switch (localStorageValue) {
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, me, finance, team]
+        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, leaveMaster, salaryMaster, me, finance, team]
       };
     case 'USER':
       return {
@@ -48,6 +48,10 @@ const getMenuItems = () => {
       return {
         items: [dashboard, calendar, me, finance, team]
       };
+      case 'ASSISTANT ACCOUNTS':
+        return {
+          items: [dashboard, calendar, me, finance]
+        };
     case 'TEAM LEAD':
       return {
         items: [dashboard, calendar, me, finance, team]

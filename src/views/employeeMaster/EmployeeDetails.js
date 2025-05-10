@@ -113,7 +113,7 @@ const EmployeeDetails = () => {
     bankName: '',
     ifscCode: '',
     doj: '',
-    resignationDate: '',
+    // resignationDate: '',
     grade: '',
     team: '',
     reportingPerson: '',
@@ -563,6 +563,7 @@ const EmployeeDetails = () => {
     setLeaveTypeErrors('');
     setEditId('');
     setLogo(null);
+    setIsViewMode(false)
   };
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date).format('YYYY-MM-DD');
@@ -669,7 +670,8 @@ const EmployeeDetails = () => {
         reportingPersonEmail: formData.reportingPersonEmail,
         reportningPersonCode: formData.reportingPersonCode,
         reportingRole: formData.reportingRole,
-        resignDate: formData.resignationDate,
+        // resignDate: formData.resignationDate || null,
+        resignDate: isValidDate(formData.resignationDate) ? formData.resignationDate : null,
         // role: formData.role,
         team: formData.team,
         updatedBy: loginUserName
@@ -679,7 +681,7 @@ const EmployeeDetails = () => {
       try {
         const response = await apiCalls('put', '/master/createUpdateEmployee', saveFormData);
         if (response.status === true) {
-          console.log('Response:', response);
+          console.log('Response:', response); 
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           handleClear();
           getAllEmployees();
@@ -703,6 +705,10 @@ const EmployeeDetails = () => {
       setFieldErrors(errors);
     }
   };
+
+  const isValidDate = (date) => {
+    return date && !isNaN(new Date(date).getTime());
+  };  
 
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
@@ -1087,8 +1093,8 @@ const EmployeeDetails = () => {
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
-                        error={fieldErrors.resignationDate}
-                        helperText={fieldErrors.resignationDate && 'Required'}
+                        // error={fieldErrors.resignationDate}
+                        // helperText={fieldErrors.resignationDate && 'Required'}
                       />
                     </LocalizationProvider>
                   </FormControl>

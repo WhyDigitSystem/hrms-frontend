@@ -37,6 +37,7 @@ const LeaveType = Loadable(lazy(() => import('views/leaveMaster/LeaveType')));
 const LeaveProcess = Loadable(lazy(() => import('views/leaveMaster/LeaveProcess')));
 const LeaveCreditControl = Loadable(lazy(() => import('views/leaveMaster/LeaveCreditControl')));
 const Holidays = Loadable(lazy(() => import('views/leaveMaster/Holidays')));
+const CompoOff = Loadable(lazy(() => import('views/me/CompoOff')));
 
 // salary master
 const SalaryHeads = Loadable(lazy(() => import('views/salaryMaster/SalaryHeads')));
@@ -194,6 +195,10 @@ const HrmsRoute = {
     {
       path: '/me/TimeSheet',
       element: <TimeSheet />
+    },
+    {
+      path: '/me/CompoOff',
+      element: <CompoOff />
     },
     {
       path: '/finance/Payslip',

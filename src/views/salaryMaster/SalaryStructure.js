@@ -280,42 +280,43 @@ const SalaryMaster = () => {
       errors.employeeName = 'Employee Name is required';
     }
 
-    let earningDetailsDataValid = true;
-    const newTableErrors = earningDetailsData.map((row) => {
-      const rowErrors = {};
-      if (!row.heading) {
-        rowErrors.heading = 'Heading is required';
-        earningDetailsDataValid = false;
-      }
-      if (!row.amount) {
-        rowErrors.amount = 'Amount is required';
-        earningDetailsDataValid = false;
-      }
+    // let earningDetailsDataValid = true;
+    // const newTableErrors = earningDetailsData.map((row) => {
+    //   const rowErrors = {};
+    //   if (!row.heading) {
+    //     rowErrors.heading = 'Heading is required';
+    //     earningDetailsDataValid = false;
+    //   }
+    //   if (!row.amount) {
+    //     rowErrors.amount = 'Amount is required';
+    //     earningDetailsDataValid = false;
+    //   }
 
-      return rowErrors;
-    });
+    //   return rowErrors;
+    // });
     setFieldErrors(errors);
 
-    setEarningDetailsDataErrors(newTableErrors);
+    // setEarningDetailsDataErrors(newTableErrors);
 
-    let deductionDetailsDataValid = true;
-    const newTableErrors1 = detectionDetailsData.map((row) => {
-      const rowErrors = {};
-      if (!row.detectionHeading) {
-        rowErrors.detectionHeading = 'Heading is required';
-        deductionDetailsDataValid = false;
-      }
-      if (!row.detectionAmount) {
-        rowErrors.detectionAmount = 'Amount is required';
-        deductionDetailsDataValid = false;
-      }
+    // let deductionDetailsDataValid = true;
+    // const newTableErrors1 = detectionDetailsData.map((row) => {
+    //   const rowErrors = {};
+    //   if (!row.detectionHeading) {
+    //     rowErrors.detectionHeading = 'Heading is required';
+    //     deductionDetailsDataValid = false;
+    //   }
+    //   if (!row.detectionAmount) {
+    //     rowErrors.detectionAmount = 'Amount is required';
+    //     deductionDetailsDataValid = false;
+    //   }
 
-      return rowErrors;
-    });
+    //   return rowErrors;
+    // });
 
-    setDetectionDetailsDataErrors(newTableErrors1);
+    // setDetectionDetailsDataErrors(newTableErrors1);
 
-    if (Object.keys(errors).length === 0 && earningDetailsDataValid && deductionDetailsDataValid) {
+    // if (Object.keys(errors).length === 0 && earningDetailsDataValid && deductionDetailsDataValid) {
+    if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
       const earningDetailsVO = earningDetailsData.map((row) => ({
@@ -825,7 +826,7 @@ const SalaryMaster = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ backgroundColor: '#673AB7' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>

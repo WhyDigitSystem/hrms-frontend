@@ -26,7 +26,10 @@ const CommonBulkUpload = ({
   month,
   screen,
   clientName,
-  orgId
+  orgId,
+  documentName,
+  employeeCode,
+  employeeName
 }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [errorDialogOpen, setErrorDialogOpen] = useState(false);
@@ -64,12 +67,15 @@ const CommonBulkUpload = ({
       const createdBy = loginUser || 'default_user';
       const formData = new FormData();
       formData.append('files', selectedFile);
-      formData.append('createdBy', createdBy);
-      formData.append('clientCode', clientCode);
-      formData.append('clientName', clientName);
-      formData.append('finYear', finYear);
-      formData.append('month', month);
+      // formData.append('createdBy', createdBy);
+      // formData.append('clientCode', clientCode);
+      // formData.append('clientName', clientName);
+      // formData.append('finYear', finYear);
+      // formData.append('month', month);
       formData.append('orgId', orgId);
+      formData.append('documentName', documentName);
+      formData.append('employeeCode', employeeCode);
+      formData.append('employeeName', employeeName);
 
       try {
         const headers = {

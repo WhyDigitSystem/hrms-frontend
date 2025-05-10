@@ -106,12 +106,12 @@ const TimeSheet = () => {
 
   const renderTimeInputs = (date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  
+
     if (weekOff.includes(dayName)) return null;
-  
+
     const dateKey = date.toDateString();
     const data = timeSheetData[dateKey] || {};
-  
+
     if (data.status === 'LEAVE') {
       return (
         <div
@@ -123,14 +123,14 @@ const TimeSheet = () => {
             backgroundColor: '#fee2e2',
             padding: '4px 8px',
             borderRadius: '4px',
-            textAlign: 'center',
+            textAlign: 'center'
           }}
         >
           On Leave 🏖️
         </div>
       );
     }
-  
+
     const formatTime = (timeStr) => {
       if (!timeStr || typeof timeStr !== 'string') return '0:00';
       const parts = timeStr.split(':');
@@ -141,7 +141,7 @@ const TimeSheet = () => {
         return `${timeStr}:00`;
       }
     };
-  
+
     return (
       <div className="mt-1 text-xs text-left">
         {data.checkIn && (
@@ -191,10 +191,7 @@ const TimeSheet = () => {
     setSelectedDate(date);
 
     try {
-      const response = await apiCalls(
-        'get',
-        `/leaveprocess/getTimeSheetByOrgId?date=${formattedDate}&empCode=${employeeCode}&orgId=${orgId}`
-      );
+      const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formattedDate}&empCode=${employeeCode}&orgId=${orgId}`);
 
       if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
         const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
@@ -247,8 +244,18 @@ const TimeSheet = () => {
     }
   };
 
+  const isCurrentMonth = (date) => {
+    const now = new Date();
+    return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+  };
+
   const handleSubmit = async () => {
     const errors = {};
+
+    if (!isCurrentMonth(selectedDate)) {
+      showToast('error', 'Editing is only allowed for the current month.');
+      return;
+    }
 
     if (formRows.length === 0) {
       errors.formRows = 'At least one entry is required';
@@ -283,7 +290,7 @@ const TimeSheet = () => {
       };
 
       try {
-        const response = await apiCalls('put', 'leaveprocess/createUpdateTimeSheet', saveData);
+        const response = await apiCalls('put', 'timesheet/createUpdateTimeSheet', saveData);
 
         if (response.status === true) {
           showToast('success', 'TimeSheet submitted successfully');
@@ -327,7 +334,7 @@ const TimeSheet = () => {
     try {
       const today = new Date(); // Current date
       console.log('bbhd', today);
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1); // 1st of current month
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1); // 1st of current month
       console.log('efeef', startOfMonth);
       const formattedData = {};
 
@@ -343,7 +350,7 @@ const TimeSheet = () => {
 
         const response = await apiCalls(
           'get',
-          `leaveprocess/getApprovedLeaveForTimeSheet?date=${loopDateStr}&employeeCode=${userName}&orgId=${orgId}`
+          `timesheet/getApprovedLeaveForTimeSheet?date=${loopDateStr}&employeeCode=${userName}&orgId=${orgId}`
         );
 
         const entries = response?.paramObjectsMap?.timeSheetVO || [];
@@ -398,14 +405,14 @@ const TimeSheet = () => {
 
   const handleShareWhatsApp = () => {
     const message = encodeURIComponent(
-      formRows.map(row =>
-        `Project: ${row.projectName}\nFrom: ${row.fromTime}\nTo: ${row.toTime}\nDescription: ${row.description}`
-      ).join('\n\n')
+      formRows
+        .map((row) => `Project: ${row.projectName}\nFrom: ${row.fromTime}\nTo: ${row.toTime}\nDescription: ${row.description}`)
+        .join('\n\n')
     );
     // const url = `https://wa.me/?text=${message}`;
     // window.open(url, '_blank');
     window.location.href = `whatsapp://send?text=${message}`;
-  };  
+  };
 
   return (
     <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -462,7 +469,11 @@ const TimeSheet = () => {
                       {formRows.map((row, index) => (
                         <tr key={index}>
                           <td>
-                            <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRow(index)}>
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDeleteRow(index)}
+                              disabled={!isCurrentMonth(selectedDate)}
+                            >
                               Delete
                             </button>
                           </td>
@@ -472,6 +483,7 @@ const TimeSheet = () => {
                               value={row.projectName}
                               onChange={(e) => handleRowChange(index, 'projectName', e.target.value)}
                               className="form-select form-select-sm w-100"
+                              disabled={!isCurrentMonth(selectedDate)}
                             >
                               <option value="">Select Project</option>
                               {alProject.map((project) => (
@@ -487,6 +499,7 @@ const TimeSheet = () => {
                               value={row.fromTime}
                               onChange={(e) => handleRowChange(index, 'fromTime', e.target.value)}
                               className="form-control form-control-sm"
+                              disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
                           <td>
@@ -495,6 +508,7 @@ const TimeSheet = () => {
                               value={row.toTime}
                               onChange={(e) => handleRowChange(index, 'toTime', e.target.value)}
                               className="form-control form-control-sm"
+                              disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
                           <td>
@@ -504,6 +518,7 @@ const TimeSheet = () => {
                               onChange={(e) => handleRowChange(index, 'description', e.target.value)}
                               className="form-control form-control-sm"
                               placeholder="Enter description"
+                              disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
                         </tr>
@@ -513,20 +528,20 @@ const TimeSheet = () => {
                 </div>
 
                 <div className="text-end mt-2">
-                  <button className="btn btn-sm btn-success" onClick={handleAddRow}>
+                  <button className="btn btn-sm btn-success" onClick={handleAddRow} disabled={!isCurrentMonth(selectedDate)}>
                     + Add Row
                   </button>
                 </div>
               </div>
 
               <div className="modal-footer d-flex flex-wrap justify-content-between gap-2">
-                <button className="btn btn-secondary" onClick={() => setModalOpen(false)}>
+                <button className="btn btn-secondary" onClick={() => setModalOpen(false)} disabled={!isCurrentMonth(selectedDate)}>
                   Cancel
                 </button>
-                <button className="btn btn-warning" onClick={handleModalClear}>
+                <button className="btn btn-warning" onClick={handleModalClear} disabled={!isCurrentMonth(selectedDate)}>
                   Clear
                 </button>
-                <button className="btn btn-primary" onClick={handleSubmit}>
+                <button className="btn btn-primary" onClick={handleSubmit} disabled={!isCurrentMonth(selectedDate)}>
                   Save Entry
                 </button>
 

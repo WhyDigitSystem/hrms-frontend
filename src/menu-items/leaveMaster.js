@@ -40,7 +40,7 @@ const allScreens = [
     type: "item", 
     url: "/leaveMaster/Holidays",
     icon: icons.IconSun  // Sun icon for holidays
-  }
+  },
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -84,7 +84,7 @@ const leaveMaster = {
           type: 'item',
           url: '/leaveMaster/Holidays',
           icon: icons.IconSun
-        }
+        },
       ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
-import { Avatar, Box, Grid, Typography, Button, useMediaQuery } from '@mui/material';
+import { Avatar, Box, Grid, Typography, Button, useMediaQuery, Dialog, DialogContent } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
@@ -36,6 +36,7 @@ const CheckinDetails = ({ isLoading }) => {
   const [checkOutTime, setCheckOutTime] = useState(null);
   const [hoursWorked, setHoursWorked] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [openProfileDialog, setOpenProfileDialog] = useState(false);
 
   useEffect(() => {
     const storedImage = localStorage.getItem('profileImage');
@@ -163,146 +164,148 @@ const CheckinDetails = ({ isLoading }) => {
   return isLoading ? (
     <SkeletonEarningCard />
   ) : (
-    <Box>
-      <Grid item>
-        <Typography variant="h6" sx={{ mb: 0, mt:2, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
-          Quick Access
-        </Typography>
-      </Grid>
+    <>
+      <Box>
+        <Grid item>
+          <Typography variant="h6" sx={{ mb: 0, mt: 2, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
+            Quick Access
+          </Typography>
+        </Grid>
 
-      <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
-        <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
-          <Grid container direction="column" spacing={2}>
-            <Grid item>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    src={`data:image/png;base64,${profileImage}`}
-                    sx={{
-                      width: isMobile ? 56 : 64,
-                      height: isMobile ? 56 : 64,
-                      border: `2px solid ${isCheckedIn ? '#4caf50' : '#f44336'}`,
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Box>
-                    <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
-                      {empName}
-                    </Typography>
-                    <Typography variant="body2" color="secondary.light" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
-                      {empcode} - {designation}
-                    </Typography>
+        <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
+          <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
+            <Grid container direction="column" spacing={2}>
+              <Grid item>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar
+                      src={`data:image/png;base64,${profileImage}`}
+                      onClick={() => setOpenProfileDialog(true)}
+                      sx={{
+                        width: isMobile ? 56 : 64,
+                        height: isMobile ? 56 : 64,
+                        border: `2px solid ${isCheckedIn ? '#4caf50' : '#f44336'}`,
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <Box>
+                      <Typography variant="h5" color="secondary.light" sx={{ fontSize: isMobile ? '16px' : '18px' }}>
+                        {empName}
+                      </Typography>
+                      <Typography variant="body2" color="secondary.light" sx={{ fontSize: isMobile ? '12px' : '14px' }}>
+                        {empcode} - {designation}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
 
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  mt:2,
-                  justifyContent: { xs: 'center', lg: 'flex-start' },
-                  flexDirection: { xs: 'row', sm: 'row' },
-                  mb: 2,
-                  pl: { lg: 5 },
-                  ml: { lg: 5 },
-                  width: '100%'
-                }}
-              >
-                {!isCheckedIn && !checkInTime ? (
-                  <Button
-                    variant="contained"
-                    startIcon={<LoginIcon />}
-                    color="primary"
-                    sx={{
-                      minWidth: isMobile ? 48 : 120,
-                      px: isMobile ? 1.5 : 2,
-                      py: 1,
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      bgcolor: 'success.main',
-                      '&:hover': {
-                        bgcolor: 'success.dark'
-                      }
-                    }}
-                    onClick={handleCheckIn}
-                  >
-                    {!isMobile && 'Check-In'}
-                  </Button>
-                ) : checkInTime instanceof Date && isCheckedIn ? (
-                  <Box
-                    sx={{
-                      minWidth: isMobile ? 48 : 120,
-                      px: 2,
-                      py: 1,
-                      borderRadius: '10px',
-                      bgcolor: 'grey.300'
-                    }}
-                  >
-                    <Typography variant="body2" align="center">
-                      <LoginIcon /> In at {checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Typography>
-                  </Box>
-                ) : (
-                  <Button
-                    variant="contained"
-                    startIcon={<LoginIcon />}
-                    color="primary"
-                    sx={{
-                      minWidth: isMobile ? 48 : 120,
-                      px: isMobile ? 1.5 : 2,
-                      py: 1,
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      bgcolor: 'success.main',
-                      '&:hover': {
-                        bgcolor: 'success.dark'
-                      }
-                    }}
-                    onClick={handleCheckIn}
-                  >
-                    {!isMobile && 'Check-In'}
-                  </Button>
-                )}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    mt: 2,
+                    justifyContent: { xs: 'center', lg: 'flex-start' },
+                    flexDirection: { xs: 'row', sm: 'row' },
+                    mb: 2,
+                    pl: { lg: 5 },
+                    ml: { lg: 5 },
+                    width: '100%'
+                  }}
+                >
+                  {!isCheckedIn && !checkInTime ? (
+                    <Button
+                      variant="contained"
+                      startIcon={<LoginIcon />}
+                      color="primary"
+                      sx={{
+                        minWidth: isMobile ? 48 : 120,
+                        px: isMobile ? 1.5 : 2,
+                        py: 1,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        bgcolor: 'success.main',
+                        '&:hover': {
+                          bgcolor: 'success.dark'
+                        }
+                      }}
+                      onClick={handleCheckIn}
+                    >
+                      {!isMobile && 'Check-In'}
+                    </Button>
+                  ) : checkInTime instanceof Date && isCheckedIn ? (
+                    <Box
+                      sx={{
+                        minWidth: isMobile ? 48 : 120,
+                        px: 2,
+                        py: 1,
+                        borderRadius: '10px',
+                        bgcolor: 'grey.300'
+                      }}
+                    >
+                      <Typography variant="body2" align="center">
+                        <LoginIcon /> In at {checkInTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      startIcon={<LoginIcon />}
+                      color="primary"
+                      sx={{
+                        minWidth: isMobile ? 48 : 120,
+                        px: isMobile ? 1.5 : 2,
+                        py: 1,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        bgcolor: 'success.main',
+                        '&:hover': {
+                          bgcolor: 'success.dark'
+                        }
+                      }}
+                      onClick={handleCheckIn}
+                    >
+                      {!isMobile && 'Check-In'}
+                    </Button>
+                  )}
 
-                {isCheckedIn ? (
-                  <Button
-                    variant="contained"
-                    startIcon={<LogoutIcon />}
-                    color="secondary"
-                    sx={{
-                      minWidth: isMobile ? 48 : 120,
-                      px: isMobile ? 1.5 : 2,
-                      py: 1,
-                      borderRadius: '10px',
-                      textTransform: 'none',
-                      bgcolor: 'error.main',
-                      '&:hover': {
-                        bgcolor: 'error.dark'
-                      }
-                    }}
-                    onClick={handleCheckOut}
-                  >
-                    {!isMobile && 'Check-Out'}
-                  </Button>
-                ) : checkOutTime instanceof Date ? (
-                  <Box
-                    sx={{
-                      minWidth: isMobile ? 48 : 120,
-                      px: 2,
-                      py: 1,
-                      borderRadius: '10px',
-                      bgcolor: 'grey.300'
-                    }}
-                  >
-                    <Typography variant="body2" align="center">
-                      <LogoutIcon /> Out at {checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Typography>
-                  </Box>
-                ) : null}
-              </Box>
+                  {isCheckedIn ? (
+                    <Button
+                      variant="contained"
+                      startIcon={<LogoutIcon />}
+                      color="secondary"
+                      sx={{
+                        minWidth: isMobile ? 48 : 120,
+                        px: isMobile ? 1.5 : 2,
+                        py: 1,
+                        borderRadius: '10px',
+                        textTransform: 'none',
+                        bgcolor: 'error.main',
+                        '&:hover': {
+                          bgcolor: 'error.dark'
+                        }
+                      }}
+                      onClick={handleCheckOut}
+                    >
+                      {!isMobile && 'Check-Out'}
+                    </Button>
+                  ) : checkOutTime instanceof Date ? (
+                    <Box
+                      sx={{
+                        minWidth: isMobile ? 48 : 120,
+                        px: 2,
+                        py: 1,
+                        borderRadius: '10px',
+                        bgcolor: 'grey.300'
+                      }}
+                    >
+                      <Typography variant="body2" align="center">
+                        <LogoutIcon /> Out at {checkOutTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </Typography>
+                    </Box>
+                  ) : null}
+                </Box>
 
-              {/* <List sx={{ color: '#fff', pl: { lg: 5 }, ml: { lg: 5 } }}>
+                {/* <List sx={{ color: '#fff', pl: { lg: 5 }, ml: { lg: 5 } }}>
                 {checkInTime && (
                   <ListItem>
                     <AccessTimeIcon sx={{ mr: 1 }} />
@@ -317,11 +320,39 @@ const CheckinDetails = ({ isLoading }) => {
                 )}
                 {hoursWorked && <ListItem>⏱ Total Time Worked: {hoursWorked}</ListItem>}
               </List> */}
+              </Grid>
             </Grid>
-          </Grid>
-        </Box>
-      </CardWrapper>
-    </Box>
+          </Box>
+        </CardWrapper>
+      </Box>
+      <Dialog
+        open={openProfileDialog}
+        onClose={() => setOpenProfileDialog(false)}
+        PaperProps={{
+          sx: {
+            backgroundColor: 'transparent', // No background
+            boxShadow: 'none', // No shadow
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }
+        }}
+      >
+        <Box
+          component="img"
+          src={`data:image/png;base64,${profileImage}`}
+          alt="Profile"
+          onClick={() => setOpenProfileDialog(false)}
+          sx={{
+            width: 250,
+            height: 250,
+            borderRadius: '50%', // Round shape
+            objectFit: 'cover',
+            cursor: 'pointer'
+          }}
+        />
+      </Dialog>
+    </>
   );
 };
 

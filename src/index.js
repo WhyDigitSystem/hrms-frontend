@@ -12,17 +12,20 @@ import { store } from 'store';
 // style + assets
 import 'assets/scss/style.scss';
 import config from './config';
+import { SnackbarProvider } from 'notistack';
 
 // ==============================|| REACT DOM RENDER  ||============================== //
 
 const container = document.getElementById('root');
 const root = createRoot(container); // createRoot(container!) if you use TypeScript
 root.render(
-  <Provider store={store}>
-    <BrowserRouter basename={config.basename}>
-      <App />
-    </BrowserRouter>
-  </Provider>
+  <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: 'top', horizontal: 'center' }} autoHideDuration={3000}>
+    <Provider store={store}>
+      <BrowserRouter basename={config.basename}>
+        <App />
+      </BrowserRouter>
+    </Provider>
+  </SnackbarProvider>
 );
 
 // If you want your app to work offline and load faster, you can change

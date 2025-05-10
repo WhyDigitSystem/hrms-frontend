@@ -1,35 +1,48 @@
 // assets
 import { IconUsers } from '@tabler/icons-react';
-import { FaPersonWalkingLuggage,FaUserClock  } from "react-icons/fa6";
+import { FaPersonWalkingLuggage, FaUserClock } from 'react-icons/fa6';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 // constant
 const icons = {
-  IconUsers, FaPersonWalkingLuggage ,FaUserClock, BeachAccessIcon, AccessTimeIcon   
+  IconUsers,
+  FaPersonWalkingLuggage,
+  FaUserClock,
+  BeachAccessIcon,
+  AccessTimeIcon
 };
 
-const userType = localStorage.getItem("userType");
+const userType = localStorage.getItem('userType');
 const allowedScreens = JSON.parse(localStorage.getItem('screens')) || [];
 
 const screenMapping = {
-  "PERMISSION REQUEST": 'permissionRequest',
-  "LEAVE REQUEST": 'leaveRequest',
-  "HOLIDAY REPORT": 'holidayReport',
-  "SWIPEIN AND SWIPEOUT": 'swipeInSwipeOut',
-  "TIME SHEET": 'timeSheet',
+  'PERMISSION REQUEST': 'permissionRequest',
+  'LEAVE REQUEST': 'leaveRequest',
+  'HOLIDAY REPORT': 'holidayReport',
+  'SWIPEIN AND SWIPEOUT': 'swipeInSwipeOut',
+  'TIME SHEET': 'timeSheet',
+  'COMPENSATORY OFF': 'compoOff',
 };
 
 const allScreens = [
-  { id: "permissionRequest", title: "Permission Request", type: "item", url: "/me/permissionRequest", icon: icons.FaUserClock },
-  { id: "leaveRequest", title: "Leave Request", type: "item", url: "/me/leaveRequest", icon: icons.FaPersonWalkingLuggage },
-  { id: "holidayReport", title: "Holiday Report", type: "item", url: "/me/HolidayReport", icon: icons.BeachAccessIcon },
-  { id: "swipeInSwipeOut", title: "Check In & Out", type: "item", url: "/me/SwipeInSwipeOut", icon: icons.AccessTimeIcon },
-  { id: "timeSheet", title: "Time Sheet", type: "item", url: "/me/TimeSheet", icon: icons.AccessTimeIcon }
+  { id: 'permissionRequest', title: 'Permission Request', type: 'item', url: '/me/permissionRequest', icon: icons.FaUserClock },
+  { id: 'leaveRequest', title: 'Leave Request', type: 'item', url: '/me/leaveRequest', icon: icons.FaPersonWalkingLuggage },
+  { id: 'holidayReport', title: 'Holiday Report', type: 'item', url: '/me/HolidayReport', icon: icons.BeachAccessIcon },
+  { id: 'swipeInSwipeOut', title: 'Check In & Out', type: 'item', url: '/me/SwipeInSwipeOut', icon: icons.AccessTimeIcon },
+  { id: 'timeSheet', title: 'Time Sheet', type: 'item', url: '/me/TimeSheet', icon: icons.AccessTimeIcon },
+  {
+    id: 'compoOff',
+    title: 'Compensatory Off',
+    type: 'item',
+    url: '/me/CompoOff',
+    icon: icons.AccessTimeIcon // Sun icon for holidays
+  }
 ];
 
-const allowedScreenIds = userType === "ADMIN"
-  ? allScreens.map(screen => screen.id) // Show all screens for ADMIN
-  : allowedScreens.map(screen => screenMapping[screen]).filter(Boolean);
+const allowedScreenIds =
+  userType === 'ADMIN'
+    ? allScreens.map((screen) => screen.id) // Show all screens for ADMIN
+    : allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
 
 const me = {
   id: 'me',
@@ -47,36 +60,43 @@ const me = {
           title: 'Permission Request',
           type: 'item',
           url: '/me/permissionRequest',
-          icon: icons.FaUserClock  
+          icon: icons.FaUserClock
         },
         {
           id: 'leaveRequest',
           title: 'Leave Request',
           type: 'item',
           url: '/me/leaveRequest',
-          icon: icons.FaPersonWalkingLuggage  
+          icon: icons.FaPersonWalkingLuggage
         },
         {
           id: 'holidayReport',
           title: 'Holiday Report',
           type: 'item',
           url: '/me/HolidayReport',
-          icon: icons.BeachAccessIcon  
+          icon: icons.BeachAccessIcon
         },
         {
           id: 'swipeInSwipeOut',
           title: 'Check In & Out',
           type: 'item',
           url: '/me/SwipeInSwipeOut',
-          icon: icons.AccessTimeIcon 
+          icon: icons.AccessTimeIcon
         },
         {
           id: 'timeSheet',
           title: 'Time Sheet',
           type: 'item',
           url: '/me/TimeSheet',
-          icon: icons.AccessTimeIcon 
+          icon: icons.AccessTimeIcon
         },
+        { 
+          id: "compoOff", 
+          title: "Compensatory Off", 
+          type: "item", 
+          url: "/me/CompoOff",
+          icon: icons.AccessTimeIcon  // Sun icon for holidays
+        }
       ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]
