@@ -221,7 +221,7 @@ const LeaveRequest = () => {
           allNotifyPerson: matchedNotifyPersons
         });
 
-        setListView(false); 
+        setListView(false);
       } else {
         console.error('API Error:', response);
       }
@@ -319,10 +319,10 @@ const LeaveRequest = () => {
         createdBy: loginUserName,
         leaveRequestNotifyDTO: Array.isArray(formData.allNotifyPerson)
           ? formData.allNotifyPerson.map((item) => ({
-              notify2: item.label || '',
-              notify2Code: item.code || '',
-              notify2Email: item.email || ''
-            }))
+            notify2: item.label || '',
+            notify2Code: item.code || '',
+            notify2Email: item.email || ''
+          }))
           : []
       };
 
@@ -334,7 +334,7 @@ const LeaveRequest = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Leave Request Updated Successfully' : 'Leave Request created successfully');
-          await sendEmailNotification(formData, notifyEmail);
+          await sendEmailNotification([saveData]);
           handleClear();
           getLeaveRequestByOrgId();
           setIsLoading(false);
@@ -352,32 +352,35 @@ const LeaveRequest = () => {
     }
   };
 
-  const sendEmailNotification = async (formData) => {
+  const sendEmailNotification = async (newRows) => {
     try {
-      const emailParams = {
-        name: formData.notify,
-        from_name: employeeName,
-        email: formData.notifyEmail,
-        leave_type: formData.leaveType,
-        start_date: dayjs(formData.fromDate).format('DD-MM-YYYY'),
-        end_date: dayjs(formData.toDate).format('DD-MM-YYYY'),
-        total_days: formData.totalDays,
-        message: formData.notes,
-        approve_link: `/team/LeaveApproval/{leave_request_id}`
-      };
 
-      console.log('Email Params:', emailParams);
+      for (const row of newRows) {
+        const notify2Emails = (row.leaveRequestNotifyDTO || []).map(p => p.notify2Email).join(', ');
 
-      if (!emailParams.email) {
-        console.error('Error: Recipient email is missing!');
-        showToast('error', 'Recipient email is missing!');
-        return;
+        const emailParams = {
+          name: row.notify,
+          from_name: employeeName,
+          email: row.notifyEmail,
+          leave_type: row.leaveType,
+          start_date: dayjs(row.fromDate).format('DD-MM-YYYY'),
+          end_date: dayjs(row.toDate).format('DD-MM-YYYY'),
+          total_days: row.totalDays,
+          notify2Email: notify2Emails,
+          message: row.notes
+        };
+
+        console.log('Email Params:', emailParams);
+
+        if (!emailParams.email) {
+          console.error('Error: Recipient email is missing!');
+          showToast('error', 'Recipient email is missing!');
+          continue;
+        }
+
+        await emailjs.send('service_hff8dd7', 'template_bs08toa', emailParams, 'G6cKiPBXzCvlFaOuo');
+        console.log('Email Sent Successfully for', emailParams.email);
       }
-
-      await emailjs.send('service_hff8dd7', 'template_bs08toa', emailParams, 'G6cKiPBXzCvlFaOuo');
-
-      // showToast("success", "Email notification sent successfully!");
-      console.log('Email Sent Successfully');
     } catch (error) {
       console.error('Email Sending Failed:', error);
       showToast('error', 'Failed to send email notification. Please try again.');
@@ -627,7 +630,7 @@ const LeaveRequest = () => {
               columns={listViewColumns}
               blockEdit={false}
               toEdit={getLeaveRequestById}
-              // enableEditing={true}
+            // enableEditing={true}
             />
           </div>
         ) : (
@@ -823,8 +826,8 @@ const LeaveRequest = () => {
                   value={
                     Array.isArray(formData.allNotifyPerson)
                       ? allReportingPersonList.filter((person) =>
-                          formData.allNotifyPerson.some((selected) => selected.code === person.code)
-                        )
+                        formData.allNotifyPerson.some((selected) => selected.code === person.code)
+                      )
                       : []
                   }
                   onChange={(event, newValue) => {

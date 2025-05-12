@@ -308,15 +308,16 @@ const PermissionRequest = () => {
         notes: formData.notes,
         notify: formData.notify,
         notifyCode: formData.notifyCode,
+        notifyEmail: formData.notifyEmail,
         orgId: Number(orgId),
         toTime: toTimeFormatted,
         totalHours: totalHoursNumber,
         permissionRequestNotifyDTO: Array.isArray(formData.allNotifyPerson)
           ? formData.allNotifyPerson.map((item) => ({
-              notify2: item.label || '',
-              notify2Code: item.code || '',
-              notify2Email: item.email || ''
-            }))
+            notify2: item.label || '',
+            notify2Code: item.code || '',
+            notify2Email: item.email || ''
+          }))
           : []
       };
 
@@ -328,7 +329,7 @@ const PermissionRequest = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Permission Request Updated Successfully' : 'Permission Request created successfully');
-          await sendEmailNotification(formData);
+          await sendEmailNotification([saveData]);
           handleClear();
           getAllPermissionRequestByOrgId();
         } else {
@@ -345,41 +346,42 @@ const PermissionRequest = () => {
     }
   };
 
-  const sendEmailNotification = async (formData) => {
+  const sendEmailNotification = async (newRows) => {
     try {
       const fromTimeFormatted = formData.fromTime ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
-
       const toTimeFormatted = formData.toTime ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
 
-      // Format totalHours properly
       let totalHoursFormatted = formData.totalHours || '';
       if (totalHoursFormatted.length === 4 && !totalHoursFormatted.includes(':')) {
-        // e.g., "0100" => "01:00"
         totalHoursFormatted = `${totalHoursFormatted.slice(0, 2)}:${totalHoursFormatted.slice(2)}`;
       }
 
-      const emailParams = {
-        name: formData.notify,
-        from_name: employeeName,
-        email: formData.notifyEmail,
-        date: formData.formDate ? dayjs(formData.formDate).format('YYYY-MM-DD') : '',
-        from_time: fromTimeFormatted,
-        to_time: toTimeFormatted,
-        total_hours: totalHoursFormatted,
-        message: formData.notes
-        // approve_link: `/team/LeaveApproval/${leave_request_id}`
-      };
+      for (const row of newRows) {
+        const notify2Emails = (row.permissionRequestNotifyDTO || []).map(p => p.notify2Email).join(', ');
 
-      console.log('Email Params:', emailParams);
+        const emailParams = {
+          name: row.notify,
+          from_name: employeeName,
+          email: row.notifyEmail,
+          notify2Email: notify2Emails,
+          date: row.date ? dayjs(row.date).format('YYYY-MM-DD') : '',
+          from_time: fromTimeFormatted,
+          to_time: toTimeFormatted,
+          total_hours: totalHoursFormatted,
+          message: row.notes
+        };
 
-      if (!emailParams.email) {
-        console.error('Error: Recipient email is missing!');
-        showToast('error', 'Recipient email is missing!');
-        return;
+        console.log('Email Params:', emailParams);
+
+        if (!emailParams.email) {
+          console.error('Error: Recipient email is missing!');
+          showToast('error', 'Recipient email is missing!');
+          continue;
+        }
+
+        await emailjs.send('service_9ucz1v3', 'template_iwypnsq', emailParams, 'Opp4e1xb0JkW0bocB');
+        console.log('Email Sent Successfully for', emailParams.email);
       }
-
-      await emailjs.send('service_9ucz1v3', 'template_iwypnsq', emailParams, 'Opp4e1xb0JkW0bocB');
-      console.log('Email Sent Successfully');
     } catch (error) {
       console.error('Email Sending Failed:', error);
       showToast('error', 'Failed to send email notification. Please try again.');
@@ -593,10 +595,10 @@ const PermissionRequest = () => {
                   onChange={(event, newValue) => {
                     const updatedFields = newValue
                       ? {
-                          notify: newValue.reportingPerson,
-                          notifyCode: newValue.reportingPersonCode,
-                          notifyEmail: newValue.notifyEmail
-                        }
+                        notify: newValue.reportingPerson,
+                        notifyCode: newValue.reportingPersonCode,
+                        notifyEmail: newValue.notifyEmail
+                      }
                       : { notify: '', notifyCode: '', notifyEmail: '' };
 
                     Object.entries(updatedFields).forEach(([name, value]) => handleInputChange({ target: { name, value } }));
@@ -627,8 +629,8 @@ const PermissionRequest = () => {
                   value={
                     Array.isArray(formData.allNotifyPerson)
                       ? allReportingPersonList.filter((person) =>
-                          formData.allNotifyPerson.some((selected) => selected.code === person.code)
-                        )
+                        formData.allNotifyPerson.some((selected) => selected.code === person.code)
+                      )
                       : []
                   }
                   onChange={(event, newValue) => {
