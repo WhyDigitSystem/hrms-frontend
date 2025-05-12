@@ -34,6 +34,7 @@ const PermissionRequest = () => {
   const [branchList, setBranchList] = useState([]);
   const [companyList, setCompanyList] = useState([]);
   const [shiftTime, setShiftTime] = useState({ shiftIn: '', shiftOut: '' });
+  const [allReportingPersonList, setAllReportingPersonList] = useState([]);
   const [errorDialog, setErrorDialog] = useState({
     open: false,
     message: ''
@@ -47,7 +48,8 @@ const PermissionRequest = () => {
     notify: '',
     notifyEmail: '',
     notifyCode: '',
-    permissionType: ''
+    permissionType: '',
+    allNotifyPerson: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -56,7 +58,8 @@ const PermissionRequest = () => {
     fromTime: '',
     toTime: null,
     notes: '',
-    notify: ''
+    notify: '',
+    allNotifyPerson: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -66,7 +69,7 @@ const PermissionRequest = () => {
     { accessorKey: 'toTime', header: 'To Time', size: 140 },
     { accessorKey: 'totalHours', header: 'Total Hrs', size: 140 },
     { accessorKey: 'notes', header: 'Notes', size: 140 },
-    { accessorKey: 'notify', header: 'Notify', size: 140 }
+    { accessorKey: 'notify', header: 'Notify', size: 140 },
   ];
 
   const [listViewData, setListViewData] = useState([]);
@@ -75,6 +78,7 @@ const PermissionRequest = () => {
     getAllPermissionRequestByOrgId();
     getNotifyList();
     getCompanyDetails();
+    getAllReportingPersonList();
     setFormData((prev) => ({
       ...prev,
       formDate: dayjs()
@@ -151,6 +155,26 @@ const PermissionRequest = () => {
     }
   };
 
+  const getAllReportingPersonList = async () => {
+    try {
+      const result = await apiCalls(
+        'get',
+        `master/getReportingNameForEmployee?branchCode=${branchCode}&employeeCode="Undefined"&orgId=${orgId}`
+      );
+      const employeeList = result?.paramObjectsMap?.employeeVO || [];
+      const mappedList = employeeList.map((emp) => ({
+        label: emp.employeeName,
+        code: emp.employeeCode,
+        email: emp.email,
+        role: emp.role
+      }));
+      setAllReportingPersonList(mappedList);
+      console.log('Notify Options:', mappedList);
+    } catch (err) {
+      console.log('Error fetching notify list', err);
+    }
+  };
+
   // Edit API
   const getPermissionRequestById = async (row) => {
     console.log('THE SELECTED PERMISSION REQUEST ID IS:', row.original.id);
@@ -163,6 +187,7 @@ const PermissionRequest = () => {
       if (response.status === true) {
         setListView(false);
         const permissionDetails = response.paramObjectsMap.permissionRequestVO;
+        const notifyList = permissionDetails.permissionRequestNotifyVO || [];
 
         console.log('PERMISSION REQUEST DETAILS:', permissionDetails);
         // Calculate total hours from fromTime and toTime
@@ -177,13 +202,18 @@ const PermissionRequest = () => {
           totalHours = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
         }
 
+        const matchedNotifyPersons = allReportingPersonList.filter((person) =>
+          notifyList.some((n) => n.notify2Code === person.code)
+        );
+
         setFormData({
           formDate: permissionDetails.date ? dayjs(permissionDetails.date) : dayjs(), // Use dayjs(permissionDetails.date) to create a dayjs object
           fromTime: permissionDetails.fromTime ? dayjs(permissionDetails.fromTime, 'HH:mm') : null,
           toTime: permissionDetails.toTime ? dayjs(permissionDetails.toTime, 'HH:mm') : null,
           totalHours: totalHours, // Set the formatted totalHours
           notes: permissionDetails.notes || '',
-          notify: permissionDetails.notify || ''
+          notify: permissionDetails.notify || '',
+          allNotifyPerson: matchedNotifyPersons
         });
       } else {
         console.error('API Error:', response);
@@ -209,7 +239,8 @@ const PermissionRequest = () => {
       toTime: null,
       totalHours: '',
       notes: '',
-      notify: ''
+      notify: '',
+      allNotifyPerson: ''
     });
 
     // Reset field errors state
@@ -219,7 +250,8 @@ const PermissionRequest = () => {
       toTime: '',
       totalHours: '',
       notes: '',
-      notify: ''
+      notify: '',
+      allNotifyPerson: ''
     });
 
     // Reset the editId if it's set (for edit mode)
@@ -250,19 +282,12 @@ const PermissionRequest = () => {
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
-      const formattedDate =
-        formData.formDate && dayjs(formData.formDate).isValid()
-          ? dayjs(formData.formDate).format('YYYY-MM-DD')
-          : null;
+      const formattedDate = formData.formDate && dayjs(formData.formDate).isValid() ? dayjs(formData.formDate).format('YYYY-MM-DD') : null;
 
       // Format fromTime and toTime properly (safe parsing)
-      const fromTimeFormatted = formData.fromTime
-        ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : null;
+      const fromTimeFormatted = formData.fromTime ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm') : null;
 
-      const toTimeFormatted = formData.toTime
-        ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : null;
+      const toTimeFormatted = formData.toTime ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm') : null;
 
       // Convert totalHours from "01:00" -> 1 (or 1.5 if needed)
       let totalHoursNumber = 0;
@@ -285,7 +310,14 @@ const PermissionRequest = () => {
         notifyCode: formData.notifyCode,
         orgId: Number(orgId),
         toTime: toTimeFormatted,
-        totalHours: totalHoursNumber,  // Important: send number not string
+        totalHours: totalHoursNumber,
+        permissionRequestNotifyDTO: Array.isArray(formData.allNotifyPerson)
+          ? formData.allNotifyPerson.map((item) => ({
+              notify2: item.label || '',
+              notify2Code: item.code || '',
+              notify2Email: item.email || ''
+            }))
+          : []
       };
 
       console.log('DATA TO SAVE IS:', saveData);
@@ -315,13 +347,9 @@ const PermissionRequest = () => {
 
   const sendEmailNotification = async (formData) => {
     try {
-      const fromTimeFormatted = formData.fromTime
-        ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
+      const fromTimeFormatted = formData.fromTime ? dayjs(formData.fromTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
 
-      const toTimeFormatted = formData.toTime
-        ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
+      const toTimeFormatted = formData.toTime ? dayjs(formData.toTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
 
       // Format totalHours properly
       let totalHoursFormatted = formData.totalHours || '';
@@ -338,7 +366,7 @@ const PermissionRequest = () => {
         from_time: fromTimeFormatted,
         to_time: toTimeFormatted,
         total_hours: totalHoursFormatted,
-        message: formData.notes,
+        message: formData.notes
         // approve_link: `/team/LeaveApproval/${leave_request_id}`
       };
 
@@ -433,7 +461,7 @@ const PermissionRequest = () => {
     setFormData((prevData) => ({
       ...prevData,
       toTime: null,
-      totalHours: ""
+      totalHours: ''
     }));
   };
 
@@ -563,27 +591,15 @@ const PermissionRequest = () => {
                   size="small"
                   value={companyList.find((c) => c.reportingPerson === formData.notify) || null}
                   onChange={(event, newValue) => {
-                    if (newValue) {
-                      handleInputChange({
-                        target: { name: 'notify', value: newValue.reportingPerson }
-                      });
-                      handleInputChange({
-                        target: { name: 'notifyCode', value: newValue.reportingPersonCode }
-                      });
-                      handleInputChange({
-                        target: { name: 'notifyEmail', value: newValue.notifyEmail }
-                      });
-                    } else {
-                      handleInputChange({
-                        target: { name: 'notify', value: '' }
-                      });
-                      handleInputChange({
-                        target: { name: 'notifyCode', value: '' }
-                      });
-                      handleInputChange({
-                        target: { name: 'notifyEmail', value: '' }
-                      });
-                    }
+                    const updatedFields = newValue
+                      ? {
+                          notify: newValue.reportingPerson,
+                          notifyCode: newValue.reportingPersonCode,
+                          notifyEmail: newValue.notifyEmail
+                        }
+                      : { notify: '', notifyCode: '', notifyEmail: '' };
+
+                    Object.entries(updatedFields).forEach(([name, value]) => handleInputChange({ target: { name, value } }));
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -592,6 +608,58 @@ const PermissionRequest = () => {
                       name="notify"
                       error={Boolean(fieldErrors.notify)}
                       helperText={fieldErrors.notify || ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 }
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={allReportingPersonList}
+                  getOptionLabel={(option) => option.label || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={
+                    Array.isArray(formData.allNotifyPerson)
+                      ? allReportingPersonList.filter((person) =>
+                          formData.allNotifyPerson.some((selected) => selected.code === person.code)
+                        )
+                      : []
+                  }
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'allNotifyPerson',
+                        value: newValue
+                      }
+                    });
+
+                    // If you need separate fields like notifyCode & notifyEmail as arrays:
+                    handleInputChange({
+                      target: {
+                        name: 'notify2Code',
+                        value: newValue.map((item) => item.code)
+                      }
+                    });
+                    handleInputChange({
+                      target: {
+                        name: 'notify2Email',
+                        value: newValue.map((item) => item.email)
+                      }
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="All Notify Person"
+                      name="allNotifyPerson"
+                      error={Boolean(fieldErrors.allNotifyPerson)}
+                      helperText={fieldErrors.allNotifyPerson || ''}
                       InputProps={{
                         ...params.InputProps,
                         style: { height: 40 }
