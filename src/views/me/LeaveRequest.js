@@ -40,6 +40,7 @@ const LeaveRequest = () => {
   const [weekOffDays, setWeekOff] = useState([]);
   const [totalLeaveDays, setTotalLeaveDays] = useState([]);
   const [notifyEmail, setNotifyEmail] = useState('');
+  const [allReportingPersonList, setAllReportingPersonList] = useState([]);
   const [formData, setFormData] = useState({
     leaveType: '',
     leaveTypeCode: '',
@@ -51,7 +52,8 @@ const LeaveRequest = () => {
     notify: '',
     notifyEmail: '',
     notifyCode: '',
-    compOffDate: null
+    compOffDate: null,
+    allNotifyPerson: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -62,7 +64,8 @@ const LeaveRequest = () => {
     totalDays: '',
     notes: '',
     notify: '',
-    compOffDate: null
+    compOffDate: null,
+    allNotifyPerson: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -100,6 +103,7 @@ const LeaveRequest = () => {
     getCompanyWeekOff();
     getLeaveRequestByOrgId();
     getNotifyList();
+    getAllReportingPersonList();
     getLeaveType();
   }, [formData.fromDate, formData.toDate, orgId, loginUserName]);
 
@@ -169,6 +173,26 @@ const LeaveRequest = () => {
     }
   };
 
+  const getAllReportingPersonList = async () => {
+    try {
+      const result = await apiCalls(
+        'get',
+        `master/getReportingNameForEmployee?branchCode=${branchCode}&employeeCode="Undefined"&orgId=${orgId}`
+      );
+      const employeeList = result?.paramObjectsMap?.employeeVO || [];
+      const mappedList = employeeList.map((emp) => ({
+        label: emp.employeeName,
+        code: emp.employeeCode,
+        email: emp.email,
+        role: emp.role
+      }));
+      setAllReportingPersonList(mappedList);
+      console.log('Notify Options:', mappedList);
+    } catch (err) {
+      console.log('Error fetching notify list', err);
+    }
+  };
+
   const getLeaveRequestById = async (row) => {
     console.log('THE SELECTED LEAVE REQUEST ID IS:', row.original.id);
     setEditId(row.original.id);
@@ -179,8 +203,11 @@ const LeaveRequest = () => {
 
       if (response.status === true && response.paramObjectsMap.leaveRequestVO) {
         const leaveRequestDetails = response.paramObjectsMap.leaveRequestVO;
+        const notifyList = leaveRequestDetails.leaveRequestNotifyVO || [];
 
         console.log('LEAVE REQUEST DETAILS:', leaveRequestDetails);
+
+        const matchedNotifyPersons = allReportingPersonList.filter((person) => notifyList.some((n) => n.notify2Code === person.code));
 
         setFormData({
           leaveType: leaveRequestDetails.leaveType || '',
@@ -190,10 +217,11 @@ const LeaveRequest = () => {
           totalDays: leaveRequestDetails.totalDays,
           notes: leaveRequestDetails.notes || '',
           notify: leaveRequestDetails.notify || '',
-          compOffDate: leaveRequestDetails.compOffDate || ''
+          compOffDate: leaveRequestDetails.compOffDate || '',
+          allNotifyPerson: matchedNotifyPersons
         });
 
-        setListView(false); // Switch back to form view
+        setListView(false); 
       } else {
         console.error('API Error:', response);
       }
@@ -219,7 +247,8 @@ const LeaveRequest = () => {
       totalDays: '',
       notes: '',
       notify: '',
-      compOffDate: null
+      compOffDate: null,
+      allNotifyPerson: ''
     });
 
     setFieldErrors({
@@ -230,7 +259,8 @@ const LeaveRequest = () => {
       totalDays: '',
       notes: '',
       notify: '',
-      compOffDate: null
+      compOffDate: null,
+      allNotifyPerson: ''
     });
 
     setEditId('');
@@ -286,7 +316,14 @@ const LeaveRequest = () => {
         designation: designation,
         employeeCode: employeeCode,
         employeeName: employeeName,
-        createdBy: loginUserName
+        createdBy: loginUserName,
+        leaveRequestNotifyDTO: Array.isArray(formData.allNotifyPerson)
+          ? formData.allNotifyPerson.map((item) => ({
+              notify2: item.label || '',
+              notify2Code: item.code || '',
+              notify2Email: item.email || ''
+            }))
+          : []
       };
 
       console.log('DATA TO SAVE IS:', saveData);
@@ -426,7 +463,7 @@ const LeaveRequest = () => {
 
   const handleDateChange = (name, value) => {
     const formattedValue = value || null;
-  
+
     if (name === 'fromDate' && formData.leaveType === 'COMPENSATORY OFF') {
       setFormData((prevData) => ({
         ...prevData,
@@ -439,7 +476,7 @@ const LeaveRequest = () => {
         [name]: formattedValue
       }));
     }
-  };  
+  };
 
   const disableWeekOffDays = (date) => {
     const disabledDays = {
@@ -767,6 +804,58 @@ const LeaveRequest = () => {
                       name="notify"
                       error={Boolean(fieldErrors.notify)}
                       helperText={fieldErrors.notify || ''}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 }
+                      }}
+                    />
+                  )}
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={allReportingPersonList}
+                  getOptionLabel={(option) => option.label || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={
+                    Array.isArray(formData.allNotifyPerson)
+                      ? allReportingPersonList.filter((person) =>
+                          formData.allNotifyPerson.some((selected) => selected.code === person.code)
+                        )
+                      : []
+                  }
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'allNotifyPerson',
+                        value: newValue
+                      }
+                    });
+
+                    // If you need separate fields like notifyCode & notifyEmail as arrays:
+                    handleInputChange({
+                      target: {
+                        name: 'notify2Code',
+                        value: newValue.map((item) => item.code)
+                      }
+                    });
+                    handleInputChange({
+                      target: {
+                        name: 'notify2Email',
+                        value: newValue.map((item) => item.email)
+                      }
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="All Notify Person"
+                      name="allNotifyPerson"
+                      error={Boolean(fieldErrors.allNotifyPerson)}
+                      helperText={fieldErrors.allNotifyPerson || ''}
                       InputProps={{
                         ...params.InputProps,
                         style: { height: 40 }
