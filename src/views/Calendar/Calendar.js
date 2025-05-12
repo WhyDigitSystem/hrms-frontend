@@ -1,36 +1,52 @@
 import React, { useState, useEffect } from 'react';
+import apiCalls from 'apicall';
+import ToastComponent, { showToast } from 'utils/toast-component';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', date: '', type: 'meeting', description: '' });
+  const [newEvent, setNewEvent] = useState({ title: '', type: '', date: '', description: '' });
   const [calendarDays, setCalendarDays] = useState([]);
-  const [successMessage, setSuccessMessage] = useState('');
   const [currentTime, setCurrentTime] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
+  
+  const [orgId] = useState(localStorage.getItem('orgId'));
+  const [calendarEvents, setCalendarEvents] = useState([]);
+  const [loginUserName] = useState(localStorage.getItem('userName'));
+  const [branchCode] = useState(localStorage.getItem('branchCode'));
+  const [branchName] = useState(localStorage.getItem('branch'));
+  const [department] = useState(localStorage.getItem('department'));
+  const [empCode] = useState(localStorage.getItem('employeeCode'));
+  const [empName] = useState(localStorage.getItem('employeeName'));
+  
+  const [selectedEventDetails, setSelectedEventDetails] = useState(null);
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-  const eventTypes = {
-    meeting: '#6b8e23',
-    birthday: '#ff6347',
-    reminder: '#1e90ff',
-    task: '#ffa500',
-  };
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  const eventTypeColors = {
+    holiday: '#FF6347', // Red for holiday
+    meeting: '#1E90FF', // Blue for meeting
+    birthday: '#FFD700', // Yellow for birthday
+    training: '#32CD32', // Green for training
+    other: '#808080' // Grey for other
+  };
+
+
+  const formatDateForInput = (year, month, day) => {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const updateCalendar = () => {
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       const days = [];
-      const prevMonthDays = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate();
       const firstDayIndex = startOfMonth.getDay();
-      const lastDayIndex = endOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
 
       let dayCount = 1;
@@ -43,10 +59,19 @@ const Calendar = () => {
           } else if (dayCount > totalDays) {
             break;
           } else {
-            week.push({
+            const dayWithEvents = {
               day: dayCount,
-              events: [],
-            });
+              events: calendarEvents.filter(event => {
+                const [year, month, day] = event.date.split('-').map(Number);
+                const eventDate = new Date(year, month - 1, day);
+                return (
+                  eventDate.getDate() === dayCount &&
+                  eventDate.getMonth() === currentDate.getMonth() &&
+                  eventDate.getFullYear() === currentDate.getFullYear()
+                );
+              })
+            };
+            week.push(dayWithEvents);
             dayCount++;
           }
         }
@@ -77,22 +102,26 @@ const Calendar = () => {
       clearInterval(timeInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [currentDate]);
-
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
+  }, [currentDate, calendarEvents]);
 
   const handleAddEvent = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+    const day = today.getDate();
+    setNewEvent({
+      title: '',
+      type: 'meeting',
+      date: formatDateForInput(year, month, day),
+      description: '',
+      id: null
+    });
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setNewEvent({ title: '', date: '', type: 'meeting', description: '' });
   };
 
   const handleEventChange = (e) => {
@@ -103,192 +132,220 @@ const Calendar = () => {
     }));
   };
 
-  const handleSubmitEvent = (e) => {
-    e.preventDefault();
-    // Handle event submission logic here
-    setSuccessMessage('Event added successfully!');
-    setShowModal(false);
+  const handleSaveEvent = async () => {
+    if (!newEvent.title || !newEvent.date || !newEvent.type) {
+      showToast('error', 'All fields are required');
+      return;
+    }
+
+    const saveData = {
+      id: newEvent.id || null, // optional, only if editing
+      eventTitle: newEvent.title,
+      eventType: newEvent.type,
+      date: newEvent.date,
+      description: newEvent.description,
+      orgId,
+      createdBy: loginUserName,
+      branchCode,
+      branchName,
+      department,
+      empCode,
+      empName,
+    };
+
+    try {
+      const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
+      if (result.status === true) {
+        showToast('success', 'Event saved successfully');
+        setShowModal(false);
+        setNewEvent({ title: '', date: '', type: 'meeting', description: '' });
+        getAllCalendarByOrgId();
+      } else {
+        showToast('error', result.paramObjectsMap?.errorMessage || 'Failed to save event');
+      }
+    } catch (err) {
+      console.error('Error saving event:', err);
+      showToast('error', 'Error occurred while saving');
+    }
   };
 
-  return (
-    <div style={{ margin: '0 auto', padding: isMobile ? '8px' : '16px', maxWidth: '100%' }}>
-      {/* Calendar Header */}
-      <div style={{ margin: '0 auto', padding: '0px' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          marginBottom: '16px',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: 'center'
-        }}>
-          <h1 style={{
-            fontSize: isMobile ? '20px' : '24px',
-            fontWeight: 'bold',
-            color: '#4a4a4a',
-            textAlign: 'center',
-            display: 'flex',
-            alignItems: 'center',
-          }}>
-            {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-            <div style={{ display: 'flex', justifyContent: 'start', alignItems: 'center', marginTop: '8px' }} className='ps-3'>
-              <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time: </label>
-              <div style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a', marginLeft: '8px' }}>{currentTime}</div>
-            </div>
-          </h1>
+  const handleEventClick = (event) => {
+    setNewEvent({
+      title: event.eventTitle,
+      type: event.eventType,
+      date: event.date,
+      description: event.description,
+      id: event.id,
+    });
+    setShowModal(true);
+  };
 
-          <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '4px', justifyContent: 'center' }}>
-              <button onClick={handlePrevMonth} style={{
-                padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
-                transition: 'transform 0.3s ease'
-              }}>
-                ←
-              </button>
-              <button onClick={handleNextMonth} style={{
-                padding: '8px', borderRadius: '50%', backgroundColor: '#f5f5f5', cursor: 'pointer', width: '35px',
-                transition: 'transform 0.3s ease'
-              }}>
-                →
-              </button>
-              <button onClick={handleAddEvent} className='border' style={{
-                padding: '8px 16px', backgroundColor: '#1d4ed8', color: 'white', borderRadius: '8px', cursor: 'pointer',
-                transition: 'background-color 0.2s, transform 0.2s'
-              }}>
-                Add New Event
-              </button>
-            </div>
+  useEffect(() => {
+    getAllCalendarByOrgId();
+  }, []);
+
+  const getAllCalendarByOrgId = async () => {
+    try {
+      const result = await apiCalls('get', `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`);
+      if (result?.status && result?.paramObjectsMap?.calendarVO) {
+        const events = result.paramObjectsMap.calendarVO.reverse();
+        setCalendarEvents(events);
+      } else {
+        showToast('error', 'No calendar events found');
+      }
+    } catch (err) {
+      console.log('Error fetching calendar data:', err);
+      showToast('error', 'Error fetching calendar data');
+    }
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+
+return (
+    <div style={{ margin: '0 auto', padding: isMobile ? '16px' : '32px', fontFamily: 'Arial, sans-serif' }}>
+      
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
+        <h1 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#4a4a4a' }}>
+          {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+          <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+            <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time:</label>
+            <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
           </div>
+        </h1>
+        <div style={{ display: 'flex', gap: '8px', marginTop: isMobile ? '16px' : '0' }}>
+          <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
+          <button onClick={handleNextMonth} style={buttonStyle}>→</button>
+          <button onClick={handleAddEvent} style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
+            Add New Event
+          </button>
         </div>
       </div>
 
-      {/* Success Message */}
-      {successMessage && (
-        <div style={{
-          backgroundColor: '#4caf50', color: 'white', padding: '8px', borderRadius: '4px', marginBottom: '16px',
-          textAlign: 'center', fontWeight: '500', animation: 'fadeIn 0.5s ease-in-out'
-        }}>
-          {successMessage}
+      {/* Event Legend */}
+      <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+        <h4 style={{ fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px', marginBottom: '12px' }}>Event Legend</h4>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          {Object.entries(eventTypeColors).map(([type, color]) => (
+            <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ width: '20px', height: '20px', backgroundColor: color, borderRadius: '50%' }}></div>
+              <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a', textTransform: 'capitalize' }}>{type}</span>
+            </div>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* Calendar Grid */}
-      <div style={{
-        backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        padding: isMobile ? '8px' : '16px', animation: 'fadeIn 1s ease-in-out'
-      }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', borderBottom: '1px solid #e5e5e5' }}>
-          {weekdays.map((day) => (
-            <div key={day} style={{ padding: '8px', textAlign: 'center', fontWeight: '500', color: '#6b7280', fontSize: isMobile ? '12px' : '14px' }}>
+      {/* Calendar */}
+      <div style={{ marginTop: '24px', padding: isMobile ? '8px' : '16px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', borderBottom: '1px solid #e5e5e5' }}>
+          {weekdays.map(day => (
+            <div key={day} style={{ padding: '8px', textAlign: 'center', fontWeight: '500', fontSize: isMobile ? '12px' : '14px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
               {day}
             </div>
           ))}
         </div>
 
-        <div style={{
-          display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', transition: 'all 0.3s ease-in-out',
-          animation: 'fadeIn 1s ease-in-out'
-        }}>
-          {calendarDays.map((week, index) => (
-            week.map((cell, i) => (
-              <div key={`${index}-${i}`} style={{
-                minHeight: isMobile ? '64px' : '96px', padding: '8px', border: '1px solid #e5e5e5', cursor: 'pointer',
-                backgroundColor: cell ? '#f9fafb' : '', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
-                transition: 'background-color 0.2s ease, transform 0.2s ease-in-out',
-                animation: 'fadeIn 0.5s ease-in-out'
-              }}>
-                {cell ? (
-                  <>
-                    <div style={{ fontWeight: '500', marginBottom: '4px', fontSize: isMobile ? '12px' : '14px' }}>{cell.day}</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      {cell.events.map(event => (
-                        <div key={event.id} style={{
-                          padding: '4px', fontSize: isMobile ? '10px' : '12px', borderRadius: '4px', border: `1px solid ${eventTypes[event.type]}`,
-                          backgroundColor: eventTypes[event.type].split(' ')[0], whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          transition: 'background-color 0.3s ease, transform 0.3s ease-in-out'
-                        }} title={`${event.title}\n${event.description}`}>
-                          {event.title}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : null}
-              </div>
-            ))
-          ))}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginTop: '12px' }}>
+          {calendarDays.map((week, wIdx) => week.map((cell, cIdx) => (
+            <div key={`${wIdx}-${cIdx}`} style={{
+              minHeight: isMobile ? '64px' : '96px',
+              padding: '12px',
+              borderRadius: '8px',
+              backgroundColor: cell ? '#f9f9f9' : 'transparent',
+              cursor: cell ? 'pointer' : 'default',
+              transition: 'all 0.3s ease'
+            }}
+              onClick={() => {
+                if (!cell) return;
+                if (cell.events.length > 0) {
+                  handleEventClick(cell.events[0]);
+                } else {
+                  const year = currentDate.getFullYear();
+                  const month = currentDate.getMonth() + 1;
+                  const day = cell.day;
+                  setNewEvent({
+                    title: '',
+                    type: 'meeting',
+                    date: formatDateForInput(year, month, day),
+                    description: '',
+                    id: null
+                  });
+                  setShowModal(true);
+                }
+              }}
+            >
+              {cell && (
+                <>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 'bold', color: '#1d4ed8' }}>{cell.day}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
+                    {cell.events.map((event, eIdx) => (
+                      <div key={eIdx} style={{
+                        padding: '4px 8px',
+                        backgroundColor: eventTypeColors[event.eventType] || '#808080',
+                        color: 'white',
+                        borderRadius: '4px',
+                        fontSize: '12px'
+                      }}>
+                        {event.eventTitle}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )))}
         </div>
       </div>
 
       {/* Modal */}
       {showModal && (
         <div style={{
-          position: 'fixed', inset: '0', backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex',
-          justifyContent: 'center', alignItems: 'center', padding: '16px', animation: 'fadeIn 0.5s ease-in-out'
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white', borderRadius: '8px', padding: '24px', width: isMobile ? '90%' : '500px',
-            animation: 'zoomIn 0.5s ease-in-out'
+            backgroundColor: 'white', padding: '20px', borderRadius: '8px',
+            width: isMobile ? '80%' : '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: 'bold' }}>Add New Event</h2>
-            </div>
-            <form onSubmit={handleSubmitEvent} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#4a4a4a', marginBottom: '4px' }}>Event Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={newEvent.title}
-                  onChange={handleEventChange}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e5e5e5' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#4a4a4a', marginBottom: '4px' }}>Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  value={newEvent.date}
-                  onChange={handleEventChange}
-                  required
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e5e5e5' }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#4a4a4a', marginBottom: '4px' }}>Event Type</label>
-                <select
-                  name="type"
-                  value={newEvent.type}
-                  onChange={handleEventChange}
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e5e5e5' }}
-                >
-                  <option value="meeting">Meeting</option>
-                  <option value="birthday">Birthday</option>
-                  <option value="reminder">Reminder</option>
-                  <option value="task">Task</option>
-                </select>
-              </div>
-              <div>
-                <label style={{ fontSize: isMobile ? '12px' : '14px', fontWeight: '500', color: '#4a4a4a', marginBottom: '4px' }}>Description</label>
-                <textarea
-                  name="description"
-                  value={newEvent.description}
-                  onChange={handleEventChange}
-                  rows="3"
-                  style={{ width: '100%', padding: '8px', borderRadius: '8px', border: '1px solid #e5e5e5' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                <button type="button" className='border' onClick={handleCloseModal} style={{
-                  padding: '8px 16px', backgroundColor: '#f3f4f6', color: '#6b7280', borderRadius: '8px', cursor: 'pointer'
-                }}>
-                  Cancel
-                </button>
-                <button type="submit" className='border' style={{
-                  padding: '8px 16px', backgroundColor: '#1d4ed8', color: 'white', borderRadius: '8px', cursor: 'pointer'
-                }}>
-                  Add New Event
-                </button>
+            <h2 style={{ marginBottom: '16px', fontSize: isMobile ? '20px' : '24px', color: '#333' }}>
+              {newEvent.id ? 'Edit Event' : 'Add Event'}
+            </h2>
+            <form onSubmit={handleSaveEvent}>
+              {['title', 'description', 'date', 'type'].map((field, i) => (
+                <div key={i} style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '14px', display: 'block', color: '#4a4a4a' }}>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
+                  {field === 'description' ? (
+                    <textarea name={field} value={newEvent[field]} onChange={handleEventChange} style={inputStyle} />
+                  ) : field === 'type' ? (
+                    <select name={field} value={newEvent[field]} onChange={handleEventChange} style={inputStyle}>
+                      <option value="meeting">Meeting</option>
+                      <option value="holiday">Holiday</option>
+                      <option value="birthday">Birthday</option>
+                      <option value="training">Training</option>
+                      <option value="other">Other</option>
+                    </select>
+                  ) : (
+                    <input
+                      type={field === 'date' ? 'date' : 'text'}
+                      name={field}
+                      value={newEvent[field]}
+                      onChange={handleEventChange}
+                      style={inputStyle}
+                      required
+                    />
+                  )}
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
+                <button type="button" onClick={handleCloseModal} style={{ ...buttonStyle, backgroundColor: '#f5f5f5', color: '#000' }}>Cancel</button>
+                <button type="submit" style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: 'white' }}>Save Event</button>
               </div>
             </form>
           </div>
@@ -296,6 +353,25 @@ const Calendar = () => {
       )}
     </div>
   );
+};
+
+const buttonStyle = {
+  padding: '12px',
+  borderRadius: '8px',
+  backgroundColor: '#f5f5f5',
+  cursor: 'pointer',
+  transition: 'all 0.3s ease',
+  border: '1px solid #e5e5e5'
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: '12px',
+  borderRadius: '8px',
+  fontSize: '14px',
+  border: '1px solid #e5e5e5',
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+  outline: 'none'
 };
 
 export default Calendar;
