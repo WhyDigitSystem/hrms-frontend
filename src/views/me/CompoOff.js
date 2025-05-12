@@ -4,7 +4,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import { useTheme } from '@mui/material/styles';
@@ -23,6 +22,7 @@ import { saveAs } from 'file-saver';
 import { FaFilePdf } from 'react-icons/fa';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { Select, MenuItem, InputLabel, FormControl, FormHelperText, Checkbox, ListItemText } from '@mui/material';
 
 export const CompoOff = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -62,7 +62,7 @@ export const CompoOff = () => {
       compoOff: null,
       description: '',
       notify: '',
-      allReportingPerson: ''
+      allReportingPerson: []
     }
   ]);
   const [leaveTypeErrors, setLeaveTypeErrors] = useState([
@@ -81,7 +81,7 @@ export const CompoOff = () => {
   useEffect(() => {
     getAllNotify();
     getAllCompoOff();
-    getAllReportingPersonList()
+    getAllReportingPersonList();
   }, []);
   const getAllNotify = async () => {
     try {
@@ -95,7 +95,10 @@ export const CompoOff = () => {
   };
   const getAllReportingPersonList = async () => {
     try {
-      const result = await apiCalls('get', `master/getReportingNameForEmployee?branchCode=${branchCode}&employeeCode="Undefined"&orgId=${orgId}`);
+      const result = await apiCalls(
+        'get',
+        `master/getReportingNameForEmployee?branchCode=${branchCode}&employeeCode="Undefined"&orgId=${orgId}`
+      );
       const notifyOptions = result?.paramObjectsMap?.employeeVO || [];
       setAllReportingPersonList(notifyOptions);
       console.log('Notify Options:', notifyOptions);
@@ -117,7 +120,7 @@ export const CompoOff = () => {
         compoOff: item.compOffDate, // this will be used as input type="date"
         description: item.notes,
         notify: item.notify,
-        allReportingPerson: item.allReportingPerson
+        allReportingPerson: item.compoffNotifyVO?.map((person) => person.notify2) || []
       }));
 
       setLeaveTypeTable(formattedData);
@@ -312,11 +315,16 @@ export const CompoOff = () => {
     // Construct final payload only from new rows
     const finalPayload = newRows.map((row) => {
       const notifyPerson = notifyList.find((n) => n.reportingPerson === row.notify);
-
+      const selectedNotifyPersons = allReportingPersonList.filter((person) => (row.allReportingPerson || []).includes(person.employeeCode));
       return {
         branch,
         branchCode,
         compOffDate: row.compoOff,
+        compoffNotifyDTO: selectedNotifyPersons.map((person) => ({
+          notify2: person.employeeName,
+          notify2Code: person.employeeCode,
+          notify2Email: person.email
+        })),
         createdBy: loginUserName,
         department,
         designation,
@@ -328,7 +336,6 @@ export const CompoOff = () => {
         notify: row.notify,
         notifyCode: notifyPerson?.reportingPersonCode || '',
         notifyEmail: notifyPerson?.email || '',
-        allReportingPerson: notifyPerson?.allReportingPerson || '',
         orgId,
         totalDays: 1
       };
@@ -382,57 +389,123 @@ export const CompoOff = () => {
   //   setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', compoOff: '', description: '', notify: '' }]);
   // };
 
-const handleAddRow = () => {
-  const lastIndex = leaveTypeTable.length - 1;
-  const lastRow = leaveTypeTable[lastIndex];
+  // const handleAddRow = () => {
+  //   const lastIndex = leaveTypeTable.length - 1;
+  //   const lastRow = leaveTypeTable[lastIndex];
 
-  const errors = {
-    leaveType: !lastRow.leaveType ? 'Leave Type is required' : '',
-    leaveCode: !lastRow.leaveCode ? 'Leave Code is required' : '',
-    compoOff: !lastRow.compoOff ? 'Compo Off is required' : '',
-    description: !lastRow.description ? 'Description is required' : '',
-    notify: !lastRow.notify ? 'Notify is required' : '',
-  };
+  //   const errors = {
+  //     leaveType: !lastRow.leaveType ? 'Leave Type is required' : '',
+  //     leaveCode: !lastRow.leaveCode ? 'Leave Code is required' : '',
+  //     compoOff: !lastRow.compoOff ? 'Compo Off is required' : '',
+  //     description: !lastRow.description ? 'Description is required' : '',
+  //     notify: !lastRow.notify ? 'Notify is required' : '',
+  //   };
 
-  const hasErrors = Object.values(errors).some((msg) => msg);
+  //   const hasErrors = Object.values(errors).some((msg) => msg);
 
-  if (hasErrors) {
-    // Update error state for last row
-    setLeaveTypeErrors((prev) => {
-      const updated = [...prev];
-      updated[lastIndex] = errors;
-      return updated;
-    });
+  //   if (hasErrors) {
+  //     // Update error state for last row
+  //     setLeaveTypeErrors((prev) => {
+  //       const updated = [...prev];
+  //       updated[lastIndex] = errors;
+  //       return updated;
+  //     });
 
-    // Optional alert message
-    alert('Please fill all fields in the previous row before adding a new one.');
-    return;
-  }
+  //     // Optional alert message
+  //     alert('Please fill all fields in the previous row before adding a new one.');
+  //     return;
+  //   }
 
-  // Clear previous errors
-  setLeaveTypeErrors((prev) => [...prev, {}]);
+  //   // Clear previous errors
+  //   setLeaveTypeErrors((prev) => [...prev, {}]);
 
-  // Add new row
-  const newRow = {
-    id: Date.now(),
-    leaveType: 'Compo Off',
-    leaveCode: '',
-    compoOff: '',
-    description: '',
-    notify: '',
-    allReportingPerson: '',
-    isNew: true,
-  };
+  //   // Add new row
+  //   const newRow = {
+  //     id: Date.now(),
+  //     leaveType: 'Compo Off',
+  //     leaveCode: '',
+  //     compoOff: '',
+  //     description: '',
+  //     notify: '',
+  //     allReportingPerson: '',
+  //     isNew: true,
+  //   };
 
-  setLeaveTypeTable((prev) => [...prev, newRow]);
+  //   setLeaveTypeTable((prev) => [...prev, newRow]);
 
-  // Scroll to new row
-  requestAnimationFrame(() => {
-    if (lastRowRef.current) {
-      lastRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  //   // Scroll to new row
+  //   requestAnimationFrame(() => {
+  //     if (lastRowRef.current) {
+  //       lastRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  //     }
+  //   });
+  // };
+
+  const handleAddRow = () => {
+    const lastIndex = leaveTypeTable.length - 1;
+
+    // If table is empty, directly add a new row
+    if (lastIndex < 0) {
+      setLeaveTypeErrors([{}]);
+      setLeaveTypeTable([
+        {
+          id: Date.now(),
+          leaveType: 'Compo Off',
+          leaveCode: '',
+          compoOff: '',
+          description: '',
+          notify: '',
+          allReportingPerson: '',
+          isNew: true
+        }
+      ]);
+      return;
     }
-  });
-};
+
+    const lastRow = leaveTypeTable[lastIndex];
+
+    const errors = {
+      leaveType: !lastRow.leaveType ? 'Leave Type is required' : '',
+      leaveCode: !lastRow.leaveCode ? 'Leave Code is required' : '',
+      compoOff: !lastRow.compoOff ? 'Compo Off is required' : '',
+      description: !lastRow.description ? 'Description is required' : '',
+      notify: !lastRow.notify ? 'Notify is required' : ''
+    };
+
+    const hasErrors = Object.values(errors).some((msg) => msg);
+
+    if (hasErrors) {
+      setLeaveTypeErrors((prev) => {
+        const updated = [...prev];
+        updated[lastIndex] = errors;
+        return updated;
+      });
+
+      alert('Please fill all fields in the previous row before adding a new one.');
+      return;
+    }
+
+    setLeaveTypeErrors((prev) => [...prev, {}]);
+
+    const newRow = {
+      id: Date.now(),
+      leaveType: 'Compo Off',
+      leaveCode: '',
+      compoOff: '',
+      description: '',
+      notify: '',
+      allReportingPerson: '',
+      isNew: true
+    };
+
+    setLeaveTypeTable((prev) => [...prev, newRow]);
+
+    requestAnimationFrame(() => {
+      if (lastRowRef.current) {
+        lastRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  };
 
   const isLastRowEmpty = (table) => {
     if (!table || table.length === 0) return false;
@@ -530,10 +603,10 @@ const handleAddRow = () => {
                           Description
                         </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                          Notify
+                          Reporting Person
                         </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                          All Reporting Person 
+                          Notify
                         </th>
                       </tr>
                     </thead>
@@ -687,7 +760,7 @@ const handleAddRow = () => {
                                 </div>
                               )}
                             </td>
-                            <td className="border px-2 py-2">
+                            {/* <td className="border px-2 py-2">
                               <select
                                 value={row.allReportingPerson}
                                 onChange={(e) => {
@@ -717,6 +790,77 @@ const handleAddRow = () => {
                                   {leaveTypeErrors[index].allReportingPerson}
                                 </div>
                               )}
+                            </td> */}
+                            {/* <td className="border px-2 py-2">
+                              <select
+                                value={row.allReportingPerson || []}
+                                onChange={(e) => {
+                                  const selectedCodes = Array.from(e.target.selectedOptions, (option) => option.value);
+                                  setLeaveTypeTable((prev) =>
+                                    prev.map((r) => (r.id === row.id ? { ...r, allReportingPerson: selectedCodes } : r))
+                                  );
+                                }}
+                                className="form-control"
+                              >
+                                <option disabled value="">
+                                  -- Select Option --
+                                </option>
+                                {allReportingPersonList.map((person) => (
+                                  <option key={person.employeeCode} value={person.employeeCode}>
+                                    {person.employeeName}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {leaveTypeErrors[index]?.allReportingPerson && (
+                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                  {leaveTypeErrors[index].allReportingPerson}
+                                </div>
+                              )}
+                            </td> */}
+                            <td className="border px-2 py-2">
+                              <FormControl fullWidth error={Boolean(leaveTypeErrors[index]?.allReportingPerson)}>
+                                {/* <InputLabel id={`multi-select-label-${row.id}`}>All Reporting Person</InputLabel> */}
+
+                                <Select
+                                  labelId={`multi-select-label-${row.id}`}
+                                  multiple
+                                  displayEmpty
+                                  value={row.allReportingPerson?.length ? row.allReportingPerson : []}
+                                  onChange={(e) => {
+                                    const selectedValues = e.target.value;
+                                    setLeaveTypeTable((prev) =>
+                                      prev.map((r) => (r.id === row.id ? { ...r, allReportingPerson: selectedValues } : r))
+                                    );
+                                  }}
+                                  renderValue={(selected) =>
+                                    selected.length === 0 ? (
+                                      <em>Select Reporting Person</em>
+                                    ) : (
+                                      selected
+                                        .map((code) => allReportingPersonList.find((p) => p.employeeCode === code)?.employeeName || code)
+                                        .join(', ')
+                                    )
+                                  }
+                                  size="small"
+                                  disabled={!row.isNew}
+                                >
+                                  <MenuItem disabled value="">
+                                    <em>Select Reporting Person</em>
+                                  </MenuItem>
+
+                                  {allReportingPersonList.map((person) => (
+                                    <MenuItem key={person.employeeCode} value={person.employeeCode}>
+                                      <Checkbox checked={row.allReportingPerson?.includes(person.employeeCode)} />
+                                      <ListItemText primary={person.employeeName} />
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+
+                                {leaveTypeErrors[index]?.allReportingPerson && (
+                                  <FormHelperText>{leaveTypeErrors[index].allReportingPerson}</FormHelperText>
+                                )}
+                              </FormControl>
                             </td>
                           </tr>
                         ))}
