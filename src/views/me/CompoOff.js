@@ -22,6 +22,7 @@ import { saveAs } from 'file-saver';
 import { FaFilePdf } from 'react-icons/fa';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import emailjs from '@emailjs/browser';
 import { Select, MenuItem, InputLabel, FormControl, FormHelperText, Checkbox, ListItemText } from '@mui/material';
 
 export const CompoOff = () => {
@@ -38,6 +39,7 @@ export const CompoOff = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notifyList, setNotifyList] = useState([]);
+  const [notifyEmail, setNotifyEmail] = useState([]);
   const [allReportingPersonList, setAllReportingPersonList] = useState([]);
   const [allCompoOff, setAllCompoOff] = useState([]);
   const [tableData, setTableData] = useState([]);
@@ -62,6 +64,8 @@ export const CompoOff = () => {
       compoOff: null,
       description: '',
       notify: '',
+      notifyEmail: '',
+      notify2Email: '',
       allReportingPerson: []
     }
   ]);
@@ -88,7 +92,9 @@ export const CompoOff = () => {
       const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${empCode}&orgId=${orgId}`);
       const notifyOptions = result?.paramObjectsMap?.PermisionRequestVO || [];
       setNotifyList(notifyOptions);
-      console.log('Notify Options:', notifyOptions);
+      setNotifyEmail(notifyOptions.notifyEmail)
+      console.log('Email', notifyOptions.notifyEmail)
+      console.log('Notifyy Options:', notifyOptions);
     } catch (err) {
       console.log('Error fetching notify list', err);
     }
@@ -101,7 +107,7 @@ export const CompoOff = () => {
       );
       const notifyOptions = result?.paramObjectsMap?.employeeVO || [];
       setAllReportingPersonList(notifyOptions);
-      console.log('Notify Options:', notifyOptions);
+      console.log('Notifyyy Options:', notifyOptions);
     } catch (err) {
       console.log('Error fetching notify list', err);
     }
@@ -348,7 +354,7 @@ export const CompoOff = () => {
 
       if (result.status === true) {
         showToast('success', editId ? 'Compo Off Updated Successfully' : 'Compo Off created successfully');
-
+        await sendEmailNotification(finalPayload); // ✅ correct payload with notify2Email
         const updatedTable = leaveTypeTable.map((row) => (row.isNew ? { ...row, isNew: false } : row));
         setLeaveTypeTable(updatedTable);
         getAllCompoOff();
@@ -361,6 +367,39 @@ export const CompoOff = () => {
       showToast('error', 'Compo Off creation failed');
     } finally {
       setIsLoading(false);
+    }
+  };
+  console.log('Mail', leaveTypeTable)
+
+  const sendEmailNotification = async (newRows) => {
+    try {
+      for (const row of newRows) {
+        const notify2Emails = (row.compoffNotifyDTO || []).map(p => p.notify2Email).join(', ');
+
+        const emailParams = {
+          name: row.notify,
+          from_name: empName,
+          compOffDate: row.compOffDate,
+          email: row.notifyEmail,
+          notify2Email: notify2Emails,
+          notes: row.notes,
+          approve_link: `/team/LeaveApproval/${row.id || 'leave_request_id'}`
+        };
+
+        console.log('Email Params:', emailParams);
+
+        if (!emailParams.email) {
+          console.error('Error: Recipient email is missing!');
+          showToast('error', 'Recipient email is missing!');
+          continue;
+        }
+
+        await emailjs.send('service_y4jqb7q', 'template_j3mr5vl', emailParams, '4wxbCMaMoQh0TD6tx');
+        console.log('Email Sent Successfully for', emailParams.email);
+      }
+    } catch (error) {
+      console.error('Email Sending Failed:', error);
+      showToast('error', 'Failed to send email notification. Please try again.');
     }
   };
 
@@ -734,7 +773,21 @@ export const CompoOff = () => {
                                 value={row.notify}
                                 onChange={(e) => {
                                   const value = e.target.value;
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, notify: value } : r)));
+                                  const selectedPerson = notifyList.find((p) => p.reportingPerson === value);
+
+                                  setLeaveTypeTable((prev) =>
+                                    prev.map((r) =>
+                                      r.id === row.id
+                                        ? {
+                                          ...r,
+                                          notify: value,
+                                          notifyEmail: selectedPerson?.email || '',
+                                          // notify2Email: selectedPerson?.reportingPerson2Email || ''
+                                        }
+                                        : r
+                                    )
+                                  );
+
                                   setLeaveTypeErrors((prev) => {
                                     const newErrors = [...prev];
                                     newErrors[index] = {
@@ -760,6 +813,7 @@ export const CompoOff = () => {
                                 </div>
                               )}
                             </td>
+
                             {/* <td className="border px-2 py-2">
                               <select
                                 value={row.allReportingPerson}

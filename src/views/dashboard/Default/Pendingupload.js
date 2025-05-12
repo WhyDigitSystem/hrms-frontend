@@ -143,6 +143,7 @@ const PendingApproval = ({ isLoading }) => {
   const [openModal, setOpenModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [processingId, setProcessingId] = useState(null);
+  // const [processingId, setProcessingId] = useState(null);
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
@@ -168,9 +169,10 @@ const PendingApproval = ({ isLoading }) => {
     try {
       setLoading(true);
 
-      const [leaveResponse, permissionResponse] = await Promise.all([
+      const [leaveResponse, permissionResponse, compoOffResponse] = await Promise.all([
         apiCalls("get", `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`),
-        apiCalls("get", `employeemaster/getPendingPermissionRequest?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`)
+        apiCalls("get", `employeemaster/getPendingPermissionRequest?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`),
+        apiCalls("get", `leaveprocess/getCompoffRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`)
       ]);
 
       // Extract leave requests
@@ -185,12 +187,18 @@ const PendingApproval = ({ isLoading }) => {
         permissionRequests = [permissionRequests];
       }
 
+      let compoOffRequests = compoOffResponse.paramObjectsMap?.compensatoryOffVO || [];
+      if (!Array.isArray(compoOffRequests)) {
+        compoOffRequests = [compoOffRequests];
+      }
+
       // Filter both to only pending or no status
       const pendingLeaveRequests = leaveRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
       const pendingPermissionRequests = permissionRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
+      const pendingCompoOffRequests = compoOffRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
 
       // Merge both lists
-      const combinedRequests = [...pendingLeaveRequests, ...pendingPermissionRequests];
+      const combinedRequests = [...pendingLeaveRequests, ...pendingPermissionRequests, ...pendingCompoOffRequests];
 
       // Set into state
       setLeaveRequests(combinedRequests);
@@ -337,6 +345,57 @@ const PendingApproval = ({ isLoading }) => {
     }
   };
 
+  const handleActionCompoOff = async (request, action) => {
+    setProcessingId(request.id);
+
+    try {
+      // 1. Make API call to approve/reject
+      await apiCalls(
+        'put',
+        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+      );
+
+      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+
+      const isApproved = action === "APPROVED";
+
+      const templateParams = {
+        name: request.employeeName,
+        from_name: employeeName,
+        date: dayjs(request.compOffDate).format("DD-MM-YYYY"),
+        status: action,
+        status_message: isApproved ? "Approved" : "Rejected",
+        status_class: isApproved ? "status-approved" : "status-rejected",
+        remarks: request.remarks || "N/A",
+        email: request.employeeEmail,
+      };
+
+      // 3. Send email notification
+      await emailjs.send(
+        'service_y4jqb7q',
+        'template_qf406wl',
+        templateParams,
+        '4wxbCMaMoQh0TD6tx'
+      );
+
+      toast.success(`Request ${action.toLowerCase()} successfully`, {
+        autoClose: 3000,
+      });
+
+    } catch (error) {
+      console.error(`Error ${action.toLowerCase()}ing request:`, error);
+
+      // Revert UI if error occurs
+      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+
+      toast.error(`Failed to ${action.toLowerCase()} request`, {
+        autoClose: 3000,
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const ActionButtons = ({ request }) => {
     const isProcessing = processingId === request.id;
     const isPending = !request.approveStatus || request.approveStatus === 'PENDING';
@@ -368,8 +427,11 @@ const PendingApproval = ({ isLoading }) => {
               onClick={() => {
                 if (request.screenName === "LEAVE REQUEST") {
                   handleActionLeave(request, "APPROVED");
+                }
+                if (request.screenName === "PERMISSION REQUEST") {
+                  handleActionPermission(request, "APPROVED");
                 } else {
-                  handleActionPermission(request, "APPROVED"); // You can customize this if you need different logic
+                  handleActionCompoOff(request, "APPROVED"); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "APPROVED")}
@@ -390,9 +452,12 @@ const PendingApproval = ({ isLoading }) => {
               actiontype="reject"
               onClick={() => {
                 if (request.screenName === "LEAVE REQUEST") {
-                  handleActionLeave(request, "APPROVED");
+                  handleActionLeave(request, "REJECTED");
+                }
+                if (request.screenName === "PERMISSION REQUEST") {
+                  handleActionPermission(request, "REJECTED");
                 } else {
-                  handleActionPermission(request, "APPROVED"); // You can customize this if you need different logic
+                  handleActionCompoOff(request, "REJECTED"); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "REJECTED")}
