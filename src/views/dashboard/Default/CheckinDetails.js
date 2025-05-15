@@ -167,12 +167,12 @@ const CheckinDetails = ({ isLoading }) => {
     <>
       <Box>
         <Grid item>
-          <Typography variant="h6" sx={{ mb: 0, mt: 2, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
+          <Typography variant="h6" sx={{ mb: 0, mt: 0, color: 'black', fontWeight: 'bold', fontSize: isMobile ? '16px' : '18px' }}>
             Quick Access
           </Typography>
         </Grid>
 
-        <CardWrapper border={false} content={false} sx={{ mt: 4, pt: 1 }}>
+        <CardWrapper border={false} content={false} sx={{ mt: 4, }}>
           <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
             <Grid container direction="column" spacing={2}>
               <Grid item>

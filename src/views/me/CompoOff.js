@@ -618,7 +618,7 @@ export const CompoOff = () => {
                         position: 'sticky',
                         top: 0,
                         zIndex: 2,
-                        background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)',
+                        background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)',
                         color: 'white'
                       }}
                     >

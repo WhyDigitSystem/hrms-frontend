@@ -681,7 +681,7 @@ const EmployeeDetails = () => {
       try {
         const response = await apiCalls('put', '/master/createUpdateEmployee', saveFormData);
         if (response.status === true) {
-          console.log('Response:', response); 
+          console.log('Response:', response);
           showToast('success', editId ? 'Employee Details updated successfully' : 'Employee Details created successfully');
           handleClear();
           getAllEmployees();
@@ -708,7 +708,7 @@ const EmployeeDetails = () => {
 
   const isValidDate = (date) => {
     return date && !isNaN(new Date(date).getTime());
-  };  
+  };
 
   const getEmployeeDetailsById = async (row) => {
     console.log('Fetching employee details for:', row);
@@ -799,11 +799,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-              ...r,
-              leaveType: newValue ? newValue.leaveType : '',
-              leaveCode: newValue ? newValue.leaveCode : '',
-              totalLeave: newValue ? newValue.totalLeave : ''
-            }
+            ...r,
+            leaveType: newValue ? newValue.leaveType : '',
+            leaveCode: newValue ? newValue.leaveCode : '',
+            totalLeave: newValue ? newValue.totalLeave : ''
+          }
           : r
       )
     );
@@ -1093,8 +1093,8 @@ const EmployeeDetails = () => {
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
-                        // error={fieldErrors.resignationDate}
-                        // helperText={fieldErrors.resignationDate && 'Required'}
+                      // error={fieldErrors.resignationDate}
+                      // helperText={fieldErrors.resignationDate && 'Required'}
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -1135,8 +1135,8 @@ const EmployeeDetails = () => {
                   name="team"
                   value={formData.team}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.team}
-                  // helperText={fieldErrors.team}
+                // error={!!fieldErrors.team}
+                // helperText={fieldErrors.team}
                 />
               </div>
 
@@ -1515,8 +1515,8 @@ const EmployeeDetails = () => {
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleInputChange}
-                  // error={!!fieldErrors.bankName}
-                  // helperText={fieldErrors.bankName}
+                // error={!!fieldErrors.bankName}
+                // helperText={fieldErrors.bankName}
                 />
               </div>
 
@@ -1572,7 +1572,7 @@ const EmployeeDetails = () => {
                           <div className="table-responsive">
                             <table className="table table-bordered ">
                               <thead>
-                                <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
+                                <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
                                   <th className="px-2 py-2 text-center" style={{ width: '68px' }}>
                                     Action
                                   </th>

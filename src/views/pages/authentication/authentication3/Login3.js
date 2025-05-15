@@ -1,11 +1,19 @@
 import { Link } from 'react-router-dom';
 
 // material-ui
-import { Chip, Divider, Grid, Stack, Typography, useMediaQuery } from '@mui/material';
+import {
+  Chip,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+  useMediaQuery,
+  Box,
+} from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // project imports
-import LogoImage from '../../../../assets/images/Why-Digit-Systems-Pvt-Ltd.png';
+import LogoImage from '../../../../assets/images/Why-Digit-Systems-Pvt-Ltd-logo-removebg-preview.png';
 import AuthCardWrapper from '../AuthCardWrapper';
 import AuthWrapper1 from '../AuthWrapper1';
 import AuthLogin from '../auth-forms/AuthLogin';
@@ -22,17 +30,19 @@ const bevanRegularStyle = {
 
 const Login = () => {
   const theme = useTheme();
-  const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
+  const matchDownSM = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
     <AuthWrapper1>
       <Grid
+        className="login-background"
         container
         direction="column"
         justifyContent="flex-end"
         sx={{
           minHeight: '100vh',
-          overflow: 'hidden', // Hide any overflow on the main container
+          overflow: 'hidden',
+          px: matchDownSM ? 1 : 2,
         }}
       >
         <Grid item xs={12}>
@@ -42,83 +52,69 @@ const Login = () => {
             alignItems="center"
             sx={{
               minHeight: 'calc(100vh - 68px)',
-              overflow: 'hidden', // Hide overflow here as well
+              overflow: 'hidden',
             }}
           >
-            <Grid
-              item
-              sx={{ m: { xs: 1, sm: 3 }, mb: 0, p: 0 }}
-              className="css-1arlb8v css-1irzm6x-MuiGrid-root"
-            >
-              <AuthCardWrapper>
+            <Grid item xs={12} sm={12} md={12} lg={12} xl={8} sx={{ px: matchDownSM ? 1 : 0 }}>
+              {/* Bubble Container */}
+              <Box className="bubble-container" sx={{ position: 'absolute', width: '100%', height: '100%' }}>
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className={`bubble bubble-${i + 1}`} />
+                ))}
+              </Box>
+
+              <AuthCardWrapper className="glass-card" sx={{ px: matchDownSM ? 2 : 3, py: matchDownSM ? 3 : 4 }}>
                 <Grid container direction="column" spacing={2} alignItems="center" justifyContent="center">
-                  <Grid item sx={{ mt: 2 }}>
+                  {/* Logo */}
+                  <Grid item sx={{ mb: matchDownSM ? 1 : 2 }}>
                     <Link to="#">
                       <img
                         src={LogoImage}
                         alt="logo"
                         style={{
-                          width: '150px',
+                          width: matchDownSM ? '120px' : '150px',
                           height: 'auto',
                         }}
                       />
                     </Link>
                   </Grid>
+
+                  <Typography
+                    style={{
+                      ...bevanRegularStyle,
+                      fontSize: matchDownSM ? 20 : 25,
+                      color: 'white',
+                    }}
+                    gutterBottom
+                    variant={matchDownSM ? 'h6' : 'h4'}
+                  >
+                    HRMS
+                  </Typography>
+
                   <Grid item xs={12}>
-                    <Grid
-                      container
-                      direction={matchDownSM ? 'column-reverse' : 'row'}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Grid item>
-                        <Stack alignItems="center" justifyContent="center" spacing={1}>
-                          <Stack alignItems="center" justifyContent="center" spacing={1}>
-                            <Typography
-                              style={bevanRegularStyle}
-                              color={theme.palette.secondary.main}
-                              gutterBottom
-                              variant={matchDownSM ? 'h5' : 'h4'}
-                            >
-                              HRMS
-                            </Typography>
-                            {/* <Typography
-                              variant="caption"
-                              fontSize="14px"
-                              textAlign={matchDownSM ? 'center' : 'inherit'}
-                            >
-                              Enter your credentials to continue
-                            </Typography> */}
-                          </Stack>
-                        </Stack>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                  <Grid item xs={12} sx={{ marginBottom: 0, paddingBottom: 0 }}>
                     <AuthLogin />
                   </Grid>
-                  {/* <Grid item xs={12} sx={{ marginBottom: 0, paddingBottom: 0 }}>
-                    <Grid item container direction="column" alignItems="center" xs={12}>
-                      <Typography
-                        component={Link}
-                        to="/pages/register/register3"
-                        variant="subtitle1"
-                        sx={{ textDecoration: 'none', marginTop: 0 }}
-                      >
-                        Don&apos;t have an account?
-                      </Typography>
-                    </Grid>
-                  </Grid> */}
+
                   <Grid item xs={12}>
                     <Divider sx={{ display: 'none' }} />
                   </Grid>
-                  <Stack direction="row" justifyContent="center" sx={{ mb: 1, mt: 1 }}>
+
+                  <Stack direction="row" justifyContent="center" sx={{ mt: 1 }}>
                     <Chip
-                      label="©  2025 Why Digit System Private Limited." // Updated version content
+                      label="© 2025 Why Digit System Private Limited."
                       disabled
-                      chipcolor="secondary"
                       size="small"
-                      sx={{ cursor: 'pointer' }}
+                      sx={{
+                        cursor: 'pointer',
+                        color: 'white',
+                        backgroundColor: 'transparent',
+                        border: '1px solid white',
+                        '& .MuiChip-label': {
+                          color: 'white',
+                          fontSize: matchDownSM ? '0.65rem' : '0.75rem',
+                        },
+                        opacity: 1,
+                      }}
                     />
                   </Stack>
                 </Grid>

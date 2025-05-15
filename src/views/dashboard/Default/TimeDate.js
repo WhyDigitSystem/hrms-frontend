@@ -20,11 +20,13 @@ const CardWrapper = styled(Paper)(({ theme }) => ({
         padding: theme.spacing(3),
     },
     borderRadius: theme.shape.borderRadius * 3,
-    background: `linear-gradient(135deg, #4f9fa6 30%, #1a6e6a 90%)`, // Updated for a darker feel
-    color: theme.palette.common.white,
-    boxShadow: 'none', // Removed shadow for simplicity
+    background: '#0f0f0f',
+    backgroundImage: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
+    color: '#00ffe7',
+    boxShadow: '0 0 25px rgba(0, 255, 255, 0.2)',
     position: 'relative',
     overflow: 'hidden',
+    border: '1px solid rgba(0, 255, 255, 0.2)',
 }));
 
 const TimeDate = ({ isLoading }) => {
@@ -90,21 +92,19 @@ const TimeDate = ({ isLoading }) => {
     };
 
     return (
-        <CardWrapper className="mt-lg-3 mt-3">
-            <Grid container spacing={3} alignItems="center" direction={isMobile ? 'column' : 'row'}>
+        <CardWrapper className="mt-lg-2 mt-2">
+            <Grid container spacing={4} direction="row" justifyContent="space-between" alignItems="center">
                 <Grid item xs={12} sm={6}>
                     <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-start'} textAlign={isMobile ? 'center' : 'left'}>
                         <Box display="flex" alignItems="center" mb={2}>
-                            <AccessTimeIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.info.light }} />
+                            <AccessTimeIcon sx={{ fontSize: isMobile ? 36 : 48, mr: 1, color: '#00ffe7' }} />
                             <Typography
-                                variant={isMobile ? 'h5' : 'h3'}
+                                variant={isMobile ? 'h6' : 'h3'}
                                 sx={{
-                                    background: 'linear-gradient(to right, #00c6ff, #0072ff)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
                                     fontWeight: 700,
-                                    color: isMobile ? 'white' : 'transparent',
-                                    letterSpacing: 2 // Added spacing for emphasis
+                                    color: '#00ffe7',
+                                    textShadow: '0 0 10px #00ffe7',
+                                    letterSpacing: 1,
                                 }}
                             >
                                 {getGreeting()}
@@ -112,18 +112,18 @@ const TimeDate = ({ isLoading }) => {
                         </Box>
 
                         <Typography
-                            variant={isMobile ? 'h4' : 'h2'}
+                            variant={isMobile ? 'h5' : 'h2'}
                             sx={{
                                 fontWeight: 'bold',
-                                color: theme.palette.common.white,
-                                textShadow: '1px 1px 5px rgba(0,0,0,0.3)',
-                                mb: isMobile ? 2 : 0, // Adjusting margin on mobile for better spacing
+                                color: '#ffffff',
+                                textShadow: '0 0 8px #00ffe7',
+                                mb: isMobile ? 2 : 1,
                             }}
                         >
                             {formattedTime}
                         </Typography>
 
-                        <Typography variant="subtitle1" sx={{ mt: 1, opacity: 0.9 }}>
+                        <Typography variant="body1" sx={{ mt: 1, color: '#a0f0ff' }}>
                             {formattedDate}
                         </Typography>
                     </Box>
@@ -132,27 +132,27 @@ const TimeDate = ({ isLoading }) => {
                 <Grid item xs={12} sm={6}>
                     <Box display="flex" flexDirection="column" alignItems={isMobile ? 'center' : 'flex-end'} textAlign={isMobile ? 'center' : 'right'}>
                         <Box display="flex" alignItems="center" mb={2}>
-                            <LocationOnIcon sx={{ fontSize: isMobile ? 40 : 48, mr: 1, color: theme.palette.success.light }} />
-                            <Typography variant={isMobile ? 'h6' : 'h5'} sx={{ fontWeight: 'bold' }}>
+                            <LocationOnIcon sx={{ fontSize: isMobile ? 36 : 48, mr: 1, color: '#00ffe7' }} />
+                            <Typography variant={isMobile ? 'subtitle1' : 'h6'} sx={{ fontWeight: 'bold', color: '#ffffff' }}>
                                 {location.city}, {location.country}
                             </Typography>
                         </Box>
 
-                        <Divider sx={{ my: 1, bgcolor: 'rgba(255,255,255,0.3)', width: isMobile ? '80%' : '100%' }} />
+                        {/* <Divider sx={{ my: 1, bgcolor: '#00ffe766', width: isMobile ? '90%' : '100%' }} /> */}
 
                         <Box display="flex" justifyContent={isMobile ? 'center' : 'flex-end'} flexWrap="wrap" gap={1}>
                             <Chip
                                 icon={<AccessTimeIcon />}
                                 label={`Time Zone: ${timeZone}`}
                                 sx={{
-                                    bgcolor: 'rgba(255,255,255,0.25)',
-                                    color: theme.palette.common.white,
+                                    bgcolor: '#1e293b',
+                                    color: '#00ffe7',
                                     borderRadius: 2,
-                                    fontSize: isMobile ? '0.85rem' : 'inherit',
-                                    padding: isMobile ? '4px 8px' : '6px 12px', // Adjust padding on mobile
-                                    transition: 'background-color 0.3s ease',
+                                    border: '1px solid #00ffe7',
+                                    fontSize: isMobile ? '0.8rem' : 'inherit',
+                                    padding: isMobile ? '2px 6px' : '6px 12px',
                                     '&:hover': {
-                                        bgcolor: 'rgba(255,255,255,0.4)',
+                                        bgcolor: '#334155',
                                     }
                                 }}
                             />
@@ -160,14 +160,14 @@ const TimeDate = ({ isLoading }) => {
                                 icon={<WbSunnyIcon />}
                                 label={`${weather.temperature} | ${weather.condition}`}
                                 sx={{
-                                    bgcolor: 'rgba(255,255,255,0.25)',
-                                    color: theme.palette.common.white,
+                                    bgcolor: '#1e293b',
+                                    color: '#00ffe7',
                                     borderRadius: 2,
-                                    fontSize: isMobile ? '0.85rem' : 'inherit',
-                                    padding: isMobile ? '4px 8px' : '6px 12px', // Adjust padding on mobile
-                                    transition: 'background-color 0.3s ease',
+                                    border: '1px solid #00ffe7',
+                                    fontSize: isMobile ? '0.8rem' : 'inherit',
+                                    padding: isMobile ? '2px 6px' : '6px 12px',
                                     '&:hover': {
-                                        bgcolor: 'rgba(255,255,255,0.4)',
+                                        bgcolor: '#334155',
                                     }
                                 }}
                             />
@@ -183,8 +183,8 @@ const TimeDate = ({ isLoading }) => {
                     bottom: -10,
                     right: -10,
                     fontSize: 160,
-                    opacity: 0.1,
-                    color: theme.palette.common.white,
+                    opacity: 0.05,
+                    color: '#00ffe7',
                     pointerEvents: 'none',
                 }}
             >

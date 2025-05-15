@@ -397,14 +397,14 @@ const SalaryProcess = () => {
             <div className="col-lg-12">
               <div className="d-flex justify-content-end mb-2">
                 {/* "Approve All" button */}
-                <button className="btn btn-success" onClick={handleApproveAll}>
+                <button className="btn btn-success-Approve" onClick={handleApproveAll}>
                   Approve All
                 </button>
               </div>
               <div className="table-responsive">
                 <table className="table table-bordered">
                   <thead>
-                    <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
+                    <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
                       <th className="px-2 py-2 text-white text-center">S.No</th>
                       <th className="px-2 py-2 text-white text-center">Employee Name</th>
                       <th className="px-2 py-2 text-white text-center">Employee Code</th>

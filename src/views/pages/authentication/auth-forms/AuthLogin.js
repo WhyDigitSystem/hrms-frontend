@@ -162,7 +162,7 @@ const FirebaseLogin = ({ ...others }) => {
   };
 
   return (
-    <Paper
+    <Paper 
       elevation={3}
       sx={{
         p: 4,
@@ -170,7 +170,7 @@ const FirebaseLogin = ({ ...others }) => {
         margin: 'auto',
         borderRadius: 3,
         boxShadow: 'none',
-        backgroundColor: theme.palette.background.default
+        backgroundColor: 'transparent'
       }}
     >
       <ToastContainer />
@@ -214,9 +214,13 @@ const FirebaseLogin = ({ ...others }) => {
                 onBlur={handleBlur}
                 onChange={handleChange}
                 label="Email Address / Username"
+                sx={{ backgroundColor: 'transparent' }} // <-- remove white background
               />
-              {touched.email && errors.email && <FormHelperText error>{errors.email}</FormHelperText>}
+              {touched.email && errors.email && (
+                <FormHelperText error>{errors.email}</FormHelperText>
+              )}
             </FormControl>
+
 
             <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ mb: 2 }}>
               <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
@@ -239,13 +243,25 @@ const FirebaseLogin = ({ ...others }) => {
               {touched.password && errors.password && <FormHelperText error>{errors.password}</FormHelperText>}
             </FormControl>
 
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <Stack direction="row" display="flex" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
               <FormControlLabel
                 control={
-                  <Checkbox checked={checked} onChange={(event) => setChecked(event.target.checked)} name="checked" color="primary" />
+                  <Checkbox
+                    checked={checked}
+                    onChange={(event) => setChecked(event.target.checked)}
+                    name="checked"
+                    sx={{
+                      color: 'white', // Unchecked color
+                      '&.Mui-checked': {
+                        color: 'white', // Checked color
+                      },
+                    }}
+                  />
                 }
                 label="Remember me"
+                sx={{ color: 'white' }} // Label text color
               />
+
               <Typography variant="subtitle2" color="primary" sx={{ cursor: 'pointer' }}>
                 Forgot Password?
               </Typography>
@@ -259,7 +275,7 @@ const FirebaseLogin = ({ ...others }) => {
 
             <AnimateButton>
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-                <Button
+                <Button className='w-75'
                   disableElevation
                   disabled={isSubmitting}
                   fullWidth
@@ -268,20 +284,20 @@ const FirebaseLogin = ({ ...others }) => {
                   variant="contained"
                   color="primary"
                   sx={{
-                    background: 'linear-gradient(135deg, #7B1FA2 0%, #512DA8 100%)', // gradient background
+                    background: 'linear-gradient(135deg, #2a4b4d 0%, #273030 100%)', // gradient background
                     borderRadius: '20px', // more rounded
                     transition: 'all 0.4s ease',
                     boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)', // initial shadow
                     fontWeight: 'bold',
                     letterSpacing: '1px',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #512DA8 0%, #7B1FA2 100%)', // reverse gradient on hover
+                      background: 'linear-gradient(135deg, #466061 0%, #2a4b4d 100%)', // reverse gradient on hover
                       boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)', // stronger shadow on hover
                       transform: 'translateY(-3px)', // move up slightly
                     }
                   }}
                 >
-                  Sign in
+                  Log in
                 </Button>
               </Box>
             </AnimateButton>

@@ -147,12 +147,21 @@ const Announcements = () => {
     position: 'relative',
     margin: 2,
     minHeight: 200,
-    background: `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
+    background: 'linear-gradient(145deg, #582222 0%, #6d5c9f 100%)',
     borderRadius: 4,
     color: theme.palette.common.white,
     overflow: 'hidden',
+    transition: 'box-shadow 0.3s ease-in-out',
+
     '&:hover': {
-      animation: `${glow} 2s infinite`,
+      boxShadow: `
+      0 0 5px #582222,
+      0 0 10px #6d5c9f,
+      0 0 15px #6d5c9f,
+      0 0 20px #582222
+    `,
+      // Optional glow animation if you have a keyframe defined:
+      // animation: `${glow} 2s infinite`,
     },
   };
 
@@ -191,8 +200,12 @@ const Announcements = () => {
             </Box>
           )}
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '8px' }}>
-          <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2 }}>
+          <IconButton color="primary" onClick={() => setOpenCreateModal(true)}><AddIcon /></IconButton>
+          <IconButton color="inherit" onClick={() => { setViewAllAnnouncements(listViewData); setOpenViewMoreModal(true); }}><VisibilityIcon /></IconButton>
+        </Box>
+        {/* <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', borderRadius: '8px' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2 }}>
             <IconButton color="primary" onClick={() => setOpenCreateModal(true)} sx={{ marginLeft: 'auto', marginRight: '10px' }}>
               <AddIcon />
             </IconButton>
@@ -200,7 +213,7 @@ const Announcements = () => {
               <VisibilityIcon fontSize="inherit" />
             </IconButton>
           </Box>
-        </Box>
+        </Box> */}
       </Box>
 
       {/* Create/Edit Modal */}
