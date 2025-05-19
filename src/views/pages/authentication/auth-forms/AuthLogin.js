@@ -20,7 +20,7 @@ import {
   IconButton,
   InputAdornment,
   InputLabel,
-  OutlinedInput,
+  Input,
   Stack,
   Typography,
   Paper
@@ -85,8 +85,6 @@ const FirebaseLogin = ({ ...others }) => {
         headers: { 'Content-Type': 'application/json' }
       });
 
-      console.log('wer', response);
-
       if (response.data.status) {
         dispatch(setUser({ orgId: response.data.paramObjectsMap.userVO.orgId }));
         localStorage.setItem('orgId', response.data.paramObjectsMap.userVO.orgId);
@@ -94,25 +92,12 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('token', response.data.paramObjectsMap.userVO.token);
         localStorage.setItem('tokenId', response.data.paramObjectsMap.userVO.tokenId);
         localStorage.setItem('userName', response.data.paramObjectsMap.userVO.userName);
-        // localStorage.setItem('userType', response.data.paramObjectsMap.userVO.roleVO[0].role);
         localStorage.setItem('employeeCode', response.data.paramObjectsMap.userVO.employeeCode);
         localStorage.setItem('employeeName', response.data.paramObjectsMap.userVO.employeeName);
         localStorage.setItem('branch', response.data.paramObjectsMap.userVO.branch);
         localStorage.setItem('branchCode', response.data.paramObjectsMap.userVO.branchCode);
         localStorage.setItem('department', response.data.paramObjectsMap.userVO.department);
         localStorage.setItem('designation', response.data.paramObjectsMap.userVO.designation);
-        // localStorage.setItem('LoginMessage', true);
-
-        // const userRole = response.data.paramObjectsMap.userVO.roleVO;
-        // localStorage.setItem('ROLE', userRole);
-        // const userType = response.data.paramObjectsMap.userVO.userType;
-        // const role = response.data.paramObjectsMap.userVO.roleVO[0].role;
-
-        // if (userType === "SADMIN" || userType === "ADMIN") {
-        //   localStorage.setItem('userType', userType);
-        // } else {
-        //   localStorage.setItem('userType', role);
-        // }
 
         const userType = response.data?.paramObjectsMap?.userVO?.userType;
         const role = response.data?.paramObjectsMap?.userVO?.roleVO?.[0]?.role;
@@ -137,10 +122,7 @@ const FirebaseLogin = ({ ...others }) => {
         dispatch(setUserRole(userRole));
         resetForm();
         navigate('/dashboard/default');
-
-        // setTimeout(() => {
         window.location.reload();
-        // }, 50);
 
         if (checked) {
           localStorage.setItem('rememberedCredentials', JSON.stringify({ email: values.email, password: values.password }));
@@ -162,7 +144,7 @@ const FirebaseLogin = ({ ...others }) => {
   };
 
   return (
-    <Paper 
+    <Paper
       elevation={3}
       sx={{
         p: 4,
@@ -204,28 +186,30 @@ const FirebaseLogin = ({ ...others }) => {
       >
         {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
           <form noValidate onSubmit={handleSubmit} {...others}>
-            <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ mb: 2 }}>
-              <InputLabel htmlFor="outlined-adornment-email-login">Email Address / Username</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-email-login"
+            <FormControl fullWidth error={Boolean(touched.email && errors.email)} sx={{ mb: 2 }} variant="standard">
+              <InputLabel htmlFor="standard-adornment-email-login" sx={{ color: 'white' }}>
+                Email Address / Username
+              </InputLabel>
+              <Input
+                id="standard-adornment-email-login"
                 type="email"
                 value={values.email}
                 name="email"
                 onBlur={handleBlur}
                 onChange={handleChange}
-                label="Email Address / Username"
-                sx={{ backgroundColor: 'transparent' }} // <-- remove white background
+                sx={{ color: 'white' }}
               />
               {touched.email && errors.email && (
                 <FormHelperText error>{errors.email}</FormHelperText>
               )}
             </FormControl>
 
-
-            <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ mb: 2 }}>
-              <InputLabel htmlFor="outlined-adornment-password-login">Password</InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-password-login"
+            <FormControl fullWidth error={Boolean(touched.password && errors.password)} sx={{ mb: 2 }} variant="standard">
+              <InputLabel htmlFor="standard-adornment-password-login" sx={{ color: 'white' }}>
+                Password
+              </InputLabel>
+              <Input
+                id="standard-adornment-password-login"
                 type={showPassword ? 'text' : 'password'}
                 value={values.password}
                 name="password"
@@ -238,7 +222,7 @@ const FirebaseLogin = ({ ...others }) => {
                     </IconButton>
                   </InputAdornment>
                 }
-                label="Password"
+                sx={{ color: 'white' }}
               />
               {touched.password && errors.password && <FormHelperText error>{errors.password}</FormHelperText>}
             </FormControl>
@@ -251,15 +235,15 @@ const FirebaseLogin = ({ ...others }) => {
                     onChange={(event) => setChecked(event.target.checked)}
                     name="checked"
                     sx={{
-                      color: 'white', // Unchecked color
+                      color: 'white',
                       '&.Mui-checked': {
-                        color: 'white', // Checked color
-                      },
+                        color: 'white'
+                      }
                     }}
                   />
                 }
                 label="Remember me"
-                sx={{ color: 'white' }} // Label text color
+                sx={{ color: 'white' }}
               />
 
               <Typography variant="subtitle2" color="primary" sx={{ cursor: 'pointer' }}>
@@ -275,7 +259,8 @@ const FirebaseLogin = ({ ...others }) => {
 
             <AnimateButton>
               <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-                <Button className='w-75'
+                <Button
+                  className="w-75"
                   disableElevation
                   disabled={isSubmitting}
                   fullWidth
@@ -284,16 +269,16 @@ const FirebaseLogin = ({ ...others }) => {
                   variant="contained"
                   color="primary"
                   sx={{
-                    background: 'linear-gradient(135deg, #2a4b4d 0%, #273030 100%)', // gradient background
-                    borderRadius: '20px', // more rounded
+                    background: 'linear-gradient(135deg, #2a4b4d 0%, #273030 100%)',
+                    borderRadius: '20px',
                     transition: 'all 0.4s ease',
-                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)', // initial shadow
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.2)',
                     fontWeight: 'bold',
                     letterSpacing: '1px',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #466061 0%, #2a4b4d 100%)', // reverse gradient on hover
-                      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)', // stronger shadow on hover
-                      transform: 'translateY(-3px)', // move up slightly
+                      background: 'linear-gradient(135deg, #466061 0%, #2a4b4d 100%)',
+                      boxShadow: '0 8px 20px rgba(0, 0, 0, 0.3)',
+                      transform: 'translateY(-3px)'
                     }
                   }}
                 >
@@ -301,7 +286,6 @@ const FirebaseLogin = ({ ...others }) => {
                 </Button>
               </Box>
             </AnimateButton>
-
           </form>
         )}
       </Formik>

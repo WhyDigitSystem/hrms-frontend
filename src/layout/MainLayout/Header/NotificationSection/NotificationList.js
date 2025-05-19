@@ -1,12 +1,14 @@
 import {
   Box, Card, CardActions, CardContent, Divider,
-  Stack, Typography, Avatar, Chip, Button
+  Stack, Typography, Avatar, Chip, Button,
+  Dialog, DialogTitle, DialogContent, DialogActions, List
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
   Person as PersonIcon,
   Event as EventIcon,
-  Work as WorkIcon
+  Work as WorkIcon,
+  Close as CloseIcon
 } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import apiCalls from 'apicall';
@@ -23,13 +25,13 @@ const statusColors = {
 const NotificationList = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode'));
-  const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
-  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
-  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [orgId] = useState(localStorage.getItem('orgId'));
+  const [employeeCode] = useState(localStorage.getItem('employeeCode'));
+  const [employeeName] = useState(localStorage.getItem('employeeName'));
+  const [branchCode] = useState(localStorage.getItem('branchCode'));
+  const [loginUserName] = useState(localStorage.getItem('userName'));
   const [processingId, setProcessingId] = useState(null);
-  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
 
   useEffect(() => {
     getAllRequests();
@@ -68,23 +70,13 @@ const NotificationList = () => {
         }
       });
 
-      const leaveRequests = Array.isArray(leaveResponse.paramObjectsMap?.leaveRequestVO)
-        ? leaveResponse.paramObjectsMap.leaveRequestVO
-        : [leaveResponse.paramObjectsMap?.leaveRequestVO].filter(Boolean);
-
-      const permissionRequests = Array.isArray(permissionResponse.paramObjectsMap?.permissionRequestVO)
-        ? permissionResponse.paramObjectsMap.permissionRequestVO
-        : [permissionResponse.paramObjectsMap?.permissionRequestVO].filter(Boolean);
-
-      const compoOffRequests = Array.isArray(compoOffResponse.paramObjectsMap?.compensatoryOffVO)
-        ? compoOffResponse.paramObjectsMap.compensatoryOffVO
-        : [compoOffResponse.paramObjectsMap?.compensatoryOffVO].filter(Boolean);
+      const flattenArray = (data) => Array.isArray(data) ? data : [data].filter(Boolean);
 
       const allMappedRequests = [
-        ...leaveRequests.map(r => mapRequest(r, 'Leave Request')),
-        ...permissionRequests.map(r => mapRequest(r, 'Permission Request')),
-        ...compoOffRequests.map(r => mapRequest(r, 'Compensatory Off'))
-      ].filter(r => r.status === 'Pending');
+        ...flattenArray(leaveResponse.paramObjectsMap?.leaveRequestVO).map(r => mapRequest(r, 'Leave Request')),
+        ...flattenArray(permissionResponse.paramObjectsMap?.permissionRequestVO).map(r => mapRequest(r, 'Permission Request')),
+        ...flattenArray(compoOffResponse.paramObjectsMap?.compensatoryOffVO).map(r => mapRequest(r, 'Compensatory Off'))
+      ];
 
       setNotifications(allMappedRequests);
     } catch (error) {
@@ -94,277 +86,244 @@ const NotificationList = () => {
     }
   };
 
-  const handleActionLeave = async (request, action) => {
+  const handleAction = async (request, action) => {
     setProcessingId(request.id);
-
     try {
-      // 1. Make API call to approve/reject
-      await apiCalls(
-        'put',
-        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
-      );
+      let apiEndpoint = '';
+      let emailParams = {};
+      let serviceId = '';
+      let templateId = '';
+      let publicKey = '';
 
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+      switch (request.type) {
+        case 'Leave Request':
+          apiEndpoint = `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`;
+          emailParams = {
+            name: request.employee.name,
+            from_name: employeeName,
+            leave_type: request.leaveType,
+            start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+            end_date: dayjs(request.toDate).format("DD-MM-YYYY"),
+            total_days: request.totalDays,
+            status: action,
+            status_message: action === "APPROVED" ? "Approved" : "Rejected",
+            remarks: request.remarks || "N/A",
+            email: request.employeeEmail,
+          };
+          serviceId = 'service_hff8dd7';
+          templateId = 'template_0pmh0cu';
+          publicKey = 'G6cKiPBXzCvlFaOuo';
+          break;
 
-      const isApproved = action === "APPROVED";
+        case 'Permission Request':
+          apiEndpoint = `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`;
+          const fromTime = dayjs(request.fromTime, ['HH:mm', 'HHmm']).format('HH:mm');
+          const toTime = dayjs(request.toTime, ['HH:mm', 'HHmm']).format('HH:mm');
+          let hours = request.totalHours;
+          if (hours?.length === 4 && !hours.includes(':')) hours = `${hours.slice(0, 2)}:${hours.slice(2)}`;
+          emailParams = {
+            name: request.employee.name,
+            from_name: employeeName,
+            start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+            from_time: fromTime,
+            to_time: toTime,
+            total_hours: hours,
+            status: action,
+            status_message: action === "APPROVED" ? "Approved" : "Rejected",
+            remarks: request.remarks || "N/A",
+            email: request.employeeEmail,
+          };
+          serviceId = 'service_9ucz1v3';
+          templateId = 'template_om3wfui';
+          publicKey = 'Opp4e1xb0JkW0bocB';
+          break;
 
-      const templateParams = {
-        name: request.employeeName,
-        from_name: employeeName,
-        leave_type: request.leaveType,
-        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
-        end_date: dayjs(request.toDate).format("DD-MM-YYYY"),
-        total_days: request.totalDays,
-        status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
-      };
+        case 'Compensatory Off':
+          apiEndpoint = `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`;
+          emailParams = {
+            name: request.employee.name,
+            from_name: employeeName,
+            date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+            status: action,
+            status_message: action === "APPROVED" ? "Approved" : "Rejected",
+            remarks: request.remarks || "N/A",
+            email: request.employeeEmail,
+          };
+          serviceId = 'service_y4jqb7q';
+          templateId = 'template_qf406wl';
+          publicKey = '4wxbCMaMoQh0TD6tx';
+          break;
 
-      // 3. Send email notification
-      await emailjs.send(
-        'service_hff8dd7',
-        'template_0pmh0cu',
-        templateParams,
-        'G6cKiPBXzCvlFaOuo'
-      );
-
-      toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
-      });
-
-    } catch (error) {
-      console.error(`Error ${action.toLowerCase()}ing request:`, error);
-
-      // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
-
-      toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
-      });
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleActionPermission = async (request, action) => {
-    setProcessingId(request.id);
-
-    try {
-      // 1. Make API call to approve/reject
-      await apiCalls(
-        'put',
-        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
-      );
-
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
-
-      const isApproved = action === "APPROVED";
-
-      const fromTimeFormatted = request.fromTime
-        ? dayjs(request.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
-
-      const toTimeFormatted = request.toTime
-        ? dayjs(request.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
-
-      let totalHoursFormatted = request.totalHours || '';
-      if (totalHoursFormatted.length === 4 && !totalHoursFormatted.includes(':')) {
-        // e.g., "0100" => "01:00"
-        totalHoursFormatted = `${totalHoursFormatted.slice(0, 2)}:${totalHoursFormatted.slice(2)}`;
+        default:
+          throw new Error("Invalid request type");
       }
 
-      const templateParams = {
-        name: request.employeeName,
-        from_name: employeeName,
-        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
-        from_time: fromTimeFormatted,
-        to_time: toTimeFormatted,
-        total_hours: totalHoursFormatted,
-        status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
-      };
-
-      // 3. Send email notification
-      await emailjs.send(
-        'service_9ucz1v3',
-        'template_om3wfui',
-        templateParams,
-        'Opp4e1xb0JkW0bocB'
-      );
-
-      toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
-      });
-
+      await apiCalls('put', apiEndpoint);
+      setNotifications(prev => prev.filter(r => r.id !== request.id));
+      await emailjs.send(serviceId, templateId, emailParams, publicKey);
+      toast.success(`Request ${action.toLowerCase()} successfully`, { autoClose: 3000 });
     } catch (error) {
-      console.error(`Error ${action.toLowerCase()}ing request:`, error);
-
-      // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
-
-      toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
-      });
+      console.error(`Failed to ${action.toLowerCase()} request:`, error);
+      toast.error(`Failed to ${action.toLowerCase()} request`, { autoClose: 3000 });
     } finally {
       setProcessingId(null);
     }
   };
 
-  const handleActionCompoOff = async (request, action) => {
-    setProcessingId(request.id);
+  const NotificationCard = ({ notification }) => (
+    <Card sx={{ mb: 2, borderRadius: 2, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+      <CardContent>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar src={notification.employee?.avatar} sx={{ width: 40, height: 40 }}>
+              {notification.employee?.name?.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {notification.employee?.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {notification.type}
+              </Typography>
+            </Box>
+          </Stack>
+          <Chip
+            label={notification.status}
+            color={statusColors[notification.status]}
+            size="small"
+            sx={{ fontWeight: 500 }}
+          />
+        </Stack>
 
-    try {
-      // 1. Make API call to approve/reject
-      await apiCalls(
-        'put',
-        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
-      );
+        <Divider sx={{ my: 2 }} />
 
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+        <Stack spacing={1.5}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <EventIcon fontSize="small" color="action" />
+            <Typography variant="body2">
+              {dayjs(notification.fromDate).format('DD MMM')} - {dayjs(notification.toDate).format('DD MMM YYYY')}
+              <span style={{ marginLeft: 8, color: '#666' }}>
+                ({notification.days} day{notification.days > 1 ? 's' : ''})
+              </span>
+            </Typography>
+          </Stack>
 
-      const isApproved = action === "APPROVED";
+          <Stack direction="row" spacing={1} alignItems="center">
+            <WorkIcon fontSize="small" color="action" />
+            <Typography variant="body2">
+              {notification.employee.department}
+            </Typography>
+          </Stack>
 
-      const templateParams = {
-        name: request.employeeName,
-        from_name: employeeName,
-        date: dayjs(request.compOffDate).format("DD-MM-YYYY"),
-        status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
-      };
+          {notification.remarks && (
+            <Stack direction="row" spacing={1} alignItems="flex-start">
+              <PersonIcon fontSize="small" color="action" />
+              <Typography variant="body2" style={{ fontStyle: 'italic' }}>
+                "{notification.remarks}"
+              </Typography>
+            </Stack>
+          )}
+        </Stack>
+      </CardContent>
 
-      // 3. Send email notification
-      await emailjs.send(
-        'service_y4jqb7q',
-        'template_qf406wl',
-        templateParams,
-        '4wxbCMaMoQh0TD6tx'
-      );
-
-      toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
-      });
-
-    } catch (error) {
-      console.error(`Error ${action.toLowerCase()}ing request:`, error);
-
-      // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
-
-      toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
-      });
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const notification = notifications.find(n => n.status === 'Pending') || notifications[0];
+      {notification.status === 'Pending' && (
+        <CardActions sx={{ justifyContent: 'flex-end', gap: 1, px: 2, pb: 2 }}>
+          <Button
+            size="small"
+            variant="contained"
+            color="success"
+            disabled={processingId === notification.id}
+            onClick={() => handleAction(notification, "APPROVED")}
+          >
+            Approve
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            color="error"
+            disabled={processingId === notification.id}
+            onClick={() => handleAction(notification, "REJECTED")}
+          >
+            Reject
+          </Button>
+        </CardActions>
+      )}
+    </Card>
+  );
 
   if (loading) {
     return <Typography textAlign="center">Loading notifications...</Typography>;
   }
 
-  if (!notification) {
+  if (notifications.length === 0) {
     return <Typography textAlign="center">No notifications available</Typography>;
   }
 
   return (
-    <Box sx={{ maxWidth: 600, margin: '0 auto', p: 1 }}>
-      <Card sx={{ borderRadius: 2, backgroundColor: '#ffffff', boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)' }}>
-        <CardContent>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Avatar src={notification.employee?.avatar} sx={{ width: 48, height: 48 }}>
-                {notification.employee?.name?.charAt(0) || '?'}
-              </Avatar>
-              <Box>
-                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                  {notification.employee?.name}
-                </Typography>
-                {/* <Typography variant="body2" color="text.secondary">
-                  {notification.employee?.position}, {notification.employee?.department}
-                </Typography> */}
+    <Box sx={{ maxWidth: 800, margin: '0 auto', p: 2 }}>
+      {/* Notification Count Header */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>Pending Notifications</Typography>
+        <Chip
+          label={`Total: ${notifications.length}`}
+          color="primary"
+          size="small"
+        />
+      </Box>
+
+      {/* Show the first notification */}
+      <NotificationCard notification={notifications[0]} />
+
+      {notifications.length > 1 && (
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
+          <Button
+            variant="outlined"
+            startIcon={<NotificationsIcon />}
+            onClick={() => setOpenModal(true)}
+            sx={{ borderRadius: 50, px: 4 }}
+          >
+            View All ({notifications.length})
+          </Button>
+        </Box>
+      )}
+
+      <Dialog
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        fullWidth
+        maxWidth="md"
+        scroll="paper"
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #eee', py: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={1.5}>
+            <NotificationsIcon color="primary" />
+            <Typography variant="h6">Pending Requests</Typography>
+            <Chip label={notifications.length} color="primary" size="small" />
+          </Stack>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ py: 2 }}>
+          <List sx={{ py: 0 }}>
+            {notifications.map((notification) => (
+              <Box key={notification.id} sx={{ mb: 2 }}>
+                <NotificationCard notification={notification} />
               </Box>
-            </Stack>
-            <Chip
-              label={notification.status}
-              color={statusColors[notification.status] || 'default'}
-              size="small"
-              sx={{ fontWeight: 500 }}
-            />
-          </Stack>
+            ))}
+          </List>
+        </DialogContent>
 
-          <Divider sx={{ my: 2 }} />
-
-          <Stack spacing={1.5}>
-            <Stack direction="row" spacing={2}>
-              <WorkIcon color="action" fontSize="small" />
-              <Typography variant="body2">
-                <strong>Request Type:</strong> {notification.type}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <EventIcon color="action" fontSize="small" />
-              <Typography variant="body2">
-                <strong>Dates:</strong> {notification.dates}
-                {notification.type === 'Leave Request' && ` (${notification.days} day${notification.days > 1 ? 's' : ''})`}
-                {notification.type === 'Overtime Claim' && ` (${notification.hours} hours)`}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={2}>
-              <NotificationsIcon color="action" fontSize="small" />
-              <Typography variant="body2">
-                <strong>Submitted:</strong> {new Date(notification.submitted).toLocaleString()}
-              </Typography>
-            </Stack>
-          </Stack>
-        </CardContent>
-
-        <CardActions sx={{ justifyContent: 'flex-end', pt: 0, pb: 2, px: 2 }}>
-          {notification.status === 'Pending' && (
-            <>
-              <Button size="small" variant="contained" color="success"
-                onClick={() => {
-                  if (notification.type === "Leave Request") {
-                    handleActionLeave(notification, "APPROVED");
-                  } else if (notification.type === "Permission Request") {
-                    handleActionPermission(notification, "APPROVED");
-                  } else if (notification.type === "Compensatory Off") {
-                    handleActionCompoOff(notification, "APPROVED");
-                  }
-                }}
-                sx={{ borderRadius: 2, px: 2 }}>
-                Approve
-              </Button>
-              <Button size="small" variant="outlined" color="error"
-                onClick={() => {
-                  if (notification.type === "Leave Request") {
-                    handleActionLeave(notification, "REJECTED");
-                  } else if (notification.type === "Permission Request") {
-                    handleActionPermission(notification, "REJECTED");
-                  } else if (notification.type === "Compensatory Off") {
-                    handleActionCompoOff(notification, "REJECTED");
-                  }
-                }}
-                sx={{ borderRadius: 2, px: 2 }}>
-                Reject
-              </Button>
-            </>
-          )}
-        </CardActions>
-      </Card>
-    </Box >
+        <DialogActions sx={{ borderTop: '1px solid #eee', py: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<CloseIcon />}
+            onClick={() => setOpenModal(false)}
+            sx={{ borderRadius: 50, px: 4 }}
+          >
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 
