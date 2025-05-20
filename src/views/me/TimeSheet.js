@@ -12,7 +12,25 @@ import { ToastContainer } from 'react-toastify';
 import { showToast } from 'utils/toast-component';
 import dayjs from 'dayjs';
 import { FaWhatsapp } from 'react-icons/fa';
-import Button from '@mui/material/Button';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  IconButton,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Typography,
+  Box
+} from '@mui/material';
+import DescriptionTwoToneIcon from '@mui/icons-material/DescriptionTwoTone';
+import DownloadIcon from '@mui/icons-material/Download';
+import * as XLSX from 'xlsx';
 
 const TimeSheet = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -28,12 +46,76 @@ const TimeSheet = () => {
   const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportTableOpen, setReportTableOpen] = useState(false);
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [allTimeSheetData, setAllTimeSheetData] = useState([]);
+  const [errors, setErrors] = useState({ fromDate: '', toDate: '' });
 
   const [loading, setLoading] = useState(false);
   const [weekOff, setWeekOff] = useState([]);
   const [formRows, setFormRows] = useState([{ projectName: '', fromTime: '', toTime: '', description: '' }]);
   const handleAddRow = () => {
     setFormRows([...formRows, { projectName: '', fromTime: '', toTime: '', description: '' }]);
+  };
+
+  const handleReportIconClick = () => {
+    setFromDate('');
+    setToDate('');
+    setErrors({ fromDate: '', toDate: '' });
+    setReportDialogOpen(true);
+  };
+
+  const handleSubmitReport = async () => {
+    const newErrors = {};
+    if (!fromDate) newErrors.fromDate = 'From Date is required';
+    if (!toDate) newErrors.toDate = 'To Date is required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      const result = await apiCalls(
+        'get',
+        `timesheet/getTimeSheetDescByOrgId?branchCode=WDSBLR&empCode=WDS027&fromDate=${fromDate}&orgId=1000000001&toDate=${toDate}`
+      );
+      const data = result?.paramObjectsMap?.timeSheetVO || [];
+
+      setAllTimeSheetData(data); // ✅ FIX: use correct state
+      setReportDialogOpen(false);
+      setReportTableOpen(true);
+    } catch (err) {
+      console.error('Error fetching report:', err);
+    }
+  };
+
+  const handleDownload = () => {
+    const rows = [];
+
+    allTimeSheetData.forEach((entry) => {
+      const details = entry.timeSheetDetailsVO || [];
+      details.forEach((detail, index) => {
+        rows.push({
+          Date: index === 0 ? entry.date : '',
+          'Employee Name': index === 0 ? entry.employeeName : '',
+          'Employee Code': index === 0 ? entry.employeeCode : '',
+          'Total Hours': index === 0 ? entry.totalhours : '',
+          Project: detail.projectName,
+          'From Time': detail.fromTime,
+          'To Time': detail.toTime,
+          Description: detail.description
+        });
+      });
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'TimeSheet');
+
+    XLSX.writeFile(workbook, 'TimeSheetReport.xlsx');
   };
 
   const handleDeleteRow = (index) => {
@@ -426,8 +508,9 @@ const TimeSheet = () => {
             icon={SaveIcon}
             isLoading={isLoading}
             // onClick={handleSave}
-            margin="0 10px 0 10px"
+            // margin="0 10px 0 10px"
           />
+          <ActionButton title="Report" icon={DescriptionTwoToneIcon} onClick={handleReportIconClick} />
         </div>
       </div>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -554,6 +637,100 @@ const TimeSheet = () => {
           </div>
         </div>
       )}
+      <Dialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)}>
+        <DialogTitle>Generate Report</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="From Date"
+            type="date"
+            fullWidth
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            error={!!errors.fromDate}
+            helperText={errors.fromDate}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            label="To Date"
+            type="date"
+            fullWidth
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            error={!!errors.toDate}
+            helperText={errors.toDate}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmitReport}>
+            Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={reportTableOpen} onClose={() => setReportTableOpen(false)} fullWidth maxWidth="xl">
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
+              Time Sheet Report
+            </Typography>
+            <IconButton onClick={handleDownload} color="primary">
+              <DownloadIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#1976d2' }}>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Date</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Employee Name</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Employee Code</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Total Hours</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Project</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>From Time</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>To Time</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Description</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {allTimeSheetData.length > 0 ? (
+                allTimeSheetData.map((entry, index) => {
+                  const details = entry.timeSheetDetailsVO || [];
+                  return details.map((detail, detailIndex) => (
+                    <TableRow key={`${entry.id}-${detail.id}`}>
+                      {/* Show date, employee name, and total hours only for the first project row */}
+                      {detailIndex === 0 ? (
+                        <>
+                          <TableCell rowSpan={details.length}>{entry.date}</TableCell>
+                          <TableCell rowSpan={details.length}>{entry.employeeName}</TableCell>
+                          <TableCell rowSpan={details.length}>{entry.employeeCode}</TableCell>
+                          <TableCell rowSpan={details.length}>{entry.totalhours}</TableCell>
+                        </>
+                      ) : null}
+                      <TableCell>{detail.projectName}</TableCell>
+                      <TableCell>{detail.fromTime}</TableCell>
+                      <TableCell>{detail.toTime}</TableCell>
+                      <TableCell>{detail.description}</TableCell>
+                    </TableRow>
+                  ));
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    No data found
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setReportTableOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <ToastContainer />
     </div>
   );

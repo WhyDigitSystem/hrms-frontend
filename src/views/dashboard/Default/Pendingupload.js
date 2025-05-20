@@ -1,4 +1,4 @@
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
 import {
   Box,
   Typography,
@@ -15,12 +15,12 @@ import {
   IconButton,
   Tooltip,
   CircularProgress
-} from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
-import MainCard from "ui-component/cards/MainCard";
-import { ThumbUp, ThumbDown, Close, ArrowForward } from "@mui/icons-material";
-import { useEffect, useState } from "react";
-import apiCalls from "apicall";
+} from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
+import MainCard from 'ui-component/cards/MainCard';
+import { ThumbUp, ThumbDown, Close, ArrowForward } from '@mui/icons-material';
+import { useEffect, useState } from 'react';
+import apiCalls from 'apicall';
 import emailjs from '@emailjs/browser';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
@@ -40,7 +40,8 @@ const BackgroundImage = () => {
         overflow: 'hidden',
         zIndex: -1,
         opacity: 0.15,
-        backgroundImage: 'url(https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)',
+        backgroundImage:
+          'url(https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         filter: 'blur(2px)'
@@ -68,35 +69,34 @@ const GradientOverlay = () => {
 
 const StyledCard = styled(MainCard)(({ theme }) => ({
   background: `rgba(255, 255, 255, 0.85)`,
-  backdropFilter: "blur(12px)",
-  borderRadius: "24px",
-  boxShadow: "0px 8px 32px rgba(0, 0, 0, 0.1)",
-  transition: "all 0.3s ease-in-out",
-  position: "relative",
-  overflow: "hidden",
+  backdropFilter: 'blur(12px)',
+  borderRadius: '24px',
+  boxShadow: '0px 8px 32px rgba(0, 0, 0, 0.1)',
+  transition: 'all 0.3s ease-in-out',
+  position: 'relative',
+  overflow: 'hidden',
   border: `1px solid rgba(255, 255, 255, 0.3)`,
   borderLeft: `4px solid #364152`, // Added left border color
-  "&:hover": {
-    boxShadow: "0px 15px 35px rgba(0, 0, 0, 0.15)",
-    transform: "translateY(-2px)"
-  },
+  '&:hover': {
+    boxShadow: '0px 15px 35px rgba(0, 0, 0, 0.15)',
+    transform: 'translateY(-2px)'
+  }
 }));
 
 const RequestItem = styled(Box)(({ theme }) => ({
   padding: theme.spacing(2.5),
   marginBottom: theme.spacing(1.5),
-  borderRadius: "16px",
+  borderRadius: '16px',
   background: theme.palette.background.paper,
-  boxShadow: "0px 4px 16px rgba(0, 0, 0, 0.05)",
-  transition: "all 0.2s ease",
+  boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.05)',
+  transition: 'all 0.2s ease',
   border: `1px solid ${theme.palette.divider}`,
   borderLeft: `4px solid #364152`, // Added left border color
-  "&:hover": {
-    transform: "translateY(-3px)",
-    boxShadow: "0px 6px 20px rgba(0, 0, 0, 0.1)",
-  },
+  '&:hover': {
+    transform: 'translateY(-3px)',
+    boxShadow: '0px 6px 20px rgba(0, 0, 0, 0.1)'
+  }
 }));
-
 
 const IconButtonStyled = styled(IconButton)(({ theme, actiontype }) => ({
   width: 40,
@@ -145,12 +145,13 @@ const PendingApproval = ({ isLoading }) => {
   const [processingId, setProcessingId] = useState(null);
   // const [processingId, setProcessingId] = useState(null);
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
+  const [empCode, setEmpCode] = useState(localStorage.getItem('employeeCode'));
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-
   // const orgId = localStorage.getItem("orgId");
-  const employeeCode = localStorage.getItem("employeeCode");
+  const employeeCode = localStorage.getItem('employeeCode');
 
   useEffect(() => {
     getAllRequests();
@@ -169,10 +170,20 @@ const PendingApproval = ({ isLoading }) => {
     try {
       setLoading(true);
 
-      const [leaveResponse, permissionResponse, compoOffResponse] = await Promise.all([
-        apiCalls("get", `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`),
-        apiCalls("get", `employeemaster/getPendingPermissionRequest?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`),
-        apiCalls("get", `leaveprocess/getCompoffRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`)
+      const [leaveResponse, permissionResponse, compoOffResponse, checkOutResponse] = await Promise.all([
+        apiCalls(
+          'get',
+          `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`
+        ),
+        apiCalls(
+          'get',
+          `employeemaster/getPendingPermissionRequest?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`
+        ),
+        apiCalls(
+          'get',
+          `leaveprocess/getCompoffRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`
+        ),
+        apiCalls('get', `basicmaster/getRequestCheckOutByOrgId?branch=${branch}&orgId=${orgId}&reportingPersoncode=${employeeCode}`)
       ]);
 
       // Extract leave requests
@@ -192,27 +203,37 @@ const PendingApproval = ({ isLoading }) => {
         compoOffRequests = [compoOffRequests];
       }
 
-      // Filter both to only pending or no status
-      const pendingLeaveRequests = leaveRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
-      const pendingPermissionRequests = permissionRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
-      const pendingCompoOffRequests = compoOffRequests.filter(req => !req.approveStatus || req.approveStatus === 'PENDING');
+      // Extract checkout requests
+      let checkOutRequests = checkOutResponse.paramObjectsMap?.checkInVO || [];
+      if (!Array.isArray(checkOutRequests)) {
+        checkOutRequests = [checkOutRequests];
+      }
 
-      // Merge both lists
-      const combinedRequests = [...pendingLeaveRequests, ...pendingPermissionRequests, ...pendingCompoOffRequests];
+      // Filter to only pending
+      const pendingLeaveRequests = leaveRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
+      const pendingPermissionRequests = permissionRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
+      const pendingCompoOffRequests = compoOffRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
+      const pendingCheckoutRequests = checkOutRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
 
-      // Set into state
+      // Merge all pending requests
+      const combinedRequests = [
+        ...pendingLeaveRequests,
+        ...pendingPermissionRequests,
+        ...pendingCompoOffRequests,
+        ...pendingCheckoutRequests
+      ];
+
+      // Set to state
       setLeaveRequests(combinedRequests);
-      setScreenNames(combinedRequests.map(item => item.screenName));
-
+      setScreenNames(combinedRequests.map((item) => item.screenName));
     } catch (error) {
-      console.error("Error fetching combined leave and permission requests:", error);
-      // toast.error("Failed to load leave and permission requests");
+      console.error('Error fetching combined requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  console.log('Permission', screenNames)
+  console.log('Permission', screenNames);
 
   const handleOpenModal = () => {
     setOpenModal(true);
@@ -233,44 +254,38 @@ const PendingApproval = ({ isLoading }) => {
         `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
       );
 
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
 
-      const isApproved = action === "APPROVED";
+      const isApproved = action === 'APPROVED';
 
       const templateParams = {
         name: request.employeeName,
         from_name: employeeName,
         leave_type: request.leaveType,
-        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
-        end_date: dayjs(request.toDate).format("DD-MM-YYYY"),
+        start_date: dayjs(request.fromDate).format('DD-MM-YYYY'),
+        end_date: dayjs(request.toDate).format('DD-MM-YYYY'),
         total_days: request.totalDays,
         status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
+        status_message: isApproved ? 'Approved' : 'Rejected',
+        status_class: isApproved ? 'status-approved' : 'status-rejected',
+        remarks: request.remarks || 'N/A',
+        email: request.employeeEmail
       };
 
       // 3. Send email notification
-      await emailjs.send(
-        'service_hff8dd7',
-        'template_0pmh0cu',
-        templateParams,
-        'G6cKiPBXzCvlFaOuo'
-      );
+      await emailjs.send('service_hff8dd7', 'template_0pmh0cu', templateParams, 'G6cKiPBXzCvlFaOuo');
 
       toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
-
     } catch (error) {
       console.error(`Error ${action.toLowerCase()}ing request:`, error);
 
       // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+      setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
 
       toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
     } finally {
       setProcessingId(null);
@@ -287,17 +302,13 @@ const PendingApproval = ({ isLoading }) => {
         `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
       );
 
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
 
-      const isApproved = action === "APPROVED";
+      const isApproved = action === 'APPROVED';
 
-      const fromTimeFormatted = request.fromTime
-        ? dayjs(request.fromTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
+      const fromTimeFormatted = request.fromTime ? dayjs(request.fromTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
 
-      const toTimeFormatted = request.toTime
-        ? dayjs(request.toTime, ['HH:mm', 'HHmm']).format('HH:mm')
-        : '';
+      const toTimeFormatted = request.toTime ? dayjs(request.toTime, ['HH:mm', 'HHmm']).format('HH:mm') : '';
 
       let totalHoursFormatted = request.totalHours || '';
       if (totalHoursFormatted.length === 4 && !totalHoursFormatted.includes(':')) {
@@ -308,37 +319,31 @@ const PendingApproval = ({ isLoading }) => {
       const templateParams = {
         name: request.employeeName,
         from_name: employeeName,
-        start_date: dayjs(request.fromDate).format("DD-MM-YYYY"),
+        start_date: dayjs(request.fromDate).format('DD-MM-YYYY'),
         from_time: fromTimeFormatted,
         to_time: toTimeFormatted,
         total_hours: totalHoursFormatted,
         status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
+        status_message: isApproved ? 'Approved' : 'Rejected',
+        status_class: isApproved ? 'status-approved' : 'status-rejected',
+        remarks: request.remarks || 'N/A',
+        email: request.employeeEmail
       };
 
       // 3. Send email notification
-      await emailjs.send(
-        'service_9ucz1v3',
-        'template_om3wfui',
-        templateParams,
-        'Opp4e1xb0JkW0bocB'
-      );
+      await emailjs.send('service_9ucz1v3', 'template_om3wfui', templateParams, 'Opp4e1xb0JkW0bocB');
 
       toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
-
     } catch (error) {
       console.error(`Error ${action.toLowerCase()}ing request:`, error);
 
       // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+      setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
 
       toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
     } finally {
       setProcessingId(null);
@@ -355,41 +360,35 @@ const PendingApproval = ({ isLoading }) => {
         `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
       );
 
-      setLeaveRequests(prev => prev.filter(r => r.id !== request.id));
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
 
-      const isApproved = action === "APPROVED";
+      const isApproved = action === 'APPROVED';
 
       const templateParams = {
         name: request.employeeName,
         from_name: employeeName,
-        date: dayjs(request.compOffDate).format("DD-MM-YYYY"),
+        date: dayjs(request.compOffDate).format('DD-MM-YYYY'),
         status: action,
-        status_message: isApproved ? "Approved" : "Rejected",
-        status_class: isApproved ? "status-approved" : "status-rejected",
-        remarks: request.remarks || "N/A",
-        email: request.employeeEmail,
+        status_message: isApproved ? 'Approved' : 'Rejected',
+        status_class: isApproved ? 'status-approved' : 'status-rejected',
+        remarks: request.remarks || 'N/A',
+        email: request.employeeEmail
       };
 
       // 3. Send email notification
-      await emailjs.send(
-        'service_y4jqb7q',
-        'template_qf406wl',
-        templateParams,
-        '4wxbCMaMoQh0TD6tx'
-      );
+      await emailjs.send('service_y4jqb7q', 'template_qf406wl', templateParams, '4wxbCMaMoQh0TD6tx');
 
       toast.success(`Request ${action.toLowerCase()} successfully`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
-
     } catch (error) {
       console.error(`Error ${action.toLowerCase()}ing request:`, error);
 
       // Revert UI if error occurs
-      setLeaveRequests(prev => [...prev, request].sort((a, b) => a.id - b.id));
+      setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
 
       toast.error(`Failed to ${action.toLowerCase()} request`, {
-        autoClose: 3000,
+        autoClose: 3000
       });
     } finally {
       setProcessingId(null);
@@ -407,12 +406,8 @@ const PendingApproval = ({ isLoading }) => {
           size="small"
           sx={{
             fontWeight: 600,
-            backgroundColor: request.approveStatus === 'APPROVED'
-              ? 'rgba(76, 175, 80, 0.1)'
-              : 'rgba(244, 67, 54, 0.1)',
-            color: request.approveStatus === 'APPROVED'
-              ? theme.palette.success.dark
-              : theme.palette.error.dark
+            backgroundColor: request.approveStatus === 'APPROVED' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
+            color: request.approveStatus === 'APPROVED' ? theme.palette.success.dark : theme.palette.error.dark
           }}
         />
       );
@@ -425,23 +420,19 @@ const PendingApproval = ({ isLoading }) => {
             <IconButtonStyled
               actiontype="approve"
               onClick={() => {
-                if (request.screenName === "LEAVE REQUEST") {
-                  handleActionLeave(request, "APPROVED");
+                if (request.screenName === 'LEAVE REQUEST') {
+                  handleActionLeave(request, 'APPROVED');
                 }
-                if (request.screenName === "PERMISSION REQUEST") {
-                  handleActionPermission(request, "APPROVED");
+                if (request.screenName === 'PERMISSION REQUEST') {
+                  handleActionPermission(request, 'APPROVED');
                 } else {
-                  handleActionCompoOff(request, "APPROVED"); // You can customize this if you need different logic
+                  handleActionCompoOff(request, 'APPROVED'); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "APPROVED")}
               disabled={isProcessing}
             >
-              {isProcessing ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <ThumbUp fontSize="small" />
-              )}
+              {isProcessing ? <CircularProgress size={20} color="inherit" /> : <ThumbUp fontSize="small" />}
             </IconButtonStyled>
           </span>
         </Tooltip>
@@ -451,23 +442,19 @@ const PendingApproval = ({ isLoading }) => {
             <IconButtonStyled
               actiontype="reject"
               onClick={() => {
-                if (request.screenName === "LEAVE REQUEST") {
-                  handleActionLeave(request, "REJECTED");
+                if (request.screenName === 'LEAVE REQUEST') {
+                  handleActionLeave(request, 'REJECTED');
                 }
-                if (request.screenName === "PERMISSION REQUEST") {
-                  handleActionPermission(request, "REJECTED");
+                if (request.screenName === 'PERMISSION REQUEST') {
+                  handleActionPermission(request, 'REJECTED');
                 } else {
-                  handleActionCompoOff(request, "REJECTED"); // You can customize this if you need different logic
+                  handleActionCompoOff(request, 'REJECTED'); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "REJECTED")}
               disabled={isProcessing}
             >
-              {isProcessing ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <ThumbDown fontSize="small" />
-              )}
+              {isProcessing ? <CircularProgress size={20} color="inherit" /> : <ThumbDown fontSize="small" />}
             </IconButtonStyled>
           </span>
         </Tooltip>
@@ -485,10 +472,7 @@ const PendingApproval = ({ isLoading }) => {
             Pending Approvals
           </Typography>
           {leaveRequests.length > 3 && (
-            <ViewAllButton
-              onClick={handleOpenModal}
-              endIcon={<ArrowForward sx={{ fontSize: '18px' }} />}
-            >
+            <ViewAllButton onClick={handleOpenModal} endIcon={<ArrowForward sx={{ fontSize: '18px' }} />}>
               View All ({leaveRequests.length})
             </ViewAllButton>
           )}
@@ -570,16 +554,18 @@ const PendingApproval = ({ isLoading }) => {
             }
           }}
         >
-          <DialogTitle sx={{
-            bgcolor: theme.palette.primary.main,
-            color: 'white',
-            py: 2,
-            px: 3,
-            background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}>
+          <DialogTitle
+            sx={{
+              bgcolor: theme.palette.primary.main,
+              color: 'white',
+              py: 2,
+              px: 3,
+              background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            }}
+          >
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="h6" fontWeight="700">
+              <Typography variant="h3" fontWeight="700">
                 All Pending Leave Requests
               </Typography>
               <IconButton
@@ -598,7 +584,7 @@ const PendingApproval = ({ isLoading }) => {
 
           <DialogContent dividers sx={{ py: 3, px: 4 }}>
             <Stack spacing={3}>
-              {leaveRequests.map((request, index) => (
+              {/* {leaveRequests.map((request, index) => (
                 <Box key={index}>
                   <Grid container spacing={3} alignItems="center">
                     <Grid item xs={12} md={4}>
@@ -681,13 +667,186 @@ const PendingApproval = ({ isLoading }) => {
                   </Box>
 
                   {index < leaveRequests.length - 1 && (
-                    <Divider sx={{
-                      my: 3,
-                      borderColor: 'rgba(0, 0, 0, 0.08)'
-                    }} />
+                    <Divider
+                      sx={{
+                        my: 3,
+                        borderColor: 'rgba(0, 0, 0, 0.08)'
+                      }}
+                    />
                   )}
                 </Box>
-              ))}
+              ))} */}
+              {leaveRequests.map((request, index) => {
+                const screen = request.screenName;
+                return (
+                  <Box key={index}>
+                    <Grid container spacing={3} alignItems="center">
+                      <Grid item xs={12} md={4}>
+                        <Box display="flex" alignItems="center">
+                          <Avatar
+                            sx={{
+                              bgcolor: theme.palette.primary.main,
+                              width: 52,
+                              height: 52,
+                              mr: 2,
+                              fontSize: '1.3rem',
+                              fontWeight: 600,
+                              boxShadow: theme.shadows[3]
+                            }}
+                          >
+                            {request.employeeName?.charAt(0) || 'U'}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="subtitle1" fontWeight="600">
+                              {request.employeeName || 'Unknown Employee'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {request.department || 'No department specified'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12} md={8}>
+                        <Grid container spacing={2}>
+                          {screen === 'LEAVE REQUEST' && (
+                            <>
+                              <Grid item xs={6} sm={3}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Leave Type
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.leaveType || '-'}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Duration
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.totalDays || 0} day{request.totalDays !== '1.00' ? 's' : ''}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Typography variant="body2" color="text.secondary">
+                                  From Date
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.startDate || '-'}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={3}>
+                                <Typography variant="body2" color="text.secondary">
+                                  To Date
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.endDate || '-'}
+                                </Typography>
+                              </Grid>
+                            </>
+                          )}
+
+                          {screen === 'PERMISSION REQUEST' && (
+                            <>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Permission Request
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.date}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Time
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.fromTime} - {request.toTime}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Total Hours
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.totalHours}
+                                </Typography>
+                              </Grid>
+                            </>
+                          )}
+
+                          {screen === 'COMPENSATORY OFF' && (
+                            <>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Leave Type
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.leaveType}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Comp Off Date
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.compOffDate}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  Total Days
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.totalDays}
+                                </Typography>
+                              </Grid>
+                            </>
+                          )}
+
+                          {screen === 'CHECKINOUT' && (
+                            <>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  CheckOut Date
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.checkInDate}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  CheckOut Time
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.entryTime}
+                                </Typography>
+                              </Grid>
+                            </>
+                          )}
+                        </Grid>
+
+                        {request.reason && (
+                          <Box mt={2}>
+                            <Typography variant="body2" color="text.secondary">
+                              Reason
+                            </Typography>
+                            <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+                              {request.reason}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Grid>
+                    </Grid>
+
+                    <Box mt={3} display="flex" justifyContent="flex-end">
+                      <ActionButtons request={request} />
+                    </Box>
+
+                    {index < leaveRequests.length - 1 && <Divider sx={{ my: 3, borderColor: 'rgba(0,0,0,0.1)' }} />}
+                  </Box>
+                );
+              })}
             </Stack>
           </DialogContent>
 
@@ -717,7 +876,7 @@ const PendingApproval = ({ isLoading }) => {
 };
 
 PendingApproval.propTypes = {
-  isLoading: PropTypes.bool,
+  isLoading: PropTypes.bool
 };
 
 export default PendingApproval;
