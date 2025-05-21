@@ -59,7 +59,8 @@ const PermissionApproval = Loadable(lazy(() => import('views/team/PermissionAppr
 const AttendanceReport = Loadable(lazy(() => import('views/team/AttendanceReport')));
 const TodayAttendance = Loadable(lazy(() => import('views/team/TodayAttendance')));
 
-
+// manageTax
+const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')))
 
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
@@ -220,8 +221,12 @@ const HrmsRoute = {
     {
       path: '/team/TodayAttendance',
       element: < TodayAttendance />
+    },
+    // manageTax
+     {
+      path: '/ManageTax/manageTax',
+      element: < ManageTax />
     }
-
 
 
   ]

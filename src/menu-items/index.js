@@ -9,6 +9,7 @@ import calendar from './calendar';
 import me from './me';
 import team from './team';
 import finance from './finance';
+import manageTax from './manageTax';
 
 // Function to get menu items based on localStorage value
 const getMenuItems = () => {
@@ -38,7 +39,7 @@ const getMenuItems = () => {
   switch (localStorageValue) {
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, me, finance, team]
+        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, me, finance, team,manageTax ]
       };
     case 'USER':
       return {
