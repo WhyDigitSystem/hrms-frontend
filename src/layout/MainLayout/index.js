@@ -1,18 +1,20 @@
-import { useDispatch, useSelector } from 'react-redux';
-import { Outlet } from 'react-router-dom';
-
 // material-ui
-import { styled, useTheme } from '@mui/material/styles';
 import { AppBar, Box, CssBaseline, Toolbar, useMediaQuery } from '@mui/material';
+import { styled, useTheme } from '@mui/material/styles';
+
+import { useDispatch, useSelector } from 'react-redux';
+import { Outlet, useLocation } from 'react-router-dom';
 
 // project imports
+import navigation from 'menu-items';
+import { SET_MENU } from 'store/actions';
+import { drawerWidth } from 'store/constant';
 import Breadcrumbs from 'ui-component/extended/Breadcrumbs';
+import Customization from '../SupportCenter';
 import Header from './Header';
 import Sidebar from './Sidebar';
-import Customization from '../Customization';
-import navigation from 'menu-items';
-import { drawerWidth } from 'store/constant';
-import { SET_MENU } from 'store/actions';
+
+
 
 // assets
 import { IconChevronRight } from '@tabler/icons-react';
@@ -26,13 +28,13 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' && pr
     'margin',
     open
       ? {
-          easing: theme.transitions.easing.easeOut,
-          duration: theme.transitions.duration.enteringScreen
-        }
+        easing: theme.transitions.easing.easeOut,
+        duration: theme.transitions.duration.enteringScreen
+      }
       : {
-          easing: theme.transitions.easing.sharp,
-          duration: theme.transitions.duration.leavingScreen
-        }
+        easing: theme.transitions.easing.sharp,
+        duration: theme.transitions.duration.leavingScreen
+      }
   ),
   [theme.breakpoints.up('md')]: {
     marginLeft: open ? 0 : -(drawerWidth - 20),
@@ -56,6 +58,7 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' && pr
 const MainLayout = () => {
   const theme = useTheme();
   const matchDownMd = useMediaQuery(theme.breakpoints.down('md'));
+  const location = useLocation(); // Get the current location
   // Handle left drawer
   const leftDrawerOpened = useSelector((state) => state.customization.opened);
   const dispatch = useDispatch();
@@ -63,8 +66,14 @@ const MainLayout = () => {
     dispatch({ type: SET_MENU, opened: !leftDrawerOpened });
   };
 
+  const isClientReport = location.pathname === '/Client/ClientReport';
+
+  if (isClientReport) {
+    return <Outlet />;
+  }
+
   return (
-    <Box sx={{ display: 'flex',p:1 }}>
+    <Box sx={{ display: 'flex', p: 1 }}>
       <CssBaseline />
       {/* header */}
       <AppBar
@@ -88,7 +97,7 @@ const MainLayout = () => {
       {/* main content */}
       <Main theme={theme} open={leftDrawerOpened}>
         {/* breadcrumb */}
-        <Breadcrumbs  separator={IconChevronRight} navigation={navigation} icon title rightAlign  style={{ marginTop: '20px' }}  />
+        <Breadcrumbs separator={IconChevronRight} navigation={navigation} icon title rightAlign style={{ marginTop: '20px' }} />
         <Outlet />
       </Main>
       <Customization />
