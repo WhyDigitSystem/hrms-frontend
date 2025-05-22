@@ -67,30 +67,110 @@ const TimeSheet = () => {
     setReportDialogOpen(true);
   };
 
+  // const handleSubmitReport = async () => {
+  //   const newErrors = {};
+  //   if (!fromDate) newErrors.fromDate = 'From Date is required';
+  //   if (!toDate) newErrors.toDate = 'To Date is required';
+
+  //   if (Object.keys(newErrors).length > 0) {
+  //     setErrors(newErrors);
+  //     return;
+  //   }
+
+  //   try {
+  //     const result = await apiCalls(
+  //       'get',
+  //       `timesheet/getTimeSheetDescByOrgId?branchCode=WDSBLR&empCode=WDS027&fromDate=${fromDate}&orgId=1000000001&toDate=${toDate}`
+  //     );
+  //     const data = result?.paramObjectsMap?.timeSheetVO || [];
+
+  //     setAllTimeSheetData(data); // ✅ FIX: use correct state
+  //     setReportDialogOpen(false);
+  //     setReportTableOpen(true);
+  //   } catch (err) {
+  //     console.error('Error fetching report:', err);
+  //   }
+  // };
+
   const handleSubmitReport = async () => {
     const newErrors = {};
     if (!fromDate) newErrors.fromDate = 'From Date is required';
     if (!toDate) newErrors.toDate = 'To Date is required';
-
+  
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-
+  
     try {
+      // Main timesheet API
       const result = await apiCalls(
         'get',
-        `timesheet/getTimeSheetDescByOrgId?branchCode=WDSBLR&empCode=WDS027&fromDate=${fromDate}&orgId=1000000001&toDate=${toDate}`
+        `timesheet/getTimeSheetDescByOrgId?branchCode=${branchCode}&empCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
       );
-      const data = result?.paramObjectsMap?.timeSheetVO || [];
-
-      setAllTimeSheetData(data); // ✅ FIX: use correct state
+      const timeSheetData = result?.paramObjectsMap?.timeSheetVO || [];
+  
+      // Leave report API
+      const leaveRes = await apiCalls(
+        'get',
+        `timesheet/getApprovedLeaveForTimeSheetReport?branchCode=${branchCode}&employeeCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
+      );
+      const leaveData = leaveRes?.paramObjectsMap?.timeSheetVO || [];
+  
+      // Holiday report API
+      const holidayRes = await apiCalls(
+        'get',
+        `timesheet/getHolidaysForTimeSheetReport?branchCode=${branchCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
+      );
+      const holidayData = holidayRes?.paramObjectsMap?.timeSheetVO || [];
+  
+      // Format leave and holiday data like timesheet for display compatibility
+      const formattedLeaveData = leaveData.map((item) => ({
+        date: item.leaveDate,
+        employeeName: 'LEAVE',
+        employeeCode: '',
+        totalhours: '',
+        timeSheetDetailsVO: [
+          {
+            projectName: item.leaveType,
+            fromTime: '',
+            toTime: '',
+            description: '',
+          },
+        ],
+      }));
+  
+      const formattedHolidayData = holidayData.map((item) => ({
+        date: item.leaveDate,
+        employeeName: 'HOLIDAY',
+        employeeCode: '',
+        totalhours: '',
+        timeSheetDetailsVO: [
+          {
+            projectName: item.leaveType,
+            fromTime: '',
+            toTime: '',
+            description: '',
+          },
+        ],
+      }));
+  
+      const combinedData = [
+        ...timeSheetData,
+        ...formattedLeaveData,
+        ...formattedHolidayData,
+      ];
+  
+      // Optional: sort by date if needed
+      combinedData.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+      setAllTimeSheetData(combinedData);
       setReportDialogOpen(false);
       setReportTableOpen(true);
     } catch (err) {
       console.error('Error fetching report:', err);
     }
-  };
+  };  
 
   const handleDownload = () => {
     const rows = [];
@@ -134,57 +214,6 @@ const TimeSheet = () => {
     getAllSwipeInandOut();
     getCompanyWeekOff();
   }, []);
-
-  // const renderTimeInputs = (date) => {
-  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-  //   if (weekOff.includes(dayName)) return null;
-
-  //   const dateKey = date.toDateString();
-  //   const data = timeSheetData[dateKey] || {};
-
-  //   if (data.status === 'LEAVE') {
-  //     return (
-  //       <div
-  //         style={{
-  //           marginTop: '4px',
-  //           fontSize: '12px',
-  //           fontWeight: 'bold',
-  //           color: '#b91c1c', // dark red
-  //           backgroundColor: '#fee2e2', // light red
-  //           padding: '4px 8px',
-  //           borderRadius: '4px',
-  //           textAlign: 'center'
-  //         }}
-  //       >
-  //         On Leave 🏖️
-  //       </div>
-  //     );
-  //   }
-
-  //   const formatTime = (timeStr) => {
-  //     if (!timeStr || typeof timeStr !== 'string') return '0:00';
-  //     const parts = timeStr.split(':');
-  //     if (parts.length >= 2) {
-  //       const [hour, minute] = parts;
-  //       return `${hour}:${minute}`;
-  //     } else {
-  //       return `${timeStr}:00`;
-  //     }
-  //   };
-
-  //   return (
-  //     <div className="mt-1 text-xs text-left">
-  //       {data.checkIn && (
-  //         <div>
-  //           {formatTime(data.checkIn)}
-  //           {data.checkOut && ` | ${formatTime(data.checkOut)}`}
-  //         </div>
-  //       )}
-  //       <div>Total: {formatTime(data.totalHours)} hrs</div>
-  //     </div>
-  //   );
-  // };
 
   const renderTimeInputs = (date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
@@ -246,16 +275,6 @@ const TimeSheet = () => {
       console.log('error', err);
     }
   };
-
-  // const handleDateClick = (date) => {
-  //   const dateKey = date.toDateString();
-  //   const data = timeSheetData[dateKey];
-  //   if (data?.status === 'LEAVE') {
-  //     return;
-  //   }
-  //   setSelectedDate(date);
-  //   setModalOpen(true);
-  // };
 
   const handleDateClick = async (date) => {
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
@@ -700,7 +719,6 @@ const TimeSheet = () => {
                   const details = entry.timeSheetDetailsVO || [];
                   return details.map((detail, detailIndex) => (
                     <TableRow key={`${entry.id}-${detail.id}`}>
-                      {/* Show date, employee name, and total hours only for the first project row */}
                       {detailIndex === 0 ? (
                         <>
                           <TableCell rowSpan={details.length}>{entry.date}</TableCell>
@@ -723,7 +741,7 @@ const TimeSheet = () => {
                   </TableCell>
                 </TableRow>
               )}
-            </TableBody>
+            </TableBody> 
           </Table>
         </DialogContent>
         <DialogActions>

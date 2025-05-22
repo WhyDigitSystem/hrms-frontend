@@ -1,164 +1,300 @@
+import React, { useEffect, useState } from 'react';
+import {
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableContainer,
+  Paper,
+  TextField,
+  TablePagination,
+  Modal,
+  Box,
+  Typography,
+  Button
+} from '@mui/material';
 import apiCalls from 'apicall';
-import { useEffect, useState } from 'react';
-import 'react-tabs/style/react-tabs.css';
-import 'react-toastify/dist/ReactToastify.css';
-import ToastComponent from 'utils/toast-component';
-import CommonListViewTable from '../basicMaster/CommonListViewTable';
-import { Box, Modal, Typography, TextField, Button } from '@mui/material';
+import { showToast } from 'utils/toast-component';
+import { ToastContainer } from 'react-toastify';
+import emailjs from '@emailjs/browser';
 
 const SwipeInSwipeOut = () => {
-  const [userName, setUserName] = useState(localStorage.getItem('userName'));
+  const [isLoading, setIsLoading] = useState(false);
+  const [userName] = useState(localStorage.getItem('userName'));
+  const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [empCode] = useState(localStorage.getItem('employeeCode'));
+  const [orgId] = useState(localStorage.getItem('orgId'));
   const [listViewData, setListViewData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [checkOutTime, setCheckOutTime] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [reportingPersonMail, setReportingPersonMail] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const handleCheckOutClick = (row) => {
-    console.log('Clicked row:', row); // ✅ Debug
-    setSelectedRow(row);
-    const currentTime = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    setCheckOutTime(currentTime);
-    setModalOpen(true);
-  };
-  const handleSaveTime = () => {
-    // Logic to update listViewData (or make API call)
-    console.log(`Saved time for ${selectedRow?.date}: ${checkOutTime}`);
-    setModalOpen(false);
-  };
-
-  // Define columns for the table
-  const listViewColumns = [
-    {
-      accessorKey: 'date', // New field for formatted date
-      header: 'Date',
-      size: 120
-    },
-    {
-      accessorKey: 'day', // New field for day
-      header: 'Day',
-      size: 120
-    },
-    { accessorKey: 'checkInTime', header: 'CheckIn Time', size: 120 },
-    // { accessorKey: 'checkOutTime', header: 'CheckOut Time', size: 120 },
-    {
-      accessorKey: 'checkOutTime',
-      header: 'CheckOut Time',
-      size: 120,
-      cell: ({ row }) => {
-        const value = row.original.checkOutTime?.trim(); // Trim in case of whitespace
-        const isClickable = value === '00:00:00';
-
-        return (
-          <span
-            style={{
-              cursor: isClickable ? 'pointer' : 'default',
-              color: isClickable ? 'blue' : 'black'
-            }}
-            onClick={() => {
-              if (isClickable) {
-                handleCheckOutClick(row.original);
-              }
-            }}
-          >
-            {value || '-'}
-          </span>
-        );
-      }
-    },
-    { accessorKey: 'totalWorkingHours', header: 'Gross Hours', size: 120 },
-    { accessorKey: 'effectiveFrom', header: 'Effective Hours', size: 120 }
-  ];
-
-  // Fetch data from the API
   useEffect(() => {
     getAllSwipeInandOut();
+    getReportingPerson();
   }, []);
 
-  // const getAllSwipeInandOut = async () => {
-  //   setLoading(true);
-  //   try {
-  //     const result = await apiCalls('get', `basicmaster/attendance/${userName}`);
-  //     if (result && result.paramObjectsMap && result.paramObjectsMap.Attendance) {
-  //       // Transform the data to include formatted date, day, and calculated hours
-  //       const transformedData = result.paramObjectsMap.Attendance.map((item) => ({
-  //         ...item,
-  //         date: formatDate(item.entryDate), // Format date as MM/DD/YYYY
-  //         day: getDay(item.entryDate), // Get day (e.g., Tuesday)
-  //         totalWorkingHours: formatTime(item.totalWorkingHours),
-  //         effectiveFrom: formatTime(item.effectiveFrom)
-  //       }));
-  //       setListViewData(transformedData.reverse());
-  //     }
-  //   } catch (err) {
-  //     console.error('Error fetching data:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const handleRowClick = (row) => {
+    setSelectedRow(row);
+    setCheckOutTime(row.checkOutTime || '');
+    setModalOpen(true);
+  };
 
   const getAllSwipeInandOut = async () => {
     setLoading(true);
     try {
       const result = await apiCalls('get', `basicmaster/attendance/${userName}`);
-      if (result && result.paramObjectsMap && result.paramObjectsMap.Attendance) {
-        const transformedData = result.paramObjectsMap.Attendance.map((item) => ({
+      if (result?.paramObjectsMap?.Attendance) {
+        const transformed = result.paramObjectsMap.Attendance.map((item) => ({
           ...item,
-          date: formatDate(item.entrydate), // ✅ corrected field name
-          day: getDay(item.entrydate), // ✅ corrected field name
-          totalWorkingHours: formatTime(item.TotalWorkingHours), // ✅ corrected field name
-          effectiveFrom: formatTime(item.effectivefrom) // ✅ corrected field name
+          date: formatDate(item.entrydate),
+          day: getDay(item.entrydate),
+          totalWorkingHours: formatTime(item.TotalWorkingHours),
+          effectiveFrom: formatTime(item.effectivefrom),
+          checkInTime: formatTime(item.checkInTime),
+          checkOutTime: formatTime(item.checkOutTime)
         }));
-        const sortedData = transformedData.sort((a, b) => new Date(b.entrydate) - new Date(a.entrydate));
-        setListViewData(sortedData);
-
-        // setListViewData(transformedData.reverse());
+        const sorted = transformed.sort((a, b) => new Date(b.entrydate) - new Date(a.entrydate));
+        setListViewData(sorted);
+        setFilteredData(sorted);
       }
-    } catch (err) {
-      console.error('Error fetching data:', err);
+    } catch (error) {
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Helper function to format date as MM/DD/YYYY
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+  const getReportingPerson = async () => {
+    setLoading(true);
+    try {
+      const result = await apiCalls('get', `master/getAllEmployeeByOrgIdAndEmployeeCode?employeeCode=${empCode}&orgId=${orgId}`);
+      if (result?.paramObjectsMap?.employeeVO?.length) {
+        const mail = result.paramObjectsMap.employeeVO[0]?.reportnigPersonEmail;
+        setReportingPersonMail(mail || '');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Helper function to get the day (e.g., Monday, Tuesday)
-  const getDay = (dateString) => {
-    const date = new Date(dateString);
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
+  };
+
+  const getDay = (dateStr) => {
+    const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
-  const formatTime = (timeString) => {
-    if (!timeString) return '00:00';
-    const [hours, minutes] = timeString.split(':');
-    return `${hours}:${minutes}`; // Return only hours and minutes
+  const formatTime = (timeStr) => {
+    if (!timeStr || timeStr === '00:00:00') return '00:00';
+    const [h, m] = timeStr.split(':');
+    return `${h}:${m}`;
   };
 
+  const handleSearch = (e) => {
+    const val = e.target.value.toLowerCase();
+    setSearchText(val);
+    const filtered = listViewData.filter(
+      (row) => row.date.toLowerCase().includes(val) || row.day.toLowerCase().includes(val) || row.checkInTime.toLowerCase().includes(val)
+    );
+    setFilteredData(filtered);
+    setPage(0);
+  };
+
+  const handleCheckOutClick = (row) => {
+    const now = new Date().toTimeString().slice(0, 5);
+    setSelectedRow(row);
+    setCheckOutTime(now);
+    setModalOpen(true);
+  };
+
+  const handleSave = async () => {
+    if (!selectedRow) return;
+  
+    // Convert from "dd/mm/yyyy" to "yyyy-mm-dd"
+    let formattedDate = '';
+    if (selectedRow.date.includes('/')) {
+      const [day, month, year] = selectedRow.date.split('/');
+      formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else {
+      formattedDate = selectedRow.date;
+    }
+  
+    const payload = {
+      branch: branch,
+      empCode: empCode,
+      orgId: orgId,
+      entryTime: checkOutTime,
+      reportingPersonMail: reportingPersonMail,
+      date: formattedDate, // correctly formatted here
+    };
+  
+    setIsLoading(true);
+  
+    try {
+      const response = await apiCalls('put', '/basicmaster/createRequestCheckOut', payload);
+  
+      if (response.status === true) {
+        showToast('success', 'Check-out time submitted successfully');
+        await sendEmailNotification(payload);
+  
+        const updatedData = listViewData.map((row) =>
+          row.date === selectedRow.date ? { ...row, checkOutTime } : row
+        );
+  
+        setListViewData(updatedData);
+        setFilteredData(
+          updatedData.filter(
+            (row) =>
+              row.date.toLowerCase().includes(searchText) ||
+              row.day.toLowerCase().includes(searchText) ||
+              row.checkInTime.toLowerCase().includes(searchText)
+          )
+        );
+  
+        setModalOpen(false);
+      } else {
+        showToast('error', response.paramObjectsMap?.errorMessage || 'Check-out submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting check-out:', error);
+      showToast('error', 'Check-out submission failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };  
+
+  const sendEmailNotification = async (row) => {
+    try {
+      const emailParams = {
+        name: row.notify, // ensure 'notify' is part of `selectedRow`
+        from_name: empName,
+        entryTime: row.entryTime, // should be `entryTime` not checkOutTime
+        email: row.reportingPersonMail,
+      };
+  
+      console.log('Email Params:', emailParams);
+  
+      if (!emailParams.email) {
+        console.error('Error: Recipient email is missing!');
+        showToast('error', 'Recipient email is missing!');
+        return;
+      }
+  
+      await emailjs.send('service_d3c7xso', 'template_0pef9wb', emailParams, 'uMcVJdror6W86lK6z');
+      console.log('Email Sent Successfully for', emailParams.email);
+    } catch (error) {
+      console.error('Email Sending Failed:', error);
+      showToast('error', 'Failed to send email notification. Please try again.');
+    }
+  };  
+
   return (
-    <>
-      <div className="card w-full p-6 bg-base-100 shadow-xl mb-3" style={{ padding: '20px' }}>
-        <div className=".d-flex flex-wrap justify-content-start mb-4">
-          {loading ? (
-            <p>Loading...</p>
-          ) : (
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} enableEditing={false} />
-          )}
-        </div>
-        <ToastComponent />
-      </div>
+    <div style={{ padding: 20 }}>
+      {/* <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
+        Swipe In / Swipe Out Records
+      </Typography> */}
+
+      <TextField variant="outlined" label="Search" value={searchText} onChange={handleSearch} sx={{ mb: 2 }} />
+
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow>
+              <TableCell>
+                <strong>Date</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Day</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Check-In</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Check-Out</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Gross Hours</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Effective Hours</strong>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          {/* <TableBody>
+            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+              <TableRow key={row.id} hover onClick={() => handleRowClick(row)}>
+                <TableCell>{row.date}</TableCell>
+                <TableCell>{row.day}</TableCell>
+                <TableCell>{row.checkInTime}</TableCell>
+                <TableCell>
+                  <span
+                    onClick={() => row.checkOutTime === '00:00' && handleCheckOutClick(row)}
+                    style={{
+                      color: row.checkOutTime === '00:00' ? 'blue' : 'black',
+                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default'
+                    }}
+                  >
+                    {row.checkOutTime}
+                  </span>
+                </TableCell>
+                <TableCell>{row.totalWorkingHours}</TableCell>
+                <TableCell>{row.effectiveFrom}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody> */}
+          <TableBody>
+            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+              <TableRow key={row.id} hover>
+                <TableCell>{row.date}</TableCell>
+                <TableCell>{row.day}</TableCell>
+                <TableCell>{row.checkInTime}</TableCell>
+                <TableCell
+                  onClick={() => {
+                    if (row.checkOutTime === '00:00') {
+                      handleCheckOutClick(row);
+                    }
+                  }}
+                  style={{
+                    color: row.checkOutTime === '00:00' ? 'blue' : 'black',
+                    cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default'
+                  }}
+                >
+                  {row.checkOutTime}
+                </TableCell>
+                <TableCell>{row.totalWorkingHours}</TableCell>
+                <TableCell>{row.effectiveFrom}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredData.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(e, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+        />
+      </TableContainer>
+
       <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Box
           sx={{
@@ -166,40 +302,31 @@ const SwipeInSwipeOut = () => {
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            width: 400,
             bgcolor: 'white',
+            p: 4,
             borderRadius: 2,
-            p: 4
+            boxShadow: 24,
+            width: 300
           }}
         >
           <Typography variant="h6" gutterBottom>
             Set Check-Out Time
           </Typography>
           <TextField
-            label="Check-Out Time"
             type="time"
             fullWidth
             value={checkOutTime}
             onChange={(e) => setCheckOutTime(e.target.value)}
             sx={{ mt: 2 }}
-            InputLabelProps={{ shrink: true }}
             inputProps={{ step: 60 }}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 3 }}
-            onClick={() => {
-              console.log('Saving time:', checkOutTime);
-              setModalOpen(false);
-            }}
-          >
+          <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }} onClick={handleSave}>
             Save
           </Button>
         </Box>
       </Modal>
-    </>
+      <ToastContainer />
+    </div>
   );
 };
 

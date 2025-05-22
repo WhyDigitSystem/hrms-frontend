@@ -395,6 +395,51 @@ const PendingApproval = ({ isLoading }) => {
     }
   };
 
+  const handleActionCheckout = async (request, action) => {
+    setProcessingId(request.id);
+  
+    try {
+      // 1. Make API call to approve/reject
+      await apiCalls(
+        'put',
+        `/basicmaster/createApprovalCheckOut?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}`
+      );
+  
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
+  
+      const isApproved = action === 'APPROVED';
+  
+      const templateParams = {
+        name: request.employeeName,
+        from_name: employeeName,
+        checkInDate: dayjs(request.checkInDate).format('DD-MM-YYYY'),
+        entryTime: request.entryTime,
+        status: action,
+        status_message: isApproved ? 'Approved' : 'Rejected',
+        status_class: isApproved ? 'status-approved' : 'status-rejected',
+        email: request.employeeEmail
+      };
+  
+      // 3. Send email notification
+      await emailjs.send('service_d3c7xso', 'template_tf8a8po', templateParams, 'uMcVJdror6W86lK6z');
+  
+      toast.success(`Request ${action.toLowerCase()} successfully`, {
+        autoClose: 3000
+      });
+    } catch (error) {
+      console.error(`Error ${action.toLowerCase()}ing request:`, error);
+  
+      // Revert UI if error occurs
+      setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
+  
+      toast.error(`Failed to ${action.toLowerCase()} request`, {
+        autoClose: 3000
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const ActionButtons = ({ request }) => {
     const isProcessing = processingId === request.id;
     const isPending = !request.approveStatus || request.approveStatus === 'PENDING';
@@ -425,8 +470,10 @@ const PendingApproval = ({ isLoading }) => {
                 }
                 if (request.screenName === 'PERMISSION REQUEST') {
                   handleActionPermission(request, 'APPROVED');
-                } else {
+                } if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'APPROVED'); // You can customize this if you need different logic
+                } else {
+                  handleActionCheckout(request, 'APPROVED'); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "APPROVED")}
@@ -447,8 +494,10 @@ const PendingApproval = ({ isLoading }) => {
                 }
                 if (request.screenName === 'PERMISSION REQUEST') {
                   handleActionPermission(request, 'REJECTED');
-                } else {
+                } if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'REJECTED'); // You can customize this if you need different logic
+                } else {
+                  handleActionCheckout(request, 'REJECTED'); // You can customize this if you need different logic
                 }
               }}
               // onClick={() => handleAction(request, "REJECTED")}

@@ -23,6 +23,7 @@ import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import UploadIcon from '@mui/icons-material/Upload';
 
 const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -80,30 +81,10 @@ const AttendenceProcess = () => {
 
   // const getAllLeaveProcess = async () => {
   //   if (!formData.fromDate || !formData.toDate) {
-  //     setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
-  //     return;
-  //   }
-
-  //   try {
-  //     const response = await apiCalls(
-  //       'get',
-  //       `leaveprocess/getLeaveDetailsForLeaveProcess?fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
-  //     );
-
-  //     if (response.status === true) {
-  //       setAllLeave(response.paramObjectsMap.leaveProcessVO);
-  //       setListViewData(response.paramObjectsMap.leaveProcessVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  // const getAllLeaveProcess = async () => {
-  //   if (!formData.fromDate || !formData.toDate) {
-  //     setFieldErrors({ fromDate: !formData.fromDate, toDate: !formData.toDate });
+  //     setFieldErrors({
+  //       fromDate: !formData.fromDate ? 'From Date is required' : '',
+  //       toDate: !formData.toDate ? 'To Date is required' : ''
+  //     });
   //     return;
   //   }
 
@@ -125,10 +106,16 @@ const AttendenceProcess = () => {
   //       setAllLeave(formattedData);
   //       setListViewData(formattedData);
   //     } else {
-  //       console.error('API Error:', response);
+  //       setFieldErrors({
+  //         fromDate: '',
+  //         toDate: response.paramObjectsMap?.errorMessage || 'No leave data found'
+  //       });
   //     }
   //   } catch (error) {
-  //     console.error('Error fetching data:', error);
+  //     setFieldErrors({
+  //       fromDate: '',
+  //       toDate: 'Failed to fetch leave details. Please try again later.'
+  //     });
   //   }
   // };
 
@@ -148,16 +135,42 @@ const AttendenceProcess = () => {
       );
   
       if (response.status === true && Array.isArray(response.paramObjectsMap.leaveProcessVO)) {
-        const formattedData = response.paramObjectsMap.leaveProcessVO.map((item) => ({
-          ...item,
-          totalLeave: parseFloat(item.totalLeave).toString(),
-          lopLeave: parseFloat(item.lopLeave).toString(),
-          empSalaryDays: parseFloat(item.empSalaryDays).toString(),
-          empTotalWorkingDays: parseFloat(item.empTotalWorkingDays).toString()
-        }));
+        const baseLeaveData = response.paramObjectsMap.leaveProcessVO;
   
-        setAllLeave(formattedData);
-        setListViewData(formattedData);
+        // Fetch EmpcheckInOutDays for each employee
+        const enrichedLeaveData = await Promise.all(
+          baseLeaveData.map(async (item) => {
+            try {
+              const empResponse = await apiCalls(
+                'get',
+                `leaveprocess/getCheckInAndOutDaysForLeaveProcess?branchCode=${branchCode}&empCode=${item.employeeCode}&fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
+              );
+        
+              const empTotalWorkingDays =
+                empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.EmpcheckInOutDays?.toString() || '0';
+        
+              return {
+                ...item,
+                totalLeave: parseFloat(item.totalLeave).toString(),
+                lopLeave: parseFloat(item.lopLeave).toString(),
+                empSalaryDays: parseFloat(item.empSalaryDays).toString(),
+                empTotalWorkingDays
+              };
+            } catch (innerError) {
+              console.error(`Failed to fetch working days for ${item.employeeCode}`, innerError);
+              return {
+                ...item,
+                totalLeave: parseFloat(item.totalLeave).toString(),
+                lopLeave: parseFloat(item.lopLeave).toString(),
+                empSalaryDays: parseFloat(item.empSalaryDays).toString(),
+                empTotalWorkingDays: '0'
+              };
+            }
+          })
+        );        
+  
+        setAllLeave(enrichedLeaveData);
+        setListViewData(enrichedLeaveData);
       } else {
         setFieldErrors({
           fromDate: '',
@@ -170,7 +183,7 @@ const AttendenceProcess = () => {
         toDate: 'Failed to fetch leave details. Please try again later.'
       });
     }
-  };
+  };  
 
   const handleDateChange = (name, date) => {
     if (date && dayjs(date).isValid()) {
@@ -292,18 +305,13 @@ const AttendenceProcess = () => {
             <ActionButton title="Search" icon={SearchIcon} onClick={getAllLeaveProcess} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
+            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave}/>
+            <ActionButton title="Save" icon={UploadIcon} isLoading={isLoading} onClick={handleBulkUploadOpen}/>
           </div>
         </div>
         {listView && (
           <div className="mt-4">
-            <CommonListViewTable
-              data={listViewData}
-              columns={listViewColumns}
-              blockEdit={true}
-              toEdit={true}
-              enableEditing={true}
-            />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={true} enableEditing={true} />
           </div>
         )}
         {!listView && (
@@ -378,7 +386,7 @@ const AttendenceProcess = () => {
                   Cancel
                 </Button>
               </div> */}
-              <div className="col-md-3">
+              {/* <div className="col-md-3">
                 <Box
                   sx={{
                     display: 'flex',
@@ -411,7 +419,7 @@ const AttendenceProcess = () => {
                     </Button>
                   </Typography>
                 </Box>
-              </div>
+              </div> */}
             </div>
             {uploadOpen && (
               <CommonBulkUpload
@@ -462,7 +470,9 @@ const AttendenceProcess = () => {
                           <div className="table-responsive">
                             <table className="table table-bordered">
                               <thead>
-                                <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
+                                <tr
+                                  style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}
+                                >
                                   <th className="px-2 py-2 text-white text-center">S.No</th>
                                   <th className="px-2 py-2 text-white text-center">Employee Name</th>
                                   <th className="px-2 py-2 text-white text-center">Employee Code</th>

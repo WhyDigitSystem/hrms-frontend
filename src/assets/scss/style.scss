@@ -24,14 +24,12 @@
   -webkit-text-fill-color: transparent;
 }
 
-
 // ==============================|| PERFECT SCROLLBAR ||============================== //
 
 .scrollbar-container {
   .ps__rail-y {
-
-    &:hover>.ps__thumb-y,
-    &:focus>.ps__thumb-y,
+    &:hover > .ps__thumb-y,
+    &:focus > .ps__thumb-y,
     &.ps--clicking .ps__thumb-y {
       background-color: $grey500;
       width: 5px;
@@ -47,8 +45,8 @@
 }
 
 .scrollbar-container.ps,
-.scrollbar-container>.ps {
-  &.ps--active-y>.ps__rail-y {
+.scrollbar-container > .ps {
+  &.ps--active-y > .ps__rail-y {
     width: 5px;
     background-color: transparent !important;
     z-index: 999;
@@ -60,8 +58,8 @@
     }
   }
 
-  &.ps--scrolling-y>.ps__rail-y,
-  &.ps--scrolling-x>.ps__rail-x {
+  &.ps--scrolling-y > .ps__rail-y,
+  &.ps--scrolling-x > .ps__rail-x {
     opacity: 0.4;
     background-color: transparent;
   }
@@ -90,7 +88,6 @@
 }
 
 @keyframes bounce {
-
   0%,
   20%,
   53%,
@@ -121,7 +118,6 @@
 }
 
 @keyframes slideY {
-
   0%,
   50%,
   100% {
@@ -138,7 +134,6 @@
 }
 
 @keyframes slideX {
-
   0%,
   50%,
   100% {
@@ -228,8 +223,8 @@
 
 .css-1vlry5a-MuiTableContainer-root {
   border-radius: 26px !important;
-  padding-right: .25rem !important;
-  padding-left: .25rem !important;
+  padding-right: 0.25rem !important;
+  padding-left: 0.25rem !important;
 }
 
 .css-kvip5o-MuiToolbar-root {
@@ -417,7 +412,6 @@
 }
 
 .css-1kqpfbs-MuiAvatar-root {
-
   color: #ffffff !important;
   background-color: #bdbdbd !important;
   color: #d8f3f1 !important;
@@ -548,7 +542,7 @@
   background-color: #10413d !important;
 }
 
-.css-1odfme6[aria-controls="menu-list-grow"],
+.css-1odfme6[aria-controls='menu-list-grow'],
 .css-1odfme6:hover {
   background: #d6e8e6 !important;
   color: #ffffff !important;
@@ -644,7 +638,7 @@
   color: #ffffff !important;
 }
 
-.css-1l5dmcq-MuiAvatar-root[aria-controls="menu-list-grow"],
+.css-1l5dmcq-MuiAvatar-root[aria-controls='menu-list-grow'],
 .css-1l5dmcq-MuiAvatar-root:hover {
   background: #10413d !important;
   color: #ffff;
@@ -665,12 +659,12 @@
 }
 
 .css-1odfme6:hover,
-.css-1odfme6[aria-controls=menu-list-grow] {
+.css-1odfme6[aria-controls='menu-list-grow'] {
   background: #10413d !important;
   color: #fff !important;
 }
 
-.css-1odfme6[aria-controls=menu-list-grow] {
+.css-1odfme6[aria-controls='menu-list-grow'] {
   background: #10413d !important;
   color: #fff !important;
 }
@@ -840,7 +834,6 @@
   padding-top: 0px !important;
   padding-bottom: 0px !important;
 }
-
 
 @keyframes animate {
   0% {
@@ -1086,7 +1079,6 @@
   animation-duration: 22s;
 }
 
-
 @keyframes rise {
   0% {
     transform: translateY(0) scale(1);
@@ -1105,7 +1097,10 @@
   -webkit-transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
   transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
   border-radius: 4px;
-  box-shadow: 0px 3px 3px -2px rgba(0, 0, 0, 0.2), 0px 3px 4px 0px rgba(0, 0, 0, 0.14), 0px 1px 8px 0px rgba(0, 0, 0, 0.12);
+  box-shadow:
+    0px 3px 3px -2px rgba(0, 0, 0, 0.2),
+    0px 3px 4px 0px rgba(0, 0, 0, 0.14),
+    0px 1px 8px 0px rgba(0, 0, 0, 0.12);
   background-image: none;
   border-radius: 12px;
   padding: 0px;
@@ -1145,20 +1140,50 @@
   }
 }
 .css-1ukdezx-MuiChip-root.Mui-disabled {
-    color: #fff !important;
+  color: #fff !important;
 }
 .css-1q8wryf-MuiInputBase-input-MuiInput-input {
-    color: #fff !important;
+  color: #fff !important;
 }
 .css-ml1g1n-MuiAvatar-root {
-    color: #ffffff !important;
-    background-color: #bdbdbd !important;
-    color: #2a4b4d !important;
-    background: #d8f3f1 !important;
-    background-color: #d8f3f1 !important;
-    color: #2a4b4d !important;
+  color: #ffffff !important;
+  background-color: #bdbdbd !important;
+  color: #2a4b4d !important;
+  background: #d8f3f1 !important;
+  background-color: #d8f3f1 !important;
+  color: #2a4b4d !important;
 }
 .css-ml1g1n-MuiAvatar-root:hover {
-    background-color: #2a4b4d !important;
-    color: #ffff !important;
+  background-color: #2a4b4d !important;
+  color: #ffff !important;
+}
+.css-wuzv82 .MuiDrawer-paper {
+  width: 185px !important;
+  background: rgb(255, 255, 255);
+  color: rgb(54, 65, 82);
+  border-right: none;
+}
+.css-v3rfqg .MuiChip-icon {
+  margin-left: 5px;
+  margin-right: -6px;
+  color: #fff !important;
+}
+.css-1tl77yc-MuiButtonBase-root-MuiListItemButton-root.Mui-selected {
+  background-color: #fff !important;
+  border-left: 2px solid #095a3b !important;
+}
+.css-wsdsdn:hover .MuiListItemIcon-root {
+  color: #ffffff !important;
+}
+.css-wsdsdn:hover {
+  background-color: #2a4b4d !important;
+  color: #ffff !important;
+}
+
+.css-15qvpff {
+  color: #fff !important;
+}
+
+.css-1jcglh9-MuiButtonBase-root-MuiListItemButton-root {
+  padding-left: 14px !important;
 }
