@@ -71,7 +71,7 @@ function Poll() {
         const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
           ...poll,
           options: poll.pollDetailsVO.map(option => ({
-            id: option.id,
+            id: option.id.toString(),
             text: option.options,
             votes: option.votes || 0
           }))
@@ -88,39 +88,65 @@ function Poll() {
   };
 
   const handleVote = async (pollId) => {
-    const selectedOption = selectedOptions[pollId];
-    if (!selectedOption) {
+    console.log("Submitting vote for:", pollId);
+    const selectedOptionId = selectedOptions[pollId];
+    if (!selectedOptionId) {
       toast.warning('Please select an option before voting');
       return;
     }
+
+    // Find the relevant poll and selected option
+    const poll = polls.find(p => p.id === pollId);
+    if (!poll) {
+      toast.error('Poll not found');
+      return;
+    }
+    const selectedOption = poll.options.find(opt => opt.id === selectedOptionId);
+    if (!selectedOption) {
+      toast.error('Invalid option selected');
+      return;
+    }
+
+    // Prepare payload according to API requirements
+    const saveData = [{
+      branchCode: branchCode,
+      branchName: branchName,
+      department: department,
+      options: selectedOption.id,
+      // Send option text instead of ID
+      orgId: parseInt(orgId, 10),  // Ensure number type
+      pollId: pollId,
+      question: poll.question,      // Get question from poll object
+      userName: loginUserName
+    }];
+
     try {
       setIsLoading(true);
-      const response = await apiCalls('post', '/basicmaster/submitVote', {
-        pollId,
-        optionId: selectedOption,
-        orgId
-      });
+      const response = await apiCalls('put', '/basicmaster/createUpdatepollVote', saveData);
+
 
       if (response?.status) {
-        const updatedData = polls.map(poll => {
-          if (poll.id === pollId) {
-            const updatedOptions = poll.options.map(opt =>
-              opt.id === selectedOption ? { ...opt, votes: opt.votes + 1 } : opt
+        // Update local state with new votes
+        const updatedPolls = polls.map(item => {
+          if (item.id === pollId) {
+            const updatedOptions = item.options.map(opt =>
+              opt.id === selectedOptionId ? { ...opt, votes: opt.votes + 1 } : opt
             );
             const totalVotes = updatedOptions.reduce((sum, opt) => sum + opt.votes, 0);
-            return { ...poll, options: updatedOptions, totalVotes, hasVoted: true };
+            return { ...item, options: updatedOptions, totalVotes, hasVoted: true };
           }
-          return poll;
+          return item;
         });
-        setPolls(updatedData);
-        setListViewData(updatedData);
+
+        setPolls(updatedPolls);
+        setListViewData(updatedPolls);
         toast.success('Vote submitted successfully!');
       } else {
         toast.error(response?.message || 'Failed to submit vote');
       }
     } catch (error) {
       toast.error('Error submitting vote');
-      console.error(error);
+      console.error('Voting error:', error);
     } finally {
       setIsLoading(false);
       setSelectedOptions(prev => ({ ...prev, [pollId]: null }));
@@ -401,6 +427,7 @@ function Poll() {
       </Modal>
 
       {/* View All Polls Modal */}
+      {/* View All Polls Modal */}
       <Modal open={viewAllModalOpen} onClose={() => setViewAllModalOpen(false)}>
         <Box sx={{
           position: 'absolute',
@@ -411,28 +438,43 @@ function Poll() {
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          width: { xs: '90vw', sm: '500px' },
-          maxHeight: '80vh',
-          overflow: 'auto'
+          width: '90vw',
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}>
-          <Typography variant="h6" mb={2}>All Polls</Typography>
-          <Grid container spacing={3}>
-            {polls.map(poll => (
-              <Grid item xs={12} key={poll.id}>
-                <Card variant="outlined" sx={{ width: '100%' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">All Polls</Typography>
+            <IconButton onClick={() => setViewAllModalOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          <Grid container spacing={2}>
+            {polls.length > 0 ? polls.map(poll => (
+              <Grid item xs={12} md={6} key={poll.id}>
+                <Card variant="outlined" sx={{
+                  borderColor: poll.hasVoted ? theme.palette.success.light : theme.palette.primary.light,
+                  '&:hover': {
+                    boxShadow: 3
+                  }
+                }}>
                   <CardContent>
-                    <Typography variant="h6" fontWeight="bold">{poll.question}</Typography>
-                    <Divider sx={{ mb: 2 }} />
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                      <Chip label={poll.hasVoted ? 'Voted' : 'Active'} size="small" color={poll.hasVoted ? 'success' : 'primary'} />
+                      <Typography variant="caption" color="text.secondary">{formatDate(poll.createdDate)}</Typography>
+                    </Box>
+                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>{poll.question}</Typography>
+                    <Divider sx={{ mb: 1 }} />
                     {poll.options.map(option => (
-                      <Box key={option.id} sx={{ mb: 2 }}>
-                        <Typography variant="body2" fontWeight={500}>{option.text}</Typography>
-                        <Typography variant="caption">{option.votes} votes</Typography>
+                      <Box key={option.id} sx={{ mb: 1 }}>
+                        <Typography variant="body2">{option.text} - {option.votes} vote(s)</Typography>
                       </Box>
                     ))}
                   </CardContent>
                 </Card>
               </Grid>
-            ))}
+            )) : (
+              <Typography>No polls available.</Typography>
+            )}
           </Grid>
         </Box>
       </Modal>
