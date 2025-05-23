@@ -94,15 +94,74 @@ const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon
             muiTableHeadCellProps: {
               align: 'center'
             },
-            size: 120
+            size: 100
           }
         }}
-        columns={customColumns}
-        data={tableData && tableData}
-        enableColumnOrdering
-        enableEditing={enableEditing}
+        // columns={customColumns}
+        columns={customColumns.map((col) => ({
+          ...col,
+          muiTableHeadCellProps: {
+            sx: {
+              backgroundColor: "#2d3e98",
+              color: "white",
+              fontWeight: "bold",
+              fontSize: "13px",
+              textAlign: "left",
+              borderBottom: "2px solid #D1D5DB",
+            },
+          },
+          muiTableBodyCellProps: {
+            sx: {
+              fontSize: "14px",
+              padding: "10px",
+              color: "#374151",
+              textAlign: "left",
+              borderBottom: "1px solid #E5E7EB",
+            },
+          },
+        }))}
+       data={tableData && tableData}
+        enableColumnOrdering={false}
+        enableColumnActions={false}
+        enableEditing
         renderRowActions={renderRowActions}
-        renderTopToolbarCustomActions={() => <Stack direction="row" spacing={2} className="ml-5 "></Stack>}
+        initialState={{ density: "compact" }}
+        muiTableContainerProps={{
+          sx: {
+            background: "#FFFFFF",
+            borderRadius: "10px",
+            boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+            border: "1px solid #E5E7EB",
+          },
+        }}
+        muiTableProps={{
+          sx: {
+            backgroundColor: "#FFFFFF",
+            borderRadius: "10px",
+            overflow: "hidden",
+            border: "1px solid #E5E7EB",
+          },
+        }}
+        muiTableBodyRowProps={{
+          sx: {
+            height: "42px",
+            "&:nth-of-type(even)": { backgroundColor: "#F9FAFB" },
+            "&:hover": {
+              backgroundColor: "#E5E7EB",
+              boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.1)",
+              transition: "0.2s ease-in-out",
+            },
+          },
+        }}
+        renderTopToolbarCustomActions={() => (
+          <Stack
+            direction="row"
+            spacing={2}
+            sx={{
+              marginLeft: "20px",
+            }}
+          ></Stack>
+        )}
       />
     </>
   );
