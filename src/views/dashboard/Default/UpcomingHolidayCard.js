@@ -11,6 +11,7 @@ import {
   DialogContent,
   IconButton,
   Divider,
+  keyframes,
   useMediaQuery, useTheme
 } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
@@ -21,6 +22,11 @@ import EventIcon from '@mui/icons-material/Event';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import CloseIcon from '@mui/icons-material/Close';
+
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
 
 const UpcomingHolidayCard = () => {
@@ -114,6 +120,13 @@ const UpcomingHolidayCard = () => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const date = new Date(dateString);
     return days[date.getDay()];
+  };
+
+  const getHolidayStatus = (dateString) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const holidayDate = new Date(dateString);
+    return holidayDate < today ? 'past' : 'upcoming';
   };
 
   const getNextHoliday = () => activeHolidays.slice(0, 1);
@@ -305,99 +318,87 @@ const UpcomingHolidayCard = () => {
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: 4,
-            background: 'linear-gradient(to right, #f5f7fa, #c3cfe2)',
-            boxShadow: 10,
-          },
+            borderRadius: 3,
+            background: 'linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%)'
+          }
         }}
       >
-        <DialogTitle
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontWeight: 600,
-            fontSize: '1.25rem',
-            bgcolor: '#e3f2fd',
-            borderBottom: '1px solid #cfd8dc',
-            p: 2,
-          }}
-        >
+        <DialogTitle sx={{
+          bgcolor: 'primary.main',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
           <Box display="flex" alignItems="center">
-            <CalendarMonthIcon sx={{ color: '#0288d1', mr: 1 }} />
-            All Upcoming Holidays
+            <CalendarMonthIcon sx={{ mr: 1 }} />
+            All Holidays
           </Box>
-          <IconButton onClick={handleViewMoreClose} sx={{ color: '#f44336' }}>
+          <IconButton onClick={handleViewMoreClose} sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent
-          dividers
-          sx={{
-            maxHeight: '70vh',
-            overflowY: 'auto',
-            backgroundColor: '#f4f6f8',
-            px: 4,
-            py: 3,
-            '&::-webkit-scrollbar': {
-              width: '8px',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              backgroundColor: '#cfd8dc',
-              borderRadius: '8px',
-            },
-          }}
-        >
-          {activeHolidays.length === 0 ? (
-            <Box sx={{ mt: 6, textAlign: 'center' }}>
-              <Typography variant="h6" color="text.secondary">
-                No upcoming holidays.
-              </Typography>
-            </Box>
-          ) : (
-            <Grid container spacing={4}>
-              {activeHolidays.map((holiday, index) => (
-                <Grid item xs={12} sm={6} md={6} key={index}>
-                  <Box
-                    sx={{
-                      p: 3,
-                      background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)',
-                      borderRadius: 3,
-                      boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-6px)',
-                        boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                      },
-                    }}
-                  >
-                    <Typography variant="subtitle1" fontWeight="bold" mb={1}>
-                      🎉 {holiday.festival}
+        <DialogContent dividers sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
+          <Grid container spacing={3} sx={{ p: 2 }}>
+            {allHolidays.sort((a, b) => new Date(a.holidayDate) - new Date(b.holidayDate)).map((holiday, index) => {
+              const status = getHolidayStatus(holiday.holidayDate);
+              return (
+                <Grid item xs={12} sm={6} md={4} key={index}>
+                  <Card sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    background: status === 'past'
+                      ? 'linear-gradient(145deg, #f5f5f5 0%, #eeeeee 100%)'
+                      : 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%)',
+                    boxShadow: 2,
+                    position: 'relative',
+                    opacity: 0,
+                    animation: `${fadeIn} 0.5s ease-out ${index * 0.1}s forwards`,
+                    transition: 'transform 0.3s',
+                    '&:hover': {
+                      transform: 'translateY(-3px)'
+                    }
+                  }}>
+                    <Box sx={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      bgcolor: status === 'past' ? '#9e9e9e' : '#4caf50',
+                      color: 'white',
+                      px: 2,
+                      py: 0.5,
+                      borderBottomLeftRadius: 12,
+                      fontSize: 12,
+                      fontWeight: 'bold'
+                    }}>
+                      {status.toUpperCase()}
+                    </Box>
+                    <Typography variant="subtitle1" fontWeight="bold" sx={{
+                      mb: 1,
+                      color: status === 'past' ? '#757575' : 'inherit'
+                    }}>
+                      {status === 'past' ? '✅' : '🎉'} {holiday.festival}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" mb={0.5}>
-                      {getDayName(holiday.holidayDate)}, {formatDate(holiday.holidayDate)}
+                    <Typography variant="body2" sx={{
+                      color: status === 'past' ? '#9e9e9e' : 'text.secondary',
+                      mb: 1
+                    }}>
+                      📅 {getDayName(holiday.holidayDate)}, {formatDate(holiday.holidayDate)}
                     </Typography>
-                    {holiday.holidayType && (
-                      <Typography variant="body2" color="text.secondary" mb={0.5}>
-                        <strong>Type:</strong> {holiday.holidayType}
-                      </Typography>
-                    )}
                     {holiday.description && (
-                      <Typography variant="body2" color="text.secondary" mb={0.5}>
-                        <strong>Description:</strong> {holiday.description}
+                      <Typography variant="body2" sx={{
+                        color: status === 'past' ? '#bdbdbd' : '#616161',
+                        fontStyle: status === 'past' ? 'italic' : 'normal'
+                      }}>
+                        {holiday.description}
                       </Typography>
                     )}
-                    {holiday.branch && (
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Branch:</strong> {holiday.branch}
-                      </Typography>
-                    )}
-                  </Box>
+                  </Card>
                 </Grid>
-              ))}
-            </Grid>
-          )}
+              );
+            })}
+          </Grid>
         </DialogContent>
       </Dialog>
     </>
