@@ -123,7 +123,7 @@ const SwipeInSwipeOut = () => {
 
   const handleSave = async () => {
     if (!selectedRow) return;
-  
+
     // Convert from "dd/mm/yyyy" to "yyyy-mm-dd"
     let formattedDate = '';
     if (selectedRow.date.includes('/')) {
@@ -132,29 +132,27 @@ const SwipeInSwipeOut = () => {
     } else {
       formattedDate = selectedRow.date;
     }
-  
+
     const payload = {
       branch: branch,
       empCode: empCode,
       orgId: orgId,
       entryTime: checkOutTime,
       reportingPersonMail: reportingPersonMail,
-      date: formattedDate, // correctly formatted here
+      date: formattedDate // correctly formatted here
     };
-  
+
     setIsLoading(true);
-  
+
     try {
       const response = await apiCalls('put', '/basicmaster/createRequestCheckOut', payload);
-  
+
       if (response.status === true) {
         showToast('success', 'Check-out time submitted successfully');
         await sendEmailNotification(payload);
-  
-        const updatedData = listViewData.map((row) =>
-          row.date === selectedRow.date ? { ...row, checkOutTime } : row
-        );
-  
+
+        const updatedData = listViewData.map((row) => (row.date === selectedRow.date ? { ...row, checkOutTime } : row));
+
         setListViewData(updatedData);
         setFilteredData(
           updatedData.filter(
@@ -164,7 +162,7 @@ const SwipeInSwipeOut = () => {
               row.checkInTime.toLowerCase().includes(searchText)
           )
         );
-  
+
         setModalOpen(false);
       } else {
         showToast('error', response.paramObjectsMap?.errorMessage || 'Check-out submission failed');
@@ -175,7 +173,7 @@ const SwipeInSwipeOut = () => {
     } finally {
       setIsLoading(false);
     }
-  };  
+  };
 
   const sendEmailNotification = async (row) => {
     try {
@@ -183,24 +181,24 @@ const SwipeInSwipeOut = () => {
         name: row.notify, // ensure 'notify' is part of `selectedRow`
         from_name: empName,
         entryTime: row.entryTime, // should be `entryTime` not checkOutTime
-        email: row.reportingPersonMail,
+        email: row.reportingPersonMail
       };
-  
+
       console.log('Email Params:', emailParams);
-  
+
       if (!emailParams.email) {
         console.error('Error: Recipient email is missing!');
         showToast('error', 'Recipient email is missing!');
         return;
       }
-  
+
       await emailjs.send('service_d3c7xso', 'template_0pef9wb', emailParams, 'uMcVJdror6W86lK6z');
       console.log('Email Sent Successfully for', emailParams.email);
     } catch (error) {
       console.error('Email Sending Failed:', error);
       showToast('error', 'Failed to send email notification. Please try again.');
     }
-  };  
+  };
 
   return (
     <div style={{ padding: 20 }}>
@@ -209,6 +207,20 @@ const SwipeInSwipeOut = () => {
       </Typography> */}
 
       <TextField variant="outlined" label="Search" value={searchText} onChange={handleSearch} sx={{ mb: 2 }} />
+      <Box display="flex" alignItems="center" justifyContent="right" gap={2} mb={2}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Box width={16} height={16} bgcolor="green" borderRadius="50%" />
+          <span>Approved</span>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Box width={16} height={16} bgcolor="#FFA500" borderRadius="50%" />
+          <span>Pending</span>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Box width={16} height={16} bgcolor="black" borderRadius="50%" />
+          <span>Not Submitted</span>
+        </Box>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table>
@@ -234,28 +246,6 @@ const SwipeInSwipeOut = () => {
               </TableCell>
             </TableRow>
           </TableHead>
-          {/* <TableBody>
-            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-              <TableRow key={row.id} hover onClick={() => handleRowClick(row)}>
-                <TableCell>{row.date}</TableCell>
-                <TableCell>{row.day}</TableCell>
-                <TableCell>{row.checkInTime}</TableCell>
-                <TableCell>
-                  <span
-                    onClick={() => row.checkOutTime === '00:00' && handleCheckOutClick(row)}
-                    style={{
-                      color: row.checkOutTime === '00:00' ? 'blue' : 'black',
-                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default'
-                    }}
-                  >
-                    {row.checkOutTime}
-                  </span>
-                </TableCell>
-                <TableCell>{row.totalWorkingHours}</TableCell>
-                <TableCell>{row.effectiveFrom}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody> */}
           <TableBody>
             {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
               <TableRow key={row.id} hover>
@@ -269,8 +259,15 @@ const SwipeInSwipeOut = () => {
                     }
                   }}
                   style={{
-                    color: row.checkOutTime === '00:00' ? 'blue' : 'black',
-                    cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default'
+                    color:
+                      row.approvalstatus === 'APPROVED'
+                        ? 'green'
+                        : row.approvalstatus === 'PENDING'
+                          ? '#FFA500' // More reliable than "orange"
+                          : 'black',
+                    cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
+                    textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
+                    fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
                   }}
                 >
                   {row.checkOutTime}

@@ -67,41 +67,16 @@ const TimeSheet = () => {
     setReportDialogOpen(true);
   };
 
-  // const handleSubmitReport = async () => {
-  //   const newErrors = {};
-  //   if (!fromDate) newErrors.fromDate = 'From Date is required';
-  //   if (!toDate) newErrors.toDate = 'To Date is required';
-
-  //   if (Object.keys(newErrors).length > 0) {
-  //     setErrors(newErrors);
-  //     return;
-  //   }
-
-  //   try {
-  //     const result = await apiCalls(
-  //       'get',
-  //       `timesheet/getTimeSheetDescByOrgId?branchCode=WDSBLR&empCode=WDS027&fromDate=${fromDate}&orgId=1000000001&toDate=${toDate}`
-  //     );
-  //     const data = result?.paramObjectsMap?.timeSheetVO || [];
-
-  //     setAllTimeSheetData(data); // ✅ FIX: use correct state
-  //     setReportDialogOpen(false);
-  //     setReportTableOpen(true);
-  //   } catch (err) {
-  //     console.error('Error fetching report:', err);
-  //   }
-  // };
-
   const handleSubmitReport = async () => {
     const newErrors = {};
     if (!fromDate) newErrors.fromDate = 'From Date is required';
     if (!toDate) newErrors.toDate = 'To Date is required';
-  
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-  
+
     try {
       // Main timesheet API
       const result = await apiCalls(
@@ -109,89 +84,122 @@ const TimeSheet = () => {
         `timesheet/getTimeSheetDescByOrgId?branchCode=${branchCode}&empCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
       );
       const timeSheetData = result?.paramObjectsMap?.timeSheetVO || [];
-  
+
+      // Get employee name from the first item (if present)
+      const empNameFromData = timeSheetData[0]?.employeeName || '';
+      const empCodeFromData = timeSheetData[0]?.employeeCode || '';
+
       // Leave report API
       const leaveRes = await apiCalls(
         'get',
         `timesheet/getApprovedLeaveForTimeSheetReport?branchCode=${branchCode}&employeeCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
       );
       const leaveData = leaveRes?.paramObjectsMap?.timeSheetVO || [];
-  
+
       // Holiday report API
       const holidayRes = await apiCalls(
         'get',
         `timesheet/getHolidaysForTimeSheetReport?branchCode=${branchCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
       );
       const holidayData = holidayRes?.paramObjectsMap?.timeSheetVO || [];
-  
+
       // Format leave and holiday data like timesheet for display compatibility
       const formattedLeaveData = leaveData.map((item) => ({
         date: item.leaveDate,
-        employeeName: 'LEAVE',
-        employeeCode: '',
+        employeeName: empNameFromData || 'LEAVE',
+        employeeCode: empCodeFromData || employeeCode,
         totalhours: '',
         timeSheetDetailsVO: [
           {
             projectName: item.leaveType,
             fromTime: '',
             toTime: '',
-            description: '',
-          },
-        ],
+            description: ''
+          }
+        ]
       }));
-  
+
       const formattedHolidayData = holidayData.map((item) => ({
         date: item.leaveDate,
-        employeeName: 'HOLIDAY',
-        employeeCode: '',
+        employeeName: empNameFromData || 'HOLIDAY',
+        employeeCode: empCodeFromData || employeeCode,
         totalhours: '',
         timeSheetDetailsVO: [
           {
             projectName: item.leaveType,
             fromTime: '',
             toTime: '',
-            description: '',
-          },
-        ],
+            description: ''
+          }
+        ]
       }));
-  
-      const combinedData = [
-        ...timeSheetData,
-        ...formattedLeaveData,
-        ...formattedHolidayData,
-      ];
-  
+
+      const combinedData = [...timeSheetData, ...formattedLeaveData, ...formattedHolidayData];
+
       // Optional: sort by date if needed
       combinedData.sort((a, b) => new Date(a.date) - new Date(b.date));
-  
+
       setAllTimeSheetData(combinedData);
       setReportDialogOpen(false);
       setReportTableOpen(true);
     } catch (err) {
       console.error('Error fetching report:', err);
     }
-  };  
+  };
 
   const handleDownload = () => {
     const rows = [];
 
-    allTimeSheetData.forEach((entry) => {
-      const details = entry.timeSheetDetailsVO || [];
-      details.forEach((detail, index) => {
-        rows.push({
-          Date: index === 0 ? entry.date : '',
-          'Employee Name': index === 0 ? entry.employeeName : '',
-          'Employee Code': index === 0 ? entry.employeeCode : '',
-          'Total Hours': index === 0 ? entry.totalhours : '',
-          Project: detail.projectName,
-          'From Time': detail.fromTime,
-          'To Time': detail.toTime,
-          Description: detail.description
-        });
-      });
+    // Extract employee details from the first working entry
+    const firstEntry = allTimeSheetData.find((entry) => entry.employeeName !== 'LEAVE' && entry.employeeName !== 'HOLIDAY');
+
+    const employeeName = firstEntry?.employeeName || '';
+    const employeeCode = firstEntry?.employeeCode || '';
+
+    // Add Employee details at the top
+    rows.push({ A: `Employee Name: ${employeeName}` });
+    rows.push({ A: `Employee Code: ${employeeCode}` });
+    rows.push({}); // Empty row for spacing
+
+    // Add the column headers
+    rows.push({
+      Date: 'Date',
+      Project: 'Project',
+      'From Time': 'From Time',
+      'To Time': 'To Time',
+      Description: 'Description',
+      'Total Hours': 'Total Hours'
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(rows);
+    // Fill in timesheet data
+    allTimeSheetData.forEach((entry) => {
+      const details = entry.timeSheetDetailsVO || [];
+
+      if (entry.employeeName === 'LEAVE' || entry.employeeName === 'HOLIDAY') {
+        rows.push({
+          Date: entry.date,
+          Project: details[0]?.projectName || '',
+          'From Time': '',
+          'To Time': '',
+          Description: '',
+          'Total Hours': ''
+        });
+      } else {
+        details.forEach((detail, index) => {
+          rows.push({
+            Date: index === 0 ? entry.date : '',
+            Project: detail.projectName,
+            'From Time': detail.fromTime,
+            'To Time': detail.toTime,
+            Description: detail.description,
+            'Total Hours': index === 0 ? entry.totalhours : ''
+          });
+        });
+      }
+    });
+
+    // Create and download the workbook
+    const worksheet = XLSX.utils.json_to_sheet(rows, { skipHeader: true });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'TimeSheet');
 
@@ -510,8 +518,6 @@ const TimeSheet = () => {
         .map((row) => `Project: ${row.projectName}\nFrom: ${row.fromTime}\nTo: ${row.toTime}\nDescription: ${row.description}`)
         .join('\n\n')
     );
-    // const url = `https://wa.me/?text=${message}`;
-    // window.open(url, '_blank');
     window.location.href = `whatsapp://send?text=${message}`;
   };
 
@@ -699,34 +705,58 @@ const TimeSheet = () => {
             </IconButton>
           </Box>
         </DialogTitle>
+
         <DialogContent>
+          {allTimeSheetData.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6">
+                <strong>Employee Name:</strong> {allTimeSheetData[0]?.employeeName || 'N/A'}
+              </Typography>
+              <Typography variant="h6">
+                <strong>Employee Code:</strong> {allTimeSheetData[0]?.employeeCode || 'N/A'}
+              </Typography>
+            </Box>
+          )}
+
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: '#1976d2' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Date</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Employee Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Employee Code</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Total Hours</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Project</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>From Time</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>To Time</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold', textAlign: 'center' }}>Description</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Date</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Total Hours</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Project</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>From Time</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>To Time</TableCell>
+                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
               </TableRow>
             </TableHead>
+
             <TableBody>
               {allTimeSheetData.length > 0 ? (
                 allTimeSheetData.map((entry, index) => {
                   const details = entry.timeSheetDetailsVO || [];
+
+                  const isLeaveOrHoliday = entry.employeeName === 'LEAVE' || entry.employeeName === 'HOLIDAY';
+
+                  if (isLeaveOrHoliday) {
+                    return (
+                      <TableRow key={`leave-holiday-${index}`}>
+                        <TableCell colSpan={6} align="center">
+                          <strong>{entry.date}</strong> - <span style={{ color: '#d32f2f' }}>{entry.employeeName}</span> (
+                          {details[0]?.projectName || ''})
+                        </TableCell>
+                      </TableRow>
+                    );
+                  }
+
                   return details.map((detail, detailIndex) => (
-                    <TableRow key={`${entry.id}-${detail.id}`}>
-                      {detailIndex === 0 ? (
+                    <TableRow key={`${entry.id}-${detail.id}-${detailIndex}`}>
+                      {detailIndex === 0 && (
                         <>
                           <TableCell rowSpan={details.length}>{entry.date}</TableCell>
-                          <TableCell rowSpan={details.length}>{entry.employeeName}</TableCell>
-                          <TableCell rowSpan={details.length}>{entry.employeeCode}</TableCell>
                           <TableCell rowSpan={details.length}>{entry.totalhours}</TableCell>
                         </>
-                      ) : null}
+                      )}
+                      {detailIndex !== 0 && null}
                       <TableCell>{detail.projectName}</TableCell>
                       <TableCell>{detail.fromTime}</TableCell>
                       <TableCell>{detail.toTime}</TableCell>
@@ -736,19 +766,19 @@ const TimeSheet = () => {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={6} align="center">
                     No data found
                   </TableCell>
                 </TableRow>
               )}
-            </TableBody> 
+            </TableBody>
           </Table>
         </DialogContent>
+
         <DialogActions>
           <Button onClick={() => setReportTableOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-
       <ToastContainer />
     </div>
   );
