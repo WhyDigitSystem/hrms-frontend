@@ -339,67 +339,100 @@ const UpcomingHolidayCard = () => {
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
+        <DialogContent dividers sx={{ maxHeight: '100vh', overflowY: 'auto' }}>
           <Grid container spacing={3} sx={{ p: 2 }}>
-            {allHolidays.sort((a, b) => new Date(a.holidayDate) - new Date(b.holidayDate)).map((holiday, index) => {
-              const status = getHolidayStatus(holiday.holidayDate);
-              return (
-                <Grid item xs={12} sm={6} md={4} key={index}>
-                  <Card sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    background: status === 'past'
-                      ? 'linear-gradient(145deg, #f5f5f5 0%, #eeeeee 100%)'
-                      : 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%)',
-                    boxShadow: 2,
-                    position: 'relative',
-                    opacity: 0,
-                    animation: `${fadeIn} 0.5s ease-out ${index * 0.1}s forwards`,
-                    transition: 'transform 0.3s',
-                    '&:hover': {
-                      transform: 'translateY(-3px)'
-                    }
-                  }}>
-                    <Box sx={{
-                      position: 'absolute',
-                      top: 0,
-                      right: 0,
-                      bgcolor: status === 'past' ? '#9e9e9e' : '#4caf50',
-                      color: 'white',
-                      px: 2,
-                      py: 0.5,
-                      borderBottomLeftRadius: 12,
-                      fontSize: 12,
-                      fontWeight: 'bold'
-                    }}>
-                      {status.toUpperCase()}
-                    </Box>
-                    <Typography variant="subtitle1" fontWeight="bold" sx={{
-                      mb: 1,
-                      color: status === 'past' ? '#757575' : 'inherit'
-                    }}>
-                      {status === 'past' ? '✅' : '🎉'} {holiday.festival}
-                    </Typography>
-                    <Typography variant="body2" sx={{
-                      color: status === 'past' ? '#9e9e9e' : 'text.secondary',
-                      mb: 1
-                    }}>
-                      📅 {getDayName(holiday.holidayDate)}, {formatDate(holiday.holidayDate)}
-                    </Typography>
-                    {holiday.description && (
-                      <Typography variant="body2" sx={{
-                        color: status === 'past' ? '#bdbdbd' : '#616161',
-                        fontStyle: status === 'past' ? 'italic' : 'normal'
-                      }}>
-                        {holiday.description}
+            {allHolidays
+              .sort((a, b) => new Date(a.holidayDate) - new Date(b.holidayDate))
+              .map((holiday, index) => {
+                const status = getHolidayStatus(holiday.holidayDate);
+                return (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <Card
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        background:
+                          status === 'past'
+                            ? 'linear-gradient(145deg, #f5f5f5 0%, #eeeeee 100%)'
+                            : 'linear-gradient(145deg, #ffffff 0%, #f3f4f6 100%)',
+                        boxShadow: 2,
+                        position: 'relative',
+                        opacity: 0,
+                        animation: `${fadeIn} 0.5s ease-out ${index * 0.1}s forwards`,
+                        transition: 'transform 0.3s',
+                        '&:hover': {
+                          transform: 'translateY(-3px)'
+                        }
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          bgcolor: 'transparent',
+                          px: 1.5,
+                          py: 0.5,
+                          fontSize: 16,
+                        }}
+                      >
+                        {status === 'past' ? (
+                          '❌'
+                        ) : (
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            fontWeight={'600'}
+                            viewBox="0 0 256 256"
+                            style={{ fill: '#40C057' }}
+                          >
+                            <g fill="#40c057" fillRule="nonzero">
+                              <g transform="scale(8.53333,8.53333)">
+                                <path d="M26.98047,5.99023c-0.2598,0.00774 -0.50638,0.11632 -0.6875,0.30273l-15.29297,15.29297l-6.29297,-6.29297c-0.25082,-0.26124 -0.62327,-0.36647 -0.97371,-0.27511c-0.35044,0.09136 -0.62411,0.36503 -0.71547,0.71547c-0.09136,0.35044 0.01388,0.72289 0.27511,0.97371l7,7c0.39053,0.39037 1.02353,0.39037 1.41406,0l16,-16c0.29576,-0.28749 0.38469,-0.72707 0.22393,-1.10691c-0.16075,-0.37985 -0.53821,-0.62204 -0.9505,-0.60988z" />
+                              </g>
+                            </g>
+                          </svg>
+                        )}
+
+                      </Box>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight="bold"
+                        sx={{
+                          mb: 1,
+                          color: status === 'past' ? '#757575' : 'inherit'
+                        }}
+                      >
+                        {holiday.festival}
                       </Typography>
-                    )}
-                  </Card>
-                </Grid>
-              );
-            })}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: status === 'past' ? '#9e9e9e' : 'text.secondary',
+                          mb: 1
+                        }}
+                      >
+                        📅 {getDayName(holiday.holidayDate)}, {formatDate(holiday.holidayDate)}
+                      </Typography>
+                      {holiday.description && (
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: status === 'past' ? '#bdbdbd' : '#616161',
+                            fontStyle: status === 'past' ? 'italic' : 'normal'
+                          }}
+                        >
+                          {holiday.description}
+                        </Typography>
+                      )}
+                    </Card>
+                  </Grid>
+                );
+              })}
           </Grid>
         </DialogContent>
+
       </Dialog>
     </>
   );

@@ -252,12 +252,12 @@ const Calendar = () => {
   );
 
   return (
-    <div style={{ margin: '0 auto', padding: isMobile ? '16px' : '32px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ margin: '0 auto', padding: isMobile ? '16px' : '5px', fontFamily: 'Arial, sans-serif' }}>
       {/* Tabs */}
       <div style={{
         display: 'flex',
         gap: '8px',
-        marginBottom: '24px',
+        marginBottom: '18px',
         flexDirection: isMobile ? 'column' : 'row'
       }}>
         <button
@@ -278,34 +278,44 @@ const Calendar = () => {
         <>
           {/* Calendar Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
-            <h1 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#4a4a4a' }}>
-              {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-              <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
-                <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time:</label>
-                <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
-              </div>
-            </h1>
-            <div style={{ display: 'flex', gap: '8px', marginTop: isMobile ? '16px' : '0' }}>
-              <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
-              <button onClick={handleNextMonth} style={buttonStyle}>→</button>
-              <button onClick={handleAddEvent} style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
-                Add New Event
-              </button>
+            <div>
+              <h1 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#4a4a4a' }}>
+                {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time:</label>
+                  <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
+                </div>
+              </h1>
             </div>
+            {/* Add New Event */}
+            <div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: isMobile ? '16px' : '0' }}>
+                <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
+                <button onClick={handleNextMonth} style={buttonStyle}>→</button>
+                <button onClick={handleAddEvent} style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
+                  Add New Event
+                </button>
+              </div>
+            </div>
+            {/* Event Legend */}
+            <div>
+              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
+                <h4 style={{ fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px', marginBottom: '12px' }}>Event Legend</h4>
+                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                  {Object.entries(eventTypeColors).map(([type, color]) => (
+                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={{ width: '20px', height: '20px', backgroundColor: color, borderRadius: '50%' }}></div>
+                      <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a', textTransform: 'capitalize' }}>{type}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
           </div>
 
-          {/* Event Legend */}
-          <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-            <h4 style={{ fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px', marginBottom: '12px' }}>Event Legend</h4>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {Object.entries(eventTypeColors).map(([type, color]) => (
-                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <div style={{ width: '20px', height: '20px', backgroundColor: color, borderRadius: '50%' }}></div>
-                  <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a', textTransform: 'capitalize' }}>{type}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+
+
 
           {/* Calendar Grid */}
           <div style={{ marginTop: '24px', padding: isMobile ? '8px' : '16px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
@@ -482,12 +492,13 @@ const Calendar = () => {
 };
 
 const buttonStyle = {
-  padding: '12px',
-  borderRadius: '8px',
-  backgroundColor: '#f5f5f5',
+  padding: '10px 16px',
+  fontSize: '14px',
+  borderRadius: '6px',
+  border: '1px solid #ccc',
+  backgroundColor: '#fff',
   cursor: 'pointer',
-  transition: 'all 0.3s ease',
-  border: '1px solid #e5e5e5'
+  transition: 'all 0.2s ease',
 };
 
 const inputStyle = {
