@@ -1,7 +1,6 @@
 import ClearIcon from '@mui/icons-material/Clear';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormHelperText } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -9,6 +8,11 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import CommonListViewTable from '../basicMaster/CommonListViewTable';
 import { useState, useEffect } from 'react';
+import IconButton from '@mui/material/IconButton';
+import Box from '@mui/material/Box';
+import { Avatar, Typography, FormHelperText, Button, Dialog, DialogContent } from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import Checkbox from '@mui/material/Checkbox';
@@ -242,7 +246,7 @@ const Company = () => {
         setListView(false);
         const particularCompany = response.paramObjectsMap.companyVO[0];
         console.log('PARTICULAR COMPANY IS:', particularCompany);
-
+setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
         // Extract weekOffDays as an array
         const weekOffDays = particularCompany.companyWeekOffVO ? particularCompany.companyWeekOffVO.map((item) => item.weekOffDays) : [];
 
@@ -267,7 +271,7 @@ const Company = () => {
           leavePolicy: particularCompany.leavePolicy,
           gstRegistered: particularCompany.gstregistered === 'Active',
           active: particularCompany.active === 'Active',
-          weekOff: weekOffDays // Setting week off days in form data
+          weekOff: weekOffDays,
         });
 
         console.log('WEEK OFF DAYS:', weekOffDays);
@@ -426,6 +430,14 @@ const Company = () => {
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', 'Company updated Successfully');
+          const generatedId = response.paramObjectsMap.companyVO.id;
+          if (generatedId && typeof logo === 'object') {
+            console.log('Generated ID:', generatedId);
+            console.log('Uploaded Item', logo);
+            handleFileUpload(generatedId);
+          } else {
+            console.log('handle Img Upload failed');
+          }
           handleClear();
           setIsLoading(false);
         } else {
@@ -442,7 +454,55 @@ const Company = () => {
       setFieldErrors(errors);
     }
   };
+  const [logo, setLogo] = useState(null);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      setLogo(file);
+    } else {
+      showToast('error', 'Please upload a valid image (PNG or JPEG).');
+    }
+  };
+  const handleFileUpload = async (generatedId) => {
+    if (!generatedId) {
+      console.warn('Generated ID is missing');
+      showToast('error', 'Generated ID is required');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', logo);
+    try {
+      const response = await apiCalls(
+        'post',
+        `/commonmaster/uploadCompanyLogoInBloob?id=${generatedId}`,
+        formData,
+        {},
+        { 'Content-Type': 'multipart/form-data' }
+      );
+      console.log('Img Upload Response:', response);
 
+      if (response.status === true) {
+        showToast('success', response.message || 'Image Uploaded successfully!');
+      } else {
+        console.warn('Img upload failed:', response);
+        showToast('error', 'Img upload failed');
+      }
+    } catch (error) {
+      console.error('Img Upload Error:', error);
+      showToast('error', 'Failed to upload Img');
+    }
+  };
+  useEffect(() => {
+    return () => {
+      if (logo && typeof logo === 'object') {
+        URL.revokeObjectURL(logo);
+      }
+    };
+  }, [logo]);
+  const handleRemoveLogo = () => setLogo(null);
   const handleView = () => {
     console.log('LIST VIEW DATAS ARE:', listViewData);
 
@@ -764,6 +824,75 @@ const Company = () => {
                     />
                   </LocalizationProvider>
                 </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    multiline
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
+                  >
+                    {/* {logo ? logo.name === '' ? "Logo👉" : logo.name : 'Upload Logo'} */}
+                    {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Logo👉') : 'Upload Logo'}
+
+                    <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
+                  </Button>
+
+                  {logo && (
+                    <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
+                      <ControlCameraIcon />
+                    </IconButton>
+                  )}
+                </Box>
+                <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+                  <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
+                    <Typography variant="h5" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }}>
+                      Company Logo
+                    </Typography>
+                    {logo ? (
+                      <Box>
+                        <Avatar
+                          src={typeof logo === 'object' ? URL.createObjectURL(logo) : `data:image/jpeg;base64,${logo}`}
+                          alt="Company Logo"
+                          sx={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 2 }}
+                        />
+                        <Box display="flex" gap={2} mt={2}>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                            onClick={handleRemoveLogo}
+                          >
+                            Delete
+                          </IconButton>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                            onClick={handleClose}
+                          >
+                            Close
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <Avatar sx={{ width: 150, height: 150, bgcolor: '#F0F0F0', borderRadius: 2 }}>
+                          <Typography variant="caption">Upload Logo</Typography>
+                        </Avatar>
+                        <Box display="flex" gap={2} mt={2}>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '15px' }}
+                            onClick={handleClose}
+                          >
+                            Close
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </div>
               <div className="col-md-3 mb-3">
                 <FormControlLabel

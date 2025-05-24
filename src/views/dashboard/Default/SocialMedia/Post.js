@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CampaignIcon from "@mui/icons-material/Campaign";
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import {
   Box,
   Typography,
@@ -16,9 +17,13 @@ import {
   Divider,
   useMediaQuery,
   keyframes,
-  Tooltip
+  Tooltip,
+  Dialog,
+  DialogContent
 } from '@mui/material';
 import { toast } from 'react-toastify';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
+import ToastComponent, { showToast } from 'utils/toast-component';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
@@ -47,7 +52,7 @@ const Post = () => {
     expiresDate: '',
     imageUrl: ''
   });
-  const [imageFile, setImageFile] = useState(null);
+  // const [imageFile, setImageFile] = useState(null);
   const [editId, setEditId] = useState('');
   const [viewAllCirculars, setViewAllCirculars] = useState([]);
 
@@ -76,26 +81,6 @@ const Post = () => {
       setListViewData([]);
     }
   };
-
-  const uploadImageToBlob = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const result = await apiCalls("post", "/basicmaster/uploadPostImageInBloob", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      if (result?.paramObjectsMap?.fileUrl) {
-        return result.paramObjectsMap.fileUrl;
-      } else {
-        throw new Error('Image upload failed');
-      }
-    } catch (err) {
-      toast.error("Image upload failed");
-      console.error("Image upload error:", err);
-      return ""; // Return an empty string on error
-    }
-  };
-
   const getCircularById = (circular) => {
     setFormData({
       circularTopic: circular.circularTopic,
@@ -164,9 +149,9 @@ const Post = () => {
 
     setIsLoading(true);
     let imageUrl = formData.imageUrl;
-    if (imageFile) {
-      imageUrl = await uploadImageToBlob(imageFile);
-    }
+    // if (logo) {
+    //   imageUrl = await handleFileUpload(generatedId);
+    // }
 
     const saveFormData = {
       ...(editId && { id: editId }),
@@ -179,7 +164,7 @@ const Post = () => {
       branchCode,
       branchName,
       department,
-      imageUrl,
+      // imageUrl,
     };
 
     try {
@@ -188,8 +173,16 @@ const Post = () => {
         toast.success(editId ? 'Circular Updated Successfully' : 'Circular created successfully');
         setOpenCreateModal(false);
         GetCircularByOrgId();
+        const generatedId = result.paramObjectsMap.circularVO.id;
+          if (generatedId && typeof logo === 'object') {
+            console.log('Generated ID:', generatedId);
+            console.log('Uploaded Item', logo);
+            handleFileUpload(generatedId);
+          } else {
+            console.log('handle Img Upload failed');
+          }
         setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
-        setImageFile(null);
+        setLogo(null);
         setEditId('');
       } else {
         toast.error(result.paramObjectsMap?.errorMessage || 'Circular creation failed');
@@ -204,19 +197,19 @@ const Post = () => {
   const handleCloseCreateModal = () => {
     setOpenCreateModal(false);
     setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
-    setImageFile(null);
+    setLogo(null);
     setEditId('');
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file); // Store the file for preview
-    }
-  };
+  // const handleImageUpload = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     setImageFile(file); // Store the file for preview
+  //   }
+  // };
 
   const handleRemoveImage = () => {
-    setImageFile(null);
+    setLogo(null);
     setFormData((prev) => ({ ...prev, imageUrl: '' })); // Reset the form data's image URL to empty
   };
 
@@ -243,7 +236,72 @@ const Post = () => {
     flexDirection: 'column',
     justifyContent: 'space-between',
   };
+  const [logo, setLogo] = useState(null);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      setLogo(file);
+    } else {
+      showToast('error', 'Please upload a valid image (PNG or JPEG).');
+    }
+  };
+  //   const uploadImageToBlob = async (file) => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("file", file);
+  //     const result = await apiCalls("post", "/basicmaster/uploadPostImageInBloob", formData, {
+  //       headers: { "Content-Type": "multipart/form-data" },
+  //     });
+  //     if (result?.paramObjectsMap?.fileUrl) {
+  //       return result.paramObjectsMap.fileUrl;
+  //     } else {
+  //       throw new Error('Image upload failed');
+  //     }
+  //   } catch (err) {
+  //     toast.error("Image upload failed");
+  //     console.error("Image upload error:", err);
+  //     return ""; // Return an empty string on error
+  //   }
+  // };
+  const handleFileUpload = async (generatedId) => {
+    if (!generatedId) {
+      console.warn('Generated ID is missing');
+      showToast('error', 'Generated ID is required');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', logo);
+    try {
+      const response = await apiCalls(
+        'post',
+        `/basicmaster/uploadPostImageInBloob?id=${generatedId}`,
+        formData,
+        {},
+        { 'Content-Type': 'multipart/form-data' }
+      );
+      console.log('Img Upload Response:', response);
 
+      if (response.status === true) {
+        showToast('success', response.message || 'Image Uploaded successfully!');
+      } else {
+        console.warn('Img upload failed:', response);
+        showToast('error', 'Img upload failed');
+      }
+    } catch (error) {
+      console.error('Img Upload Error:', error);
+      showToast('error', 'Failed to upload Img');
+    }
+  };
+  useEffect(() => {
+    return () => {
+      if (logo && typeof logo === 'object') {
+        URL.revokeObjectURL(logo);
+      }
+    };
+  }, [logo]);
   return (
     <Box sx={cardStyle}>
       <Box sx={{ position: 'relative', padding: isMobile ? 3 : 4, zIndex: 1 }}>
@@ -325,11 +383,75 @@ const Post = () => {
             helperText={fieldErrors.expiresDate}
             sx={{ mb: 3 }}
           />
-          <Button variant="outlined" component="label" sx={{ mb: 2 }}>
-            Upload Image
-            <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
-          </Button>
-          {(imageFile || formData.imageUrl) && (
+              <div className="col-md-9 mb-3">
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    multiline
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
+                  >
+                    {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Image') : 'Upload Image'}
+
+                    <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
+                  </Button>
+
+                  {logo && (
+                    <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
+                      <ControlCameraIcon />
+                    </IconButton>
+                  )}
+                </Box>
+                <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+                  <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
+                    <Typography variant="h5" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }}>
+                      Image
+                    </Typography>
+                    {logo ? (
+                      <Box>
+                        <Avatar
+                          src={typeof logo === 'object' ? URL.createObjectURL(logo) : `data:image/jpeg;base64,${logo}`}
+                          alt="Image"
+                          sx={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 2 }}
+                        />
+                        <Box display="flex" gap={2} mt={2}>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                            onClick={handleRemoveImage}
+                          >
+                            Delete
+                          </IconButton>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                            onClick={handleClose}
+                          >
+                            Close
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    ) : (
+                      <Box>
+                        <Avatar sx={{ width: 150, height: 150, bgcolor: '#F0F0F0', borderRadius: 2 }}>
+                          <Typography variant="caption">Upload Image</Typography>
+                        </Avatar>
+                        <Box display="flex" gap={2} mt={2}>
+                          <IconButton
+                            variant="contained"
+                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '15px' }}
+                            onClick={handleClose}
+                          >
+                            Close
+                          </IconButton>
+                        </Box>
+                      </Box>
+                    )}
+                  </DialogContent>
+                </Dialog>
+              </div>
+          {/* {(imageFile || formData.imageUrl) && (
             <Box sx={{ mb: 2 }}>
               <img
                 src={imageFile ? URL.createObjectURL(imageFile) : formData.imageUrl}
@@ -338,7 +460,7 @@ const Post = () => {
               />
               <Button onClick={handleRemoveImage} color="error" fullWidth sx={{ mt: 1 }}>Remove Image</Button>
             </Box>
-          )}
+          )} */}
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button onClick={handleCloseCreateModal} color="secondary">Cancel</Button>
             <Button onClick={handleSave} variant="contained" color="primary" disabled={isLoading}>
