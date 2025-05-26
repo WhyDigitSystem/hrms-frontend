@@ -37,6 +37,7 @@ const UserCreation = () => {
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [designation, setDesignation] = useState(localStorage.getItem('designation'));
   const [roleDataSelect, setRoleDataSelect] = useState([]);
   const [value, setValue] = useState(0);
   const [editMode, setEditMode] = useState(false);
@@ -81,9 +82,9 @@ const UserCreation = () => {
   });
 
   const listViewColumns = [
-    { accessorKey: 'employeeCode', header: 'EmployeeCode', size: 140 },
-    { accessorKey: 'employeeName', header: 'Name', size: 140 },
-    { accessorKey: 'userName', header: 'User Name', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Code', size: 140 },
+    { accessorKey: 'employeeName', header: 'Employee', size: 140 },
+    { accessorKey: 'designation', header: 'Designation', size: 140 },
     { accessorKey: 'email', header: 'Email', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
@@ -683,7 +684,25 @@ const UserCreation = () => {
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
+
                 <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea"
+                    label="Designation"
+                    variant="outlined"
+                    size="small"
+                    name="designation"
+                    fullWidth
+                    disabled
+                    required
+                    value={formData.designation}
+                    onChange={handleInputChange}
+                    helperText={<span style={{ color: 'red' }}>{fieldErrors.designation ? 'This field is required' : ''}</span>}
+                    inputProps={{ maxLength: 15 }}
+                  />
+                </div>
+
+                {/* <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea"
                     label="UserName"
@@ -698,7 +717,7 @@ const UserCreation = () => {
                     helperText={<span style={{ color: 'red' }}>{fieldErrors.userName ? 'This field is required' : ''}</span>}
                     inputProps={{ maxLength: 15 }}
                   />
-                </div>
+                </div> */}
 
                 {/* <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.userType}>
@@ -792,7 +811,6 @@ const UserCreation = () => {
                     <>
                       <div className="row d-flex ml">
                         <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
                         </div>
                         <div className="row mt-2">
                           <div className="col-lg-9">
@@ -813,8 +831,12 @@ const UserCreation = () => {
                                       Start Date
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      End Date
+                                      <div className='d-flex justify-content-end align-items-center'>
+                                        <div className='pe-5 pt-3'> End Date</div>
+                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                      </div>
                                     </th>
+
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -933,15 +955,15 @@ const UserCreation = () => {
                   {value === 1 && (
                     <>
                       <div className="row d-flex ml">
-                        <div className="mb-1">
+                        {/* <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
-                        </div>
+                        </div> */}
                         <div className="row mt-2">
                           <div className="col-lg-6">
                             <div className="table-responsive">
                               <table className="table table-bordered table-responsive">
                                 <thead>
-                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
@@ -951,7 +973,12 @@ const UserCreation = () => {
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                       Branch Code
                                     </th>
-                                    <th className="px-2 py-2 text-white text-center">Branch</th>
+                                    <th className="px-2 py-2 text-white text-center">
+                                      <div className='d-flex justify-content-end align-items-center'>
+                                        <div className='pe-5 pt-3'> Branch</div>
+                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                      </div>
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
