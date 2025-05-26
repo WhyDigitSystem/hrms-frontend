@@ -387,7 +387,7 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
-        // ...(editId && { id: editId }),
+        ...(editId && { id: editId }),
         id: orgId,
         active: formData.active,
         address: formData.address,
@@ -417,20 +417,11 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
 
       try {
         const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-
-        // if (editId) {
-        //   // PUT request (update)
-        //   response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-        // }
-        // else {
-        //   // POST request (create)
-        //   response = await apiCalls('post', `commonmaster/company`, saveFormData);
-        // }
-
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', 'Company updated Successfully');
-          const generatedId = response.paramObjectsMap.companyVO.id;
+          const generatedId = response.paramObjectsMap.CompanyVO.id;
+          console.log("save", typeof logo);
           if (generatedId && typeof logo === 'object') {
             console.log('Generated ID:', generatedId);
             console.log('Uploaded Item', logo);
