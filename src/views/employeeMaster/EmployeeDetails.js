@@ -185,7 +185,7 @@ const EmployeeDetails = () => {
     },
     {
       accessorKey: 'employeeName',
-      header: 'Name',
+      header: 'Employee',
       size: 140,
       Cell: ({ row }) => (
         <span style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => getEmployeeDetailsById(row)}>
@@ -1564,9 +1564,9 @@ const EmployeeDetails = () => {
                 {value === 0 && (
                   <>
                     <div className="row d-flex ml">
-                      <div className="mb-1">
+                      {/* <div className="mb-1">
                         <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                      </div>
+                      </div> */}
                       <div className="row mt-2">
                         <div className="col-lg-12">
                           <div className="table-responsive">
@@ -1589,7 +1589,10 @@ const EmployeeDetails = () => {
                                     Total Leave
                                   </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                                    Effective From
+                                    <div className='d-flex justify-content-end align-items-center'>
+                                      <div className='pe-5 pt-3'> Effective From</div>
+                                      <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                    </div>
                                   </th>
                                 </tr>
                               </thead>

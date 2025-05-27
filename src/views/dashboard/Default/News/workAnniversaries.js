@@ -9,20 +9,29 @@ import {
   Paper,
   Fade,
   Skeleton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  Slide
 } from '@mui/material';
 import WorkIcon from '@mui/icons-material/Work';
 import CelebrationIcon from '@mui/icons-material/Celebration';
-import apiCalls from 'apicall';
-import { showToast } from 'utils/toast-component';
+import CloseIcon from '@mui/icons-material/Close';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
+import apiCalls from 'apicall';
+import { showToast } from 'utils/toast-component';
 
 function WorkAnniversaries() {
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [todayAnniversaries, setTodayAnniversaries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeData, setEmployeeData] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     if (orgId) fetchWorkAnniversaries();
@@ -40,18 +49,17 @@ function WorkAnniversaries() {
           role: emp.designation || 'Employee',
           gender: emp.gender || '',
           years: emp.noofyears || 0,
-          image: '', // Optional future enhancement
+          image: '',
           department: emp.department || '',
         }));
         setTodayAnniversaries(anniversaries);
       } else {
         setTodayAnniversaries([]);
       }
+
       if (result?.paramObjectsMap?.employeeVO?.length > 0) {
         const empData = result.paramObjectsMap.employeeVO[0];
         setEmployeeData(empData);
-
-        // Optionally update localStorage with fetched data
         if (empData.profileImage) {
           localStorage.setItem('profileImage', empData.profileImage);
         }
@@ -77,9 +85,84 @@ function WorkAnniversaries() {
     pauseOnHover: true,
   };
 
+  const renderAnniversaryCard = (person) => (
+    <Fade in timeout={800}>
+      <Paper
+        elevation={6}
+        sx={{
+          borderRadius: 6,
+          p: 4,
+          backdropFilter: 'blur(8px)',
+          background: 'rgba(255, 255, 255, 0.85)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+          transition: 'transform 0.3s ease-in-out',
+          '&:hover': {
+            transform: 'scale(1.02)',
+          },
+        }}
+      >
+        <Box display="flex" flexDirection="column" alignItems="center" textAlign="center">
+          <Box display="flex" alignItems="center" gap={2} flexDirection={{ xs: 'column', sm: 'row' }}>
+            <Avatar
+              src={
+                employeeData?.profileImage
+                  ? `data:image/png;base64,${employeeData?.profileImage}`
+                  : ''
+              }
+              sx={{
+                width: 80,
+                height: 80,
+                bgcolor: '#1976d2',
+                fontSize: 32,
+                border: '3px solid white',
+                boxShadow: 2,
+                animation: 'pulse 2s infinite',
+              }}
+            >
+              {!employeeData?.profileImage && person.initials}
+            </Avatar>
+            <Box textAlign={{ xs: 'center', sm: 'left' }}>
+              <Typography variant="h6" fontWeight="bold">
+                {person.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {person.role}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                ID: {person.employeeId}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Divider sx={{ width: '100%', my: 2 }} />
+
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Tooltip title="Years of Contribution" arrow>
+              <Chip
+                icon={<CelebrationIcon />}
+                label={`${person.years} Year${person.years > 1 ? 's' : ''}`}
+                color="primary"
+                sx={{ fontWeight: 'bold', px: 1, animation: 'pulse 2s infinite' }}
+              />
+            </Tooltip>
+
+            <Tooltip title="Work Anniversary" arrow>
+              <Chip
+                icon={<WorkIcon />}
+                label="Happy Anniversary!"
+                color="success"
+                variant="outlined"
+                sx={{ px: 1 }}
+              />
+            </Tooltip>
+          </Box>
+        </Box>
+      </Paper>
+    </Fade>
+  );
+
   return (
     <Box mt={4} px={2} sx={{ overflow: 'hidden' }}>
-      {/* Inline CSS for animations - move to global CSS if desired */}
       <style>
         {`
           @keyframes pulse {
@@ -98,23 +181,44 @@ function WorkAnniversaries() {
           }
         `}
       </style>
+      <div className='d-flex justify-content-between align-items-center'>
+        <Typography
+          variant="h4"
+          sx={{
+            color: '#1976d2',
+            fontWeight: 700,
+            textAlign: 'center',
+            mb: 4,
+            letterSpacing: 1,
+            animation: 'pulse 3s infinite',
+            background: 'linear-gradient(90deg, #1565c0, #42a5f5)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          🎉 Today’s Work Anniversaries
+        </Typography>
 
-      <Typography
-        variant="h4"
-        sx={{
-          color: '#1976d2',
-          fontWeight: 700,
-          textAlign: 'center',
-          mb: 4,
-          letterSpacing: 1,
-          animation: 'pulse 3s infinite',
-          background: 'linear-gradient(90deg, #1565c0, #42a5f5)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}
-      >
-        🎉 Today’s Work Anniversaries
-      </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          {todayAnniversaries.length > 0 && (
+            <Tooltip title="View All Work Anniversaries">
+              <IconButton
+                onClick={() => setOpenDialog(true)}
+                sx={{
+                  backgroundColor: '#1976d2',
+                  color: '#fff',
+                  '&:hover': {
+                    backgroundColor: '#115293',
+                  },
+                  boxShadow: 2,
+                }}
+              >
+                <VisibilityIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
+      </div>
 
       {isLoading ? (
         <Box textAlign="center">
@@ -127,131 +231,139 @@ function WorkAnniversaries() {
           />
         </Box>
       ) : todayAnniversaries.length > 0 ? (
-        <Slider {...sliderSettings}>
-          {todayAnniversaries.map((person, index) => (
-            <Box key={index} px={2}>
-              <Fade in timeout={800}>
-                <Paper
-                  elevation={6}
+        <>
+          <Box>{renderAnniversaryCard(todayAnniversaries[0])}</Box>
+
+          {todayAnniversaries.length > 1 && (
+            <Box mt={2} textAlign="center">
+              <Tooltip title="View More Anniversaries" arrow>
+                <IconButton
+                  onClick={() => setOpenDialog(true)}
                   sx={{
-                    borderRadius: 6,
-                    p: 4,
-                    backdropFilter: 'blur(8px)',
-                    background: 'rgba(255, 255, 255, 0.85)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-                    transition: 'transform 0.3s ease-in-out',
+                    backgroundColor: '#1976d2',
+                    color: '#fff',
                     '&:hover': {
-                      transform: 'scale(1.02)',
+                      backgroundColor: '#115293',
                     },
+                    borderRadius: '50%',
+                    boxShadow: 3,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      gap={2}
-                      flexDirection={{ xs: 'column', sm: 'row' }}
-                    >
-                      <Avatar
-                        src={
-                          employeeData?.profileImage
-                            ? `data:image/png;base64,${employeeData?.profileImage}`
-                            : ''
-                        }
-                        sx={{
-                          width: 80,
-                          height: 80,
-                          bgcolor: '#1976d2',
-                          fontSize: 32,
-                          border: '3px solid white',
-                          boxShadow: 2,
-                          animation: 'pulse 2s infinite',
-                        }}
-                      >
-                        {!employeeData?.profileImage && person.initials}
-                      </Avatar>
-                      <Box textAlign={{ xs: 'center', sm: 'left' }}>
-                        <Typography variant="h6" fontWeight="bold">
-                          {person.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {person.role}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ID: {person.employeeId}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                    {/* {person.department && (
-                      <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        sx={{ mt: 0.5 }}
-                      >
-                        {person.department}
-                      </Typography>
-                    )} */}
-
-                    <Divider sx={{ width: '100%', my: 2 }} />
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: 1,
-                        flexWrap: 'wrap',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Tooltip title="Years of Contribution" arrow>
-                        <Chip
-                          icon={<CelebrationIcon />}
-                          label={`${person.years} Year${person.years > 1 ? 's' : ''}`}
-                          color="primary"
-                          sx={{
-                            fontWeight: 'bold',
-                            px: 1,
-                            animation: 'pulse 2s infinite',
-                          }}
-                        />
-                      </Tooltip>
-
-                      <Tooltip title="Work Anniversary" arrow>
-                        <Chip
-                          icon={<WorkIcon />}
-                          label="Happy Anniversary!"
-                          color="success"
-                          variant="outlined"
-                          sx={{ px: 1 }}
-                        />
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                </Paper>
-              </Fade>
+                  <ExpandMoreIcon fontSize="large" />
+                </IconButton>
+              </Tooltip>
             </Box>
-          ))}
-        </Slider>
+          )}
+        </>
       ) : (
         <Typography
           variant="body2"
           align="center"
-          sx={{
-            color: '#757575',
-            fontStyle: 'italic',
-            mt: 2,
-          }}
+          sx={{ color: '#757575', fontStyle: 'italic', mt: 2 }}
         >
           No work anniversaries today
         </Typography>
       )}
+
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        TransitionComponent={Slide}
+        TransitionProps={{ direction: 'up' }}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            p: 2,
+            background: 'rgba(255,255,255,0.95)',
+            backdropFilter: 'blur(10px)',
+            maxHeight: '90vh',
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 'bold', textAlign: 'center', pb: 0 }}>
+          🎊 All Work Anniversaries Today
+          <IconButton
+            aria-label="close"
+            onClick={() => setOpenDialog(false)}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent dividers sx={{ pt: 2 }}>
+          <Box
+            display="grid"
+            gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }}
+            gap={3}
+            px={1}
+            py={2}
+          >
+            {todayAnniversaries.map((person, index) => (
+              <Fade in timeout={500 + index * 200} key={index}>
+                <Paper
+                  elevation={4}
+                  sx={{
+                    borderRadius: 4,
+                    p: 3,
+                    background: '#fff',
+                    transition: 'transform 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                    },
+                  }}
+                >
+                  <Box display="flex" alignItems="center" flexDirection="column" textAlign="center">
+                    <Avatar
+                      src={
+                        employeeData?.profileImage
+                          ? `data:image/png;base64,${employeeData?.profileImage}`
+                          : ''
+                      }
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        mb: 1,
+                        bgcolor: '#1976d2',
+                        fontSize: 24,
+                      }}
+                    >
+                      {!employeeData?.profileImage && person.initials}
+                    </Avatar>
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      {person.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {person.role}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {person.employeeId}
+                    </Typography>
+                    <Box mt={1} display="flex" gap={1} justifyContent="center" flexWrap="wrap">
+                      <Chip
+                        icon={<CelebrationIcon />}
+                        label={`${person.years} Year${person.years > 1 ? 's' : ''}`}
+                        color="primary"
+                        size="small"
+                      />
+                      <Chip
+                        icon={<WorkIcon />}
+                        label="Anniversary"
+                        color="success"
+                        variant="outlined"
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </Paper>
+              </Fade>
+            ))}
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }

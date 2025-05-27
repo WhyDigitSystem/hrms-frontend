@@ -54,7 +54,7 @@ const Company = () => {
     leaveCreditControl: '',
     autoCreditDate: null,
     leavePolicy: '',
-    weekOff: '',
+    weekOff: [],
     shiftIn: null,
     shiftOut: null,
     gstRegistered: true,
@@ -163,7 +163,7 @@ const Company = () => {
     const numericRegex = /^[0-9]*$/;
     const alphanumericRegex = /^[A-Za-z0-9]*$/;
 
-    let newValue = value?.toUpperCase() || '';
+    let newValue = value;
     let error = '';
 
     // Validation logic
@@ -210,14 +210,13 @@ const Company = () => {
     if (name === 'weekOff') {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        [name]: typeof value === 'string' ? value.split(',') : value
+        [name]: value // value is already an array from MUI Select
       }));
-      return; // Exit here to avoid further processing for weekOff
+      return;
     }
 
     // Handle dropdowns separately
     if (type === 'select-one') {
-      // This ensures dropdown updates do not affect other state properties
       setFormData((prevFormData) => ({
         ...prevFormData,
         [name]: value
@@ -246,7 +245,7 @@ const Company = () => {
         setListView(false);
         const particularCompany = response.paramObjectsMap.companyVO[0];
         console.log('PARTICULAR COMPANY IS:', particularCompany);
-setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
+        setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
         // Extract weekOffDays as an array
         const weekOffDays = particularCompany.companyWeekOffVO ? particularCompany.companyWeekOffVO.map((item) => item.weekOffDays) : [];
 
@@ -272,6 +271,8 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
           gstRegistered: particularCompany.gstregistered === 'Active',
           active: particularCompany.active === 'Active',
           weekOff: weekOffDays,
+          shiftIn: particularCompany.shiftIn || null,
+          shiftOut: particularCompany.shiftOut || null,
         });
 
         console.log('WEEK OFF DAYS:', weekOffDays);
@@ -411,7 +412,9 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
         panNo: formData.panNo,
         phone: formData.mobileNo,
         state: formData.state,
-        zip: formData.pincode
+        zip: formData.pincode,
+        shiftIn: formData.shiftIn,
+        shiftOut: formData.shiftOut,
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
@@ -804,7 +807,7 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
                       value={formData.shiftOut ? dayjs(formData.shiftOut, 'HH:mm') : null}
                       onChange={(newValue) => handleTimeChange('shiftOut', newValue)}
                       ampm={false}
-                      disabled={!formData.shiftIn} 
+                      disabled={!formData.shiftIn}
                       minTime={formData.shiftIn ? dayjs(formData.shiftIn, 'HH:mm') : undefined}
                       slots={{
                         openPickerIcon: AccessTimeIcon
@@ -850,13 +853,13 @@ setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
                           sx={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 2 }}
                         />
                         <Box display="flex" gap={2} mt={2}>
-                          <IconButton
+                          {/* <IconButton
                             variant="contained"
                             sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
                             onClick={handleRemoveLogo}
                           >
                             Delete
-                          </IconButton>
+                          </IconButton> */}
                           <IconButton
                             variant="contained"
                             sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
