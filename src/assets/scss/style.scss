@@ -1220,18 +1220,6 @@
   color: #ffff !important;
 }
 
-.css-1gz3mal {
-  color: rgb(54, 65, 82);
-  background-image: none;
-  max-width: 400px !important;
-  box-shadow: none;
-  background-color: transparent !important;
-  transition: box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 32px !important;
-  margin: auto !important;
-  border-radius: 12px !important;
-}
-
 .css-1tar6f7-MuiButtonBase-root-MuiFab-root {
   background-color: #2a4b4d !important;
 }
@@ -1383,11 +1371,30 @@
   border-radius: 0% !important;
 }
 
-.css-atqmg2{
+.css-atqmg2 {
   text-align: left;
   padding-right: 20px !important;
   padding-left: 25px !important;
 }
+
 .css-1wgel6j {
-    color: #fff !important;
+  color: #fff !important;
+}
+
+.css-1gz3mal {
+  background-color: transparent !important;
+  background-image: none;
+  border-radius: 12px !important;
+  box-shadow: none;
+  color: #364152;
+  margin: auto !important;
+  max-width: 431px !important;
+  padding: 0px !important;
+  transition: box-shadow .3s cubic-bezier(.4, 0, .2, 1);
+}
+
+.css-14hvdh5-MuiFormControlLabel-root {
+  margin-left: -20px !important;
+  margin-right: 30px !important;
+  width: 50% !important;
 }
