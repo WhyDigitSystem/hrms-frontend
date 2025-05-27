@@ -406,11 +406,11 @@ const SalaryProcess = () => {
                   <thead>
                     <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
                       <th className="px-2 py-2 text-white text-center">S.No</th>
-                      <th className="px-2 py-2 text-white text-center">Employee Name</th>
-                      <th className="px-2 py-2 text-white text-center">Employee Code</th>
+                      <th className="px-2 py-2 text-white text-center">Code</th>
+                      <th className="px-2 py-2 text-white text-center">Employee</th>
                       <th className="px-2 py-2 text-white text-center">Total Leave</th>
-                      <th className="px-2 py-2 text-white text-center">LOP (Loss of Pay)</th>
-                      <th className="px-2 py-2 text-white text-center">Total Employee Working Days</th>
+                      <th className="px-2 py-2 text-white text-center">LOP</th>
+                      <th className="px-2 py-2 text-white text-center">Working Days</th>
                       <th className="px-2 py-2 text-white text-center">Total Working Days</th>
                       <th className="px-2 py-2 text-white text-center">Gross Salary</th>
                       <th className="px-2 py-2 text-white text-center">Net Pay Salary</th>
@@ -423,8 +423,8 @@ const SalaryProcess = () => {
                       mainTableData.map((leave, index) => (
                         <tr key={leave.employeeCode}>
                           <td className="text-center">{index + 1}</td>
-                          <td className="text-center">{leave.employeeName}</td>
                           <td className="text-center">{leave.employeeCode}</td>
+                          <td className="text-center">{leave.employeeName}</td>
                           <td className="text-center">{leave.totalLeave}</td>
                           <td className="text-center">{leave.lopLeave}</td>
                           <td className="text-center">{leave.empTotalWorkingDays}</td>

@@ -64,8 +64,8 @@ const SalaryMaster = () => {
   });
 
   const listViewColumns = [
-    { accessorKey: 'employeeName', header: 'Employee Name', size: 140 },
-    { accessorKey: 'employeeCode', header: 'Employee Code', size: 140 },
+    { accessorKey: 'employeeName', header: 'Employee', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Code', size: 140 },
     { accessorKey: 'dateOfBirth', header: 'DOB', size: 140 },
     { accessorKey: 'grade', header: 'Grade', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
@@ -712,9 +712,9 @@ const SalaryMaster = () => {
                   {value === 0 && (
                     <>
                       <div className="row d-flex ml">
-                        <div className="mb-1">
+                        {/* <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                        </div>
+                        </div> */}
                         <div className="row mt-2">
                           <div className="col-lg-9">
                             <div className="table-responsive">
@@ -731,7 +731,10 @@ const SalaryMaster = () => {
                                       Heading
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Amount
+                                      <div className='d-flex justify-content-end align-items-center'>
+                                        <div className='pe-5 pt-3'> Amount </div>
+                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                      </div>
                                     </th>
                                   </tr>
                                 </thead>
@@ -818,15 +821,15 @@ const SalaryMaster = () => {
                   {value === 1 && (
                     <>
                       <div className="row d-flex ml">
-                        <div className="mb-1">
+                        {/* <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
-                        </div>
+                        </div> */}
                         <div className="row mt-2">
                           <div className="col-lg-9">
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ background: 'linear-gradient(193deg, #009d90 30%, #7bb9b4 90%)', color: 'white' }}>
+                                  <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
@@ -837,7 +840,7 @@ const SalaryMaster = () => {
                                       Heading
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Amount111
+                                      Amount
                                     </th>
                                   </tr>
                                 </thead>

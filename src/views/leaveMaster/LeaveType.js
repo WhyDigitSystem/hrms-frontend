@@ -51,8 +51,8 @@ const LeaveType = () => {
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'leaveType', header: 'Leave Type', size: 140 },
-    { accessorKey: 'leaveCode', header: 'Leave Code', size: 140 },
+    { accessorKey: 'leaveCode', header: 'Code', size: 140 },
+    { accessorKey: 'leaveType', header: 'Type', size: 140 },
     { accessorKey: 'leaveApplicable', header: 'Leave Applicable', size: 140 },
     { accessorKey: 'salaryDeduction', header: 'Salary Deduction', size: 140 },
     // { accessorKey: 'totalLeave', header: 'Total Leaves', size: 140 },
@@ -135,13 +135,13 @@ const LeaveType = () => {
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
     let updatedValue = type === 'checkbox' ? checked : value;
-  
+
     // Update form data
     setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: updatedValue
     }));
-  
+
     // Validation logic for 'leaveType'
     if (name === 'leaveType') {
       if (updatedValue.length < 3) {
@@ -161,7 +161,7 @@ const LeaveType = () => {
         [name]: ''
       }));
     }
-  
+
     // Maintain cursor position
     if (type === 'text' || type === 'email' || type === 'textarea') {
       setTimeout(() => {
@@ -171,7 +171,7 @@ const LeaveType = () => {
         }
       }, 0);
     }
-  };  
+  };
 
   const handleClear = () => {
     setFormData({
@@ -311,7 +311,7 @@ const LeaveType = () => {
               {/* Leave Type */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Leave Type"
+                  label="Type"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -326,7 +326,7 @@ const LeaveType = () => {
               {/* Leave Code */}
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Leave Code"
+                  label="Code"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -465,24 +465,24 @@ const LeaveType = () => {
                 </>
 
                   )} */}
-                  <div className="col-md-3 mb-3">
-                    <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
-                      <InputLabel id="carryForward">Carry Forward</InputLabel>
-                      <Select
-                        labelId="carryForward"
-                        id="carryForward"
-                        name="carryForward"
-                        value={formData.carryForward || ''}
-                        onChange={handleInputChange}
-                        label="Carry Forward" // Add this line
-                      >
-                        <MenuItem value="Yes">Yes</MenuItem>
-                        <MenuItem value="No">No</MenuItem>
-                      </Select>
-                      {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
-                    </FormControl>
-                  </div>
-              
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth size="small" error={!!fieldErrors.carryForward}>
+                  <InputLabel id="carryForward">Carry Forward</InputLabel>
+                  <Select
+                    labelId="carryForward"
+                    id="carryForward"
+                    name="carryForward"
+                    value={formData.carryForward || ''}
+                    onChange={handleInputChange}
+                    label="Carry Forward" // Add this line
+                  >
+                    <MenuItem value="Yes">Yes</MenuItem>
+                    <MenuItem value="No">No</MenuItem>
+                  </Select>
+                  {fieldErrors.carryForward && <FormHelperText>{fieldErrors.carryForward}</FormHelperText>}
+                </FormControl>
+              </div>
+
               <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
