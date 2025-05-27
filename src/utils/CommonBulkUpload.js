@@ -64,10 +64,10 @@ const CommonBulkUpload = ({
     setIsLoading(true);
 
     if (selectedFile) {
-      const createdBy = loginUser || 'default_user';
+      const createdBy = loginUser;
       const formData = new FormData();
       formData.append('files', selectedFile);
-      // formData.append('createdBy', createdBy);
+      formData.append('createdBy', createdBy);
       // formData.append('clientCode', clientCode);
       // formData.append('clientName', clientName);
       // formData.append('finYear', finYear);
