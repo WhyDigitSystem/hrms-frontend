@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { Avatar, Box, ButtonBase, Chip, useMediaQuery } from '@mui/material';
+import { Avatar, Box, ButtonBase, Stack, Typography, Chip } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // project imports
@@ -11,18 +11,19 @@ import ProfileSection from './ProfileSection';
 import SearchSection from './SearchSection';
 
 // assets
-import { IconMenu2 } from '@tabler/icons-react';
+import { IconMenu2, IconSun, IconMoon } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
+// import GlobalSection from './GlobalSection';
 
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
 const Header = ({ handleLeftDrawerToggle }) => {
+  const theme = useTheme();
   const [logo, setLogo] = useState(null);
   const [orgId] = useState(localStorage.getItem('orgId'));
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
 
   useEffect(() => {
     getCompanyDetails();
@@ -64,14 +65,18 @@ const Header = ({ handleLeftDrawerToggle }) => {
           }
         }}
       >
-        <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
+        {/* <Box component="span" sx={{ display: { xs: 'none', md: 'block' }, flexGrow: 1 }}>
+          <LogoSection />
+        </Box> */}
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'none', md: 'block' }, flexGrow: 1 }}>
           <LogoSection />
         </Box>
+
         <ButtonBase
           sx={{
             borderRadius: '12px',
             overflow: 'hidden',
-            display: { xs: 'inline-flex', sm: 'none' }
+            display: { xs: 'inline-flex', sm: 'none' } // Visible only on xs (mobile), hidden on sm and up
           }}
         >
           <Avatar
@@ -93,6 +98,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
             <IconMenu2 stroke={1.5} size="1.3rem" />
           </Avatar>
         </ButtonBase>
+
       </Box>
 
       {/* header search */}
@@ -100,10 +106,15 @@ const Header = ({ handleLeftDrawerToggle }) => {
 
       <Box sx={{ flexGrow: 1 }} />
 
-      {/* Company Logo & Info */}
+      {/* Company logo */}
       <Box
         sx={{
-          display: 'flex',
+          display: {
+            xs: logo && logo[0]?.companyLogo ? 'none' : 'flex',
+            sm: 'flex'
+          },
+          flexDirection: 'column',
+          alignItems: { xs: 'center', sm: 'flex-start' },
           alignItems: 'center',
           justifyContent: { xs: 'center', md: 'flex-end' },
           width: { xs: '100%', md: 400 },
@@ -160,9 +171,40 @@ const Header = ({ handleLeftDrawerToggle }) => {
         </Box>
       </Box>
 
-      {/* Notifications and Profile */}
-      <NotificationSection />
-      <ProfileSection />
+
+      {/* Right Side Actions */}
+      <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
+        {/* Theme Toggle Button */}
+        {/* <ButtonBase sx={{ borderRadius: '12px', overflow: 'hidden' }}>
+          <Avatar
+            variant="rounded"
+            sx={{
+              ...theme.typography.commonAvatar,
+              ...theme.typography.mediumAvatar,
+              transition: 'all .2s ease-in-out',
+              background: theme.palette.primary.light,
+              color: theme.palette.primary.dark,
+              '&:hover': {
+                background: theme.palette.primary.dark,
+                color: theme.palette.primary.light
+              }
+            }}
+            color="inherit"
+          >
+            {theme.palette.mode === 'dark' ? (
+              <IconSun stroke={1.5} size="1.3rem" />
+            ) : (
+              <IconMoon stroke={1.5} size="1.3rem" />
+            )}
+          </Avatar>
+        </ButtonBase> */}
+
+        {/* Notification */}
+        <NotificationSection />
+
+        {/* Profile */}
+        <ProfileSection />
+      </Stack>
     </>
   );
 };
