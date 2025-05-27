@@ -67,7 +67,7 @@ const PermissionApproval = () => {
         <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
           Permission Approval - {branchName || 'No branch available'} - Branch
         </Typography>
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 0 }}>
           {listViewData.length > 0 ? (
             <Paper
               sx={{

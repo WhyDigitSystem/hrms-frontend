@@ -58,7 +58,7 @@ const LeaveApproval = () => {
           Leave Approval- {branchName ? branchName : "No branch available"} - Branch
           </Typography> */}
         </Box>
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 0 }}>
           {listViewData.length > 1 && (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
               <CommonListViewTable

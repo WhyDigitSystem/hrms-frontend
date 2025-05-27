@@ -133,7 +133,7 @@ const HolidayReport = () => {
           </Button> */}
           <ActionButton title="Download" icon={DownloadIcon} onClick={handleDownloadPDF} margin="0 10px 0 10px" />
         </Box>
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 0 }}>
           {listViewData.length > 1 && (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
               <CommonListViewTable

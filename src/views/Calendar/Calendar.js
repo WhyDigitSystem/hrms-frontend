@@ -10,10 +10,9 @@ const Calendar = () => {
   const [currentTime, setCurrentTime] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const [activeTab, setActiveTab] = useState('calendar');
+
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [calendarEvents, setCalendarEvents] = useState([]);
-  const [holidays, setHolidays] = useState([]);
-  const [allEvents, setAllEvents] = useState([]);
   const [loginUserName] = useState(localStorage.getItem('userName'));
   const [branchCode] = useState(localStorage.getItem('branchCode'));
   const [branchName] = useState(localStorage.getItem('branch'));
@@ -34,40 +33,6 @@ const Calendar = () => {
     training: '#32CD32',
     other: '#808080'
   };
-
-  useEffect(() => {
-    const combineEvents = () => {
-      const transformedHolidays = holidays.map(holiday => ({
-        eventTitle: holiday.festival,
-        date: holiday.holidayDate,
-        eventType: 'holiday',
-        description: 'Public Holiday',
-        id: `holiday-${holiday.id}`
-      }));
-
-      // Filter out duplicate events
-      const calendarEventIds = new Set(calendarEvents.map(e => e.id));
-      const uniqueHolidays = transformedHolidays.filter(h => !calendarEventIds.has(h.id));
-
-      setAllEvents([...calendarEvents, ...uniqueHolidays]);
-    };
-
-    if (calendarEvents.length || holidays.length) {
-      combineEvents();
-    }
-  }, [calendarEvents, holidays]);
-
-  useEffect(() => {
-    const transformedHolidays = holidays.map(holiday => ({
-      eventTitle: holiday.festival,
-      date: holiday.holidayDate,
-      eventType: 'holiday',
-      description: 'Public Holiday',
-      id: `holiday-${holiday.id}`
-    }));
-    setAllEvents([...calendarEvents, ...transformedHolidays]);
-  }, [calendarEvents, holidays]);
-
 
   const formatDateForInput = (year, month, day) => {
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -92,7 +57,7 @@ const Calendar = () => {
           } else {
             const dayWithEvents = {
               day: dayCount,
-              events: allEvents.filter(event => {
+              events: calendarEvents.filter(event => {
                 const [year, month, day] = event.date.split('-').map(Number);
                 const eventDate = new Date(year, month - 1, day);
                 return (
@@ -133,7 +98,7 @@ const Calendar = () => {
       clearInterval(timeInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [currentDate, allEvents]);
+  }, [currentDate, calendarEvents]);
 
   const handleAddEvent = () => {
     const today = new Date();
@@ -164,11 +129,6 @@ const Calendar = () => {
   };
 
   const handleSaveEvent = async () => {
-    if (newEvent.id?.startsWith('holiday-')) {
-      showToast('error', 'Holidays cannot be modified');
-      return;
-    }
-
     if (!newEvent.title || !newEvent.date || !newEvent.type) {
       showToast('error', 'All fields are required');
       return;
@@ -196,8 +156,11 @@ const Calendar = () => {
         setShowModal(false);
         setNewEvent({ title: '', date: '', type: 'meeting', description: '' });
         getAllCalendarByOrgId();
+      } else {
+        showToast('error', result.paramObjectsMap?.errorMessage || 'Failed to save event');
       }
     } catch (err) {
+      console.error('Error saving event:', err);
       showToast('error', 'Error occurred while saving');
     }
   };
@@ -215,37 +178,22 @@ const Calendar = () => {
 
   useEffect(() => {
     getAllCalendarByOrgId();
-    fetchHolidays();
   }, []);
-
-  const fetchHolidays = async () => {
-    try {
-      const result = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
-      if (result?.status && result?.paramObjectsMap?.holidayVO) {
-        setHolidays(result.paramObjectsMap.holidayVO);
-      } else {
-        showToast('error', 'Failed to load holidays');
-      }
-    } catch (err) {
-      console.error('Holiday API error:', err);
-      showToast('error', 'Error fetching holidays');
-    }
-  };
 
   const getAllCalendarByOrgId = async () => {
     try {
       const result = await apiCalls('get', `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`);
       if (result?.status && result?.paramObjectsMap?.calendarVO) {
-        setCalendarEvents(result.paramObjectsMap.calendarVO.reverse());
+        const events = result.paramObjectsMap.calendarVO.reverse();
+        setCalendarEvents(events);
       } else {
-        showToast('error', 'Failed to load calendar events');
+        showToast('error', 'No calendar events found');
       }
     } catch (err) {
-      console.error('Calendar API error:', err);
+      console.log('Error fetching calendar data:', err);
       showToast('error', 'Error fetching calendar data');
     }
   };
-
 
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -269,56 +217,37 @@ const Calendar = () => {
 
   const renderEventsList = () => (
     <div style={{ marginTop: '24px', maxHeight: '400px', overflowY: 'auto' }}>
-      {allEvents.length === 0 ? (
-        <div style={{
-          padding: '16px',
-          textAlign: 'center',
-          color: '#666',
-          backgroundColor: '#f8f9fa',
-          borderRadius: '8px'
-        }}>
-          No events found
-        </div>
-      ) : (
-        allEvents.map((event, index) => (
-          <div key={`${event.id}-${index}`}
-            style={{
-              padding: '16px',
-              marginBottom: '8px',
-              borderRadius: '8px',
-              backgroundColor: '#fff',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              cursor: event.id?.startsWith('holiday-') ? 'default' : 'pointer',
-              opacity: event.cancel ? 0.5 : 1
-            }}
-            onClick={() => !event.id?.startsWith('holiday-') && handleEventClick(event)}
-          >
-            {/* Rest of the event item rendering remains same */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                backgroundColor: eventTypeColors[event.eventType] || '#808080'
-              }}></div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600' }}>{event.eventTitle}</h3>
-              {event.id?.startsWith('holiday-') && (
-                <span style={{ fontSize: '12px', color: '#666', marginLeft: '8px' }}>
-                  (Public Holiday)
-                </span>
-              )}
-            </div>
-            <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
-              {new Date(event.date).toLocaleDateString()} - {event.eventType}
-            </div>
-            {event.description && (
-              <div style={{ marginTop: '8px', fontSize: '14px', color: '#888' }}>
-                {event.description}
-              </div>
-            )}
+      {calendarEvents.map((event, index) => (
+        <div key={index}
+          style={{
+            padding: '16px',
+            marginBottom: '8px',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            cursor: 'pointer'
+          }}
+          onClick={() => handleEventClick(event)}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: eventTypeColors[event.eventType] || '#808080'
+            }}></div>
+            <h3 style={{ fontSize: '16px', fontWeight: '600' }}>{event.eventTitle}</h3>
           </div>
-        ))
-      )}
+          <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
+            {new Date(event.date).toLocaleDateString()} - {event.eventType}
+          </div>
+          {event.description && (
+            <div style={{ marginTop: '8px', fontSize: '14px', color: '#888' }}>
+              {event.description}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 
@@ -382,7 +311,12 @@ const Calendar = () => {
                 </div>
               </div>
             </div>
+
           </div>
+
+
+
+
           {/* Calendar Grid */}
           <div style={{ marginTop: '24px', padding: isMobile ? '8px' : '16px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(7, 1fr)', gap: '8px', borderBottom: '1px solid #e5e5e5' }}>

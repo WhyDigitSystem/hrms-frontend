@@ -381,7 +381,7 @@ const AttendenceProcess = () => {
           </div>
         </div>
         {listView && (
-          <div className="mt-4">
+          <div className="mt-0">
             <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={true} enableEditing={true} />
           </div>
         )}
