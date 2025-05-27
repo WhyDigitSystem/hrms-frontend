@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 // material-ui
-import { Avatar, Box, ButtonBase, Chip } from '@mui/material';
+import { Avatar, Box, ButtonBase, Chip, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
 // project imports
@@ -16,13 +16,13 @@ import { useEffect, useState } from 'react';
 import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
 
-
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
 
 const Header = ({ handleLeftDrawerToggle }) => {
   const [logo, setLogo] = useState(null);
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [orgId] = useState(localStorage.getItem('orgId'));
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     getCompanyDetails();
@@ -40,12 +40,10 @@ const Header = ({ handleLeftDrawerToggle }) => {
   const getCompanyDetails = async () => {
     try {
       const response = await apiCalls('get', `commonmaster/company/${orgId}`);
-      console.log('API Response:', response);
-
       if (response.status === true) {
         const particularCompany = response.paramObjectsMap.companyVO[0];
         setLogo(response.paramObjectsMap.companyVO);
-        console.log('THE LISTVIEW COMPANY IS:', particularCompany);
+        console.log('Company Details:', particularCompany);
       } else {
         console.error('API Error:', response);
       }
@@ -53,7 +51,6 @@ const Header = ({ handleLeftDrawerToggle }) => {
       console.error('Error fetching data:', error);
     }
   };
-
 
   return (
     <>
@@ -75,7 +72,8 @@ const Header = ({ handleLeftDrawerToggle }) => {
             borderRadius: '12px',
             overflow: 'hidden',
             display: { xs: 'inline-flex', sm: 'none' }
-          }}>
+          }}
+        >
           <Avatar
             variant="rounded"
             sx={{
@@ -102,27 +100,37 @@ const Header = ({ handleLeftDrawerToggle }) => {
 
       <Box sx={{ flexGrow: 1 }} />
 
-
-      {/* <company Logo */}
-      <div className="mt-2" style={{ display: 'flex', alignItems: 'center', justifyContent: 'end', width: 400 }}>
+      {/* Company Logo & Info */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: { xs: 'center', md: 'flex-end' },
+          width: { xs: '100%', md: 400 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          textAlign: { xs: 'center', sm: 'start' },
+          mt: 1,
+          mb: { xs: 1, md: 0 },
+          gap: 1,
+          ps: 2,
+        }}
+      >
         <Avatar
           sx={{
             fontSize: "16px",
-            width: "100px", // Adjust size as needed
-            height: "75px",
+            width: { xs: 80, sm: 100 },
+            height: { xs: 60, sm: 75 },
             fontWeight: "bold",
-            // border: "2px solid white",
-            // boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.15)",
-            marginRight: "5px",
-            marginTop: "-10px",
-            backgroundColor: "transparent" 
+            backgroundColor: "transparent",
+            marginRight: { sm: "5px" },
+            marginTop: { xs: 0, sm: "-10px" }
           }}
         >
           {logo && logo[0]?.companyLogo ? (
             <img
               src={`data:image/png;base64,${logo[0].companyLogo}`}
               alt="Company Logo"
-              style={{ width: "100%", height: "100%", objectFit: "contain", }}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
             />
           ) : (
             "Upload Logo"
@@ -130,22 +138,29 @@ const Header = ({ handleLeftDrawerToggle }) => {
           <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
         </Avatar>
 
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h6 style={{ marginTop: '-12px', marginBottom: 1, color:'white' }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', sm: 'flex-start' } }}>
+          <Box
+            component="h6"
+            sx={{
+              mt: { xs: 0, sm: '-12px' },
+              mb: 0.5,
+              fontSize: '14px',
+              color: 'white',
+              fontWeight: 'bold'
+            }}
+          >
             {localStorage.getItem('companyName')}
-          </h6>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <Chip
-              label={`${localStorage.getItem('branch')}`}
-              size="small"
-              color="primary"
-              sx={{ fontSize: '11px', height: '20px' }}
-            />
-          </div>
+          </Box>
+          <Chip
+            label={localStorage.getItem('branch')}
+            size="small"
+            color="primary"
+            sx={{ fontSize: '11px', height: '20px' }}
+          />
+        </Box>
+      </Box>
 
-        </div>
-      </div>
-
+      {/* Notifications and Profile */}
       <NotificationSection />
       <ProfileSection />
     </>

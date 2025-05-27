@@ -1398,3 +1398,30 @@
   margin-right: 30px !important;
   width: 50% !important;
 }
+
+@media (min-width: 0px) {
+  .css-1csgmiv {
+    -webkit-box-pack: center !important;
+    -ms-flex-pack: center !important;
+    -webkit-justify-content: center !important;
+    justify-content: end !important;
+    width: 100%;
+    -webkit-flex-direction: row !important;
+    -ms-flex-direction: column !important;
+    flex-direction: row !important;
+    text-align: center !important;
+    margin-bottom: 0px !important;
+  }
+}
+
+@media (min-width: 0px) {
+  .css-1hb15oy {
+    flex-direction: row !important;
+    margin-bottom: 0px !important;
+    padding-left: 8px !important;
+  }
+}
+
+.css-1weec88-MuiInputBase-root-MuiOutlinedInput-root {
+  border-radius: 17px !important;
+}
