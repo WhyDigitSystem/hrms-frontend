@@ -5,12 +5,13 @@ import ToastComponent, { showToast } from 'utils/toast-component';
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({ title: '', type: '', date: '', description: '' });
   const [calendarDays, setCalendarDays] = useState([]);
   const [currentTime, setCurrentTime] = useState('');
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const [activeTab, setActiveTab] = useState('calendar');
+  const [holidays, setHolidays] = useState([]);
 
+  // Local storage values
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [loginUserName] = useState(localStorage.getItem('userName'));
@@ -34,9 +35,12 @@ const Calendar = () => {
     other: '#808080'
   };
 
-  const formatDateForInput = (year, month, day) => {
-    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-  };
+  const [newEvent, setNewEvent] = useState({
+    eventTitle: '',
+    eventType: 'meeting',
+    date: '',
+    description: ''
+  });
 
   useEffect(() => {
     const updateCalendar = () => {
@@ -45,6 +49,7 @@ const Calendar = () => {
       const days = [];
       const firstDayIndex = startOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
+      const combinedEvents = [...calendarEvents, ...holidays];
 
       let dayCount = 1;
       for (let i = 0; i < 6; i++) {
@@ -57,14 +62,19 @@ const Calendar = () => {
           } else {
             const dayWithEvents = {
               day: dayCount,
-              events: calendarEvents.filter(event => {
-                const [year, month, day] = event.date.split('-').map(Number);
-                const eventDate = new Date(year, month - 1, day);
-                return (
-                  eventDate.getDate() === dayCount &&
-                  eventDate.getMonth() === currentDate.getMonth() &&
-                  eventDate.getFullYear() === currentDate.getFullYear()
-                );
+              events: combinedEvents.filter(event => {
+                try {
+                  const [year, month, day] = event.date.split('-').map(Number);
+                  const eventDate = new Date(year, month - 1, day);
+                  return (
+                    eventDate.getDate() === dayCount &&
+                    eventDate.getMonth() === currentDate.getMonth() &&
+                    eventDate.getFullYear() === currentDate.getFullYear()
+                  );
+                } catch (error) {
+                  console.error('Invalid date format:', event.date);
+                  return false;
+                }
               })
             };
             week.push(dayWithEvents);
@@ -79,15 +89,10 @@ const Calendar = () => {
 
     const updateTime = () => {
       const now = new Date();
-      const hours = now.getHours().toString().padStart(2, '0');
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      setCurrentTime(`${hours}:${minutes}:${seconds}`);
+      setCurrentTime(now.toLocaleTimeString());
     };
 
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 600);
-    };
+    const handleResize = () => setIsMobile(window.innerWidth <= 600);
 
     updateCalendar();
     updateTime();
@@ -98,26 +103,252 @@ const Calendar = () => {
       clearInterval(timeInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [currentDate, calendarEvents]);
+  }, [currentDate, calendarEvents, holidays]);
 
+  // Fetch data functions
+  const getAllCalendarByOrgId = async () => {
+    try {
+      const result = await apiCalls('get',
+        `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`
+      );
+      if (result?.paramObjectsMap?.calendarVO) {
+        const transformed = result.paramObjectsMap.calendarVO.reverse().map(event => ({
+          ...event,
+          eventTitle: event.eventTitle === "Untitled Event" ? "" : event.eventTitle?.trim() || "",
+          eventType: event.eventType || 'other',
+          // Add user details from localStorage
+          empName: event.empName || empName,
+          branchName: event.branchName || branchName,
+          department: event.department || department
+        }));
+        setCalendarEvents(transformed);
+      }
+    } catch (err) {
+      showToast('error', 'Error fetching calendar events');
+    }
+  };
+
+  const getAllHolidaysByOrgId = async () => {
+    try {
+      const result = await apiCalls('get',
+        `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}&branchCode=${branchCode}`
+      );
+      if (result?.paramObjectsMap?.holidayVO) {
+        const transformed = result.paramObjectsMap.holidayVO.map(holiday => ({
+          eventTitle: `${holiday.festival} 🎉`,
+          eventType: 'holiday',
+          date: holiday.holidayDate,
+          description: `Date: ${holiday.holidayDate}\nDay: ${holiday.day}\nType: Official Holiday`,
+          id: `holiday-${holiday.id}`,
+          isHoliday: true
+        }));
+        setHolidays(transformed);
+      }
+    } catch (err) {
+      showToast('error', 'Error fetching holidays');
+    }
+  };
+
+  useEffect(() => {
+    getAllCalendarByOrgId();
+    getAllHolidaysByOrgId();
+  }, []);
+
+  // Event handlers
   const handleAddEvent = () => {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth() + 1;
-    const day = today.getDate();
     setNewEvent({
-      title: '',
-      type: 'meeting',
-      date: formatDateForInput(year, month, day),
+      eventTitle: '',
+      eventType: 'meeting',
+      date: formatDateForInput(today.getFullYear(), today.getMonth() + 1, today.getDate()),
       description: '',
       id: null
     });
     setShowModal(true);
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setNewEvent({ title: '', date: '', type: 'meeting', description: '' });
+  const handleEventClick = (event) => {
+    setNewEvent({
+      ...event,
+      isHoliday: event.isHoliday || false
+    });
+    setShowModal(true);
+  };
+
+  const handleSaveEvent = async () => {
+    // Validate required fields
+    if (!newEvent.eventTitle?.trim()) {
+      showToast('error', 'Event title is required');
+      return;
+    }
+
+    if (!newEvent.date) {
+      showToast('error', 'Event date is required');
+      return;
+    }
+
+    // Prepare the API payload
+    const saveData = {
+      id: newEvent.id || null,
+      eventTitle: newEvent.eventTitle.trim(),
+      eventType: newEvent.eventType,
+      date: newEvent.date,
+      description: newEvent.description,
+      orgId: orgId,
+      branchCode: branchCode,
+      empCode: empCode,
+      createdBy: loginUserName
+    };
+
+    try {
+      const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
+
+      if (result?.status) {
+        showToast('success', 'Event saved successfully');
+        setShowModal(false);
+        await getAllCalendarByOrgId(); // Refresh the events list
+      } else {
+        showToast('error', result?.message || 'Failed to save event');
+      }
+    } catch (err) {
+      console.error('Save Error:', err);
+      showToast('error', 'Error saving event. Please try again.');
+    }
+  };
+
+
+  const ModalForm = () => (
+    // ... other modal container styles ...
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSaveEvent();
+    }}>
+      {/* Event Title Input */}
+      <div style={{ marginBottom: 12 }}>
+        <label>Title</label>
+        <input
+          name="eventTitle"  // Corrected name
+          value={newEvent.eventTitle}
+          onChange={handleEventChange}
+          style={inputStyle}
+        />
+      </div>
+
+      {/* Event Type Select */}
+      <div style={{ marginBottom: 12 }}>
+        <label>Type</label>
+        <select
+          name="eventType"  // Corrected name
+          value={newEvent.eventType}
+          onChange={handleEventChange}
+          style={inputStyle}
+        >
+          <option value="meeting">Meeting</option>
+          <option value="birthday">Birthday</option>
+          <option value="training">Training</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+    </form>
+  );
+
+  // Helper functions
+  const formatDateForInput = (year, month, day) => {
+    return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+  };
+
+  // UI components
+  const EventLegend = () => (
+    <div style={{ marginTop: 16, padding: 16, backgroundColor: '#f9f9f9', borderRadius: 8 }}>
+      <h4 style={{ fontWeight: 'bold', marginBottom: 12 }}>Event Legend</h4>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        {Object.entries(eventTypeColors).map(([type, color]) => (
+          <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 20, height: 20, backgroundColor: color, borderRadius: '50%' }} />
+            <span style={{ textTransform: 'capitalize' }}>{type}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const CalendarGrid = () => (
+    <div style={{
+      marginTop: 24, padding: isMobile ? 8 : 16,
+      backgroundColor: '#fff', borderRadius: 8, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    }}>
+      <div style={{
+        display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 4 : 7}, 1fr)`,
+        gap: 8, borderBottom: '1px solid #e5e5e5'
+      }}>
+        {weekdays.map(day => (
+          <div key={day} style={{
+            padding: 8, textAlign: 'center', fontWeight: 500,
+            backgroundColor: '#f5f5f5', borderRadius: 8
+          }}>
+            {day}
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 2 : 7}, 1fr)`,
+        gap: isMobile ? 6 : 8, marginTop: 12
+      }}>
+        {calendarDays.map((week, wIdx) => week.map((cell, cIdx) => (
+          <div key={`${wIdx}-${cIdx}`}
+            style={{
+              minHeight: isMobile ? 64 : 96, padding: 8, borderRadius: 8,
+              backgroundColor: cell ? '#f9f9f9' : 'transparent',
+              cursor: cell ? 'pointer' : 'default'
+            }}
+            onClick={() => cell && handleEventClick(cell.events[0])}>
+            {cell && (
+              <>
+                <div style={{ color: '#1d4ed8', fontWeight: 'bold' }}>{cell.day}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {cell.events.slice(0, 2).map((event, eIdx) => (
+                    <div key={eIdx} title={
+                      `Date: ${event.date}\n` +
+                      `Type: ${event.eventType}\n` +
+                      `Branch: ${event.branchName || branchName}\n` +
+                      `Department: ${event.department || department}\n` +
+                      `Created by: ${event.empName || empName}\n\n` +
+                      event.description}
+                      style={{
+                        padding: '4px 8px',
+                        backgroundColor: eventTypeColors[event.eventType],
+                        color: 'white',
+                        borderRadius: 4,
+                        fontSize: 12,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal'
+                      }}>
+                      {event.eventTitle}
+                    </div>
+                  ))}
+                  {cell.events.length > 2 && (
+                    <div style={{ fontSize: 12, color: '#666' }}>
+                      +{cell.events.length - 2} more
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )))};
+      </div>
+    </div>
+  );
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
   };
 
   const handleEventChange = (e) => {
@@ -128,360 +359,156 @@ const Calendar = () => {
     }));
   };
 
-  const handleSaveEvent = async () => {
-    if (!newEvent.title || !newEvent.date || !newEvent.type) {
-      showToast('error', 'All fields are required');
-      return;
-    }
-
-    const saveData = {
-      id: newEvent.id || null,
-      eventTitle: newEvent.title,
-      eventType: newEvent.type,
-      date: newEvent.date,
-      description: newEvent.description,
-      orgId,
-      createdBy: loginUserName,
-      branchCode,
-      branchName,
-      department,
-      empCode,
-      empName,
-    };
-
-    try {
-      const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
-      if (result.status === true) {
-        showToast('success', 'Event saved successfully');
-        setShowModal(false);
-        setNewEvent({ title: '', date: '', type: 'meeting', description: '' });
-        getAllCalendarByOrgId();
-      } else {
-        showToast('error', result.paramObjectsMap?.errorMessage || 'Failed to save event');
-      }
-    } catch (err) {
-      console.error('Error saving event:', err);
-      showToast('error', 'Error occurred while saving');
-    }
-  };
-
-  const handleEventClick = (event) => {
+  const handleCloseModal = () => {
+    setShowModal(false);
     setNewEvent({
-      title: event.eventTitle,
-      type: event.eventType,
-      date: event.date,
-      description: event.description,
-      id: event.id,
+      eventTitle: '',
+      eventType: 'meeting',
+      date: '',
+      description: '',
+      id: null
     });
-    setShowModal(true);
   };
-
-  useEffect(() => {
-    getAllCalendarByOrgId();
-  }, []);
-
-  const getAllCalendarByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`);
-      if (result?.status && result?.paramObjectsMap?.calendarVO) {
-        const events = result.paramObjectsMap.calendarVO.reverse();
-        setCalendarEvents(events);
-      } else {
-        showToast('error', 'No calendar events found');
-      }
-    } catch (err) {
-      console.log('Error fetching calendar data:', err);
-      showToast('error', 'Error fetching calendar data');
-    }
-  };
-
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
-  };
-
-  const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
-  };
-
-  const tabStyle = (isActive) => ({
-    padding: isMobile ? '12px 16px' : '12px 24px',
-    borderRadius: '8px',
-    backgroundColor: isActive ? '#1d4ed8' : '#f5f5f5',
-    color: isActive ? 'white' : '#4a4a4a',
-    border: 'none',
-    cursor: 'pointer',
-    fontSize: isMobile ? '14px' : '16px',
-    flex: isMobile ? 1 : 'none',
-    transition: 'all 0.3s ease'
-  });
-
-  const renderEventsList = () => (
-    <div style={{ marginTop: '24px', maxHeight: '400px', overflowY: 'auto' }}>
-      {calendarEvents.map((event, index) => (
-        <div key={index}
-          style={{
-            padding: '16px',
-            marginBottom: '8px',
-            borderRadius: '8px',
-            backgroundColor: '#fff',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            cursor: 'pointer'
-          }}
-          onClick={() => handleEventClick(event)}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              width: '12px',
-              height: '12px',
-              borderRadius: '50%',
-              backgroundColor: eventTypeColors[event.eventType] || '#808080'
-            }}></div>
-            <h3 style={{ fontSize: '16px', fontWeight: '600' }}>{event.eventTitle}</h3>
-          </div>
-          <div style={{ marginTop: '8px', fontSize: '14px', color: '#666' }}>
-            {new Date(event.date).toLocaleDateString()} - {event.eventType}
-          </div>
-          {event.description && (
-            <div style={{ marginTop: '8px', fontSize: '14px', color: '#888' }}>
-              {event.description}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
 
   return (
-    <div style={{ margin: '0 auto', padding: isMobile ? '16px' : '5px', fontFamily: 'Arial, sans-serif' }}>
-      {/* Tabs */}
+    <div style={{ margin: '0 auto', padding: isMobile ? 16 : 24, fontFamily: 'Arial, sans-serif' }}>
       <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '18px',
+        display: 'flex', gap: 8, marginBottom: 18,
         flexDirection: isMobile ? 'column' : 'row'
       }}>
-        <button
-          style={tabStyle(activeTab === 'calendar')}
-          onClick={() => setActiveTab('calendar')}
-        >
+        <button onClick={() => setActiveTab('calendar')}
+          style={tabStyle(activeTab === 'calendar')}>
           Calendar View
         </button>
-        <button
-          style={tabStyle(activeTab === 'events')}
-          onClick={() => setActiveTab('events')}
-        >
+        <button onClick={() => setActiveTab('events')}
+          style={tabStyle(activeTab === 'events')}>
           Events List
         </button>
       </div>
 
       {activeTab === 'calendar' ? (
         <>
-          {/* Calendar Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            flexDirection: isMobile ? 'column' : 'row', alignItems: 'center'
+          }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#4a4a4a' }}>
+              <h1 style={{ fontSize: isMobile ? 20 : 28, fontWeight: 'bold' }}>
                 {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
-                  <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time:</label>
-                  <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
-                </div>
               </h1>
-            </div>
-            {/* Add New Event */}
-            <div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: isMobile ? '16px' : '0' }}>
-                <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
-                <button onClick={handleNextMonth} style={buttonStyle}>→</button>
-                <button onClick={handleAddEvent} style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
-                  Add New Event
-                </button>
+              <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
+                <span>Current Time: {currentTime}</span>
               </div>
             </div>
-            {/* Event Legend */}
-            <div>
-              <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f9f9', borderRadius: '8px' }}>
-                <h4 style={{ fontWeight: 'bold', fontSize: isMobile ? '14px' : '16px', marginBottom: '12px' }}>Event Legend</h4>
-                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                  {Object.entries(eventTypeColors).map(([type, color]) => (
-                    <div key={type} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <div style={{ width: '20px', height: '20px', backgroundColor: color, borderRadius: '50%' }}></div>
-                      <span style={{ fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a', textTransform: 'capitalize' }}>{type}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-
-
-
-          {/* Calendar Grid */}
-          <div style={{ marginTop: '24px', padding: isMobile ? '8px' : '16px', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(4, 1fr)' : 'repeat(7, 1fr)', gap: '8px', borderBottom: '1px solid #e5e5e5' }}>
-              {weekdays.map(day => (
-                <div key={day} style={{ padding: isMobile ? '6px' : '8px', textAlign: 'center', fontWeight: '500', fontSize: isMobile ? '11px' : '14px', backgroundColor: '#f5f5f5', borderRadius: '8px' }}>
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(7, 1fr)', gap: isMobile ? '6px' : '8px', marginTop: '12px' }}>
-              {calendarDays.map((week, wIdx) =>
-                week.map((cell, cIdx) => {
-                  const isClickable = Boolean(cell);
-                  const hasEvents = cell?.events?.length > 0;
-
-                  const handleCellClick = () => {
-                    if (!cell) return;
-                    if (hasEvents) {
-                      handleEventClick(cell.events[0]);
-                    } else {
-                      const year = currentDate.getFullYear();
-                      const month = currentDate.getMonth() + 1;
-                      const day = cell.day;
-                      setNewEvent({
-                        title: '',
-                        type: 'meeting',
-                        date: formatDateForInput(year, month, day),
-                        description: '',
-                        id: null
-                      });
-                      setShowModal(true);
-                    }
-                  };
-
-                  const handleKeyDown = (e) => {
-                    if (isClickable && (e.key === 'Enter' || e.key === ' ')) {
-                      handleCellClick();
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={`${wIdx}-${cIdx}`}
-                      role={isClickable ? 'button' : undefined}
-                      tabIndex={isClickable ? 0 : -1}
-                      onClick={handleCellClick}
-                      onKeyDown={handleKeyDown}
-                      style={{
-                        minHeight: isMobile ? '64px' : '96px',
-                        padding: isMobile ? '8px' : '12px',
-                        borderRadius: '8px',
-                        backgroundColor: isClickable ? '#f9f9f9' : 'transparent',
-                        cursor: isClickable ? 'pointer' : 'default',
-                        transition: 'all 0.3s ease',
-                        outline: 'none'
-                      }}
-                    >
-                      {cell && (
-                        <>
-                          <div style={{
-                            fontSize: isMobile ? '14px' : '16px',
-                            fontWeight: 'bold',
-                            color: '#1d4ed8',
-                            marginBottom: '4px'
-                          }}>
-                            {cell.day}
-                          </div>
-
-                          <div style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '4px',
-                            justifyContent: 'center'
-                          }}>
-                            {cell.events.slice(0, 2).map((event, eIdx) => (
-                              <div
-                                key={eIdx}
-                                title={event.eventTitle}
-                                style={{
-                                  padding: '4px 8px',
-                                  backgroundColor: eventTypeColors[event.eventType] || '#808080',
-                                  color: 'white',
-                                  borderRadius: '4px',
-                                  fontSize: '12px',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: '100%'
-                                }}
-                              >
-                                {event.eventTitle}
-                              </div>
-                            ))}
-                            {cell.events.length > 2 && (
-                              <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                +{cell.events.length - 2} more
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })
-              )}
+            <div style={{ display: 'flex', gap: 8, marginTop: isMobile ? 16 : 0 }}>
+              <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
+              <button onClick={handleNextMonth} style={buttonStyle}>→</button>
+              <button onClick={handleAddEvent} style={{
+                ...buttonStyle,
+                backgroundColor: '#1d4ed8', color: 'white'
+              }}>
+                Add Event
+              </button>
             </div>
           </div>
+
+          <EventLegend />
+          <CalendarGrid />
         </>
       ) : (
-        renderEventsList()
+        <div style={{ marginTop: 24, maxHeight: 400, overflowY: 'auto' }}>
+          {[...calendarEvents, ...holidays].map((event, index) => (
+            <div key={index} onClick={() => handleEventClick(event)}
+              style={{
+                padding: 16, marginBottom: 8, borderRadius: 8,
+                backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: eventTypeColors[event.eventType]
+                }} />
+                <h3>{event.eventTitle}</h3>
+              </div>
+              <div style={{ marginTop: 8, color: '#666' }}>
+                {new Date(event.date).toLocaleDateString()} - {event.eventType}
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
+          justifyContent: 'center', alignItems: 'center'
         }}>
           <div style={{
-            backgroundColor: 'white', padding: '20px', borderRadius: '8px',
-            width: isMobile ? '80%' : '400px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+            backgroundColor: 'white', padding: 20, borderRadius: 8,
+            width: isMobile ? '90%' : 400, maxWidth: '100%'
           }}>
-            <h2 style={{ marginBottom: '16px', fontSize: isMobile ? '20px' : '24px', color: '#333' }}>
-              {newEvent.id ? 'Edit Event' : 'Add Event'}
+            <h2 style={{ marginBottom: 16 }}>
+              {newEvent.isHoliday ? '🎉 Holiday Details' : newEvent.id ? 'Edit Event' : 'New Event'}
             </h2>
+
+            {newEvent.isHoliday && (
+              <div style={{ padding: 12, marginBottom: 16, backgroundColor: '#fff3cd', borderRadius: 8 }}>
+                <strong>Official Organization Holiday</strong>
+              </div>
+            )}
+
             <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }}>
-              {['title', 'description', 'date', 'type'].map((field, i) => (
-                <div key={i} style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '14px', display: 'block', color: '#4a4a4a' }}>{field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                  {field === 'description' ? (
-                    <textarea
-                      name={field}
-                      value={newEvent[field]}
-                      onChange={handleEventChange}
-                      style={inputStyle}
-                    />
-                  ) : field === 'type' ? (
-                    <select
-                      name={field}
-                      value={newEvent[field]}
-                      onChange={handleEventChange}
-                      style={inputStyle}
-                    >
-                      <option value="meeting">Meeting</option>
-                      <option value="holiday">Holiday</option>
-                      <option value="birthday">Birthday</option>
-                      <option value="training">Training</option>
-                      <option value="other">Other</option>
-                    </select>
-                  ) : (
-                    <input
-                      type={field === 'date' ? 'date' : 'text'}
-                      name={field}
-                      value={newEvent[field]}
-                      onChange={handleEventChange}
-                      style={inputStyle}
-                      required
-                    />
-                  )}
-                </div>
-              ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
-                <button type="button" onClick={handleCloseModal} style={{ ...buttonStyle, backgroundColor: '#f5f5f5', color: '#000' }}>Cancel</button>
-                <button type="submit" style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: 'white' }}>Save Event</button>
+              <div style={{ marginBottom: 12 }}>
+                <label>Title</label>
+                <input name="eventTitle" value={newEvent.eventTitle} onChange={handleEventChange}
+                  disabled={newEvent.isHoliday} style={inputStyle} />
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label>Date</label>
+                {newEvent.isHoliday ? (
+                  <div style={{ padding: 12, backgroundColor: '#f8f9fa', borderRadius: 8 }}>
+                    {new Date(newEvent.date).toLocaleDateString('en-US', {
+                      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                    })}
+                  </div>
+                ) : (
+                  <input type="date" name="date" value={newEvent.date}
+                    onChange={handleEventChange} style={inputStyle} />
+                )}
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label>Type</label>
+                <select name="eventType" value={newEvent.eventType} onChange={handleEventChange}
+                  disabled={newEvent.isHoliday} style={inputStyle}>
+                  <option value="meeting">Meeting</option>
+                  <option value="holiday">Holiday</option>
+                  <option value="birthday">Birthday</option>
+                  <option value="training">Training</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label>Description</label>
+                <textarea name="description" value={newEvent.description}
+                  onChange={handleEventChange} disabled={newEvent.isHoliday}
+                  style={inputStyle} />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <button type="button" onClick={handleCloseModal} style={buttonStyle}>
+                  Cancel
+                </button>
+                {!newEvent.isHoliday && (
+                  <button type="submit" style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: 'white' }}>
+                    Save
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -491,24 +518,31 @@ const Calendar = () => {
   );
 };
 
+// Style constants
 const buttonStyle = {
   padding: '10px 16px',
-  fontSize: '14px',
-  borderRadius: '6px',
-  border: '1px solid #ccc',
+  borderRadius: 6,
+  border: '1px solid #ddd',
   backgroundColor: '#fff',
   cursor: 'pointer',
-  transition: 'all 0.2s ease',
+  transition: 'all 0.2s'
 };
 
 const inputStyle = {
   width: '100%',
-  padding: '12px',
-  borderRadius: '8px',
-  fontSize: '14px',
-  border: '1px solid #e5e5e5',
-  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-  outline: 'none'
+  padding: 12,
+  borderRadius: 8,
+  border: '1px solid #eee',
+  marginTop: 4
 };
+
+const tabStyle = (isActive) => ({
+  padding: '12px 24px',
+  borderRadius: 8,
+  backgroundColor: isActive ? '#1d4ed8' : '#f5f5f5',
+  color: isActive ? 'white' : '#333',
+  border: 'none',
+  cursor: 'pointer'
+});
 
 export default Calendar;
