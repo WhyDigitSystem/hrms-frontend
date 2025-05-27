@@ -2,28 +2,17 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import TextField from '@mui/material/TextField';
-import { useTheme } from '@mui/material/styles';
 import apiCalls from 'apicall';
 import { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import COASample from '../../assets/sample-files/COASample.xlsx';
-import { FaFileExcel } from 'react-icons/fa';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import { FaFilePdf } from 'react-icons/fa';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import emailjs from '@emailjs/browser';
-import { Select, MenuItem, InputLabel, FormControl, FormHelperText, Checkbox, ListItemText } from '@mui/material';
+import { Select, MenuItem, FormControl, FormHelperText, Checkbox, ListItemText } from '@mui/material';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { format } from 'date-fns';
 
 export const CompoOff = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -35,56 +24,40 @@ export const CompoOff = () => {
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [isLoading, setIsLoading] = useState(false);
-  const [showForm, setShowForm] = useState(true);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [notifyList, setNotifyList] = useState([]);
   const [notifyEmail, setNotifyEmail] = useState([]);
   const [allReportingPersonList, setAllReportingPersonList] = useState([]);
   const [allCompoOff, setAllCompoOff] = useState([]);
-  const [tableData, setTableData] = useState([]);
-  const [newRows, setNewRows] = useState([]);
   const lastRowRef = useRef(null);
+  const [weekOffDays, setWeekOff] = useState([]);
+  const [holidayList, setHolidayList] = useState([]);
 
-  const [formData, setFormData] = useState({
-    countryCode: '',
-    countryName: ''
-  });
   const [editId, setEditId] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({
-    countryName: '',
-    countryCode: ''
-  });
-
   const [leaveTypeTable, setLeaveTypeTable] = useState([
     {
       id: 1,
-      leaveType: 'Compo Off',
-      leaveCode: '',
       compoOff: null,
+      compoOffDay: '',
+      assignedBy: '',
       description: '',
       notify: '',
-      notifyEmail: '',
-      notify2Email: '',
-      allReportingPerson: []
+      reportingPerson: ''
     }
   ]);
   const [leaveTypeErrors, setLeaveTypeErrors] = useState([
     {
-      leaveType: '',
-      leaveCode: '',
       compoOff: null,
+      compoOffDay: '',
+      assignedBy: '',
       description: '',
       notify: '',
-      allReportingPerson: ''
+      reportingPerson: ''
     }
   ]);
   const [listView, setListView] = useState(false);
 
-  const [listViewData, setListViewData] = useState([]);
   useEffect(() => {
     getAllNotify();
-    getAllCompoOff();
     getAllReportingPersonList();
   }, []);
   const getAllNotify = async () => {
@@ -92,9 +65,9 @@ export const CompoOff = () => {
       const result = await apiCalls('get', `employeemaster/getReportingPerson?employeeCode=${empCode}&orgId=${orgId}`);
       const notifyOptions = result?.paramObjectsMap?.PermisionRequestVO || [];
       setNotifyList(notifyOptions);
-      setNotifyEmail(notifyOptions.notifyEmail)
-      console.log('Email', notifyOptions.notifyEmail)
-      console.log('Notifyy Options:', notifyOptions);
+      setNotifyEmail(notifyOptions.notifyEmail);
+      console.log('Email', notifyOptions.notifyEmail);
+      console.log('Notify Options:', notifyOptions);
     } catch (err) {
       console.log('Error fetching notify list', err);
     }
@@ -107,147 +80,331 @@ export const CompoOff = () => {
       );
       const notifyOptions = result?.paramObjectsMap?.employeeVO || [];
       setAllReportingPersonList(notifyOptions);
-      console.log('Notifyyy Options:', notifyOptions);
+      console.log('Notify Options:', notifyOptions);
     } catch (err) {
       console.log('Error fetching notify list', err);
     }
   };
 
-  const getAllCompoOff = async () => {
-    try {
-      const result = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
-      const compoOffData = result?.paramObjectsMap?.compensatoryOffVO || [];
-
-      // Convert to table structure
-      const formattedData = compoOffData.map((item) => ({
-        id: item.id,
-        leaveType: item.leaveType,
-        leaveCode: item.leaveCode,
-        compoOff: item.compOffDate, // this will be used as input type="date"
-        description: item.notes,
-        notify: item.notify,
-        allReportingPerson: item.compoffNotifyVO?.map((person) => person.notify2) || []
-      }));
-
-      setLeaveTypeTable(formattedData);
-      setAllCompoOff(compoOffData); // if needed elsewhere
-      console.log('Notify Options:', compoOffData);
-    } catch (err) {
-      console.log('Error fetching notify list', err);
-    }
+  const handleView = () => {
+    setListView(!listView);
   };
 
-  const getCountryById = async (row) => {
-    console.log('THE SELECTED COUNTRY ID IS:', row.original.id);
-    setEditId(row.original.id);
-    try {
-      const response = await apiCalls('get', `commonmaster/country/${row.original.id}`);
+  // const handleAddRow = () => {
+  //   const lastIndex = leaveTypeTable.length - 1;
+  //   const lastRow = leaveTypeTable[lastIndex];
 
-      if (response.status === true) {
-        const particularCountry = response.paramObjectsMap.Country;
-        setFormData({
-          countryCode: particularCountry.countryCode,
-          countryName: particularCountry.countryName
+  //   const errors = {
+  //     compoOff: !lastRow.compoOff ? 'Compensatory Off Date is required' : '',
+  //     description: !lastRow.description ? 'Description is required' : '',
+  //     notify: !lastRow.notify || lastRow.notify.length === 0 ? 'Notify is required' : '',
+  //     assignedBy: !lastRow.assignedBy ? 'Assigned By is required' : ''
+  //   };
+
+  //   const hasErrors = Object.values(errors).some((msg) => msg);
+
+  //   if (hasErrors) {
+  //     setLeaveTypeErrors((prev) => {
+  //       const updated = [...prev];
+  //       updated[lastIndex] = errors;
+  //       return updated;
+  //     });
+  //     return; // Stop adding new row
+  //   }
+
+  //   // No errors — Add new row
+  //   const newRow = {
+  //     id: Date.now(),
+  //     compoOff: null,
+  //     compoOffDay: '',
+  //     assignedBy: '',
+  //     description: '',
+  //     notify: []
+  //   };
+
+  //   setLeaveTypeTable((prev) => [...prev, newRow]);
+
+  //   // Add blank error entry for new row
+  //   setLeaveTypeErrors((prev) => [
+  //     ...prev,
+  //     {
+  //       compoOff: '',
+  //       description: '',
+  //       notify: '',
+  //       assignedBy: ''
+  //     }
+  //   ]);
+  // };
+
+  const handleAddRow = () => {
+    const editableRows = leaveTypeTable.filter(row => !row.disabled);
+    const lastEditableIndex = editableRows.length - 1;
+    const lastRow = editableRows[lastEditableIndex];
+
+    if (!lastRow) {
+      // No editable rows, allow adding
+    } else {
+      const errors = {
+        compoOff: !lastRow.compoOff ? 'Compensatory Off Date is required' : '',
+        assignedBy: !lastRow.assignedBy ? 'Assigned By is required' : '',
+        description: !lastRow.description ? 'Description is required' : '',
+        notify: !lastRow.notify || lastRow.notify.length === 0 ? 'Notify is required' : ''
+      };
+
+      const hasErrors = Object.values(errors).some(Boolean);
+      if (hasErrors) {
+        setLeaveTypeErrors((prev) => {
+          const updated = [...prev];
+          const actualIndex = leaveTypeTable.findIndex(r => r.id === lastRow.id);
+          updated[actualIndex] = errors;
+          return updated;
         });
-        setListView(false);
-      } else {
-        console.error('API Error');
+        return;
       }
-    } catch (error) {
-      console.error('Error fetching data:', error);
     }
-  };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    const newRow = {
+      id: Date.now(),
+      compoOff: null,
+      compoOffDay: '',
+      assignedBy: '',
+      description: '',
+      notify: [],
+      disabled: false
+    };
+
+    setLeaveTypeTable((prev) => [...prev, newRow]);
+    setLeaveTypeErrors((prev) => [...prev, { compoOff: '', assignedBy: '', description: '', notify: '' }]);
   };
 
   const handleClear = () => {
-    getAllCompoOff();
-    const initialRow = {
-      id: Date.now(), // or use a uuid
-      leaveType: 'Compo Off',
-      leaveCode: '',
-      compoOff: '',
-      description: '',
-      notify: '',
-      allReportingPerson: ''
-    };
+    setLeaveTypeTable([
+      {
+        id: Date.now(),
+        compoOff: null,
+        compoOffDay: '',
+        assignedBy: '',
+        description: '',
+        notify: ''
+      }
+    ]);
 
-    setLeaveTypeTable([initialRow]);
     setLeaveTypeErrors([
       {
-        leaveType: '',
-        leaveCode: '',
         compoOff: '',
         description: '',
         notify: '',
-        allReportingPerson: ''
+        assignedBy: ''
       }
     ]);
+    getAllCompoOff();
+  };
+
+  useEffect(() => {
+    getCompanyWeekOff();
+    getHolidayReport();
+  }, []);
+
+  // Fetch company week off days
+  const getCompanyWeekOff = async () => {
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
+      setWeekOff(weekOffDays);
+    } catch (error) {
+      console.error('Error fetching week offs:', error);
+    }
+  };
+
+  // Fetch holidays list
+  const getHolidayReport = async () => {
+    try {
+      const result = await apiCalls('get', `basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
+      const holidays = result.paramObjectsMap.holidayVO.map((item) => ({
+        holidayDate: item.holidayDate, // yyyy-mm-dd
+        day: item.day.toUpperCase(),
+        festival: item.festival
+      }));
+      setHolidayList(holidays);
+    } catch (error) {
+      console.error('Error fetching holidays:', error);
+    }
+  };
+
+  // // Check if the given date is enabled (week off or holiday)
+  // const isDateEnabled = (dateStr) => {
+  //   const date = new Date(dateStr);
+  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+  //   // Check if it's a week off day
+  //   if (weekOffDays.includes(dayName)) return true;
+
+  //   // Check if it's a holiday
+  //   if (holidayList.some((h) => h.holidayDate === dateStr)) return true;
+
+  //   return false;
+  // };
+
+  const isDateEnabled = (dateStr) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // reset time for accurate comparison
+
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+    const isHoliday = holidayList.some((h) => h.holidayDate === dateStr);
+    const isWeekOff = weekOffDays.includes(dayName);
+
+    // Allow only if it's a holiday or week-off AND it's today or in the past
+    return (isHoliday || isWeekOff) && date <= today;
+  };
+
+  // Get compoOffDay text for a selected date
+  const getCompoOffDayText = (dateStr) => {
+    if (!dateStr) return '';
+
+    const date = new Date(dateStr);
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+    // Check week off
+    if (weekOffDays.includes(dayName)) {
+      return `Week-Off - ${dayName}`;
+    }
+
+    // Check holiday
+    const holiday = holidayList.find((h) => h.holidayDate === dateStr);
+    if (holiday) {
+      return `${holiday.festival} - ${holiday.day}`;
+    }
+
+    return '';
+  };
+
+  const formatDate = (date) => {
+    return format(date, 'yyyy-MM-dd'); // formats using local timezone
+  };
+
+  const handleDateChange = (date, id) => {
+    const selectedDateStr = formatDate(date);
+
+    setLeaveTypeTable((prev) =>
+      prev.map((row) =>
+        row.id === id
+          ? {
+            ...row,
+            compoOff: selectedDateStr,
+            compoOffDay: getCompoOffDayText(selectedDateStr)
+          }
+          : row
+      )
+    );
+
+    setLeaveTypeErrors((prev) =>
+      prev.map((err, index) =>
+        leaveTypeTable[index].id === id ? { ...err, compoOff: selectedDateStr ? '' : 'Compo Off is required' } : err
+      )
+    );
+  };
+
+  // ✅ Updated: handle description + clear error
+  const handleDescriptionChange = (e, id) => {
+    const newValue = e.target.value;
+
+    setLeaveTypeTable((prev) => prev.map((row) => (row.id === id ? { ...row, description: newValue } : row)));
+
+    setLeaveTypeErrors((prev) =>
+      prev.map((err, index) => (leaveTypeTable[index].id === id ? { ...err, description: newValue ? '' : 'Description is required' } : err))
+    );
+  };
+
+  // Update assignedBy handler
+  const handleAssignedByChange = (e, id, index) => {
+    const selectedCode = e.target.value;
+    const selectedPerson = allReportingPersonList.find((p) => p.employeeName === selectedCode);
+
+    setLeaveTypeTable((prev) =>
+      prev.map((row) =>
+        row.id === id
+          ? {
+            ...row,
+            assignedBy: selectedCode,
+            assignedByName: selectedPerson ? `${selectedPerson.role} - ${selectedPerson.employeeName}` : ''
+          }
+          : row
+      )
+    );
+
+    // Clear error
+    setLeaveTypeErrors((prev) =>
+      prev.map((err, idx) => (idx === index ? { ...err, assignedBy: selectedCode ? '' : err.assignedBy } : err))
+    );
+  };
+
+  // Update notify handler
+  const handleNotifyChange = (e, id, index) => {
+    const selectedValues = e.target.value;
+
+    setLeaveTypeTable((prev) => prev.map((row) => (row.id === id ? { ...row, notify: selectedValues } : row)));
+
+    // Clear error
+    setLeaveTypeErrors((prev) =>
+      prev.map((err, idx) => (idx === index ? { ...err, notify: selectedValues.length > 0 ? '' : err.notify } : err))
+    );
   };
 
   // const handleSave = async () => {
-  //   const errors = {};
-  //   let tableErrors = [];
-  //   let hasTableError = false;
+  //   const allErrors = [];
+  //   let hasAnyErrors = false;
 
-  //   // Validate leaveTypeTable fields
-  //   leaveTypeTable.forEach((row, index) => {
-  //     const rowErrors = {};
+  //   // Validate all rows
+  //   leaveTypeTable.forEach((row) => {
+  //     const rowErrors = {
+  //       compoOff: !row.compoOff ? 'Compensatory Off Date is required' : '',
+  //       description: !row.description ? 'Description is required' : '',
+  //       notify: !row.notify || row.notify.length === 0 ? 'Notify is required' : '',
+  //       assignedBy: !row.assignedBy ? 'Assigned By is required' : ''
+  //     };
 
-  //     if (!row.leaveType) {
-  //       rowErrors.leaveType = 'Leave Type is required';
-  //       hasTableError = true;
-  //     }
-  //     if (!row.leaveCode) {
-  //       rowErrors.leaveCode = 'Leave Code is required';
-  //       hasTableError = true;
-  //     }
-  //     if (!row.compoOff) {
-  //       rowErrors.compoOff = 'Compo Off is required';
-  //       hasTableError = true;
-  //     }
-  //     if (!row.description) {
-  //       rowErrors.description = 'Description is required';
-  //       hasTableError = true;
-  //     }
-  //     if (!row.notify) {
-  //       rowErrors.notify = 'Notify is required';
-  //       hasTableError = true;
-  //     }
-
-  //     tableErrors[index] = rowErrors;
+  //     allErrors.push(rowErrors);
+  //     if (Object.values(rowErrors).some((msg) => msg)) hasAnyErrors = true;
   //   });
 
-  //   // Set errors if any
-  //   if (Object.keys(errors).length > 0 || hasTableError) {
-  //     setFieldErrors(errors);
-  //     setLeaveTypeErrors(tableErrors);
+  //   setLeaveTypeErrors(allErrors);
+  //   if (hasAnyErrors) {
+  //     showToast('error', 'Please fix all required fields before saving');
   //     return;
   //   }
 
-  //   // Construct final payload
+  //   // ✅ prepare payload
   //   const finalPayload = leaveTypeTable.map((row) => {
-  //     const notifyPerson = notifyList.find((n) => n.reportingPerson === row.notify);
+  //     const selectedNotifyPersons = allReportingPersonList.filter((person) => (row.notify || []).includes(person.employeeCode));
+
+  //     // ✅ Get first reporting person from notifyList (from getAllNotify API)
+  //     const firstNotifyPerson = notifyList[0] || {};
 
   //     return {
-  //       branch: branch,
-  //       branchCode: branchCode,
+  //       assignedBy: row.assignedBy,
+  //       branch,
+  //       branchCode,
   //       compOffDate: row.compoOff,
+  //       compOffDay: row.compoOffDay,
+  //       compoffNotifyDTO: selectedNotifyPersons.map((person) => ({
+  //         notify2: person.employeeName,
+  //         notify2Code: person.employeeCode,
+  //         notify2Email: person.email
+  //       })),
   //       createdBy: loginUserName,
-  //       department: department,
-  //       designation: designation,
+  //       department,
+  //       designation,
   //       employeeCode: empCode,
   //       employeeName: empName,
-  //       leaveCode: row.leaveCode,
-  //       leaveType: row.leaveType,
+  //       leaveCode: 'COMP-OFF',
+  //       leaveType: 'Compensatory Off',
   //       notes: row.description,
-  //       notify: row.notify,
-  //       notifyCode: notifyPerson?.reportingPersonCode || '',
-  //       notifyEmail: notifyPerson?.email || '',
-  //       orgId: orgId,
+  //       notify: firstNotifyPerson.reportingPerson || '',
+  //       notifyCode: firstNotifyPerson.reportingPersonCode || '',
+  //       notifyEmail: firstNotifyPerson.email || '',
+  //       orgId : parseInt(orgId),
   //       totalDays: 1
   //     };
   //   });
@@ -256,15 +413,16 @@ export const CompoOff = () => {
 
   //   try {
   //     const result = await apiCalls('put', 'leaveprocess/createUpdateCompOff', finalPayload);
-
   //     if (result.status === true) {
   //       showToast('success', editId ? 'Compo Off Updated Successfully' : 'Compo Off created successfully');
+  //       await sendEmailNotification(finalPayload);
   //       handleClear();
+  //       getAllCompoOff();
   //     } else {
   //       showToast('error', result.paramObjectsMap?.errorMessage || 'Compo Off creation failed');
   //     }
   //   } catch (err) {
-  //     console.log('error', err);
+  //     console.error('Error:', err);
   //     showToast('error', 'Compo Off creation failed');
   //   } finally {
   //     setIsLoading(false);
@@ -272,60 +430,53 @@ export const CompoOff = () => {
   // };
 
   const handleSave = async () => {
-    const errors = {};
-    let tableErrors = [];
-    let hasTableError = false;
+    // 1. Get only editable rows (new unsaved rows)
+    const editableRows = leaveTypeTable.filter(row => !row.disabled);
 
-    // Filter only newly added rows
-    const newRows = leaveTypeTable.filter((row) => row.isNew);
+    // 2. Validate only editable rows
+    const allErrors = [];
+    let hasAnyErrors = false;
 
-    if (newRows.length === 0) {
-      showToast('info', 'No new data to save');
-      return;
-    }
-
-    // Validate only new rows
-    newRows.forEach((row, index) => {
-      const rowErrors = {};
-
-      if (!row.leaveType) {
-        rowErrors.leaveType = 'Leave Type is required';
-        hasTableError = true;
-      }
-      if (!row.leaveCode) {
-        rowErrors.leaveCode = 'Leave Code is required';
-        hasTableError = true;
-      }
-      if (!row.compoOff) {
-        rowErrors.compoOff = 'Compo Off is required';
-        hasTableError = true;
-      }
-      if (!row.description) {
-        rowErrors.description = 'Description is required';
-        hasTableError = true;
-      }
-      if (!row.notify) {
-        rowErrors.notify = 'Notify is required';
-        hasTableError = true;
-      }
-
-      tableErrors.push(rowErrors);
+    editableRows.forEach((row) => {
+      const rowErrors = {
+        compoOff: !row.compoOff ? 'Compensatory Off Date is required' : '',
+        assignedBy: !row.assignedBy ? 'Assigned By is required' : '',
+        description: !row.description ? 'Description is required' : '',
+        notify: !row.notify || row.notify.length === 0 ? 'Notify is required' : ''
+      };
+      allErrors.push(rowErrors);
+      if (Object.values(rowErrors).some(Boolean)) hasAnyErrors = true;
     });
 
-    if (Object.keys(errors).length > 0 || hasTableError) {
-      setFieldErrors(errors);
-      setLeaveTypeErrors(tableErrors);
+    // 3. Map validation errors back to the full table
+    const mergedErrors = leaveTypeTable.map(row => {
+      const index = editableRows.findIndex(r => r.id === row.id);
+      return row.disabled
+        ? { compoOff: '', assignedBy: '', description: '', notify: '' }
+        : allErrors[index] || { compoOff: '', assignedBy: '', description: '', notify: '' };
+    });
+
+    setLeaveTypeErrors(mergedErrors);
+
+    if (hasAnyErrors) {
+      showToast('error', 'Please fix all required fields before saving');
       return;
     }
 
-    // Construct final payload only from new rows
-    const finalPayload = newRows.map((row) => {
-      const notifyPerson = notifyList.find((n) => n.reportingPerson === row.notify);
-      const selectedNotifyPersons = allReportingPersonList.filter((person) => (row.allReportingPerson || []).includes(person.employeeCode));
+    // 4. Prepare payload from editable rows
+    const finalPayload = editableRows.map((row) => {
+      const selectedNotifyPersons = allReportingPersonList.filter((person) =>
+        (row.notify || []).includes(person.employeeCode)
+      );
+
+      const firstNotifyPerson = notifyList?.[0] || {};
+
       return {
+        assignedBy: row.assignedBy,
         branch,
         branchCode,
         compOffDate: row.compoOff,
+        compOffDay: row.compoOffDay,
         compoffNotifyDTO: selectedNotifyPersons.map((person) => ({
           notify2: person.employeeName,
           notify2Code: person.employeeCode,
@@ -336,45 +487,53 @@ export const CompoOff = () => {
         designation,
         employeeCode: empCode,
         employeeName: empName,
-        leaveCode: row.leaveCode,
-        leaveType: row.leaveType,
+        leaveCode: 'COMP-OFF',
+        leaveType: 'Compensatory Off',
         notes: row.description,
-        notify: row.notify,
-        notifyCode: notifyPerson?.reportingPersonCode || '',
-        notifyEmail: notifyPerson?.email || '',
-        orgId,
+        notify: firstNotifyPerson.reportingPerson || '',
+        notifyCode: firstNotifyPerson.reportingPersonCode || '',
+        notifyEmail: firstNotifyPerson.email || '',
+        orgId: parseInt(orgId),
         totalDays: 1
       };
     });
 
+    // 5. Submit the data
     setIsLoading(true);
 
     try {
       const result = await apiCalls('put', 'leaveprocess/createUpdateCompOff', finalPayload);
 
       if (result.status === true) {
-        showToast('success', editId ? 'Compo Off Updated Successfully' : 'Compo Off created successfully');
-        await sendEmailNotification(finalPayload); // ✅ correct payload with notify2Email
-        const updatedTable = leaveTypeTable.map((row) => (row.isNew ? { ...row, isNew: false } : row));
-        setLeaveTypeTable(updatedTable);
-        getAllCompoOff();
-        // handleClear();
+        showToast('success', 'Compensatory Off saved successfully');
+        await sendEmailNotification(finalPayload);
+
+        // ✅ Mark all editable rows as saved (disabled)
+        setLeaveTypeTable((prev) =>
+          prev.map((row) =>
+            !row.disabled ? { ...row, disabled: true } : row
+          )
+        );
+
+        setLeaveTypeErrors([]); // Clear errors
+        // Optional: reset editId or form if needed
+        // handleClear(); // Uncomment if you want to clear the form
+        getAllCompoOff(); // Refresh from server
       } else {
         showToast('error', result.paramObjectsMap?.errorMessage || 'Compo Off creation failed');
       }
     } catch (err) {
-      console.log('error', err);
+      console.error('Error:', err);
       showToast('error', 'Compo Off creation failed');
     } finally {
       setIsLoading(false);
     }
   };
-  console.log('Mail', leaveTypeTable)
 
   const sendEmailNotification = async (newRows) => {
     try {
       for (const row of newRows) {
-        const notify2Emails = (row.compoffNotifyDTO || []).map(p => p.notify2Email).join(', ');
+        const notify2Emails = (row.compoffNotifyDTO || []).map((p) => p.notify2Email).join(', ');
 
         const emailParams = {
           name: row.notify,
@@ -403,187 +562,129 @@ export const CompoOff = () => {
     }
   };
 
-  const handleView = () => {
-    setListView(!listView);
-  };
+  // const getAllCompoOff = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
+  //     const compoOffData = result?.paramObjectsMap?.compensatoryOffVO || [];
 
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false); // Close dialog
-  };
+  //     const formattedData = compoOffData.map((item) => ({
+  //       id: item.id,
+  //       compoOff: item.compOffDate,
+  //       compoOffDay: item.compOffDay,
+  //       assignedBy: item.assignedBy,
+  //       description: item.notes,
+  //       notify: (item.compoffNotifyVO || []).map((p) => p.notify2Code)
+  //     }));
 
-  // const handleAddRow = () => {
-  //   if (isLastRowEmpty(leaveTypeTable)) {
-  //     displayRowError(leaveTypeTable);
-  //     return;
+  //     setLeaveTypeTable(formattedData);
+  //   } catch (err) {
+  //     console.log('Error fetching comp-off data', err);
   //   }
-  //   const newRow = {
-  //     id: Date.now(),
-  //     leaveType: 'Compo Off',
-  //     leaveCode: '',
-  //     compoOff: '',
-  //     description: '',
-  //     notify: ''
-  //   };
-  //   setLeaveTypeTable([...leaveTypeTable, newRow]);
-  //   setLeaveTypeErrors([...leaveTypeErrors, { leaveCode: '', compoOff: '', description: '', notify: '' }]);
   // };
 
-  // const handleAddRow = () => {
-  //   const lastIndex = leaveTypeTable.length - 1;
-  //   const lastRow = leaveTypeTable[lastIndex];
+  // const getAllCompoOff = async () => {
+  //   try {
+  //     const response = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
+  //     if (response.status && Array.isArray(response.data)) {
+  //       const fetchedRows = response.data.map((item) => ({
+  //         id: Date.now() + Math.random(),
+  //         compoOff: item.compOffDate || null,
+  //         compoOffDay: item.compOffDay || '',
+  //         assignedBy: item.assignedBy || '',
+  //         description: item.notes || '',
+  //         notify: [], // You can optionally populate this if notify2Code is present
+  //         disabled: true
+  //       }));
 
-  //   const errors = {
-  //     leaveType: !lastRow.leaveType ? 'Leave Type is required' : '',
-  //     leaveCode: !lastRow.leaveCode ? 'Leave Code is required' : '',
-  //     compoOff: !lastRow.compoOff ? 'Compo Off is required' : '',
-  //     description: !lastRow.description ? 'Description is required' : '',
-  //     notify: !lastRow.notify ? 'Notify is required' : '',
-  //   };
-
-  //   const hasErrors = Object.values(errors).some((msg) => msg);
-
-  //   if (hasErrors) {
-  //     // Update error state for last row
-  //     setLeaveTypeErrors((prev) => {
-  //       const updated = [...prev];
-  //       updated[lastIndex] = errors;
-  //       return updated;
-  //     });
-
-  //     // Optional alert message
-  //     alert('Please fill all fields in the previous row before adding a new one.');
-  //     return;
-  //   }
-
-  //   // Clear previous errors
-  //   setLeaveTypeErrors((prev) => [...prev, {}]);
-
-  //   // Add new row
-  //   const newRow = {
-  //     id: Date.now(),
-  //     leaveType: 'Compo Off',
-  //     leaveCode: '',
-  //     compoOff: '',
-  //     description: '',
-  //     notify: '',
-  //     allReportingPerson: '',
-  //     isNew: true,
-  //   };
-
-  //   setLeaveTypeTable((prev) => [...prev, newRow]);
-
-  //   // Scroll to new row
-  //   requestAnimationFrame(() => {
-  //     if (lastRowRef.current) {
-  //       lastRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  //       setLeaveTypeTable(fetchedRows); // overwrite with read-only rows
+  //       setLeaveTypeErrors(fetchedRows.map(() => ({
+  //         compoOff: '',
+  //         assignedBy: '',
+  //         description: '',
+  //         notify: ''
+  //       })));
   //     }
-  //   });
+  //   } catch (error) {
+  //     console.error('Error fetching comp-off data:', error);
+  //     showToast('error', 'Failed to fetch comp-off data');
+  //   }
   // };
 
-  const handleAddRow = () => {
-    const lastIndex = leaveTypeTable.length - 1;
+  const addNewRow = () => {
+    setLeaveTypeTable((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        compoOff: '',
+        compoOffDay: '',
+        assignedBy: '',
+        description: '',
+        notify: [],
+        disabled: false, // 👈 important
+      },
+    ]);
 
-    // If table is empty, directly add a new row
-    if (lastIndex < 0) {
-      setLeaveTypeErrors([{}]);
-      setLeaveTypeTable([
-        {
-          id: Date.now(),
-          leaveType: 'Compo Off',
-          leaveCode: '',
-          compoOff: '',
-          description: '',
-          notify: '',
-          allReportingPerson: '',
-          isNew: true
-        }
-      ]);
-      return;
-    }
+    setLeaveTypeErrors((prev) => [
+      ...prev,
+      {
+        compoOff: '',
+        assignedBy: '',
+        description: '',
+        notify: '',
+      },
+    ]);
+  };
 
-    const lastRow = leaveTypeTable[lastIndex];
+  const getAllCompoOff = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`
+      );
 
-    const errors = {
-      leaveType: !lastRow.leaveType ? 'Leave Type is required' : '',
-      leaveCode: !lastRow.leaveCode ? 'Leave Code is required' : '',
-      compoOff: !lastRow.compoOff ? 'Compo Off is required' : '',
-      description: !lastRow.description ? 'Description is required' : '',
-      notify: !lastRow.notify ? 'Notify is required' : ''
-    };
+      console.log('API response:', response);
 
-    const hasErrors = Object.values(errors).some((msg) => msg);
+      if (
+        response.status &&
+        response.paramObjectsMap?.compensatoryOffVO &&
+        Array.isArray(response.paramObjectsMap.compensatoryOffVO)
+      ) {
+        const fetchedRows = response.paramObjectsMap.compensatoryOffVO.map((item, index) => ({
+          id: item.id || Date.now() + index,
+          compoOff: item.compOffDate || null,
+          compoOffDay: item.compOffDay || '',
+          assignedBy: item.assignedBy || '',
+          description: item.notes || '',
+          notify: Array.isArray(item.compoffNotifyVO)
+            ? item.compoffNotifyVO.map(n => n.notify2 || '').filter(Boolean)
+            : [],
+          disabled: true,
+        }));
 
-    if (hasErrors) {
-      setLeaveTypeErrors((prev) => {
-        const updated = [...prev];
-        updated[lastIndex] = errors;
-        return updated;
-      });
-
-      alert('Please fill all fields in the previous row before adding a new one.');
-      return;
-    }
-
-    setLeaveTypeErrors((prev) => [...prev, {}]);
-
-    const newRow = {
-      id: Date.now(),
-      leaveType: 'Compo Off',
-      leaveCode: '',
-      compoOff: '',
-      description: '',
-      notify: '',
-      allReportingPerson: '',
-      isNew: true
-    };
-
-    setLeaveTypeTable((prev) => [...prev, newRow]);
-
-    requestAnimationFrame(() => {
-      if (lastRowRef.current) {
-        lastRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        setLeaveTypeTable(fetchedRows);
+        setLeaveTypeErrors(
+          fetchedRows.map(() => ({
+            compoOff: '',
+            assignedBy: '',
+            description: '',
+            notify: '',
+          }))
+        );
+      } else {
+        setLeaveTypeTable([]);
+        setLeaveTypeErrors([]);
+        showToast('error', 'No compensatory off data found');
       }
-    });
-  };
 
-  const isLastRowEmpty = (table) => {
-    if (!table || table.length === 0) return false;
-
-    const lastRow = table[table.length - 1];
-    if (!lastRow) return false;
-
-    if (table === leaveTypeTable) {
-      return !lastRow.leaveCode || !lastRow.compoOff || !lastRow.description || !lastRow.notify;
-    }
-    return false;
-  };
-
-  const displayRowError = (table) => {
-    if (table === leaveTypeTable) {
-      setLeaveTypeErrors((prevErrors) => {
-        const newErrors = [...prevErrors];
-        newErrors[table.length - 1] = {
-          ...newErrors[table.length - 1],
-          leaveType: !table[table.length - 1].leaveType ? 'Leave Type is required' : '',
-          leaveCode: !table[table.length - 1].leaveCode ? 'Leave Code is required' : '',
-          compoOff: !table[table.length - 1].compoOff ? 'Compo Off Date is required' : '',
-          description: !table[table.length - 1].description ? 'Description is required' : '',
-          notify: !table[table.length - 1].notify ? 'Notify is required' : ''
-        };
-        return newErrors;
-      });
+    } catch (error) {
+      console.error('Error fetching comp-off data:', error);
+      showToast('error', 'Failed to fetch comp-off data');
     }
   };
 
-  const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
-    const rowIndex = table.findIndex((row) => row.id === id);
-    if (rowIndex !== -1) {
-      const updatedData = table.filter((row) => row.id !== id);
-      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
-      setTable(updatedData);
-      setErrorTable(updatedErrors);
-    }
-  };
+  useEffect(() => {
+    getAllCompoOff();
+  }, []);
 
   return (
     <>
@@ -629,20 +730,17 @@ export const CompoOff = () => {
                         <th className="px-2 py-2 text-center" style={{ width: '50px' }}>
                           S.No
                         </th>
-                        <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
-                          Leave Type
-                        </th>
-                        <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
-                          Leave Code
-                        </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
                           Compensatory Off Date
                         </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                          Description
+                          Compensatory Off Day
                         </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                          Reporting Person
+                          Assigned By
+                        </th>
+                        <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
+                          Area of Description
                         </th>
                         <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
                           Notify
@@ -653,240 +751,62 @@ export const CompoOff = () => {
                     <tbody>
                       {Array.isArray(leaveTypeTable) &&
                         leaveTypeTable.map((row, index) => (
-                          <tr key={row.id} ref={index === leaveTypeTable.length - 1 ? lastRowRef : null}>
-                            {/* <td className="border px-2 py-2 text-center">
-                              <ActionButton
-                                title="Delete"
-                                icon={DeleteIcon}
-                                onClick={() =>
-                                  handleDeleteRow(row.id, leaveTypeTable, setLeaveTypeTable, leaveTypeErrors, setLeaveTypeErrors)
-                                }
-                                />
-                            </td> */}
+                          <tr key={row.id}>
                             <td className="text-center">
                               <div className="pt-2">{index + 1}</div>
                             </td>
                             <td className="border px-2 py-2">
-                              <input
-                                type="text"
-                                value={row.leaveType}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, leaveType: value } : r)));
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      leaveType: !value ? 'Leave Type is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                className={leaveTypeErrors[index]?.leaveType ? 'error form-control' : 'form-control'}
-                                disabled
+                              <DatePicker
+                                selected={row.compoOff ? new Date(row.compoOff) : null}
+                                onChange={(date) => handleDateChange(date, row.id)}
+                                dateFormat="yyyy-MM-dd"
+                                filterDate={(date) => isDateEnabled(formatDate(date))} // use updated formatDate
+                                placeholderText="Select comp-off date"
+                                className={`form-control ${leaveTypeErrors[index]?.compoOff ? 'is-invalid' : ''}`}
+                                disabled={row.disabled}
                               />
-                              {leaveTypeErrors[index]?.leaveType && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].leaveType}
-                                </div>
-                              )}
+                              {leaveTypeErrors[index]?.compoOff && <div className="text-danger">{leaveTypeErrors[index].compoOff}</div>}
+                            </td>
+
+                            <td className="border px-2 py-2">
+                              <input type="text" className="form-control" value={row.compoOffDay || ''} readOnly />
                             </td>
                             <td className="border px-2 py-2">
-                              <input
-                                type="text"
-                                value={row.leaveCode}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, leaveCode: value } : r)));
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      leaveCode: !value ? 'Leave Code is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                className={leaveTypeErrors[index]?.leaveCode ? 'error form-control' : 'form-control'}
-                                disabled={!row.isNew}
-                              />
-                              {leaveTypeErrors[index]?.leaveCode && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].leaveCode}
-                                </div>
-                              )}
-                            </td>
-                            <td className="border px-2 py-2">
-                              <input
-                                type="date"
-                                value={row.compoOff}
-                                className={leaveTypeErrors[index]?.compoOff ? 'error form-control' : 'form-control'}
-                                disabled={!row.isNew}
-                                onChange={(e) => {
-                                  const date = e.target.value;
-
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, compoOff: date } : r)));
-
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      compoOff: !date ? 'Compo Off is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                              />
-                              {leaveTypeErrors[index]?.compoOff && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].compoOff}
-                                </div>
-                              )}
+                              <select
+                                value={row.assignedBy || ''}
+                                onChange={(e) => handleAssignedByChange(e, row.id, index)}
+                                className={`form-control ${leaveTypeErrors[index]?.assignedBy ? 'is-invalid' : ''}`}
+                                disabled={row.disabled}
+                              >
+                                <option value="">Select Option</option>
+                                {allReportingPersonList.map((person) => (
+                                  <option key={person.employeeCode} value={person.employeeName}>
+                                    {person.role} - {person.employeeName}
+                                  </option>
+                                ))}
+                              </select>
+                              {leaveTypeErrors[index]?.assignedBy && <div className="text-danger">{leaveTypeErrors[index].assignedBy}</div>}
                             </td>
                             <td className="border px-2 py-2">
                               <input
                                 type="text"
                                 value={row.description}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, description: value } : r)));
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      description: !value ? 'Description is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                className={leaveTypeErrors[index]?.description ? 'error form-control' : 'form-control'}
-                                disabled={!row.isNew}
+                                disabled={row.disabled}
+                                className={`form-control ${leaveTypeErrors[index]?.description ? 'is-invalid' : ''}`}
+                                onChange={(e) => handleDescriptionChange(e, row.id)}
                               />
                               {leaveTypeErrors[index]?.description && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].description}
-                                </div>
+                                <div className="text-danger">{leaveTypeErrors[index].description}</div>
                               )}
                             </td>
                             <td className="border px-2 py-2">
-                              <select
-                                value={row.notify}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  const selectedPerson = notifyList.find((p) => p.reportingPerson === value);
-
-                                  setLeaveTypeTable((prev) =>
-                                    prev.map((r) =>
-                                      r.id === row.id
-                                        ? {
-                                          ...r,
-                                          notify: value,
-                                          notifyEmail: selectedPerson?.email || '',
-                                          // notify2Email: selectedPerson?.reportingPerson2Email || ''
-                                        }
-                                        : r
-                                    )
-                                  );
-
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      notify: !value ? 'Notify is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                className={leaveTypeErrors[index]?.notify ? 'error form-control' : 'form-control'}
-                                disabled={!row.isNew}
-                              >
-                                <option value="">Select Option</option>
-                                {notifyList.map((person) => (
-                                  <option key={person.reportingPersonCode} value={person.reportingPerson}>
-                                    {person.reportingPerson}
-                                  </option>
-                                ))}
-                              </select>
-                              {leaveTypeErrors[index]?.notify && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].notify}
-                                </div>
-                              )}
-                            </td>
-
-                            {/* <td className="border px-2 py-2">
-                              <select
-                                value={row.allReportingPerson}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  setLeaveTypeTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, allReportingPerson: value } : r)));
-                                  setLeaveTypeErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      allReportingPerson: !value ? 'All ReportingPerson is required' : ''
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                className={leaveTypeErrors[index]?.allReportingPerson ? 'error form-control' : 'form-control'}
-                                disabled={!row.isNew}
-                              >
-                                <option value="">Select Option</option>
-                                {allReportingPersonList.map((person) => (
-                                  <option key={person.employeeCode} value={person.employeeName}>
-                                    {person.employeeName}
-                                  </option>
-                                ))}
-                              </select>
-                              {leaveTypeErrors[index]?.allReportingPerson && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].allReportingPerson}
-                                </div>
-                              )}
-                            </td> */}
-                            {/* <td className="border px-2 py-2">
-                              <select
-                                value={row.allReportingPerson || []}
-                                onChange={(e) => {
-                                  const selectedCodes = Array.from(e.target.selectedOptions, (option) => option.value);
-                                  setLeaveTypeTable((prev) =>
-                                    prev.map((r) => (r.id === row.id ? { ...r, allReportingPerson: selectedCodes } : r))
-                                  );
-                                }}
-                                className="form-control"
-                              >
-                                <option disabled value="">
-                                  -- Select Option --
-                                </option>
-                                {allReportingPersonList.map((person) => (
-                                  <option key={person.employeeCode} value={person.employeeCode}>
-                                    {person.employeeName}
-                                  </option>
-                                ))}
-                              </select>
-
-                              {leaveTypeErrors[index]?.allReportingPerson && (
-                                <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                  {leaveTypeErrors[index].allReportingPerson}
-                                </div>
-                              )}
-                            </td> */}
-                            <td className="border px-2 py-2">
-                              <FormControl fullWidth error={Boolean(leaveTypeErrors[index]?.allReportingPerson)}>
-                                {/* <InputLabel id={`multi-select-label-${row.id}`}>All Reporting Person</InputLabel> */}
-
+                              <FormControl fullWidth error={Boolean(leaveTypeErrors[index]?.notify)}>
                                 <Select
-                                  labelId={`multi-select-label-${row.id}`}
                                   multiple
                                   displayEmpty
-                                  value={row.allReportingPerson?.length ? row.allReportingPerson : []}
-                                  onChange={(e) => {
-                                    const selectedValues = e.target.value;
-                                    setLeaveTypeTable((prev) =>
-                                      prev.map((r) => (r.id === row.id ? { ...r, allReportingPerson: selectedValues } : r))
-                                    );
-                                  }}
+                                  value={row.notify?.length ? row.notify : []}
+                                  disabled={row.disabled}
+                                  onChange={(e) => handleNotifyChange(e, row.id, index)}
                                   renderValue={(selected) =>
                                     selected.length === 0 ? (
                                       <em>Select Reporting Person</em>
@@ -897,23 +817,18 @@ export const CompoOff = () => {
                                     )
                                   }
                                   size="small"
-                                  disabled={!row.isNew}
                                 >
                                   <MenuItem disabled value="">
                                     <em>Select Reporting Person</em>
                                   </MenuItem>
-
                                   {allReportingPersonList.map((person) => (
                                     <MenuItem key={person.employeeCode} value={person.employeeCode}>
-                                      <Checkbox checked={row.allReportingPerson?.includes(person.employeeCode)} />
+                                      <Checkbox checked={row.notify?.includes(person.employeeCode)} />
                                       <ListItemText primary={person.employeeName} />
                                     </MenuItem>
                                   ))}
                                 </Select>
-
-                                {leaveTypeErrors[index]?.allReportingPerson && (
-                                  <FormHelperText>{leaveTypeErrors[index].allReportingPerson}</FormHelperText>
-                                )}
+                                {leaveTypeErrors[index]?.notify && <FormHelperText>{leaveTypeErrors[index].notify}</FormHelperText>}
                               </FormControl>
                             </td>
                           </tr>
