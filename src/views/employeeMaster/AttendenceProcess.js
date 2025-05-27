@@ -582,7 +582,7 @@ const AttendenceProcess = () => {
                                             {row.missing ? 'Dates' : '-'}
                                           </TableCell>
                                           <TableCell
-                                            sx={{ color: row.empStatus === 'Matched' ? 'green' : 'red' }}
+                                            sx={{ color: row.empStatus === 'MATCHED' ? 'green' : 'red' }}
                                           >
                                             {row.empStatus}
                                           </TableCell>

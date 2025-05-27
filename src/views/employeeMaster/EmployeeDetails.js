@@ -35,6 +35,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useNavigate } from 'react-router-dom';
 import DescriptionIcon from '@mui/icons-material/Description';
+import CommonTable from 'views/basicMaster/CommonTable';
 
 const EmployeeDetails = () => {
   const [showForm, setShowForm] = useState(false);
@@ -184,20 +185,29 @@ const EmployeeDetails = () => {
       )
     },
     {
-      accessorKey: 'employeeName',
+      accessorKey: 'employee',
       header: 'Employee',
       size: 140,
       Cell: ({ row }) => (
         <span style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => getEmployeeDetailsById(row)}>
-          {row.original.employeeName}
+          {row.original.employee}
         </span>
       )
     },
-    { accessorKey: 'employeeCode', header: 'Code', size: 140 },
-    { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
+    { accessorKey: 'employeecode', header: 'Code', size: 140 },
+    { accessorKey: 'joiningdate', header: 'Date of Join', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
-    { accessorKey: 'active', header: 'Active', size: 140 }
+    {
+      accessorKey: 'active',
+      header: 'Active',
+      size: 140,
+      Cell: ({ row }) => (
+        <span style={{ color: row.original.active ? 'green' : 'red', fontWeight: 500 }}>
+          {row.original.active ? 'Active' : 'Inactive'}
+        </span>
+      )
+    }
   ];
 
   useEffect(() => {
@@ -316,6 +326,7 @@ const EmployeeDetails = () => {
 
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
+
     const nameRegex = /^[A-Za-z ]*$/;
     const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
     const numberRegex = /^[0-9]*$/;
@@ -323,6 +334,14 @@ const EmployeeDetails = () => {
     let errorMessage = '';
     let inputValue = value;
 
+    // Handle checkbox early
+    if (type === 'checkbox') {
+      setFormData((prevData) => ({ ...prevData, [name]: checked }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+      return;
+    }
+
+    // Input sanitization
     switch (name) {
       case 'aadhaarNo':
       case 'accountNo':
@@ -338,7 +357,7 @@ const EmployeeDetails = () => {
         break;
     }
 
-    // Sanitize inputs based on field type
+    // Validation logic
     if (name === 'aadhaarNo') {
       if (!aadhaarRegex.test(inputValue)) {
         errorMessage = 'Aadhaar must be 12 digits';
@@ -374,20 +393,6 @@ const EmployeeDetails = () => {
         errorMessage = 'Mobile number cannot exceed 10 digits.';
       }
     }
-    // Validation logic
-    if (name === 'aadhaarNo') {
-      if (!aadhaarRegex.test(inputValue)) {
-        errorMessage = 'Aadhaar must be 12 digits';
-      }
-    } else if (name === 'panNo') {
-      if (inputValue.length === 10 && !panRegex.test(inputValue)) {
-        errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
-      }
-    } else if (name === 'accountNo') {
-      if (!accountRegex.test(inputValue)) {
-        errorMessage = 'Account must be 9-18 digits';
-      }
-    }
 
     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
@@ -396,11 +401,7 @@ const EmployeeDetails = () => {
       getAllReportingPerson(value);
     }
 
-    if (errorMessage) {
-      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
-    } else {
-      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
-
+    if (!errorMessage) {
       if (name === 'branch') {
         const selectedBranch = branchList.find((br) => br.branch === value);
         setFormData((prevData) => ({
@@ -408,12 +409,7 @@ const EmployeeDetails = () => {
           branch: value,
           branchCode: selectedBranch ? selectedBranch.branchCode : ''
         }));
-        console.log('br', branch);
-      } else if (type === 'checkbox') {
-        setFormData((prevData) => ({ ...prevData, [name]: checked }));
       } else {
-        let inputValue = value;
-
         if (name === 'email') {
           inputValue = value.toLowerCase();
         } else if (type === 'text' || type === 'textarea') {
@@ -427,13 +423,12 @@ const EmployeeDetails = () => {
           setFormData((prevData) => ({
             ...prevData,
             reportingPerson: value,
-            reportingPersonEmail: selectedEmployee ? selectedEmployee.email : '',
-            reportingPersonCode: selectedEmployee ? selectedEmployee.employeeCode : '',
-            reportingRole: selectedEmployee ? selectedEmployee.role : ''
+            reportingPersonEmail: selectedEmployee?.email || '',
+            reportingPersonCode: selectedEmployee?.employeeCode || '',
+            reportingRole: selectedEmployee?.role || ''
           }));
         }
 
-        // If gender or designation is selected, call getAllLeaveType
         if (name === 'gender' || name === 'designation') {
           const selectedDesignation = designationList.find(
             (row) => row.designationName === (name === 'designation' ? value : formData.designation)
@@ -446,11 +441,10 @@ const EmployeeDetails = () => {
           }
         }
 
-        // Check if input type is text or textarea before calling setSelectionRange
         if (type === 'text' || type === 'textarea') {
           setTimeout(() => {
             const inputElement = document.getElementsByName(name)[0];
-            if (inputElement && inputElement.setSelectionRange) {
+            if (inputElement?.setSelectionRange) {
               inputElement.setSelectionRange(selectionStart, selectionEnd);
             }
           }, 0);
@@ -716,11 +710,11 @@ const EmployeeDetails = () => {
     setShowForm(true);
 
     try {
-      const result = await apiCalls('get', `/master/employee/${row.original.id}`);
+      const result = await apiCalls('get', `/master/employee/${row.original.employeeid}`);
 
       if (result) {
         const employeeDetailsVO = result.paramObjectsMap.Employee;
-        setEditId(row.original.id);
+        setEditId(row.original.employeeid);
 
         const designationCode = designationList.find((d) => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
         const gender = employeeDetailsVO.gender || '';
@@ -757,7 +751,7 @@ const EmployeeDetails = () => {
           bankName: employeeDetailsVO.bankName || '',
           ifscCode: employeeDetailsVO.ifscCode || '',
           active: employeeDetailsVO.active === 'Active',
-          id: employeeDetailsVO.id || 0
+          id: employeeDetailsVO.employeeid || 0
         });
 
         setLeaveTypeTable(
@@ -1580,10 +1574,10 @@ const EmployeeDetails = () => {
                                     S.No
                                   </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
-                                    Leave Type
+                                    Type
                                   </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '150px' }}>
-                                    Leave Code
+                                    Code
                                   </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
                                     Total Leave
@@ -1731,7 +1725,7 @@ const EmployeeDetails = () => {
             <CircularProgress />
           </div>
         ) : (
-          <CommonListViewTable
+          <CommonTable
             data={listViewData}
             columns={columns}
             blockEdit={true}
