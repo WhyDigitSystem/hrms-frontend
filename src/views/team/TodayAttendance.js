@@ -60,7 +60,7 @@ const TodayAttendance = () => {
           </Typography>
         </Box> */}
 
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: 0 }}>
           {listViewData.length > 0 ? (
             <Paper
               sx={{
