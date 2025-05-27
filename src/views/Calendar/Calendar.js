@@ -388,31 +388,30 @@ const Calendar = () => {
 
       {activeTab === 'calendar' ? (
         <>
-          <div style={{
-            display: 'flex', justifyContent: 'space-between',
-            flexDirection: isMobile ? 'column' : 'row', alignItems: 'center'
-          }}>
+          {/* Calendar Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? 20 : 28, fontWeight: 'bold' }}>
+              <h1 style={{ fontSize: isMobile ? '20px' : '28px', fontWeight: 'bold', color: '#4a4a4a' }}>
                 {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                  <label style={{ fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>Time:</label>
+                  <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
+                </div>
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', marginTop: 8 }}>
-                <span>Current Time: {currentTime}</span>
+            </div>
+
+            {/* Add New Event */}
+            <div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: isMobile ? '16px' : '0' }}>
+                <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
+                <button onClick={handleNextMonth} style={buttonStyle}>→</button>
+                <button onClick={handleAddEvent} style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: '#fff', padding: '12px 20px' }}>
+                  Add New Event
+                </button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: isMobile ? 16 : 0 }}>
-              <button onClick={handlePrevMonth} style={buttonStyle}>←</button>
-              <button onClick={handleNextMonth} style={buttonStyle}>→</button>
-              <button onClick={handleAddEvent} style={{
-                ...buttonStyle,
-                backgroundColor: '#1d4ed8', color: 'white'
-              }}>
-                Add Event
-              </button>
-            </div>
+            <EventLegend />
           </div>
-
-          <EventLegend />
           <CalendarGrid />
         </>
       ) : (
