@@ -23,7 +23,7 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
-import { FormHelperText, MenuItem, Autocomplete } from '@mui/material';
+import { FormHelperText, MenuItem, Autocomplete,Box } from '@mui/material';
 import { date } from 'yup';
 
 const Holidays = () => {
@@ -51,7 +51,7 @@ const Holidays = () => {
     { accessorKey: 'holidayDate', header: 'Holiday Date', size: 140 }, // Check correct field name
     { accessorKey: 'day', header: 'Day', size: 140 },
     { accessorKey: 'festival', header: 'Festival', size: 140 },
-    { accessorKey: 'branchName', header: 'Branch Name', size: 140 }
+    // { accessorKey: 'branchName', header: 'Branch Name', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
@@ -290,25 +290,34 @@ const Holidays = () => {
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
-          <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-            <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
-            <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-            <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} />
-            <ActionButton title="Save" icon={UploadIcon} isLoading={isLoading} onClick={handleBulkUploadOpen} margin="0 10px 0 10px" />
-            {uploadOpen && (
-              <CommonBulkUpload
-                open={uploadOpen}
-                handleClose={handleBulkUploadClose}
-                dialogTitle="Upload Files"
-                uploadText="Upload File"
-                onSubmit={handleSubmit}
-                handleFileUpload={handleFileUpload}
-                apiUrl="/basicmaster/excelUploadForHolidays"
-                screen="HolidayReport"
-                loginUser={loginUserName}
-                orgId={orgId}
-              />
+          <div className="d-flex flex-wrap justify-content-between align-items-baseline" style={{ marginBottom: '20px' }}>
+            <div>
+              <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
+              <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
+              <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
+              <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} />
+              <ActionButton title="Save" icon={UploadIcon} isLoading={isLoading} onClick={handleBulkUploadOpen} margin="0 10px 0 10px" />
+              {uploadOpen && (
+                <CommonBulkUpload
+                  open={uploadOpen}
+                  handleClose={handleBulkUploadClose}
+                  dialogTitle="Upload Files"
+                  uploadText="Upload File"
+                  onSubmit={handleSubmit}
+                  handleFileUpload={handleFileUpload}
+                  apiUrl="/basicmaster/excelUploadForHolidays"
+                  screen="HolidayReport"
+                  loginUser={loginUserName}
+                  orgId={orgId}
+                />
+              )}
+            </div>
+            {listView && (
+              <Box sx={{ color: '#3f51b5', fontSize: '13px', fontWeight: 700 }}>
+                {branchList.map((b) => (
+                  <p key={b.id}>Branch Name : {b.branch}</p>
+                ))}
+              </Box>
             )}
           </div>
         </div>
