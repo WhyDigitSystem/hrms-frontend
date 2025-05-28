@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, Modal, TextField, Fab, Tooltip } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import PostIcon from '@mui/icons-material/PostAdd'; // Icon for POST
@@ -6,6 +6,7 @@ import PollIcon from '@mui/icons-material/Poll'; // Icon for POLL
 import AddIcon from '@mui/icons-material/Add'; // FAB icon
 import Post from './Post';
 import Poll from './Poll'; // Ensure this import is correct
+import apiCalls from 'apicall';
 
 // Styled Components
 const CardWrapper = styled(Box)(({ theme }) => ({
@@ -105,57 +106,67 @@ const Main = () => {
   const [itPosts, setItPosts] = useState([]); // IT posts
   const [postToEdit, setPostToEdit] = useState(null); // Post to edit
   const [currentPostIndex, setCurrentPostIndex] = useState(0); // Track the current post index in the modal
+  const [circularData, setCircularData] = useState([]);
+  const [pollData, setPollData] = useState([]);
+  const department = localStorage.getItem('department');
+  const branchCode = localStorage.getItem('branchCode');
+  const orgId = localStorage.getItem('orgId');
 
-  // Handle creating a new post
-  const handleCreatePost = (post) => {
-    if (tabValue === 0) {
-      setOrganizationPosts([...organizationPosts, post]); // Add to Organization posts
-    } else {
-      setItPosts([...itPosts, post]); // Add to IT posts
+  const GetCircularByOrgId = async () => {
+    try {
+      const type = tabValue === 0 ? 'Organization' : 'IT';
+      const endpoint =
+        tabValue === 0
+          ? `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&type=${type}&department=ALL`
+          : `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}&type=${type}`;
+
+      const result = await apiCalls('get', endpoint);
+
+      if (result?.paramObjectsMap?.circularVO) {
+        const formattedData = result.paramObjectsMap.circularVO.reverse();
+        setCircularData(formattedData);
+      } else {
+        setCircularData([]);
+      }
+    } catch (err) {
+      console.error('Error fetching circulars:', err);
+      setCircularData([]);
     }
   };
 
-  // Handle editing a post
-  const handleEditPost = (post) => {
-    if (tabValue === 0) {
-      const updatedPosts = organizationPosts.map((p, index) =>
-        index === postToEdit ? post : p
-      );
-      setOrganizationPosts(updatedPosts);
-    } else {
-      const updatedPosts = itPosts.map((p, index) =>
-        index === postToEdit ? post : p
-      );
-      setItPosts(updatedPosts);
-    }
-    setPostToEdit(null);
-  };
+  const getAllPolls = async () => {
+    try {
+      const type = tabValue === 0 ? 'Organization' : 'IT';
 
-  // Handle opening edit post modal
-  const handleOpenEditPostModal = (index) => {
-    setPostToEdit(index);
-    setIsEditPostModalOpen(true);
-  };
+      const endpoint =
+        tabValue === 0
+          ? `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&type=${type}&department=ALL`
+          : `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}&type=${type}`;
 
-  // Handle next post
-  const handleNextPost = () => {
-    const posts = tabValue === 0 ? organizationPosts : itPosts;
-    if (currentPostIndex < posts.length - 1) {
-      setCurrentPostIndex(currentPostIndex + 1);
-    } else {
-      setCurrentPostIndex(0); // Loop back to the first post
+      const result = await apiCalls('get', endpoint);
+
+      if (result && result.paramObjectsMap.pollsVO) {
+        const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
+          ...poll,
+          options: poll.pollDetailsVO.map(option => ({
+            id: option.id.toString(),
+            text: option.options,
+            votes: option.votes || 0
+          }))
+        }));
+        setPollData(transformed);
+      }
+    } catch (error) {
+      console.error('Error fetching polls:', error);
+      setPollData(error.message || 'Failed to fetch');
     }
   };
 
-  // Handle previous post
-  const handlePreviousPost = () => {
-    const posts = tabValue === 0 ? organizationPosts : itPosts;
-    if (currentPostIndex > 0) {
-      setCurrentPostIndex(currentPostIndex - 1);
-    } else {
-      setCurrentPostIndex(posts.length - 1); // Loop back to the last post
-    }
-  };
+  useEffect(() => {
+    GetCircularByOrgId();
+    getAllPolls();
+  }, [tabValue]);
+
 
   // Get current posts based on tab
   const posts = tabValue === 0 ? organizationPosts : itPosts;
@@ -222,14 +233,14 @@ const Main = () => {
         {/* Content for POST Tab */}
         {nestedTabValue === 'POST' && (
           <Box sx={{ mt: 3, minHeight: '280px' }}>
-            <Post />
+            <Post tabValue={tabValue}  circularData={circularData} setCircularData={setCircularData}/>
           </Box>
         )}
 
         {/* Content for POLL Tab */}
         {nestedTabValue === 'POLL' && (
           <Box sx={{ mt: 3, minHeight: '280px' }}>
-            <Poll />
+            <Poll tabValue={tabValue} pollData={pollData} setPollData={setPollData}/>
           </Box>
         )}
       </CardWrapper>

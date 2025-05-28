@@ -34,7 +34,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 
-function Poll() {
+function Poll({ tabValue, setPollData, pollData }) {
   const theme = useTheme();
   const [polls, setPolls] = useState([]);
   const [listViewData, setListViewData] = useState([]);
@@ -58,6 +58,7 @@ function Poll() {
   const branchName = localStorage.getItem('branch');
   const department = localStorage.getItem('department');
   const loginUserName = localStorage.getItem('userName');
+  const userType = localStorage.getItem('userType');
 
   useEffect(() => {
     getAllPolls();
@@ -66,7 +67,15 @@ function Poll() {
   const getAllPolls = async () => {
     try {
       setIsLoading(true);
-      const result = await apiCalls('get', `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}`);
+      const type = tabValue === 0 ? 'Organization' : 'IT';
+
+      const endpoint =
+        tabValue === 0
+          ? `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&type=${type}&department=ALL`
+          : `/basicmaster/getAllPollsByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}&type=${type}`;
+
+      const result = await apiCalls('get', endpoint);
+
       if (result && result.paramObjectsMap.pollsVO) {
         const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
           ...poll,
@@ -77,7 +86,7 @@ function Poll() {
           }))
         }));
         setPolls(transformed);
-        setListViewData(transformed);
+        setPollData(transformed);
       }
     } catch (error) {
       console.error('Error fetching polls:', error);
@@ -117,7 +126,7 @@ function Poll() {
       orgId: parseInt(orgId, 10),  // Ensure number type
       pollId: pollId,
       question: poll.question,      // Get question from poll object
-      userName: loginUserName
+      userName: loginUserName,
     }];
 
     try {
@@ -159,20 +168,22 @@ function Poll() {
       return;
     }
 
+    const type = tabValue === 0 ? 'Organization' : 'IT';
     const saveData = {
       ...(editId && { id: editId }),
       active: true,
       branchCode,
       branchName,
       createdBy: loginUserName,
-      department,
+      department: tabValue === 0 ? 'All' : department,
       maxSelection: newPoll.maxSelection,
       multiSelect: newPoll.multiSelect,
       orgId,
       pollDetailsDTO: pollDetails.map(opt => ({ options: opt })),
       question: newPoll.question,
       expiresDate: newPoll.expiresDate,
-      updatedBy: loginUserName
+      updatedBy: loginUserName,
+      type
     };
 
     try {
@@ -216,9 +227,9 @@ function Poll() {
     <Box sx={{ p: 3 }}>
       <ToastContainer position="top-right" autoClose={5000} />
       <Grid container spacing={3}>
-        {listViewData.length > 0 ? (
-          listViewData
-            .slice(0, showAllPolls ? listViewData.length : 1)
+        {pollData.length > 0 ? (
+          pollData
+            .slice(0, showAllPolls ? pollData.length : 1)
             .map(poll => (
               <Grid item xs={12} md={6} lg={12} key={poll.id}>
                 <Card variant="outlined" sx={{
@@ -331,6 +342,7 @@ function Poll() {
             setEditId('');
             setOpenCreateModal(true);
           }}
+          disabled={userType === 'USER' && tabValue === 0 || userType === 'TEAM LEAD' && tabValue === 0}
           sx={{
             p: 1.5, // increase padding
             background: 'linear-gradient(45deg, #3f51b5, #2196f3)',

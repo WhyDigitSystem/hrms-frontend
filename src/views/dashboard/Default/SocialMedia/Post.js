@@ -31,20 +31,21 @@ import { useTheme } from '@mui/material/styles';
 import apiCalls from 'apicall';
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
-const Post = () => {
+const Post = ({ tabValue, circularData, setCircularData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [listViewData, setListViewData] = useState([]);
   const [praiseCounts, setPraiseCounts] = useState({});
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
-  const [orgId] = useState(localStorage.getItem('orgId'));
   const [branchCode] = useState(localStorage.getItem('branchCode'));
   const [branchName] = useState(localStorage.getItem('branch'));
   const [department] = useState(localStorage.getItem('department'));
+  const [userType] = useState(localStorage.getItem('userType'));
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const loginUserName = localStorage.getItem('userName');
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
@@ -62,25 +63,33 @@ const Post = () => {
     100% { box-shadow: 0 0 5px ${theme.palette.primary.main}; }
   `;
 
-  useEffect(() => {
-    GetCircularByOrgId();
-  }, [orgId]);
-
   const GetCircularByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}`);
+      const type = tabValue === 0 ? 'Organization' : 'IT';
+      const endpoint =
+        tabValue === 0
+          ? `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&type=${type}&department=ALL`
+          : `/basicmaster/getAllCircularByOrgId?branchCode=${branchCode}&orgId=${orgId}&department=${department}&type=${type}`;
+
+      const result = await apiCalls('get', endpoint);
+
       if (result?.paramObjectsMap?.circularVO) {
         const formattedData = result.paramObjectsMap.circularVO.reverse();
-        setListViewData(formattedData);
+        setCircularData(formattedData);
         fetchAllPraiseCounts(formattedData);
       } else {
-        setListViewData([]);
+        setCircularData([]);
       }
     } catch (err) {
       console.error('Error fetching circulars:', err);
-      setListViewData([]);
+      setCircularData([]);
     }
   };
+
+  useEffect(() => {
+    GetCircularByOrgId();
+  }, []);
+
   const getCircularById = (circular) => {
     setFormData({
       circularTopic: circular.circularTopic,
@@ -149,9 +158,7 @@ const Post = () => {
 
     setIsLoading(true);
     let imageUrl = formData.imageUrl;
-    // if (logo) {
-    //   imageUrl = await handleFileUpload(generatedId);
-    // }
+    const type = tabValue === 0 ? 'Organization' : 'IT';
 
     const saveFormData = {
       ...(editId && { id: editId }),
@@ -163,8 +170,9 @@ const Post = () => {
       createdBy: loginUserName,
       branchCode,
       branchName,
-      department,
-      // imageUrl,
+      department: tabValue === 0 ? 'All' : department, // Only include department if tabValue is not 0
+      type,
+      // imageUrl, // Uncomment this if needed
     };
 
     try {
@@ -173,14 +181,16 @@ const Post = () => {
         toast.success(editId ? 'Circular Updated Successfully' : 'Circular created successfully');
         setOpenCreateModal(false);
         GetCircularByOrgId();
+
         const generatedId = result.paramObjectsMap.circularVO.id;
-          if (generatedId && typeof logo === 'object') {
-            console.log('Generated ID:', generatedId);
-            console.log('Uploaded Item', logo);
-            handleFileUpload(generatedId);
-          } else {
-            console.log('handle Img Upload failed');
-          }
+        if (generatedId && typeof logo === 'object') {
+          console.log('Generated ID:', generatedId);
+          console.log('Uploaded Item', logo);
+          handleFileUpload(generatedId);
+        } else {
+          console.log('handle Img Upload failed');
+        }
+
         setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
         setLogo(null);
         setEditId('');
@@ -306,17 +316,17 @@ const Post = () => {
     <Box sx={cardStyle}>
       <Box sx={{ position: 'relative', padding: isMobile ? 3 : 4, zIndex: 1 }}>
         <Box sx={announcementStyle}>
-          {listViewData.length > 0 ? (
+          {circularData.length > 0 ? (
             <Box>
-              <Typography variant="h6" gutterBottom>{listViewData[0].circularTopic}</Typography>
-              <Typography variant="body1" sx={{ lineHeight: 1.6 }}>{listViewData[0].circularcontent}</Typography>
+              <Typography variant="h6" gutterBottom>{circularData[0].circularTopic}</Typography>
+              <Typography variant="body1" sx={{ lineHeight: 1.6 }}>{circularData[0].circularcontent}</Typography>
               <Tooltip title="Praise this circular">
-                <IconButton onClick={() => handlePraise(listViewData[0].id)} color="secondary">
+                <IconButton onClick={() => handlePraise(circularData[0].id)} color="secondary">
                   <ThumbUpAltIcon />
                 </IconButton>
               </Tooltip>
               <Typography variant="caption">
-                {praiseCounts[listViewData[0].id] || "0"}
+                {praiseCounts[circularData[0].id] || "0"}
               </Typography>
             </Box>
           ) : (
@@ -326,13 +336,26 @@ const Post = () => {
             </Box>
           )}
         </Box>
+
         <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2 }}>
-          <IconButton color="primary" onClick={() => setOpenCreateModal(true)}><AddIcon /></IconButton>
-          <IconButton color="inherit" onClick={() => { setViewAllCirculars(listViewData); setOpenViewMoreModal(true); }}><VisibilityIcon /></IconButton>
+          <IconButton
+            color="primary"
+            onClick={() => setOpenCreateModal(true)}
+            disabled={userType === 'USER' && tabValue === 0 || userType === 'TEAM LEAD' && tabValue === 0}
+          >
+            <AddIcon />
+          </IconButton>
+          <IconButton
+            color="inherit"
+            onClick={() => {
+              setViewAllCirculars(circularData);
+              setOpenViewMoreModal(true);
+            }}
+          >
+            <VisibilityIcon />
+          </IconButton>
         </Box>
       </Box>
-
-
 
       {/* Create/Edit Modal */}
       <Modal open={openCreateModal} onClose={handleCloseCreateModal}>
@@ -383,74 +406,74 @@ const Post = () => {
             helperText={fieldErrors.expiresDate}
             sx={{ mb: 3 }}
           />
-              <div className="col-md-9 mb-3">
-                <Box display="flex" alignItems="center" gap={1}>
-                  <Button
-                    variant="outlined"
-                    component="label"
-                    multiline
-                    startIcon={<CloudUploadIcon />}
-                    sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
-                  >
-                    {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Image') : 'Upload Image'}
+          <div className="col-md-9 mb-3">
+            <Box display="flex" alignItems="center" gap={1}>
+              <Button
+                variant="outlined"
+                component="label"
+                multiline
+                startIcon={<CloudUploadIcon />}
+                sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
+              >
+                {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Image') : 'Upload Image'}
 
-                    <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
-                  </Button>
+                <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
+              </Button>
 
-                  {logo && (
-                    <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
-                      <ControlCameraIcon />
-                    </IconButton>
-                  )}
-                </Box>
-                <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-                  <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
-                    <Typography variant="h5" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }}>
-                      Image
-                    </Typography>
-                    {logo ? (
-                      <Box>
-                        <Avatar
-                          src={typeof logo === 'object' ? URL.createObjectURL(logo) : `data:image/jpeg;base64,${logo}`}
-                          alt="Image"
-                          sx={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 2 }}
-                        />
-                        <Box display="flex" gap={2} mt={2}>
-                          <IconButton
-                            variant="contained"
-                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
-                            onClick={handleRemoveImage}
-                          >
-                            Delete
-                          </IconButton>
-                          <IconButton
-                            variant="contained"
-                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
-                            onClick={handleClose}
-                          >
-                            Close
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    ) : (
-                      <Box>
-                        <Avatar sx={{ width: 150, height: 150, bgcolor: '#F0F0F0', borderRadius: 2 }}>
-                          <Typography variant="caption">Upload Image</Typography>
-                        </Avatar>
-                        <Box display="flex" gap={2} mt={2}>
-                          <IconButton
-                            variant="contained"
-                            sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '15px' }}
-                            onClick={handleClose}
-                          >
-                            Close
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </div>
+              {logo && (
+                <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
+                  <ControlCameraIcon />
+                </IconButton>
+              )}
+            </Box>
+            <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+              <DialogContent sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h5" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }}>
+                  Image
+                </Typography>
+                {logo ? (
+                  <Box>
+                    <Avatar
+                      src={typeof logo === 'object' ? URL.createObjectURL(logo) : `data:image/jpeg;base64,${logo}`}
+                      alt="Image"
+                      sx={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 2 }}
+                    />
+                    <Box display="flex" gap={2} mt={2}>
+                      <IconButton
+                        variant="contained"
+                        sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                        onClick={handleRemoveImage}
+                      >
+                        Delete
+                      </IconButton>
+                      <IconButton
+                        variant="contained"
+                        sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '13px' }}
+                        onClick={handleClose}
+                      >
+                        Close
+                      </IconButton>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Avatar sx={{ width: 150, height: 150, bgcolor: '#F0F0F0', borderRadius: 2 }}>
+                      <Typography variant="caption">Upload Image</Typography>
+                    </Avatar>
+                    <Box display="flex" gap={2} mt={2}>
+                      <IconButton
+                        variant="contained"
+                        sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)', fontSize: '15px' }}
+                        onClick={handleClose}
+                      >
+                        Close
+                      </IconButton>
+                    </Box>
+                  </Box>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
           {/* {(imageFile || formData.imageUrl) && (
             <Box sx={{ mb: 2 }}>
               <img
