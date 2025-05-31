@@ -157,7 +157,7 @@ const Payslip = () => {
   useEffect(() => {
     if (passedEmployeeCode) {
       setEmployeeCode(passedEmployeeCode);
-      localStorage.setItem('employeeCode', passedEmployeeCode);
+      // localStorage.setItem('employeeCode', passedEmployeeCode);
     }
   }, [passedEmployeeCode]);
 

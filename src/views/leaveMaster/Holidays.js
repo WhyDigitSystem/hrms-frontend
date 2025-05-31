@@ -30,6 +30,8 @@ const Holidays = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+  const [department, setDepartment] = useState(localStorage.getItem('department'));
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -210,8 +212,10 @@ const Holidays = () => {
       setIsLoading(true);
       const saveData = {
         ...(editId && { id: editId }),
-        active: formData.active,
+        // active: formData.active,
         branchName: formData.branchName,
+        department: department,
+        branchCode: branchCode,
         holidayDate: formData.holidayDate, // Fix: Ensure correct field name
         createdBy: loginUserName,
         day: formData.day,

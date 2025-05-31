@@ -7,7 +7,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
-import { TableCell, TableContainer, TableHead, TablePagination, Tooltip, Typography } from '@mui/material';
+import { TableCell, TableContainer, TableHead, TablePagination, Tooltip, Typography, Checkbox } from '@mui/material';
 import 'react-tabs/style/react-tabs.css';
 import { ToastContainer } from 'react-toastify';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -20,10 +20,22 @@ import { showToast } from 'utils/toast-component';
 // import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import Box from '@mui/material/Box';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Paper, Table, TableRow, TableBody, TextField } from '@mui/material';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Paper,
+  Table,
+  TableRow,
+  TableBody,
+  TextField
+} from '@mui/material';
 import UploadIcon from '@mui/icons-material/Upload';
-import handleSampleFileAttendence from "../../../src/assets/sample-files/Attendance_Process_Sample.xlsx"
-import handleSampleFileCheckOut from "../../assets/sample-files/Uploadcheckin_Sample_File.xlsx"
+import handleSampleFileAttendence from '../../../src/assets/sample-files/Attendance_Process_Sample.xlsx';
+import handleSampleFileCheckOut from '../../assets/sample-files/Uploadcheckin_Sample_File.xlsx';
 
 const AttendenceProcess = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +53,10 @@ const AttendenceProcess = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [openMissingDialog, setOpenMissingDialog] = useState(false);
   const [selectedMissingDates, setSelectedMissingDates] = useState([]);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogTableData, setDialogTableData] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
+
   // const [isHidden, setIsHidden] = useState(false);
   const [formData, setFormData] = useState({
     fromDate: null,
@@ -153,14 +169,11 @@ const AttendenceProcess = () => {
                 `leaveprocess/getCheckInAndOutDaysForLeaveProcess?branchCode=${branchCode}&empCode=${item.employeeCode}&fromDate=${formData.fromDate}&orgId=${orgId}&toDate=${formData.toDate}`
               );
 
-              const empTotalWorkingDays =
-                empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.EmpcheckInOutDays?.toString() || '0';
+              const empTotalWorkingDays = empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.EmpcheckInOutDays?.toString() || '0';
 
-              const empStatus =
-                empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.status?.toString() || '';
+              const empStatus = empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.status?.toString() || '';
 
-              const missing =
-                empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.missingDates?.toString() || '';
+              const missing = empResponse?.paramObjectsMap?.checkInOutDetailsList?.[0]?.missingDates?.toString() || '';
 
               return {
                 ...item,
@@ -186,9 +199,12 @@ const AttendenceProcess = () => {
           })
         );
 
-        setAllLeave(enrichedLeaveData);
-        console.log('Status', allLeave)
-        setListViewData(enrichedLeaveData);
+        // setAllLeave(enrichedLeaveData);
+        // console.log('Status', allLeave);
+        // setListViewData(enrichedLeaveData);
+        setDialogTableData(enrichedLeaveData);
+        setSelectedRows([]);
+        setDialogOpen(true);
       } else {
         setFieldErrors({
           fromDate: '',
@@ -201,6 +217,64 @@ const AttendenceProcess = () => {
         toDate: 'Failed to fetch leave details. Please try again later.'
       });
     }
+  };
+
+  // const handleSelectAllClick = (event) => {
+  //   if (event.target.checked) {
+  //     const newSelecteds = dialogTableData.map((n) => n.employeeCode);
+  //     setSelectedRows(newSelecteds);
+  //     return;
+  //   }
+  //   setSelectedRows([]);
+  // };
+
+  // const handleClick = (employeeCode) => {
+  //   const selectedIndex = selectedRows.indexOf(employeeCode);
+  //   let newSelected = [];
+
+  //   if (selectedIndex === -1) {
+  //     newSelected = newSelected.concat(selectedRows, employeeCode);
+  //   } else if (selectedIndex === 0) {
+  //     newSelected = newSelected.concat(selectedRows.slice(1));
+  //   } else if (selectedIndex === selectedRows.length - 1) {
+  //     newSelected = newSelected.concat(selectedRows.slice(0, -1));
+  //   } else if (selectedIndex > 0) {
+  //     newSelected = newSelected.concat(selectedRows.slice(0, selectedIndex), selectedRows.slice(selectedIndex + 1));
+  //   }
+
+  //   setSelectedRows(newSelected);
+  // };
+
+  // const isSelected = (employeeCode) => selectedRows.indexOf(employeeCode) !== -1;
+
+  const isSelected = (employeeCode) => selectedRows.includes(employeeCode);
+
+  const handleClick = (employeeCode) => {
+    const selectedIndex = selectedRows.indexOf(employeeCode);
+    let newSelected = [...selectedRows];
+
+    if (selectedIndex === -1) {
+      newSelected.push(employeeCode);
+    } else {
+      newSelected.splice(selectedIndex, 1);
+    }
+
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAllClick = (event) => {
+    if (event.target.checked) {
+      const allCodes = dialogTableData.map((row) => row.employeeCode);
+      setSelectedRows(allCodes);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const handleAddSelected = () => {
+    const selectedData = dialogTableData.filter((row) => selectedRows.includes(row.employeeCode));
+    setAllLeave(selectedData);
+    setDialogOpen(false);
   };
 
   const handleDateChange = (name, date) => {
@@ -316,9 +390,10 @@ const AttendenceProcess = () => {
     console.log(event.target.files[0]);
   };
 
-  const filteredData = allLeave.filter((row) =>
-    row.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    row.employeeCode?.toLowerCase().includes(searchCodeQuery.toLowerCase())
+  const filteredData = allLeave.filter(
+    (row) =>
+      row.employeeName?.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      row.employeeCode?.toLowerCase().includes(searchCodeQuery.toLowerCase())
   );
 
   return (
@@ -337,10 +412,10 @@ const AttendenceProcess = () => {
               // onClick={handleBulkUploadOpen}
               onClick={() => {
                 setUploadFile({
-                  title: "Upload Attendance Process",
-                  apiUrl: "/leaveprocess/uploadLeaveProcess",
+                  title: 'Upload Attendance Process',
+                  apiUrl: '/leaveprocess/uploadLeaveProcess',
                   sampleFileDownload: handleSampleFileAttendence,
-                  sampleFileName: "AttendenceProcess Sample File",
+                  sampleFileName: 'AttendenceProcess Sample File',
                   loginUser: loginUserName
                 });
                 setUploadOpen(true);
@@ -367,10 +442,10 @@ const AttendenceProcess = () => {
                 // onClick={handleBulkUploadOpen}
                 onClick={() => {
                   setUploadFile({
-                    title: "Upload Check Out",
-                    apiUrl: "/leaveprocess/uploadcheckin",
+                    title: 'Upload Check Out',
+                    apiUrl: '/leaveprocess/uploadcheckin',
                     sampleFileDownload: handleSampleFileCheckOut,
-                    sampleFileName: "CheckOut Sample File"
+                    sampleFileName: 'CheckOut Sample File'
                   });
                   setUploadOpen(true);
                 }}
@@ -491,103 +566,67 @@ const AttendenceProcess = () => {
                             <TableContainer component={Paper}>
                               <Table>
                                 <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-                                  {/* search */}
-                                  {/* <TableRow>
-                                    <TableCell />
-                                    <TableCell>
-                                      <TextField
-                                        placeholder="Search Name"
-                                        variant="standard"
-                                        fullWidth
-                                        value={searchQuery}
-                                        onChange={(e) => {
-                                          setSearchQuery(e.target.value);
-                                          setPage(0);
-                                        }}
-                                        sx={{
-                                          '& .MuiInputBase-input': {
-                                            color: 'white', // input text color
-                                            '&::placeholder': {
-                                              color: 'white', // placeholder color
-                                              opacity: 1,
-                                            },
-                                          },
-                                        }}
-                                      />
-                                    </TableCell>
-                                    <TableCell>
-                                      <TextField
-                                        placeholder="Search Code"
-                                        variant="standard"
-                                        fullWidth
-                                        value={searchCodeQuery}
-                                        onChange={(e) => {
-                                          setSearchCodeQuery(e.target.value);
-                                          setPage(0);
-                                        }}
-                                        sx={{
-                                          '& .MuiInputBase-input': {
-                                            color: 'white', // input text color
-                                            '&::placeholder': {
-                                              color: 'white', // placeholder color
-                                              opacity: 1,
-                                            },
-                                          },
-                                        }}
-                                      />
-                                    </TableCell>
-                                    <TableCell colSpan={5} />
-                                  </TableRow> */}
-                                  {/* Header Row */}
                                   <TableRow>
-                                    <TableCell><strong>S.No</strong></TableCell>
-                                    <TableCell><strong>Employee</strong></TableCell>
-                                    <TableCell><strong>Code</strong></TableCell>
-                                    <TableCell><strong>Total Leave</strong></TableCell>
-                                    <TableCell><strong>LOP</strong></TableCell>
-                                    <TableCell><strong>Working Days</strong></TableCell>
-                                    <TableCell><strong>Total Working Days</strong></TableCell>
-                                    <TableCell><strong>Missing</strong></TableCell>
-                                    <TableCell><strong>Status</strong></TableCell>
+                                    <TableCell>
+                                      <strong>S.No</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Employee</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Code</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Total Leave</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>LOP</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Working Days</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Total Working Days</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Missing</strong>
+                                    </TableCell>
+                                    <TableCell>
+                                      <strong>Status</strong>
+                                    </TableCell>
                                   </TableRow>
                                 </TableHead>
 
                                 <TableBody>
                                   {filteredData.length > 0 ? (
-                                    filteredData
-                                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                      .map((row, index) => (
-                                        <TableRow key={row.id || index} hover>
-                                          <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                                          <TableCell>{row.employeeName}</TableCell>
-                                          <TableCell>{row.employeeCode}</TableCell>
-                                          <TableCell>{row.totalLeave}</TableCell>
-                                          <TableCell>{row.lopLeave}</TableCell>
-                                          <TableCell>{row.empTotalWorkingDays}</TableCell>
-                                          <TableCell>{row.empSalaryDays}</TableCell>
-                                          <TableCell
-                                            sx={{
-                                              color: 'blue',
-                                              cursor: row.missing ? 'pointer' : 'default',
-                                              textDecoration: row.missing ? 'underline' : 'none'
-                                            }}
-                                            onClick={() => {
-                                              if (row.missing) {
-                                                const datesArray = row.missing.split(',').map(d => d.trim());
-                                                setSelectedMissingDates(datesArray);
-                                                setOpenMissingDialog(true);
-                                              }
-                                            }}
-                                          >
-                                            {row.missing ? 'Dates' : '-'}
-                                          </TableCell>
-                                          <TableCell
-                                            sx={{ color: row.empStatus === 'MATCHED' ? 'green' : 'red' }}
-                                          >
-                                            {row.empStatus}
-                                          </TableCell>
-                                        </TableRow>
-                                      ))
+                                    filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row, index) => (
+                                      <TableRow key={row.id || index} hover>
+                                        <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                                        <TableCell>{row.employeeName}</TableCell>
+                                        <TableCell>{row.employeeCode}</TableCell>
+                                        <TableCell>{row.totalLeave}</TableCell>
+                                        <TableCell>{row.lopLeave}</TableCell>
+                                        <TableCell>{row.empTotalWorkingDays}</TableCell>
+                                        <TableCell>{row.empSalaryDays}</TableCell>
+                                        <TableCell
+                                          sx={{
+                                            color: 'blue',
+                                            cursor: row.missing ? 'pointer' : 'default',
+                                            textDecoration: row.missing ? 'underline' : 'none'
+                                          }}
+                                          onClick={() => {
+                                            if (row.missing) {
+                                              const datesArray = row.missing.split(',').map((d) => d.trim());
+                                              setSelectedMissingDates(datesArray);
+                                              setOpenMissingDialog(true);
+                                            }
+                                          }}
+                                        >
+                                          {row.missing ? 'Dates' : '-'}
+                                        </TableCell>
+                                        <TableCell sx={{ color: row.empStatus === 'MATCHED' ? 'green' : 'red' }}>{row.empStatus}</TableCell>
+                                      </TableRow>
+                                    ))
                                   ) : (
                                     <TableRow>
                                       <TableCell colSpan={8} align="center">
@@ -644,8 +683,8 @@ const AttendenceProcess = () => {
             borderRadius: 3,
             background: 'linear-gradient(to right, #f0f2f5, #e3f2fd)',
             boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
-            p: 2,
-          },
+            p: 2
+          }
         }}
       >
         <DialogTitle
@@ -655,7 +694,7 @@ const AttendenceProcess = () => {
             borderTopLeftRadius: 12,
             borderTopRightRadius: 12,
             fontWeight: 'bold',
-            textAlign: 'center',
+            textAlign: 'center'
           }}
         >
           Missing Dates
@@ -674,7 +713,7 @@ const AttendenceProcess = () => {
                     background: '#e3f2fd',
                     padding: '6px 10px',
                     borderRadius: '8px',
-                    listStyleType: 'disc',
+                    listStyleType: 'disc'
                   }}
                 >
                   {date}
@@ -700,11 +739,107 @@ const AttendenceProcess = () => {
               px: 4,
               py: 1,
               '&:hover': {
-                background: 'linear-gradient(90deg, #303f9f, #1976d2)',
-              },
+                background: 'linear-gradient(90deg, #303f9f, #1976d2)'
+              }
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="lg">
+        <DialogTitle>Select Employees</DialogTitle>
+        <DialogContent>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedRows.length > 0 && selectedRows.length < dialogTableData.length}
+                    checked={dialogTableData.length > 0 && selectedRows.length === dialogTableData.length}
+                    onChange={handleSelectAllClick}
+                  />
+                </TableCell>
+                <TableCell>
+                  <strong>Employee Name</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Employee Code</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Total Leave</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>LOP Leave</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Emp Salary Days</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Month</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Year</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Missing</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {dialogTableData.map((row) => {
+                const isItemSelected = isSelected(row.employeeCode);
+                return (
+                  <TableRow
+                    key={row.employeeCode}
+                    hover
+                    role="checkbox"
+                    aria-checked={isItemSelected}
+                    selected={isItemSelected}
+                    sx={{ cursor: 'pointer' }}
+                  >
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={isItemSelected} onChange={() => handleClick(row.employeeCode)} />
+                    </TableCell>
+                    <TableCell>{row.employeeName}</TableCell>
+                    <TableCell>{row.employeeCode}</TableCell>
+                    <TableCell>{row.totalLeave}</TableCell>
+                    <TableCell>{row.lopLeave}</TableCell>
+                    <TableCell>{row.empSalaryDays}</TableCell>
+                    <TableCell>{row.month}</TableCell>
+                    <TableCell>{row.year}</TableCell>
+                    <TableCell
+                      sx={{
+                        color: 'blue',
+                        cursor: row.missing ? 'pointer' : 'default',
+                        textDecoration: row.missing ? 'underline' : 'none'
+                      }}
+                      onClick={() => {
+                        if (row.missing) {
+                          const datesArray = row.missing.split(',').map((d) => d.trim());
+                          setSelectedMissingDates(datesArray);
+                          setOpenMissingDialog(true);
+                        }
+                      }}
+                    >
+                      {row.missing ? 'Dates' : '-'}
+                    </TableCell>
+                    <TableCell sx={{ color: row.empStatus === 'MATCHED' ? 'green' : 'red' }}>{row.empStatus}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDialogOpen(false)} color="secondary">
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleAddSelected} disabled={selectedRows.length === 0}>
+            Add Selected
           </Button>
         </DialogActions>
       </Dialog>

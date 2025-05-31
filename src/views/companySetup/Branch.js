@@ -103,7 +103,7 @@ const Branch = () => {
 
   const getCompanyDetails = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company`);
+      const response = await apiCalls('get', `commonmaster/company/${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {

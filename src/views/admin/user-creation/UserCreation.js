@@ -45,6 +45,7 @@ const UserCreation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [empList, setEmpList] = useState([]);
+  const [companyNameForOrg, setCompanyNameForOrg] = useState([]);
 
   const [formData, setFormData] = useState({
     docId: '',
@@ -117,6 +118,7 @@ const UserCreation = () => {
     getAllBranches();
     getAllRoles();
     getAllUserCreation();
+    getCompanyName();
   }, []);
 
   const handleInputChange = (e) => {
@@ -168,7 +170,7 @@ const UserCreation = () => {
           setFormData((prevData) => ({
             ...prevData,
             employeeCode: selectedEmp.employeeCode,
-            employeeName: selectedEmp.employeeName,
+            employeeName: selectedEmp.employee,
             email: selectedEmp.email
           }));
         }
@@ -211,7 +213,7 @@ const UserCreation = () => {
         ...prevData,
         userName: selectedEmp.employeeCode,
         employeeCode: selectedEmp.employeeCode,
-        employeeName: selectedEmp.employeeName,
+        employeeName: selectedEmp.employee,
         email: selectedEmp.email,
         branch: selectedEmp.branch,
         branchCode: selectedEmp.branchCode,
@@ -247,6 +249,22 @@ const UserCreation = () => {
 
       if (response.status === true) {
         setEmpList(response.paramObjectsMap.employeeVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getCompanyName = async () => {
+    try {
+      const response = await apiCalls('get', `/commonmaster/company/${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setCompanyNameForOrg(response.paramObjectsMap.companyVO[0].companyName);
+        console.log("company name", response.paramObjectsMap.companyVO[0].companyName)
       } else {
         console.error('API Error:', response);
       }
@@ -400,6 +418,7 @@ const UserCreation = () => {
         ...(!editId && { password: encryptedPassword }),
         branch: formData.branch,
         branchcode: formData.branchCode,
+        companyName: companyNameForOrg,
         department: formData.department,
         designation: formData.designation,
         employeeCode: formData.employeeCode,
@@ -976,7 +995,7 @@ const UserCreation = () => {
                                     <th className="px-2 py-2 text-white text-center">
                                       <div className='d-flex justify-content-end align-items-center'>
                                         <div className='pe-5 pt-3'> Branch</div>
-                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} /></div>
                                       </div>
                                     </th>
                                   </tr>

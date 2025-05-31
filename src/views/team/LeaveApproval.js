@@ -5,12 +5,13 @@ import { ToastContainer, toast } from 'react-toastify';
 import apiCalls from 'apicall';
 import 'react-toastify/dist/ReactToastify.css';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import SearchOffIcon from '@mui/icons-material/SearchOff';
 
 const LeaveApproval = () => {
   const [listViewData, setListViewData] = useState([]);
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const orgId = localStorage.getItem('orgId');
-  const employeeCode = localStorage.getItem("employeeCode");
+  const employeeCode = localStorage.getItem('employeeCode');
 
   useEffect(() => {
     getAllApprovedLeaveForTeam();
@@ -20,7 +21,10 @@ const LeaveApproval = () => {
   const getAllApprovedLeaveForTeam = useCallback(async () => {
     try {
       // Fetching approved leaves for the team
-      const result = await apiCalls('get', `/leaveprocess/getAllApprovedLeaveForTeam?branchCode=${branchCode}&orgId=${orgId}&reportingPersonCode=${employeeCode}`);
+      const result = await apiCalls(
+        'get',
+        `/leaveprocess/getAllApprovedLeaveForTeam?branchCode=${branchCode}&orgId=${orgId}&reportingPersonCode=${employeeCode}`
+      );
 
       const approvedLeaves = result?.paramObjectsMap?.leaveRequestVO || [];
 
@@ -31,7 +35,6 @@ const LeaveApproval = () => {
       if (reversedApprovedLeaves.length > 0 && reversedApprovedLeaves[0].branchCode) {
         setBranchCode(reversedApprovedLeaves[0].branchCode);
       }
-
     } catch (err) {
       console.error('Error fetching data:', err);
     }
@@ -46,29 +49,40 @@ const LeaveApproval = () => {
     { accessorKey: 'totalDays', header: 'Total Days', size: 140 },
     { accessorKey: 'startDate', header: 'Start Date', size: 140 },
     { accessorKey: 'endDate', header: 'End Date', size: 140 },
-    { accessorKey: 'screenName', header: 'Screen Name', size: 140 },
+    { accessorKey: 'screenName', header: 'Screen Name', size: 140 }
   ];
 
   return (
     <>
-      <Card sx={{ padding: 4, backgroundColor: '#ffffff', boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)', borderRadius: 4, maxWidth: '100%', mt: 3 }}>
+      <Card
+        sx={{
+          padding: 4,
+          backgroundColor: '#ffffff',
+          boxShadow: '0px 8px 24px rgba(0, 0, 0, 0.12)',
+          borderRadius: 4,
+          maxWidth: '100%',
+          mt: 3
+        }}
+      >
         <ToastContainer position="top-right" autoClose={5000} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          {/* <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
-          Leave Approval- {branchName ? branchName : "No branch available"} - Branch
-          </Typography> */}
-        </Box>
         <Box sx={{ mt: 0 }}>
-          {listViewData.length > 1 && (
+          {listViewData.length > 0 ? (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <CommonListViewTable
-                data={listViewData}
-                columns={listViewColumns}
-                blockEdit
-                showActions={false}
-                hideActions
-              />
+              <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit showActions={false} hideActions />
             </Paper>
+          ) : (
+            <Box
+              sx={{
+                py: 1,
+                textAlign: 'center',
+                color: 'text.secondary',
+                fontSize: 16,
+                fontWeight: 500
+              }}
+            >
+              <SearchOffIcon sx={{ fontSize: 40, mb: 1, color: 'grey.500' }} />
+              <div>No data found</div>
+            </Box>
           )}
         </Box>
       </Card>

@@ -98,6 +98,7 @@ const FirebaseLogin = ({ ...others }) => {
         localStorage.setItem('branchCode', response.data.paramObjectsMap.userVO.branchCode);
         localStorage.setItem('department', response.data.paramObjectsMap.userVO.department);
         localStorage.setItem('designation', response.data.paramObjectsMap.userVO.designation);
+        localStorage.setItem('companyName', response.data.paramObjectsMap.userVO.companyName);
 
         const userType = response.data?.paramObjectsMap?.userVO?.userType;
         const role = response.data?.paramObjectsMap?.userVO?.roleVO?.[0]?.role;

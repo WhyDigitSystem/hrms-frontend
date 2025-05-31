@@ -176,7 +176,7 @@ const EmployeeDetails = () => {
       header: 'Payslip',
       size: 100,
       Cell: ({ row }) => (
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'left' }}>
           <DescriptionIcon
             style={{ color: '#388e3c', cursor: 'pointer' }}
             onClick={() => navigateToPayslip(row.original.employeeCode)}
@@ -194,8 +194,8 @@ const EmployeeDetails = () => {
         </span>
       )
     },
-    { accessorKey: 'employeecode', header: 'Code', size: 140 },
-    { accessorKey: 'joiningdate', header: 'Date of Join', size: 140 },
+    { accessorKey: 'employeeCode', header: 'Code', size: 140 },
+    { accessorKey: 'joiningDate', header: 'Date of Join', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
     {
@@ -710,11 +710,11 @@ const EmployeeDetails = () => {
     setShowForm(true);
 
     try {
-      const result = await apiCalls('get', `/master/employee/${row.original.employeeid}`);
+      const result = await apiCalls('get', `/master/employee/${row.original.employeeId}`);
 
       if (result) {
         const employeeDetailsVO = result.paramObjectsMap.Employee;
-        setEditId(row.original.employeeid);
+        setEditId(row.original.employeeId);
 
         const designationCode = designationList.find((d) => d.designationName === employeeDetailsVO.designation)?.designationCode || '';
         const gender = employeeDetailsVO.gender || '';
@@ -751,7 +751,7 @@ const EmployeeDetails = () => {
           bankName: employeeDetailsVO.bankName || '',
           ifscCode: employeeDetailsVO.ifscCode || '',
           active: employeeDetailsVO.active === 'Active',
-          id: employeeDetailsVO.employeeid || 0
+          id: employeeDetailsVO.employeeId || 0
         });
 
         setLeaveTypeTable(
@@ -892,8 +892,8 @@ const EmployeeDetails = () => {
     // Prepare table data
     const tableData = listViewData.map((employee, index) => [
       index + 1,
-      employee.employeeName,
       employee.employeeCode,
+      employee.employeeName,
       employee.branch,
       employee.doj || employee.joiningDate,
       employee.grade,

@@ -720,7 +720,9 @@ const SalaryMaster = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
+                                  <tr
+                                    style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}
+                                  >
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
@@ -731,9 +733,11 @@ const SalaryMaster = () => {
                                       Heading
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      <div className='d-flex justify-content-end align-items-center'>
-                                        <div className='pe-5 pt-3'> Amount </div>
-                                        <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                      <div className="d-flex justify-content-end align-items-center">
+                                        <div className="pe-5 pt-3"> Amount </div>
+                                        <div className="d-flex justify-content-end">
+                                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                                        </div>
                                       </div>
                                     </th>
                                   </tr>
@@ -829,7 +833,9 @@ const SalaryMaster = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-                                  <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
+                                  <tr
+                                    style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}
+                                  >
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                       Action
                                     </th>
@@ -840,7 +846,12 @@ const SalaryMaster = () => {
                                       Heading
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Amount
+                                      <div className="d-flex justify-content-end align-items-center">
+                                        <div className="pe-5 pt-3"> Amount </div>
+                                        <div className="d-flex justify-content-end">
+                                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
+                                        </div>
+                                      </div>
                                     </th>
                                   </tr>
                                 </thead>

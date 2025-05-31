@@ -497,22 +497,22 @@ const LeaveRequest = () => {
     const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
     const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
 
-    const sevenDaysAgo = dayjs().subtract(7, 'day');
-    const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
+    // const sevenDaysAgo = dayjs().subtract(7, 'day');
+    // const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
 
-    return isWeekOff || isBeforeEffectiveFrom || isBefore7Days;
+    return isWeekOff || isBeforeEffectiveFrom;
   };
 
-  const getMinSelectableDate = () => {
-    const sevenDaysAgo = dayjs().subtract(7, 'day');
-    const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
+  // const getMinSelectableDate = () => {
+  //   const sevenDaysAgo = dayjs().subtract(7, 'day');
+  //   const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
 
-    // Return the later date between sevenDaysAgo and effectiveFrom
-    if (effectiveFromDate && effectiveFromDate.isAfter(sevenDaysAgo)) {
-      return effectiveFromDate;
-    }
-    return sevenDaysAgo;
-  };
+  //   // Return the later date between sevenDaysAgo and effectiveFrom
+  //   if (effectiveFromDate && effectiveFromDate.isAfter(sevenDaysAgo)) {
+  //     return effectiveFromDate;
+  //   }
+  //   return sevenDaysAgo;
+  // };
 
   const getCompanyWeekOff = async () => {
     try {
@@ -686,7 +686,7 @@ const LeaveRequest = () => {
                         onChange={(newValue) => handleDateChange('fromDate', newValue)}
                         shouldDisableDate={disableWeekOffDays}
                         // minDate={formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null} // Prevent selecting dates before effectiveFrom
-                        minDate={getMinSelectableDate()}
+                        // minDate={getMinSelectableDate()}
                       />
                     ) : (
                       <TextField label="From Date" size="small" value="" placeholder="Select Leave Type First" disabled />

@@ -15,6 +15,8 @@ import { IconMenu2, IconSun, IconMoon } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
+import Modal from '@mui/material/Modal';
+
 // import GlobalSection from './GlobalSection';
 
 // ==============================|| MAIN NAVBAR / HEADER ||============================== //
@@ -23,7 +25,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
   const theme = useTheme();
   const [logo, setLogo] = useState(null);
   const [orgId] = useState(localStorage.getItem('orgId'));
-
+  const [logoPreviewOpen, setLogoPreviewOpen] = useState(false);
 
   useEffect(() => {
     getCompanyDetails();
@@ -98,7 +100,6 @@ const Header = ({ handleLeftDrawerToggle }) => {
             <IconMenu2 stroke={1.5} size="1.3rem" />
           </Avatar>
         </ButtonBase>
-
       </Box>
 
       {/* header search */}
@@ -107,7 +108,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
       <Box sx={{ flexGrow: 1 }} />
 
       {/* Company logo */}
-      <Box
+      {/* <Box
         sx={{
           display: {
             xs: logo && logo[0]?.companyLogo ? 'none' : 'flex',
@@ -169,8 +170,83 @@ const Header = ({ handleLeftDrawerToggle }) => {
             sx={{ fontSize: '11px', height: '20px' }}
           />
         </Box>
-      </Box>
+      </Box> */}
 
+      <Box
+        sx={{
+          display: {
+            xs: logo && logo[0]?.companyLogo ? 'none' : 'flex',
+            sm: 'flex'
+          },
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: 'center',
+          justifyContent: { xs: 'center', md: 'flex-end' },
+          width: { xs: '100%', md: 380 },
+          textAlign: { xs: 'center', sm: 'start' },
+          mt: 1.5,
+          mb: { xs: 1.5, md: 0 },
+          gap: 1.5,
+          ps: 2
+        }}
+      >
+        <Box
+          sx={{
+            position: 'relative',
+            width: { xs: 75, sm: 95 },
+            height: { xs: 58, sm: 72 },
+            borderRadius: 2,
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            transition: 'transform 0.3s ease',
+            '&:hover': {
+              transform: 'scale(1.05)'
+            }
+          }}
+          onClick={() => setLogoPreviewOpen(true)}
+        >
+          {logo && logo[0]?.companyLogo ? (
+            <img
+              src={`data:image/png;base64,${logo[0].companyLogo}`}
+              alt="Company Logo"
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            />
+          ) : (
+            <Typography variant="caption" sx={{ color: '#888', fontSize: '11px' }}>
+              Upload Logo
+            </Typography>
+          )}
+          <input type="file" id="logo-upload" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: { xs: 'center', sm: 'flex-start' } }}>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '14px',
+              color: '#ffffff',
+              textShadow: '1px 1px 2px rgba(0,0,0,0.5)',
+              mb: 0.4
+            }}
+          >
+            {localStorage.getItem('companyName') || 'Company Name'}
+          </Typography>
+          <Chip
+            label={localStorage.getItem('branch') || 'Branch'}
+            size="small"
+            color="primary"
+            sx={{
+              fontSize: '11px',
+              height: '20px',
+              px: 1,
+              fontWeight: 500
+            }}
+          />
+        </Box>
+      </Box>
 
       {/* Right Side Actions */}
       <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
@@ -205,6 +281,39 @@ const Header = ({ handleLeftDrawerToggle }) => {
         {/* Profile */}
         <ProfileSection />
       </Stack>
+      <Modal
+        open={logoPreviewOpen}
+        onClose={() => setLogoPreviewOpen(false)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(4px)'
+        }}
+      >
+        <Box
+          sx={{
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 1
+          }}
+        >
+          {logo?.[0]?.companyLogo && (
+            <img
+              src={`data:image/png;base64,${logo[0]?.companyLogo}`}
+              alt="Company Logo"
+              style={{ width: '100%', height: '60%', objectFit: 'cover' }}
+            />
+          )}
+        </Box>
+      </Modal>
     </>
   );
 };

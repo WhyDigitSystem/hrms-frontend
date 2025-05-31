@@ -476,11 +476,11 @@ const SalaryProcess = () => {
                 <th>
                   <FormControlLabel control={<Checkbox checked={selectAll} onChange={handleSelectAll} />} label="Select All" />
                 </th>
-                <th>Employee Name</th>
-                <th>Employee Code</th>
+                <th>Code</th>
+                <th>Employee</th>
                 <th>Total Leave</th>
-                <th>LOP (Loss of Pay)</th>
-                <th>Total Employee Working Days</th>
+                <th>LOP</th>
+                <th>Working Days</th>
                 <th>Total Working Days</th>
                 <th>Gross Salary</th>
                 <th>Net Pay Salary</th>
@@ -493,8 +493,8 @@ const SalaryProcess = () => {
                   <td>
                     <Checkbox checked={selectedRows.includes(leave.employeeCode)} onChange={() => handleRowSelect(leave.employeeCode)} />
                   </td>
-                  <td>{leave.employeeName}</td>
                   <td>{leave.employeeCode}</td>
+                  <td>{leave.employeeName}</td>
                   <td>{leave.totalLeave}</td>
                   <td>{leave.lopLeave}</td>
                   <td>{leave.empTotalWorkingDays}</td>
