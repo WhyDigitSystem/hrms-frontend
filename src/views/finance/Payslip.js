@@ -362,7 +362,7 @@ const Payslip = () => {
             <Divider />
             <InfoColumn>
               <p>
-                <strong>Bank Name:</strong> {employeeDetails.bankname}
+                <strong>Bank Name:</strong> {employeeDetails.bankName}
               </p>
               <p>
                 <strong>Account No:</strong> {employeeDetails.accountno}
