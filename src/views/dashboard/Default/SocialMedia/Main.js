@@ -204,7 +204,7 @@ const Main = () => {
             },
           }}
         >
-          IT
+          {department}
         </Button>
       </Box>
 
