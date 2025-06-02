@@ -46,6 +46,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
   const [fieldErrors, setFieldErrors] = useState({});
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
+  const [logoPreviewOpen, setLogoPreviewOpen] = useState(false);
   const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
@@ -91,6 +92,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
   }, []);
 
   const getCircularById = (circular) => {
+    setLogo(circular.postImage);
     setFormData({
       circularTopic: circular.circularTopic,
       circularcontent: circular.circularcontent,
@@ -181,6 +183,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
         toast.success(editId ? 'Circular Updated Successfully' : 'Circular created successfully');
         setOpenCreateModal(false);
         GetCircularByOrgId();
+        // window.location.reload();
 
         const generatedId = result.paramObjectsMap.circularVO.id;
         if (generatedId && typeof logo === 'object') {
@@ -194,6 +197,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
         setFormData({ circularTopic: '', circularcontent: '', expiresDate: '', imageUrl: '' });
         setLogo(null);
         setEditId('');
+
       } else {
         toast.error(result.paramObjectsMap?.errorMessage || 'Circular creation failed');
       }
@@ -312,14 +316,43 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
       }
     };
   }, [logo]);
+  // console.log('Image URL:', circularData[0].postImage);
+
   return (
     <Box sx={cardStyle}>
       <Box sx={{ position: 'relative', padding: isMobile ? 3 : 4, zIndex: 1 }}>
         <Box sx={announcementStyle}>
           {circularData.length > 0 ? (
             <Box>
-              <Typography variant="h6" gutterBottom>{circularData[0].circularTopic}</Typography>
-              <Typography variant="body1" sx={{ lineHeight: 1.6 }}>{circularData[0].circularcontent}</Typography>
+              <div className='d-flex justify-content-between align-items-center'>
+
+                <div>
+                  <Typography variant="h6" gutterBottom>
+                    {circularData[0].circularTopic}
+                  </Typography>
+                  <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                    {circularData[0].circularcontent}
+                  </Typography>
+                </div>
+                <div>
+                  {circularData?.[0]?.postImage && (
+                    <Box
+                      component="img"
+                      src={`data:image/png;base64,${circularData[0].postImage}`}
+                      alt="Circular Attachment"
+                      sx={{
+                        width: '100%',
+                        maxHeight: 300,
+                        objectFit: 'contain',
+                        mt: 2,
+                        borderRadius: 2,
+                      }}
+                      onClick={() => setLogoPreviewOpen(true)}
+                    />
+                  )}
+                </div>
+              </div>
+
               <Tooltip title="Praise this circular">
                 <IconButton onClick={() => handlePraise(circularData[0].id)} color="secondary">
                   <ThumbUpAltIcon />
@@ -328,11 +361,17 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
               <Typography variant="caption">
                 {praiseCounts[circularData[0].id] || "0"}
               </Typography>
+
+              {/* Display image if available */}
+
+
             </Box>
           ) : (
             <Box sx={{ textAlign: 'center' }}>
               <NotificationsActiveIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>No circulars available</Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                No circulars available
+              </Typography>
             </Box>
           )}
         </Box>
@@ -420,7 +459,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                 <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
               </Button>
 
-              {logo && (
+              { logo && (
                 <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
                   <ControlCameraIcon />
                 </IconButton>
@@ -537,11 +576,60 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                       </>
                     }
                   />
+                  <div>
+                    {circularData?.[0]?.postImage && (
+                      <Box
+                        component="img"
+                        src={`data:image/png;base64,${circularData[0].postImage}`}
+                        alt="Circular Attachment"
+                        sx={{
+                          width: '100%',
+                          maxHeight: 300,
+                          objectFit: 'contain',
+                          mt: 2,
+                          borderRadius: 2,
+                        }}
+                      />
+                    )}
+                  </div>
                 </ListItem>
                 <Divider variant="inset" component="li" />
               </React.Fragment>
             ))}
           </List>
+        </Box>
+      </Modal>
+      <Modal
+        open={logoPreviewOpen}
+        onClose={() => setLogoPreviewOpen(false)}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(4px)'
+        }}
+      >
+        <Box
+          sx={{
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            overflow: 'hidden',
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 1
+          }}
+        >
+          {circularData?.[0]?.postImage && (
+            <img
+              src={`data:image/png;base64,${circularData[0].postImage}`}
+              alt="Circular Attachment"
+              style={{ width: '100%', height: '60%', objectFit: 'cover' }}
+            />
+          )}
         </Box>
       </Modal>
     </Box>
