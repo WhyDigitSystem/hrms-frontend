@@ -4,6 +4,7 @@ import { lazy } from 'react';
 import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import { element } from 'prop-types';
+import PrivateRoute from './PrivateRoute';
 // import Roles from 'views/basicMaster/roles';
 
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -67,7 +68,7 @@ const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')))
 
 const HrmsRoute = {
   path: '/',
-  element: <MainLayout />,
+  element: <PrivateRoute><MainLayout /></PrivateRoute>,
   children: [
     {
       path: '/',
@@ -223,7 +224,7 @@ const HrmsRoute = {
       element: < TodayAttendance />
     },
     // manageTax
-     {
+    {
       path: '/ManageTax/manageTax',
       element: < ManageTax />
     }

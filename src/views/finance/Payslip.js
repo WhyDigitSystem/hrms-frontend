@@ -21,9 +21,9 @@ import { useLocation } from 'react-router-dom';
 const Payslip = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [orgId] = useState(localStorage.getItem('orgId') || '');
-  //   const [employeeCode] = useState(localStorage.getItem('employeeCode') || '');
   const [employeeDetails, setEmployeeDetails] = useState(null);
   const [earningsData, setEarningsData] = useState([]);
+  const [payslipCompanydetails, setPayslipCompanydetails] = useState();
   const [totalEarningRow, setTotalEarningRow] = useState(null);
   const [deductionsData, setDeductionsData] = useState([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
@@ -35,18 +35,66 @@ const Payslip = () => {
   const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode') || '');
   const location = useLocation();
   const { employeeCode: passedEmployeeCode } = location.state || {};
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [logoLoadError, setLogoLoadError] = useState(false);
+
+  useEffect(() => {
+    if (passedEmployeeCode) {
+      setEmployeeCode(passedEmployeeCode);
+    }
+  }, [passedEmployeeCode]);
+
+  useEffect(() => {
+    getPayslipCompanyDetails();
+  }, [orgId]);
 
   useEffect(() => {
     if (passedEmployeeCode && selectedMonth && selectedYear) {
-      fetchPayslipData(passedEmployeeCode); // use the passed one
+      fetchPayslipData(passedEmployeeCode);
     }
   }, [passedEmployeeCode, selectedMonth, selectedYear]);
 
-  useEffect(() => {
-    if (showPayslip && selectedMonth && selectedYear) {
-      fetchPayslipData();
+  const logoUrl = useMemo(() => {
+    if (!companyDetails?.companylogo) return null;
+
+    const logo = companyDetails.companylogo;
+
+    // Handle base64 strings
+    if (logo.startsWith('data:image')) {
+      return logo;
     }
-  }, [selectedMonth, selectedYear, showPayslip]);
+
+    // Handle raw base64 strings without prefix
+    if (/^[A-Za-z0-9+/]+={0,2}$/.test(logo)) {
+      return `data:image/png;base64,${logo}`;
+    }
+
+    // Handle relative paths
+    if (logo.startsWith('/')) {
+      return `${window.location.origin}${logo}`;
+    }
+
+    // Handle missing protocol
+    if (!logo.startsWith('http://') && !logo.startsWith('https://')) {
+      return `https://${logo}`;
+    }
+
+    return logo;
+  }, [companyDetails]);
+
+
+
+  const getPayslipCompanyDetails = async () => {
+    try {
+      // FIX: Changed 'orgid' to 'orgId' to match API parameter case
+      const result = await apiCalls('get', `basicmaster/getpayslipCompanydetails?orgId=${orgId}`);
+      if (result.paramObjectsMap?.Company?.length > 0) {
+        setCompanyDetails(result.paramObjectsMap.Company[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch company details:', err);
+    }
+  };
 
   const validateForm = () => {
     let valid = true;
@@ -86,9 +134,10 @@ const Payslip = () => {
     setDeductionsData([]);
     setTotalEarningRow(null);
     setTotalEarnings(0);
+    setPayslipCompanydetails();
 
     try {
-      const [employeeRes, earningsRes, deductionsRes] = await Promise.all([
+      const [employeeRes, earningsRes, deductionsRes, payslipCompanydetails] = await Promise.all([
         apiCalls('get', `/basicmaster/getpayslipemployeedetails?Employeecode=${employeeCode}&orgId=${orgId}`),
         apiCalls(
           'get',
@@ -97,10 +146,13 @@ const Payslip = () => {
         apiCalls(
           'get',
           `/basicmaster/getpayslipdeductiondetails?Employeecode=${employeeCode}&Month=${selectedMonth}&orgId=${orgId}&year=${selectedYear}`
+        ),
+        apiCalls(
+          'get',
+          `basicmaster/getpayslipCompanydetails?orgId=${orgId}`
         )
       ]);
 
-      // Handle API errors
       const handleApiError = (response, defaultMessage) => {
         if (!response?.status) {
           const errorMsg = response?.paramObjectsMap?.errorMessage || defaultMessage;
@@ -113,7 +165,6 @@ const Payslip = () => {
       handleApiError(earningsRes, 'Failed to fetch earnings details');
       handleApiError(deductionsRes, 'Failed to fetch deduction details');
 
-      // Process data
       const hasEarnings = earningsRes.paramObjectsMap?.employee?.length > 0;
       const hasDeductions = deductionsRes.paramObjectsMap?.employee?.length > 0;
 
@@ -123,12 +174,10 @@ const Payslip = () => {
         return;
       }
 
-      // Employee details
       if (employeeRes.paramObjectsMap.employee?.length > 0) {
         setEmployeeDetails(employeeRes.paramObjectsMap.employee[0]);
       }
 
-      // Earnings processing
       if (hasEarnings) {
         const processedEarnings = processEarningsData(earningsRes.paramObjectsMap.employee);
         setEarningsData(processedEarnings.rows);
@@ -136,7 +185,6 @@ const Payslip = () => {
         setTotalEarnings(processedEarnings.total.amount);
       }
 
-      // Deductions processing
       if (hasDeductions) {
         const filteredDeductions = deductionsRes.paramObjectsMap.employee
           .filter((item) => item.heading !== 'Total Deduction')
@@ -153,13 +201,6 @@ const Payslip = () => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (passedEmployeeCode) {
-      setEmployeeCode(passedEmployeeCode);
-      // localStorage.setItem('employeeCode', passedEmployeeCode);
-    }
-  }, [passedEmployeeCode]);
 
   const processEarningsData = (data) => {
     const merged = data.reduce((acc, item) => {
@@ -207,12 +248,12 @@ const Payslip = () => {
   };
 
   const handleDownload = () => {
-    if (!showPayslip || !employeeDetails || noDataFound) {
+     if (!showPayslip || !employeeDetails || noDataFound) {
       showToast('Please generate a valid payslip first', 'warning');
       return;
     }
 
-    const input = document.getElementById('payslip-container');
+  const input = document.getElementById('payslip-container');
     html2canvas(input, {
       scale: 2,
       useCORS: true,
@@ -229,7 +270,7 @@ const Payslip = () => {
       })
       .catch((error) => {
         console.error('PDF generation failed:', error);
-        showToast('Failed to generate PDF', 'error');
+        // showToast('Failed to generate PDF', 'error');
       });
   };
 
@@ -241,11 +282,16 @@ const Payslip = () => {
     () =>
       selectedMonth
         ? dayjs()
-            .month(selectedMonth - 1)
-            .format('MMMM')
+          .month(selectedMonth - 1)
+          .format('MMMM')
         : '',
     [selectedMonth]
   );
+
+  const handleLogoError = () => {
+    console.error('Failed to load company logo');
+    setLogoLoadError(true);
+  };
 
   return (
     <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -325,19 +371,39 @@ const Payslip = () => {
       {showPayslip && !noDataFound && employeeDetails && !isLoading && (
         <Container id="payslip-container" className="w-100">
           <Header className="p-3">
+
             <LogoContainer>
-              <Logo src={LogoImage} alt="Company Logo" />
-              <CompanyInfo>
-                <CompanyName>WHY DIGIT SYSTEMS PRIVATE LIMITED</CompanyName>
-                <CompanyAddress>23/1 T.C PALAYA MAIN ROAD, HOYSALA NAGAR BANGALORE – 560016</CompanyAddress>
-              </CompanyInfo>
+              {logoUrl && !logoLoadError ? (
+                <>
+                  <CompanyLogo
+                    src={logoUrl}
+                    alt="Company Logo"
+                    onError={handleLogoError}
+                  />
+                  <CompanyName>
+                    {companyDetails?.companyname || 'Company Name'}
+                  </CompanyName>
+                </>
+              ) : (
+                <CompanyName id="company-name-fallback">
+                  {companyDetails?.companyname || 'Company Name'}
+                </CompanyName>
+              )}
             </LogoContainer>
+
+            <CompanyAddress>
+              {/* {companyDetails?.address || 'Address Not Available'}, */}
+              {/* {companyDetails?.companyname ? ` ${companyDetails.companyname}` : ''} */}
+              {companyDetails?.address ? ` ${companyDetails.address}` : ''}
+              {companyDetails?.city ? ` ${companyDetails.city}` : ''}
+              {companyDetails?.pincode ? ` - ${companyDetails.pincode}` : ''}
+            </CompanyAddress>
+
             <PayslipTitle>
               PAY SLIP FOR THE MONTH OF {monthName.toUpperCase()} {selectedYear}
             </PayslipTitle>
           </Header>
 
-          {/* Employee Info Section */}
           <EmployeeInfo>
             <InfoColumn>
               <p>
@@ -359,7 +425,7 @@ const Payslip = () => {
                 <strong>Days In Month:</strong> {employeeDetails.totalworkingdays}
               </p>
             </InfoColumn>
-            <Divider />
+            {/* <Divider /> */}
             <InfoColumn>
               <p>
                 <strong>Bank Name:</strong> {employeeDetails.bankName}
@@ -381,7 +447,6 @@ const Payslip = () => {
 
           <DividerLine />
 
-          {/* Earnings and Deductions */}
           <TableSection>
             <EarningsTable>
               <thead>
@@ -429,7 +494,6 @@ const Payslip = () => {
             </DeductionsTable>
           </TableSection>
 
-          {/* Net Pay */}
           <div style={{ marginTop: '20px', padding: '10px' }}>
             <p>
               <strong>Net Pay for the month ( Total Earnings - Total Deductions): Rs. {netPay.toFixed(2)}</strong>
@@ -437,7 +501,6 @@ const Payslip = () => {
             <p style={{ fontStyle: 'italic' }}>(Rupees __________ Only)</p>
           </div>
 
-          {/* Footer */}
           <p style={{ fontSize: '12px', textAlign: 'center', marginTop: '20px' }}>
             This is a system-generated payslip and does not require signature.
           </p>
@@ -470,22 +533,6 @@ const NoDataMessage = styled.div`
   background-color: #f9f9f9;
 `;
 
-const Wrapper = styled.div`
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  padding: 20px;
-`;
-
-const PayslipBox = styled.div`
-  border: 2px solid #2d2c2c;
-  padding: 0px;
-  width: 70%;
-  margin: auto;
-`;
-
-const Header = styled.div`
-  padding-bottom: 15px;
-`;
 const Container = styled.div`
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   margin: auto;
@@ -497,37 +544,12 @@ const Container = styled.div`
   box-sizing: border-box;
 `;
 
-const LogoContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const Logo = styled.img`
-  width: 110px;
-  height: 75px;
-`;
-
-const CompanyInfo = styled.div`
-  flex: 1;
-  text-align: center;
-`;
-
-const CompanyName = styled.div`
-  font-size: 22px;
-  font-weight: bold;
-`;
-
-const CompanyAddress = styled.div`
-  font-size: 13px;
-  margin-top: 4px;
-`;
-
 const PayslipTitle = styled.div`
+  width: 100%;
+  margin-top: 15px;
+  text-align: center;
   font-size: 18px;
   font-weight: bold;
-  text-align: center;
-  margin: 15px 0;
 `;
 
 const EmployeeInfo = styled.div`
@@ -536,15 +558,42 @@ const EmployeeInfo = styled.div`
   padding: 10px;
 `;
 
+
+const LogoContainer = styled.div`
+    display: flex;
+  align-items: center;
+  height: 60px;
+`;
+const CompanyLogo = styled.img`
+   max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+`;
+
+const CompanyName = styled.div`
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  color: #333;
+  padding-left: 40px;
+`;
+
+const CompanyAddress = styled.div`
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 15px;
+`;
+
 const InfoColumn = styled.div`
   width: 50%;
   padding-top: 0px;
+  padding-left:10px;
 `;
 
 const Divider = styled.div`
   width: 1px;
   background-color: black;
-  margin: 0 11px;
+  margin: 11px 14px;
 `;
 
 const DividerLine = styled.hr`
@@ -590,5 +639,10 @@ const tdRight = {
   padding: '6px',
   textAlign: 'right'
 };
+const Header = styled.div`
+  text-align: center;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 20px;
+`;
 
 export default Payslip;

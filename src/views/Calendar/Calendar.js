@@ -10,6 +10,8 @@ const Calendar = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
   const [activeTab, setActiveTab] = useState('calendar');
   const [holidays, setHolidays] = useState([]);
+  const [companyDetails, setCompanyDetails] = useState(null);
+  const [weekOffs, setWeekOffs] = useState([]);
 
   // Local storage values
   const [orgId] = useState(localStorage.getItem('orgId'));
@@ -48,6 +50,7 @@ const Calendar = () => {
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       const days = [];
       const firstDayIndex = startOfMonth.getDay();
+      const firstDayOfMonth = startOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
       const combinedEvents = [...calendarEvents, ...holidays];
 
@@ -60,6 +63,27 @@ const Calendar = () => {
           } else if (dayCount > totalDays) {
             break;
           } else {
+            const currentDay = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              dayCount
+            );
+
+            // Calculate correct week number (1-6)
+            const weekNumber = Math.ceil((dayCount + firstDayOfMonth) / 7);
+
+            // Get day name (e.g., "SUNDAY")
+            const dayName = weekdays[currentDay.getDay()].toUpperCase();
+
+            // Check if this is a week-off day
+            const isWeekOff = weekOffs.some(off => {
+              if (off.weekOffDays !== dayName) return false;
+
+              // Handle "every week" (-1) or specific week numbers
+              if (off.weekNumbers.includes(-1)) return true;
+              return off.weekNumbers.includes(weekNumber);
+            });
+
             const dayWithEvents = {
               day: dayCount,
               events: combinedEvents.filter(event => {
@@ -75,7 +99,8 @@ const Calendar = () => {
                   console.error('Invalid date format:', event.date);
                   return false;
                 }
-              })
+              }),
+              isWeekOff
             };
             week.push(dayWithEvents);
             dayCount++;
@@ -103,7 +128,7 @@ const Calendar = () => {
       clearInterval(timeInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [currentDate, calendarEvents, holidays]);
+  }, [currentDate, calendarEvents, holidays, weekOffs]);
 
   // Fetch data functions
   const getAllCalendarByOrgId = async () => {
@@ -149,10 +174,35 @@ const Calendar = () => {
     }
   };
 
+  // Fetch company week-offs
+  const getCompanyWeekOffs = async () => {
+    try {
+      const result = await apiCalls('get', `/commonmaster/company/${orgId}`);
+      if (result?.paramObjectsMap?.companyWeekOffVO) {
+        setWeekOffs(result.paramObjectsMap.companyWeekOffVO);
+      }
+    } catch (err) {
+      console.error('Failed to fetch company week-offs:', err);
+      showToast('error', 'Error fetching company week-off information');
+    }
+  };
+
   useEffect(() => {
     getAllCalendarByOrgId();
     getAllHolidaysByOrgId();
+    getCompanyWeekOffs();
   }, []);
+
+  const getCompany = async () => {
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+      if (result.paramObjectsMap?.Company?.length > 0) {
+        setCompanyDetails(result.paramObjectsMap.companyVO[0]);
+      }
+    } catch (err) {
+      console.error('Failed to fetch company details:', err);
+    }
+  };
 
   // Event handlers
   const handleAddEvent = () => {
@@ -168,6 +218,8 @@ const Calendar = () => {
   };
 
   const handleEventClick = (event) => {
+    if (!event) return;
+
     setNewEvent({
       ...event,
       isHoliday: event.isHoliday || false
@@ -176,7 +228,6 @@ const Calendar = () => {
   };
 
   const handleSaveEvent = async () => {
-    // Validate required fields
     if (!newEvent.eventTitle?.trim()) {
       showToast('error', 'Event title is required');
       return;
@@ -206,7 +257,7 @@ const Calendar = () => {
       if (result?.status) {
         showToast('success', 'Event saved successfully');
         setShowModal(false);
-        await getAllCalendarByOrgId(); // Refresh the events list
+        await getAllCalendarByOrgId();
       } else {
         showToast('error', result?.message || 'Failed to save event');
       }
@@ -216,43 +267,6 @@ const Calendar = () => {
     }
   };
 
-
-  const ModalForm = () => (
-    // ... other modal container styles ...
-    <form onSubmit={(e) => {
-      e.preventDefault();
-      handleSaveEvent();
-    }}>
-      {/* Event Title Input */}
-      <div style={{ marginBottom: 12 }}>
-        <label>Title</label>
-        <input
-          name="eventTitle"  // Corrected name
-          value={newEvent.eventTitle}
-          onChange={handleEventChange}
-          style={inputStyle}
-        />
-      </div>
-
-      {/* Event Type Select */}
-      <div style={{ marginBottom: 12 }}>
-        <label>Type</label>
-        <select
-          name="eventType"  // Corrected name
-          value={newEvent.eventType}
-          onChange={handleEventChange}
-          style={inputStyle}
-        >
-          <option value="meeting">Meeting</option>
-          <option value="birthday">Birthday</option>
-          <option value="training">Training</option>
-          <option value="other">Other</option>
-        </select>
-      </div>
-
-    </form>
-  );
-
   // Helper functions
   const formatDateForInput = (year, month, day) => {
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -261,7 +275,7 @@ const Calendar = () => {
   // UI components
   const EventLegend = () => (
     <div style={{ marginTop: 16, padding: 16, backgroundColor: '#f9f9f9', borderRadius: 8 }}>
-      <h4 style={{ fontWeight: 'bold', marginBottom: 12 }}>Event Legend</h4>
+      <h4 style={{ fontWeight: 'bold', marginBottom: 12 }}>Calendar Legend</h4>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
         {Object.entries(eventTypeColors).map(([type, color]) => (
           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -269,6 +283,17 @@ const Calendar = () => {
             <span style={{ textTransform: 'capitalize' }}>{type}</span>
           </div>
         ))}
+        {/* Week-off indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{
+            width: 20,
+            height: 20,
+            backgroundColor: '#ffe6e6',
+            border: '2px solid #ff6666',
+            borderRadius: '4px'
+          }} />
+          <span>Week Off</span>
+        </div>
       </div>
     </div>
   );
@@ -300,13 +325,57 @@ const Calendar = () => {
           <div key={`${wIdx}-${cIdx}`}
             style={{
               minHeight: isMobile ? 64 : 96, padding: 8, borderRadius: 8,
-              backgroundColor: cell ? '#f9f9f9' : 'transparent',
-              cursor: cell ? 'pointer' : 'default'
+              backgroundColor: cell?.isWeekOff ? '#ffcccc' : (cell ? '#f9f9f9' : 'transparent'),
+              border: cell?.isWeekOff ? '2px solid #ff6666' : 'none',
+              cursor: cell ? 'pointer' : 'default',
+              position: 'relative'
             }}
-            onClick={() => cell && handleEventClick(cell.events[0])}>
+            onClick={() => {
+              if (!cell) return;
+
+              if (cell.events.length > 0) {
+                handleEventClick(cell.events[0]);
+              } else {
+                // Create new event pre-filled with this date
+                const dateStr = formatDateForInput(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth() + 1,
+                  cell.day
+                );
+                setNewEvent({
+                  eventTitle: '',
+                  eventType: 'meeting',
+                  date: dateStr,
+                  description: '',
+                  id: null
+                });
+                setShowModal(true);
+              }
+            }}>
             {cell && (
               <>
-                <div style={{ color: '#1d4ed8', fontWeight: 'bold' }}>{cell.day}</div>
+                <div style={{
+                  color: cell.isWeekOff ? '#cc0000' : '#1d4ed8',
+                  fontWeight: 'bold'
+                }}>
+                  {cell.day}
+                </div>
+                {/* Week-off indicator */}
+                {cell.isWeekOff && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 4,
+                    right: 4,
+                    fontSize: 10,
+                    color: '#cc0000',
+                    fontWeight: 'bold',
+                    backgroundColor: 'rgba(255,255,255,0.7)',
+                    padding: '2px 4px',
+                    borderRadius: 4
+                  }}>
+                    OFF
+                  </div>
+                )}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {cell.events.slice(0, 2).map((event, eIdx) => (
                     <div key={eIdx} title={
@@ -338,7 +407,7 @@ const Calendar = () => {
               </>
             )}
           </div>
-        )))};
+        )))}
       </div>
     </div>
   );
@@ -353,8 +422,8 @@ const Calendar = () => {
 
   const handleEventChange = (e) => {
     const { name, value } = e.target;
-    setNewEvent((prevEvent) => ({
-      ...prevEvent,
+    setNewEvent(prev => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -462,8 +531,13 @@ const Calendar = () => {
             <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }}>
               <div style={{ marginBottom: 12 }}>
                 <label>Title</label>
-                <input name="eventTitle" value={newEvent.eventTitle} onChange={handleEventChange}
-                  disabled={newEvent.isHoliday} style={inputStyle} />
+                <input
+                  name="eventTitle"
+                  value={newEvent.eventTitle}
+                  onChange={handleEventChange}
+                  disabled={newEvent.isHoliday}
+                  style={inputStyle}
+                />
               </div>
 
               <div style={{ marginBottom: 12 }}>
@@ -475,36 +549,57 @@ const Calendar = () => {
                     })}
                   </div>
                 ) : (
-                  <input type="date" name="date" value={newEvent.date}
-                    onChange={handleEventChange} style={inputStyle} />
+                  <input
+                    type="date"
+                    name="date"
+                    value={newEvent.date}
+                    onChange={handleEventChange}
+                    style={inputStyle}
+                  />
                 )}
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <label>Type</label>
-                <select name="eventType" value={newEvent.eventType} onChange={handleEventChange}
-                  disabled={newEvent.isHoliday} style={inputStyle}>
+                <select
+                  name="eventType"
+                  value={newEvent.eventType}
+                  onChange={handleEventChange}
+                  disabled={newEvent.isHoliday}
+                  style={inputStyle}
+                >
                   <option value="meeting">Meeting</option>
-                  <option value="holiday">Holiday</option>
                   <option value="birthday">Birthday</option>
                   <option value="training">Training</option>
+                  <option value="holiday">Holiday</option>
                   <option value="other">Other</option>
                 </select>
               </div>
 
               <div style={{ marginBottom: 12 }}>
                 <label>Description</label>
-                <textarea name="description" value={newEvent.description}
-                  onChange={handleEventChange} disabled={newEvent.isHoliday}
-                  style={inputStyle} />
+                <textarea
+                  name="description"
+                  value={newEvent.description}
+                  onChange={handleEventChange}
+                  disabled={newEvent.isHoliday}
+                  style={inputStyle}
+                />
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <button type="button" onClick={handleCloseModal} style={buttonStyle}>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  style={buttonStyle}
+                >
                   Cancel
                 </button>
                 {!newEvent.isHoliday && (
-                  <button type="submit" style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: 'white' }}>
+                  <button
+                    type="submit"
+                    style={{ ...buttonStyle, backgroundColor: '#1d4ed8', color: 'white' }}
+                  >
                     Save
                   </button>
                 )}
