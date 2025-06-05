@@ -5,11 +5,7 @@ import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBullete
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import {
-    FormControl,
-    FormHelperText,
-    InputLabel,
-    MenuItem,
-    Select,
+    Button,
     TextField,
     Box,
     Tab,
@@ -17,12 +13,23 @@ import {
     FormControlLabel,
     Checkbox
 } from '@mui/material';
+import dayjs from 'dayjs';
+import GridOnIcon from '@mui/icons-material/GridOn';
+import Paper from '@mui/material/Paper';
+import Draggable from 'react-draggable';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-
+function PaperComponent(props) {
+  return (
+    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+      <Paper {...props} />
+    </Draggable>
+  );
+}
 const GoalsMaster = () => {
     const [listViewData, setListViewData] = useState([]);
     const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
@@ -31,6 +38,10 @@ const GoalsMaster = () => {
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [fillGridData, setFillGridData] = useState([]);
     const [formData, setFormData] = useState({
         appraisalId: '',
         code: '',
@@ -97,7 +108,6 @@ const GoalsMaster = () => {
             showToast('error', 'Failed to fetch goals');
         }
     };
-
     const getGoalsById = async (row) => {
         setEditId(row.original.id);
         try {
@@ -303,7 +313,73 @@ const GoalsMaster = () => {
 
     const handleView = () => setListView(!listView);
     const handleTabChange = (_, newValue) => setValue(newValue);
-
+    const handleFullGrid = () => {
+      // if (formData.customerCode) {
+        setModalOpen(true);
+        getAllFillGrid();
+      // }else{
+      //   setModalOpen(false);
+      //   showToast('warning', formData.customerName ? `${formData.customerCode} has No Data` : 'Please Select Customer Name');
+      // }
+    };
+    const handleCloseModal = () => {
+      setModalOpen(false);
+    };
+    const handleSelectAll = () => {
+      if (selectAll) {
+        setSelectedRows([]);
+      } else {
+        setSelectedRows(fillGridData.map((_, index) => index));
+      }
+      setSelectAll(!selectAll);
+    };
+    const handleSubmitSelectedRows = async () => {
+      const selectedData = selectedRows.map((index) => fillGridData[index]);
+      console.log("charge amt", selectedData);
+      const newData = selectedData
+        .filter((data) => {
+          return !goalsDetailsData.some(
+            (item) => item.invNo === data.vid && item.invDate === data.vdate
+          );
+        })
+        .map((data) => ({
+          id: Date.now() + Math.random(), 
+          invNo: data.vid || '',
+          invDate: data.vdate ? dayjs(data.vdate).format('YYYY-MM-DD') : null,
+          amount: data.billamount || '',
+          gstAmt: data.gstamount || '',
+          chargeAmt: data.chargeAmt || '',
+          currency: data.acccurrency || '',
+          exRate: data.exrate || '',
+          refDate: data.refate ? dayjs(data.refate).format('YYYY-MM-DD') : null,
+          refNo: data.refNo || ''
+        }));
+      if (newData.length < selectedData.length) {
+        showToast('warning', 'Some of the selected items are already added!');
+      }
+      if (newData.length === 0) {
+        return;
+      }
+      setGoalsDetailsData((prev) => [...prev, ...newData]);
+      setSelectedRows([]);
+      setSelectAll(false);
+      handleCloseModal();
+    };    
+  const getAllFillGrid = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/arreceivable/getReciptFillGrid?orgId=${orgId}&partyCode=${formData.customerCode}`
+        );
+      if (response.status === true) {
+        setFillGridData(response.paramObjectsMap.reciptFillGrid);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
     return (
         <>
             <div>
@@ -417,7 +493,7 @@ const GoalsMaster = () => {
                                     {value === 0 && (
                                         <>
                                             <div className="mb-1">
-                                                <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                                                <ActionButton title="Fill Grid" icon={GridOnIcon} onClick={handleFullGrid} />
                                             </div>
                                             <div className="row mt-2">
                                                 <div className="col-lg-12">
@@ -504,6 +580,111 @@ const GoalsMaster = () => {
                                         </>
                                     )}
                                 </Box>
+                    <Dialog
+                      open={modalOpen}
+                      maxWidth={'md'}
+                      fullWidth={true}
+                      onClose={handleCloseModal}
+                      PaperComponent={PaperComponent}
+                      aria-labelledby="draggable-dialog-title"
+                    >
+                      <DialogTitle textAlign="center" style={{ cursor: 'move' }} id="draggable-dialog-title">
+                        <h6>Grid Details</h6>
+                      </DialogTitle>
+                      <DialogContent className="pb-0">
+                        <div className="row">
+                          <div className="col-lg-12">
+                            <div className="table-responsive">
+                              <table className="table table-bordered">
+                                <thead>
+                                  <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%)', color: 'white' }}>
+                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                      <Checkbox sx={{
+                                        color: 'white',
+                                        '&.Mui-checked': {
+                                          color: 'white', 
+                                        },
+                                      }}
+                                      checked={selectAll} onChange={handleSelectAll} />
+                                    </th>
+                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                                      KRAID</th>
+                                    <th className="table-header">KRA</th>
+                                    <th className="table-header">DETAILS</th>
+                                    <th className="table-header">VALID</th>
+                                    <th className="table-header">KPIID</th>
+                                    <th className="table-header">DETAILS</th>
+                                    <th className="table-header">GNO</th>
+                                    <th className="table-header">GOAL</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {fillGridData?.map((row, index) => (
+                                    <tr key={row.id}>
+                                      <td className="border p-0 text-center">
+                                        <Checkbox
+                                        sx={{
+                                          // borderColor: 'white',
+                                          // color: 'white'
+                                          backgroundColor: 'white'
+                                        }}
+                                          checked={selectedRows.includes(index)}
+                                          onChange={(e) => {
+                                            const isChecked = e.target.checked;
+                                            setSelectedRows((prev) => (isChecked ? [...prev, index] : prev.filter((i) => i !== index)));
+                                          }}
+                                        />
+                                      </td>
+                                      <td className="text-center">{index + 1}</td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.vid || ''}
+                                      </td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.vdate ? dayjs(row.vdate).format('DD-MM-YYYY') : ''}
+                                      </td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.billamount || ''}
+                                      </td> 
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.gstamount || ''}
+                                      </td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.chargeAmt || 0}
+                                      </td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.chargeAmt || 0}
+                                      </td>
+                                      <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
+                                        {row.chargeAmt || 0}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                      <DialogActions sx={{ p: '1.25rem' }} className="pt-0">
+                        <Button onClick={handleCloseModal} sx={{ color: 'red' }}>
+                          Cancel
+                        </Button>
+                        <Button
+                          color="secondary"
+                          onClick={handleSubmitSelectedRows}
+                          variant="contained"
+                          sx={{
+                          backgroundColor: 'green',
+                          '&:hover': {
+                            backgroundColor: 'green',
+                          },
+                        }}
+
+                        >
+                          Proceed
+                        </Button>
+                      </DialogActions>
+                    </Dialog>
                             </div>
                         </>
                     ) : (
