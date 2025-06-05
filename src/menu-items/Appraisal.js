@@ -63,7 +63,7 @@ const Appraisal = {
           url: '/Appraisal/PreGoalsApproval',
           icon: icons.IconReceipt
         },
-         {
+        {
           id: 'SelfGoals',
           title: 'Self Goals',
           type: 'item',

@@ -1,5 +1,5 @@
 // assets
-import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2,IconMapQuestion, IconUsersGroup, IconWorld ,IconMap ,IconBuildingSkyscraper } from '@tabler/icons-react';
+import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2, IconMapQuestion, IconUsersGroup, IconWorld, IconMap, IconBuildingSkyscraper } from '@tabler/icons-react';
 
 // constant
 const icons = {
@@ -20,16 +20,16 @@ const icons3 = {
   IconCashBanknote
 };
 const icons4 = {
-  IconBuildingFactory2 
+  IconBuildingFactory2
 };
 const icons6 = {
   IconIdBadge2
 };
 const icons7 = {
-  IconMapQuestion 
+  IconMapQuestion
 };
 const icons8 = {
-  IconUsersGroup 
+  IconUsersGroup
 };
 
 
@@ -45,6 +45,11 @@ const screenMapping = {
   REGION: 'region',
   DEPARTMENT: 'department',
   DESIGNATION: 'designation',
+  AppraisalPeroid: 'AppraisalPeroid',
+  KRAKPI: 'KRAKPI',
+  Weightage: "Weightage",
+  Grade: "Grade",
+  Goals: "Goals"
 };
 
 const allScreens = [
@@ -56,6 +61,13 @@ const allScreens = [
   { id: 'department', title: 'Department', type: 'item', url: '/basicMaster/Department', icon: icons4.IconBuildingFactory2 },
   { id: 'designation', title: 'Designation', type: 'item', url: '/basicMaster/Designation', icon: icons6.IconIdBadge2 },
   { id: 'projectMaster', title: 'Project Master', type: 'item', url: '/basicMaster/ProjectMaster', icon: icons6.IconIdBadge2 },
+  { id: 'AppraisalPeroid', title: 'Appraisal Peroid', type: 'item', url: '/basicMaster/AppraisalPeroid', icon: icons6.IconIdBadge2 },
+  { id: 'KRAKPI', title: 'KRA KPI', type: 'item', url: '/basicMaster/KRAKPI', icon: icons6.IconIdBadge2 },
+  { id: 'Weightage', title: 'Weightage', type: 'item', url: '/basicMaster/Weightage', icon: icons6.IconIdBadge2 },
+  { id: 'Grade', title: 'Grade', type: 'item', url: '/basicMaster/Grade', icon: icons6.IconIdBadge2 },
+  { id: 'Goals', title: 'Goals', type: 'item', url: '/basicMaster/Goals', icon: icons6.IconIdBadge2 },
+
+
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -107,14 +119,14 @@ const basicMaster = {
           title: 'Region',
           type: 'item',
           url: '/basicMaster/RegionMaster',
-          icon: icons7.IconMapQuestion 
+          icon: icons7.IconMapQuestion
         },
         {
           id: 'department',
           title: 'Department',
           type: 'item',
           url: '/basicMaster/Department',
-          icon: icons4.IconBuildingFactory2 
+          icon: icons4.IconBuildingFactory2
         },
         {
           id: 'designation',
@@ -130,6 +142,41 @@ const basicMaster = {
           url: '/basicMaster/ProjectMaster',
           icon: icons6.IconIdBadge2
         },
+        {
+          id: 'AppraisalPeroid',
+          title: 'Appraisal Peroid',
+          type: 'item',
+          url: '/basicMaster/AppraisalPeroid',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'KRAKPI',
+          title: 'KRA KPI',
+          type: 'item',
+          url: '/basicMaster/KRAKPI',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'Weightage',
+          title: 'Weightage',
+          type: 'item',
+          url: '/basicMaster/Weightage',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'Grade',
+          title: 'Grade',
+          type: 'item',
+          url: '/basicMaster/Grade',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'Goals',
+          title: 'Goals',
+          type: 'item',
+          url: '/basicMaster/Goals',
+          icon: icons6.IconIdBadge2
+        }
       ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]

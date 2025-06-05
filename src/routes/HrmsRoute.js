@@ -28,6 +28,13 @@ const ScreenNames = Loadable(lazy(() => import('views/basicMaster/ScreenNames'))
 const LeaveAssigned = Loadable(lazy(() => import('views/basicMaster/leaveAssigned')));
 const ProjectMaster = Loadable(lazy(() => import('views/basicMaster/ProjectMaster')));
 
+const AppraisalPeroid = Loadable(lazy(() => import('views/basicMaster/AppraisalPeroid')));
+const KRAKPI = Loadable(lazy(() => import('views/basicMaster/KRAKPI')));
+const Weightage = Loadable(lazy(() => import('views/basicMaster/Weightage')));
+const Grade = Loadable(lazy(() => import('views/basicMaster/Grade')));
+const Goals = Loadable(lazy(() => import('views/basicMaster/Goals')));
+
+
 // Employee Master
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
 const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
@@ -133,6 +140,26 @@ const HrmsRoute = {
     {
       path: '/basicMaster/roles',
       element: <Roles />
+    },
+    {
+      path: '/basicMaster/AppraisalPeroid',
+      element: <AppraisalPeroid />
+    },
+    {
+      path: '/basicMaster/KRAKPI',
+      element: <KRAKPI />
+    },
+    {
+      path: '/basicMaster/Weightage',
+      element: <Weightage />
+    },
+    {
+      path: '/basicMaster/Grade',
+      element: <Grade />
+    },
+    {
+      path: '/basicMaster/Goals',
+      element: <Goals />
     },
     {
       path: '/companysetup/ScreenNames',
