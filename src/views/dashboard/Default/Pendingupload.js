@@ -496,7 +496,7 @@ const PendingApproval = ({ isLoading }) => {
                   handleActionPermission(request, 'REJECTED');
                 } if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'REJECTED'); // You can customize this if you need different logic
-                } else {
+                } if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'REJECTED'); // You can customize this if you need different logic
                 }
               }}
