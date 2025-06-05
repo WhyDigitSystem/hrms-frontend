@@ -10,7 +10,21 @@ import CommonListViewTable from '../basicMaster/CommonListViewTable';
 import { useState, useEffect } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
-import { Avatar, Typography, FormHelperText, Button, Dialog, DialogContent } from '@mui/material';
+import {
+  Avatar,
+  Typography,
+  FormHelperText,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell
+} from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import 'react-tabs/style/react-tabs.css';
@@ -37,6 +51,36 @@ const Company = () => {
   const [cityList, setCityList] = useState([]);
   const [currencyList, setCurrencyList] = useState([]);
   const [editId, setEditId] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
+  const [weekOffRows, setWeekOffRows] = useState([{ weekOff: '', weekNumbers: [] }]);
+
+  const handleWeekOffChange = (index, value) => {
+    const updated = [...weekOffRows];
+    updated[index].weekOff = value;
+    setWeekOffRows(updated);
+  };
+
+  const handleWeekNumberChange = (index, value) => {
+    const updated = [...weekOffRows];
+    updated[index].weekNumbers = value;
+    setWeekOffRows(updated);
+  };
+
+  const handleAddRow = () => {
+    setWeekOffRows([...weekOffRows, { weekOff: '', weekNumbers: [] }]);
+  };
+
+  const handleClearRow = (index) => {
+    const updated = [...weekOffRows];
+    updated[index] = { weekOff: '', weekNumbers: [] };
+    setWeekOffRows(updated);
+  };
+
+  const handleDeleteRow = (index) => {
+    const updated = [...weekOffRows];
+    updated.splice(index, 1);
+    setWeekOffRows(updated);
+  };
 
   const [formData, setFormData] = useState({
     companyCode: '',
@@ -82,6 +126,21 @@ const Company = () => {
     gstRegistered: true,
     active: true
   });
+
+  const [tempWeekOff, setTempWeekOff] = useState(formData.weekOff || []);
+
+  const handleOpenDialog = () => {
+    setTempWeekOff(formData.weekOff || []);
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => setOpenDialog(false);
+
+  const handleSaveDialog = () => {
+    setFormData((prev) => ({ ...prev, weekOff: tempWeekOff }));
+    setOpenDialog(false);
+  };
+
   const [listView, setListView] = useState(false);
   const listViewColumns = [
     { accessorKey: 'companyCode', header: 'Company Code', size: 140 },
@@ -247,7 +306,16 @@ const Company = () => {
         console.log('PARTICULAR COMPANY IS:', particularCompany);
         setLogo(response.paramObjectsMap.companyVO[0].companyLogo);
         // Extract weekOffDays as an array
-        const weekOffDays = particularCompany.companyWeekOffVO ? particularCompany.companyWeekOffVO.map((item) => item.weekOffDays) : [];
+        // const weekOffDays = particularCompany.companyWeekOffVO ? particularCompany.companyWeekOffVO.map((item) => item.weekOffDays) : [];
+
+        // Map API week off data into weekOffRows state format
+        const weekOffDataFromApi =
+          particularCompany.companyWeekOffVO?.map((item) => ({
+            weekOff: item.weekOffDays || '',
+            weekNumbers: item.weekNumbers || []
+          })) || [];
+
+        setWeekOffRows(weekOffDataFromApi);
 
         setFormData({
           companyCode: particularCompany.companyCode,
@@ -270,12 +338,12 @@ const Company = () => {
           leavePolicy: particularCompany.leavePolicy,
           gstRegistered: particularCompany.gstregistered === 'Active',
           active: particularCompany.active === 'Active',
-          weekOff: weekOffDays,
+          // weekOff: weekOffDays,
           shiftIn: particularCompany.shiftIn || null,
-          shiftOut: particularCompany.shiftOut || null,
+          shiftOut: particularCompany.shiftOut || null
         });
 
-        console.log('WEEK OFF DAYS:', weekOffDays);
+        // console.log('WEEK OFF DAYS:', weekOffDays);
       } else {
         console.error('API Error:', response);
       }
@@ -286,7 +354,7 @@ const Company = () => {
 
   const getCompanyDetails = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company`);
+      const response = await apiCalls('get', `commonmaster/company/${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -385,6 +453,12 @@ const Company = () => {
       errors.pincode = 'Invalid Pincode';
     }
 
+    const isInvalidWeekOff = weekOffRows.some((row) => !row.weekOff || row.weekNumbers.length === 0);
+    if (isInvalidWeekOff) {
+      showToast('error', 'Please fill all week off rows before saving');
+      return;
+    }
+
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
@@ -397,7 +471,13 @@ const Company = () => {
         city: formData.city,
         companyCode: formData.companyCode,
         companyName: formData.companyName,
-        companyWeekOffDTO: formData.weekOff?.map((day) => ({ weekOffDays: day })) || [],
+        // companyWeekOffDTO: formData.weekOff?.map((day) => ({ weekOffDays: day })) || [],
+        companyWeekOffDTO: weekOffRows
+          .filter((row) => row.weekOff && row.weekNumbers.length > 0)
+          .map((row) => ({
+            weekOffDays: row.weekOff,
+            weekNumbers: row.weekNumbers.includes(-1) ? [-1] : row.weekNumbers // 'All' as [0]
+          })),
         country: formData.country,
         createdBy: loginUserName,
         currency: formData.currency,
@@ -414,7 +494,7 @@ const Company = () => {
         state: formData.state,
         zip: formData.pincode,
         shiftIn: formData.shiftIn,
-        shiftOut: formData.shiftOut,
+        shiftOut: formData.shiftOut
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
@@ -424,7 +504,7 @@ const Company = () => {
           console.log('Response:', response);
           showToast('success', 'Company updated Successfully');
           const generatedId = response.paramObjectsMap.CompanyVO.id;
-          console.log("save", typeof logo);
+          console.log('save', typeof logo);
           if (generatedId && typeof logo === 'object') {
             console.log('Generated ID:', generatedId);
             console.log('Uploaded Item', logo);
@@ -480,6 +560,7 @@ const Company = () => {
 
       if (response.status === true) {
         showToast('success', response.message || 'Image Uploaded successfully!');
+        window.location.reload();
       } else {
         console.warn('Img upload failed:', response);
         showToast('error', 'Img upload failed');
@@ -759,7 +840,7 @@ const Company = () => {
                 </FormControl>
               </div>
 
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <FormControl fullWidth size="small" error={!!fieldErrors.weekOff}>
                   <InputLabel id="weekOff">Week Off</InputLabel>
                   <Select
@@ -780,6 +861,31 @@ const Company = () => {
                   </Select>
                   {fieldErrors.weekOff && <FormHelperText>{fieldErrors.weekOff}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              <div className="col-md-3 mb-3">
+                {/* <Button variant="outlined" onClick={handleOpenDialog} fullWidth>
+                  Week Off
+                </Button> */}
+                {/* Week Off button + summary display */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  <Button variant="outlined" onClick={handleOpenDialog}>
+                    Week Off
+                  </Button>
+
+                  {/* Display saved Week Off data summary */}
+                  <div>
+                    {weekOffRows.length === 0 ? (
+                      <em>No Week Off Selected</em>
+                    ) : (
+                      weekOffRows.map((row, idx) => (
+                        <div key={idx} style={{ fontSize: '0.875rem', color: '#555' }}>
+                          <strong>{row.weekOff || 'Select Day'}</strong> :{' '}
+                          {row.weekNumbers.includes(-1) ? 'All Weeks' : row.weekNumbers.join(', ')}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
@@ -904,6 +1010,91 @@ const Company = () => {
           </>
         )}
       </div>
+      <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth>
+        <DialogTitle>Select Week Off Days</DialogTitle>
+        <DialogContent>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: '#f0f0f0' }}>
+                <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Week Off</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Week Numbers</TableCell>
+                <TableCell sx={{ fontWeight: 'bold', color: '#333' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {weekOffRows.map((row, index) => (
+                <TableRow key={index}>
+                  {/* Week Off Dropdown */}
+                  <TableCell>
+                    <FormControl fullWidth size="small">
+                      <Select value={row.weekOff} onChange={(e) => handleWeekOffChange(index, e.target.value)} displayEmpty>
+                        <MenuItem value="">
+                          <em>Select Day</em>
+                        </MenuItem>
+                        {['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].map((day) => (
+                          <MenuItem key={day} value={day}>
+                            {day}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+
+                  {/* Week Numbers Multi-select */}
+                  <TableCell>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        multiple
+                        value={row.weekNumbers}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const updated = value.includes(-1) ? [-1] : value;
+                          handleWeekNumberChange(index, updated);
+                        }}
+                        renderValue={(selected) => (selected.includes(-1) ? 'All' : selected.join(', '))}
+                      >
+                        {[1, 2, 3, 4, 5].map((num) => (
+                          <MenuItem key={num} value={num}>
+                            {num}
+                          </MenuItem>
+                        ))}
+                        <MenuItem key="All" value={-1}>
+                          All
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell>
+                    <Button variant="outlined" color="secondary" size="small" onClick={() => handleClearRow(index)} sx={{ mr: 1 }}>
+                      Clear
+                    </Button>
+                    <Button variant="outlined" color="error" size="small" onClick={() => handleDeleteRow(index)}>
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          {/* Add New Row Button */}
+          <Box mt={2}>
+            <Button variant="outlined" onClick={handleAddRow}>
+              Add
+            </Button>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleSaveDialog} variant="contained">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <ToastComponent />
     </>
   );

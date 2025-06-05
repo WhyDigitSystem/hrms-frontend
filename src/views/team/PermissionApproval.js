@@ -68,7 +68,7 @@ const PermissionApproval = () => {
         <Box sx={{ mt: 0 }}>
           {listViewData.length > 0 ? (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
-              <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit showActions={false} hideActions />
+              <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit showActions={false} enableEditing={false} hideActions />
             </Paper>
           ) : (
             <Box

@@ -319,10 +319,10 @@ const LeaveRequest = () => {
         createdBy: loginUserName,
         leaveRequestNotifyDTO: Array.isArray(formData.allNotifyPerson)
           ? formData.allNotifyPerson.map((item) => ({
-            notify2: item.label || '',
-            notify2Code: item.code || '',
-            notify2Email: item.email || ''
-          }))
+              notify2: item.label || '',
+              notify2Code: item.code || '',
+              notify2Email: item.email || ''
+            }))
           : []
       };
 
@@ -354,9 +354,8 @@ const LeaveRequest = () => {
 
   const sendEmailNotification = async (newRows) => {
     try {
-
       for (const row of newRows) {
-        const notify2Emails = (row.leaveRequestNotifyDTO || []).map(p => p.notify2Email).join(', ');
+        const notify2Emails = (row.leaveRequestNotifyDTO || []).map((p) => p.notify2Email).join(', ');
 
         const emailParams = {
           name: row.notify,
@@ -481,8 +480,32 @@ const LeaveRequest = () => {
     }
   };
 
+  // const disableWeekOffDays = (date) => {
+  //   const disabledDays = {
+  //     SUNDAY: 0,
+  //     MONDAY: 1,
+  //     TUESDAY: 2,
+  //     WEDNESDAY: 3,
+  //     THURSDAY: 4,
+  //     FRIDAY: 5,
+  //     SATURDAY: 6
+  //   };
+
+  //   const isWeekOff = weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
+
+  //   const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
+  //   const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
+
+  //   // const sevenDaysAgo = dayjs().subtract(7, 'day');
+  //   // const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
+
+  //   return isWeekOff || isBeforeEffectiveFrom;
+  // };
+
   const disableWeekOffDays = (date) => {
-    const disabledDays = {
+    if (!Array.isArray(weekOffDays)) return false;
+
+    const dayMap = {
       SUNDAY: 0,
       MONDAY: 1,
       TUESDAY: 2,
@@ -492,13 +515,33 @@ const LeaveRequest = () => {
       SATURDAY: 6
     };
 
-    const isWeekOff = weekOffDays.includes(Object.keys(disabledDays).find((day) => disabledDays[day] === date.day()));
+    const day = date.day(); // 0 (Sunday) to 6 (Saturday)
+    const dateOfMonth = date.date(); // 1 to 31
+    const month = date.month(); // 0 to 11
+
+    const weekOfMonth = Math.ceil(dateOfMonth / 7);
+    const isLastWeek = date.add(7, 'day').month() !== month;
+
+    const isWeekOff = weekOffDays.some((item) => {
+      const offDay = dayMap[item.weekOffDays];
+      const weekNums = item.weekNumbers;
+
+      if (day !== offDay) return false;
+
+      // Case 1: -1 means all Sundays (or all of that day) should be disabled
+      if (weekNums.length === 1 && weekNums[0] === -1) return true;
+
+      // Case 2: Disable only specific weeks like 1st, 3rd, etc.
+      if (weekNums.includes(weekOfMonth)) return true;
+
+      // Case 3: Disable last week
+      if (weekNums.includes(-1) && isLastWeek) return true;
+
+      return false;
+    });
 
     const effectiveFromDate = formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null;
     const isBeforeEffectiveFrom = effectiveFromDate ? date.isBefore(effectiveFromDate, 'day') : false;
-
-    // const sevenDaysAgo = dayjs().subtract(7, 'day');
-    // const isBefore7Days = date.isBefore(sevenDaysAgo, 'day');
 
     return isWeekOff || isBeforeEffectiveFrom;
   };
@@ -514,13 +557,23 @@ const LeaveRequest = () => {
   //   return sevenDaysAgo;
   // };
 
+  // const getCompanyWeekOff = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+  //     const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
+  //     setWeekOff(weekOffDays);
+  //   } catch (error) {
+  //     console.error('Error', error);
+  //   }
+  // };
+
   const getCompanyWeekOff = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
-      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
-      setWeekOff(weekOffDays);
+      const weekOffData = result.paramObjectsMap.companyVO[0].companyWeekOffVO || [];
+      setWeekOff(weekOffData); // Store full objects
     } catch (error) {
-      console.error('Error', error);
+      console.error('Error fetching company week off data:', error);
     }
   };
 
@@ -630,7 +683,7 @@ const LeaveRequest = () => {
               columns={listViewColumns}
               blockEdit={false}
               toEdit={getLeaveRequestById}
-            // enableEditing={true}
+              // enableEditing={false}
             />
           </div>
         ) : (
@@ -826,8 +879,8 @@ const LeaveRequest = () => {
                   value={
                     Array.isArray(formData.allNotifyPerson)
                       ? allReportingPersonList.filter((person) =>
-                        formData.allNotifyPerson.some((selected) => selected.code === person.code)
-                      )
+                          formData.allNotifyPerson.some((selected) => selected.code === person.code)
+                        )
                       : []
                   }
                   onChange={(event, newValue) => {

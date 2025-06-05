@@ -223,10 +223,60 @@ const TimeSheet = () => {
     getCompanyWeekOff();
   }, []);
 
-  const renderTimeInputs = (date) => {
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+  // const renderTimeInputs = (date) => {
+  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
 
-    if (weekOff.includes(dayName)) return null;
+  //   if (weekOff.includes(dayName)) return null;
+
+  //   const dateKey = date.toDateString();
+  //   const data = timeSheetData[dateKey] || {};
+
+  //   if (data.status === 'LEAVE') {
+  //     return (
+  //       <div
+  //         style={{
+  //           marginTop: '4px',
+  //           fontSize: '12px',
+  //           fontWeight: 'bold',
+  //           color: '#b91c1c',
+  //           backgroundColor: '#fee2e2',
+  //           padding: '4px 8px',
+  //           borderRadius: '4px',
+  //           textAlign: 'center'
+  //         }}
+  //       >
+  //         On Leave 🏖️
+  //       </div>
+  //     );
+  //   }
+
+  //   const formatTime = (timeStr) => {
+  //     if (!timeStr || typeof timeStr !== 'string') return '0:00';
+  //     const parts = timeStr.split(':');
+  //     if (parts.length >= 2) {
+  //       const [hour, minute] = parts;
+  //       return `${hour}:${minute}`;
+  //     } else {
+  //       return `${timeStr}:00`;
+  //     }
+  //   };
+
+  //   return (
+  //     <div className="mt-1 text-xs text-left">
+  //       {data.checkIn && (
+  //         <div>
+  //           {formatTime(data.checkIn)}
+  //           {data.checkOut && ` | ${formatTime(data.checkOut)}`}
+  //         </div>
+  //       )}
+  //       <div>Total: {formatTime(data.totalHours)} hrs</div>
+  //     </div>
+  //   );
+  // };
+
+  const renderTimeInputs = (date) => {
+    const formatted = dayjs(date).format('YYYY-MM-DD');
+    if (weekOff.includes(formatted)) return null;
 
     const dateKey = date.toDateString();
     const data = timeSheetData[dateKey] || {};
@@ -284,27 +334,92 @@ const TimeSheet = () => {
     }
   };
 
+  // const handleDateClick = async (date) => {
+  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+  //   // Check for week off
+  //   if (weekOff.includes(dayName)) return;
+
+  //   const dateKey = date.toDateString();
+  //   const timeSheetStatus = timeSheetData[dateKey];
+
+  //   // Check if the selected date is marked as LEAVE
+  //   if (timeSheetStatus?.status === 'LEAVE') return;
+
+  //   const formattedDate = dayjs(date).format('YYYY-MM-DD');
+  //   setSelectedDate(date);
+
+  //   try {
+  //     const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formattedDate}&empCode=${employeeCode}&orgId=${orgId}`);
+
+  //     if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
+  //       const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
+
+  //       const mergedDetails = allTimeSheetEntries.flatMap((entry) => entry.timeSheetDetailsVO || []);
+
+  //       const formattedRows = mergedDetails.map((item) => ({
+  //         projectName: item.projectName || '',
+  //         fromTime: item.fromTime || '',
+  //         toTime: item.toTime || '',
+  //         description: item.description || ''
+  //       }));
+
+  //       setFormRows(
+  //         formattedRows.length > 0
+  //           ? formattedRows
+  //           : [
+  //               {
+  //                 projectName: '',
+  //                 fromTime: '',
+  //                 toTime: '',
+  //                 description: ''
+  //               }
+  //             ]
+  //       );
+  //     } else {
+  //       setFormRows([
+  //         {
+  //           projectName: '',
+  //           fromTime: '',
+  //           toTime: '',
+  //           description: ''
+  //         }
+  //       ]);
+  //     }
+
+  //     setModalOpen(true);
+  //   } catch (error) {
+  //     console.error('Error fetching timesheet:', error);
+  //     showToast('error', 'Failed to fetch timesheet data');
+  //     setFormRows([
+  //       {
+  //         projectName: '',
+  //         fromTime: '',
+  //         toTime: '',
+  //         description: ''
+  //       }
+  //     ]);
+  //     setModalOpen(true);
+  //   }
+  // };
+
   const handleDateClick = async (date) => {
+    const formatted = dayjs(date).format('YYYY-MM-DD');
+    if (weekOff.includes(formatted)) return;
+
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-    // Check for week off
-    if (weekOff.includes(dayName)) return;
-
     const dateKey = date.toDateString();
     const timeSheetStatus = timeSheetData[dateKey];
 
-    // Check if the selected date is marked as LEAVE
     if (timeSheetStatus?.status === 'LEAVE') return;
 
-    const formattedDate = dayjs(date).format('YYYY-MM-DD');
     setSelectedDate(date);
 
     try {
-      const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formattedDate}&empCode=${employeeCode}&orgId=${orgId}`);
+      const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formatted}&empCode=${employeeCode}&orgId=${orgId}`);
 
       if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
         const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
-
         const mergedDetails = allTimeSheetEntries.flatMap((entry) => entry.timeSheetDetailsVO || []);
 
         const formattedRows = mergedDetails.map((item) => ({
@@ -314,41 +429,16 @@ const TimeSheet = () => {
           description: item.description || ''
         }));
 
-        setFormRows(
-          formattedRows.length > 0
-            ? formattedRows
-            : [
-                {
-                  projectName: '',
-                  fromTime: '',
-                  toTime: '',
-                  description: ''
-                }
-              ]
-        );
+        setFormRows(formattedRows.length > 0 ? formattedRows : [{ projectName: '', fromTime: '', toTime: '', description: '' }]);
       } else {
-        setFormRows([
-          {
-            projectName: '',
-            fromTime: '',
-            toTime: '',
-            description: ''
-          }
-        ]);
+        setFormRows([{ projectName: '', fromTime: '', toTime: '', description: '' }]);
       }
 
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching timesheet:', error);
       showToast('error', 'Failed to fetch timesheet data');
-      setFormRows([
-        {
-          projectName: '',
-          fromTime: '',
-          toTime: '',
-          description: ''
-        }
-      ]);
+      setFormRows([{ projectName: '', fromTime: '', toTime: '', description: '' }]);
       setModalOpen(true);
     }
   };
@@ -491,13 +581,67 @@ const TimeSheet = () => {
     }
   };
 
+  // const getCompanyWeekOff = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+  //     const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
+  //     setWeekOff(weekOffDays);
+  //   } catch (error) {
+  //     console.error('Error', error);
+  //   }
+  // };
+
+  const isWeekOff = (date) => {
+    return weekOff.includes(dayjs(date).format('YYYY-MM-DD'));
+  };
+
   const getCompanyWeekOff = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
-      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
-      setWeekOff(weekOffDays);
+      const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO;
+
+      const currentMonth = dayjs().month(); // 0-based (June = 5)
+      const currentYear = dayjs().year();
+
+      const offDates = [];
+
+      for (const config of weekOffConfig) {
+        const dayName = config.weekOffDays.toUpperCase(); // e.g., 'MONDAY'
+        const weekNumbers = config.weekNumbers; // e.g., [-1] or [1, 3]
+
+        const dayIndex = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(dayName);
+        if (dayIndex === -1) continue;
+
+        // Get all dates in the current month matching the given weekday
+        const daysInMonth = dayjs(`${currentYear}-${currentMonth + 1}-01`).daysInMonth();
+        const matchedDates = [];
+
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = dayjs(`${currentYear}-${currentMonth + 1}-${day}`);
+          if (date.day() === dayIndex) {
+            matchedDates.push(date);
+          }
+        }
+
+        // Check if -1 is present => all occurrences of that day are off
+        if (weekNumbers.includes(-1)) {
+          matchedDates.forEach((date) => {
+            offDates.push(date.format('YYYY-MM-DD'));
+          });
+        } else {
+          // Only specific week numbers like 1st, 3rd etc.
+          for (const weekNumber of weekNumbers) {
+            if (weekNumber >= 1 && weekNumber <= matchedDates.length) {
+              const specificDate = matchedDates[weekNumber - 1];
+              if (specificDate) offDates.push(specificDate.format('YYYY-MM-DD'));
+            }
+          }
+        }
+      }
+
+      setWeekOff(offDates); // Example: ['2025-06-01', '2025-06-02', ...]
     } catch (error) {
-      console.error('Error', error);
+      console.error('Error fetching week off:', error);
     }
   };
 
@@ -540,13 +684,22 @@ const TimeSheet = () => {
       </div>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="p-6 bg-white rounded-lg shadow-md w-full">
-          <Calendar
+          {/* <Calendar
             onClickDay={(value, e) => {
               const dayName = value.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
               if (!weekOff.includes(dayName)) {
                 handleDateClick(value);
               }
             }}
+            tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
+          /> */}
+          <Calendar
+            onClickDay={(date) => {
+              if (!isWeekOff(date)) {
+                handleDateClick(date);
+              }
+            }}
+            tileDisabled={({ date, view }) => view === 'month' && isWeekOff(date)}
             tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
           />
         </div>

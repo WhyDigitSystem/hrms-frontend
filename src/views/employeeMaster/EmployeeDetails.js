@@ -92,6 +92,7 @@ const EmployeeDetails = () => {
     reportingRole: '',
     department: '',
     designation: '',
+    uan: '',
     // role: '',
     active: true,
     branchCode: '',
@@ -121,6 +122,7 @@ const EmployeeDetails = () => {
     reportingRole: '',
     department: '',
     designation: '',
+    uan: '',
     // role: '',
     active: true,
     branchCode: '',
@@ -170,17 +172,13 @@ const EmployeeDetails = () => {
   };
 
   const columns = [
-
     {
       accessorKey: 'payslip',
       header: 'Payslip',
       size: 100,
       Cell: ({ row }) => (
         <div style={{ display: 'flex', justifyContent: 'left' }}>
-          <DescriptionIcon
-            style={{ color: '#388e3c', cursor: 'pointer' }}
-            onClick={() => navigateToPayslip(row.original.employeeCode)}
-          />
+          <DescriptionIcon style={{ color: '#388e3c', cursor: 'pointer' }} onClick={() => navigateToPayslip(row.original.employeeCode)} />
         </div>
       )
     },
@@ -203,9 +201,7 @@ const EmployeeDetails = () => {
       header: 'Active',
       size: 140,
       Cell: ({ row }) => (
-        <span style={{ color: row.original.active ? 'green' : 'red', fontWeight: 500 }}>
-          {row.original.active ? 'Active' : 'Inactive'}
-        </span>
+        <span style={{ color: row.original.active ? 'green' : 'red', fontWeight: 500 }}>{row.original.active ? 'Active' : 'Inactive'}</span>
       )
     }
   ];
@@ -324,12 +320,147 @@ const EmployeeDetails = () => {
     }
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
+
+  //   const nameRegex = /^[A-Za-z ]*$/;
+  //   const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
+  //   const numberRegex = /^[0-9]*$/;
+
+  //   let errorMessage = '';
+  //   let inputValue = value;
+
+  //   // Handle checkbox early
+  //   if (type === 'checkbox') {
+  //     setFormData((prevData) => ({ ...prevData, [name]: checked }));
+  //     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+  //     return;
+  //   }
+
+  //   // Input sanitization
+  //   switch (name) {
+  //     case 'aadhaarNo':
+  //     case 'accountNo':
+  //     case 'mobileNo':
+  //     case 'altMobileNo':
+  //       inputValue = value.replace(/\D/g, ''); // Only digits
+  //       break;
+  //     case 'panNo':
+  //     case 'ifscCode':
+  //       inputValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  //       break;
+  //     default:
+  //       break;
+  //   }
+
+  //   // Validation logic
+  //   if (name === 'aadhaarNo') {
+  //     if (!aadhaarRegex.test(inputValue)) {
+  //       errorMessage = 'Aadhaar must be 12 digits';
+  //     }
+  //   } else if (name === 'panNo') {
+  //     if (inputValue.length === 10 && !panRegex.test(inputValue)) {
+  //       errorMessage = 'Invalid PAN format (e.g., ABCDE1234F)';
+  //     }
+  //   } else if (name === 'accountNo') {
+  //     if (!accountRegex.test(inputValue)) {
+  //       errorMessage = 'Account must be 9-18 digits';
+  //     }
+  //   } else if (name === 'ifscCode') {
+  //     if (inputValue.length === 11 && !ifscRegex.test(inputValue)) {
+  //       errorMessage = 'Invalid IFSC format (e.g., SBIN0123456)';
+  //     }
+  //   } else if (name === 'mobileNo' || name === 'altMobileNo') {
+  //     if (inputValue.length === 10 && !mobileRegex.test(inputValue)) {
+  //       errorMessage = 'Invalid Mobile Number';
+  //     } else if (inputValue.length > 0 && inputValue.length !== 10) {
+  //       errorMessage = 'Mobile number must be 10 digits';
+  //     }
+  //   }
+
+  //   if (name === 'employeeName' && !codeRegex.test(value)) {
+  //     errorMessage = 'Invalid Format';
+  //   } else if (name === 'employeeCode' && !codeRegex.test(value)) {
+  //     errorMessage = 'Invalid Format';
+  //   } else if (name === 'mobileNo' || name === 'alternativeMobile') {
+  //     if (!numberRegex.test(value)) {
+  //       errorMessage = 'Only numbers are allowed.';
+  //     } else if (value.length > 10) {
+  //       errorMessage = 'Mobile number cannot exceed 10 digits.';
+  //     }
+  //   }
+
+  //   setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+  //   setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
+
+  //   if (name === 'employeeCode' && !errorMessage) {
+  //     getAllReportingPerson(value);
+  //   }
+
+  //   if (!errorMessage) {
+  //     if (name === 'branch') {
+  //       const selectedBranch = branchList.find((br) => br.branch === value);
+  //       setFormData((prevData) => ({
+  //         ...prevData,
+  //         branch: value,
+  //         branchCode: selectedBranch ? selectedBranch.branchCode : ''
+  //       }));
+  //     } else {
+  //       if (name === 'email') {
+  //         inputValue = value.toLowerCase();
+  //       } else if (type === 'text' || type === 'textarea') {
+  //         inputValue = value.toUpperCase();
+  //       }
+
+  //       setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
+
+  //       if (name === 'reportingPerson') {
+  //         const selectedEmployee = allReportingPerson.find((emp) => emp.employeeName === value);
+  //         setFormData((prevData) => ({
+  //           ...prevData,
+  //           reportingPerson: value,
+  //           reportingPersonEmail: selectedEmployee?.email || '',
+  //           reportingPersonCode: selectedEmployee?.employeeCode || '',
+  //           reportingRole: selectedEmployee?.role || ''
+  //         }));
+  //       }
+
+  //       if (name === 'gender' || name === 'designation') {
+  //         const selectedDesignation = designationList.find(
+  //           (row) => row.designationName === (name === 'designation' ? value : formData.designation)
+  //         );
+  //         const updatedGender = name === 'gender' ? value : formData.gender;
+  //         const updatedDesignationCode = selectedDesignation ? selectedDesignation.designationCode : '';
+
+  //         if (updatedGender && updatedDesignationCode) {
+  //           getAllLeaveType(updatedDesignationCode, updatedGender);
+  //         }
+  //       }
+
+  //       if (type === 'text' || type === 'textarea') {
+  //         setTimeout(() => {
+  //           const inputElement = document.getElementsByName(name)[0];
+  //           if (inputElement?.setSelectionRange) {
+  //             inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //           }
+  //         }, 0);
+  //       }
+  //     }
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
 
     const nameRegex = /^[A-Za-z ]*$/;
     const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
     const numberRegex = /^[0-9]*$/;
+    const aadhaarRegex = /^\d{12}$/;
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const accountRegex = /^\d{9,18}$/;
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+    const mobileRegex = /^[6-9]\d{9}$/;
+    const uanRegex = /^[A-Za-z]{0,12}$/; // Only alphabets up to 12 characters
 
     let errorMessage = '';
     let inputValue = value;
@@ -349,13 +480,28 @@ const EmployeeDetails = () => {
       case 'altMobileNo':
         inputValue = value.replace(/\D/g, ''); // Only digits
         break;
+    
       case 'panNo':
       case 'ifscCode':
         inputValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
         break;
+    
+      case 'uan':
+        if (/[^0-9]/.test(value)) {
+          errorMessage = 'Only numbers are allowed';
+        }
+    
+        inputValue = value.replace(/\D/g, ''); // Allow only digits
+    
+        if (inputValue.length > 12) {
+          errorMessage = 'UAN cannot exceed 12 digits.';
+          inputValue = inputValue.slice(0, 12);
+        }
+        break;
+    
       default:
         break;
-    }
+    }      
 
     // Validation logic
     if (name === 'aadhaarNo') {
@@ -394,9 +540,11 @@ const EmployeeDetails = () => {
       }
     }
 
+    // Set error and value
     setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
 
+    // Additional logic
     if (name === 'employeeCode' && !errorMessage) {
       getAllReportingPerson(value);
     }
@@ -536,6 +684,7 @@ const EmployeeDetails = () => {
       reportingRole: '',
       department: '',
       designation: '',
+      uan: '',
       // role: '',
       active: true,
       branchCode: '',
@@ -557,7 +706,7 @@ const EmployeeDetails = () => {
     setLeaveTypeErrors('');
     setEditId('');
     setLogo(null);
-    setIsViewMode(false)
+    setIsViewMode(false);
   };
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date).format('YYYY-MM-DD');
@@ -648,6 +797,7 @@ const EmployeeDetails = () => {
         dateOfBirth: formData.dob,
         department: formData.department,
         designation: formData.designation,
+        uanNo: parseInt(formData.uan),
         email: formData.email,
         employeeAddress: formData.employeeAddress,
         employeeCode: formData.employeeCode,
@@ -737,6 +887,7 @@ const EmployeeDetails = () => {
           team: employeeDetailsVO.team || '',
           department: employeeDetailsVO.department || '',
           designation: employeeDetailsVO.designation || '',
+          uan: employeeDetailsVO.uanNo || '',
           reportingPerson: employeeDetailsVO.reportnigPerson || '',
           reportingRole: employeeDetailsVO.reportingRole || '',
           reportingPersonEmail: employeeDetailsVO.reportnigPersonEmail || '',
@@ -793,11 +944,11 @@ const EmployeeDetails = () => {
       prev.map((r) =>
         r.id === row.id
           ? {
-            ...r,
-            leaveType: newValue ? newValue.leaveType : '',
-            leaveCode: newValue ? newValue.leaveCode : '',
-            totalLeave: newValue ? newValue.totalLeave : ''
-          }
+              ...r,
+              leaveType: newValue ? newValue.leaveType : '',
+              leaveCode: newValue ? newValue.leaveCode : '',
+              totalLeave: newValue ? newValue.totalLeave : ''
+            }
           : r
       )
     );
@@ -1087,8 +1238,8 @@ const EmployeeDetails = () => {
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
-                      // error={fieldErrors.resignationDate}
-                      // helperText={fieldErrors.resignationDate && 'Required'}
+                        // error={fieldErrors.resignationDate}
+                        // helperText={fieldErrors.resignationDate && 'Required'}
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -1129,8 +1280,8 @@ const EmployeeDetails = () => {
                   name="team"
                   value={formData.team}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.team}
-                // helperText={fieldErrors.team}
+                  // error={!!fieldErrors.team}
+                  // helperText={fieldErrors.team}
                 />
               </div>
 
@@ -1185,6 +1336,7 @@ const EmployeeDetails = () => {
                   )}
                 />
               </div>
+
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={allReportingPerson}
@@ -1478,6 +1630,21 @@ const EmployeeDetails = () => {
                 />
               </div>
 
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="UAN No"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="uan"
+                  inputProps={{ maxLength: 12 }}
+                  value={formData.uan}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.uan}
+                  helperText={fieldErrors.uan}
+                />
+              </div>
+
               <h5 className="mb-4 mt-2">Bank Details</h5>
 
               {/* Account Number */}
@@ -1509,8 +1676,8 @@ const EmployeeDetails = () => {
                   name="bankName"
                   value={formData.bankName}
                   onChange={handleInputChange}
-                // error={!!fieldErrors.bankName}
-                // helperText={fieldErrors.bankName}
+                  // error={!!fieldErrors.bankName}
+                  // helperText={fieldErrors.bankName}
                 />
               </div>
 
@@ -1566,7 +1733,9 @@ const EmployeeDetails = () => {
                           <div className="table-responsive">
                             <table className="table table-bordered ">
                               <thead>
-                                <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
+                                <tr
+                                  style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}
+                                >
                                   <th className="px-2 py-2 text-center" style={{ width: '68px' }}>
                                     Action
                                   </th>
@@ -1583,9 +1752,11 @@ const EmployeeDetails = () => {
                                     Total Leave
                                   </th>
                                   <th className="px-2 py-2 text-center" style={{ width: '200px' }}>
-                                    <div className='d-flex justify-content-end align-items-center'>
-                                      <div className='pe-5 pt-3'> Effective From</div>
-                                      <div className='d-flex justify-content-end'><ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /></div>
+                                    <div className="d-flex justify-content-end align-items-center">
+                                      <div className="pe-5 pt-3"> Effective From</div>
+                                      <div className="d-flex justify-content-end">
+                                        <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                                      </div>
                                     </div>
                                   </th>
                                 </tr>
@@ -1725,13 +1896,7 @@ const EmployeeDetails = () => {
             <CircularProgress />
           </div>
         ) : (
-          <CommonTable
-            data={listViewData}
-            columns={columns}
-            blockEdit={true}
-            toEdit={getEmployeeDetailsById}
-            enableEditing={false}
-          />
+          <CommonTable data={listViewData} columns={columns} blockEdit={true} toEdit={getEmployeeDetailsById} enableEditing={false} />
         )}
       </div>
     </div>

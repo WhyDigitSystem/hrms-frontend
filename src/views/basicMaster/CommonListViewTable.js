@@ -123,7 +123,7 @@ const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon
        data={tableData && tableData}
         enableColumnOrdering={false}
         enableColumnActions={false}
-        enableEditing
+        enableEditing={enableEditing}
         renderRowActions={renderRowActions}
         initialState={{ density: "compact" }}
         muiTableContainerProps={{
