@@ -472,7 +472,7 @@ const PendingApproval = ({ isLoading }) => {
                   handleActionPermission(request, 'APPROVED');
                 } if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'APPROVED'); // You can customize this if you need different logic
-                } else {
+                } if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'APPROVED'); // You can customize this if you need different logic
                 }
               }}
