@@ -41,7 +41,9 @@ const Calendar = () => {
     eventTitle: '',
     eventType: 'meeting',
     date: '',
-    description: ''
+    description: '',
+    startTime: '', // New field
+    endTime: ''   // New field
   });
 
   useEffect(() => {
@@ -144,7 +146,10 @@ const Calendar = () => {
           // Add user details from localStorage
           empName: event.empName || empName,
           branchName: event.branchName || branchName,
-          department: event.department || department
+          department: event.department || department,
+          time: event.time || [], // Ensure time array exists
+          startTime: event.time && event.time.length > 0 ? event.time[0] : '',
+          endTime: event.time && event.time.length > 1 ? event.time[1] : ''
         }));
         setCalendarEvents(transformed);
       }
@@ -238,9 +243,13 @@ const Calendar = () => {
       return;
     }
 
+    const timeArray = [];
+    if (newEvent.startTime) timeArray.push(newEvent.startTime);
+    if (newEvent.endTime) timeArray.push(newEvent.endTime);
+
     // Prepare the API payload
     const saveData = {
-      id: newEvent.id || null,
+      id: newEvent.id || undefined, // Send undefined instead of null
       eventTitle: newEvent.eventTitle.trim(),
       eventType: newEvent.eventType,
       date: newEvent.date,
@@ -248,8 +257,10 @@ const Calendar = () => {
       orgId: orgId,
       branchCode: branchCode,
       empCode: empCode,
-      createdBy: loginUserName
+      createdBy: loginUserName,
+      time: [newEvent.startTime, newEvent.endTime].filter(Boolean) // Always send array
     };
+    if (saveData.time.length === 0) delete saveData.time;
 
     try {
       const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
@@ -380,6 +391,7 @@ const Calendar = () => {
                   {cell.events.slice(0, 2).map((event, eIdx) => (
                     <div key={eIdx} title={
                       `Date: ${event.date}\n` +
+                      (event.time && event.time.length > 0 ? `Time: ${event.time.join(' - ')}\n` : '') +
                       `Type: ${event.eventType}\n` +
                       `Branch: ${event.branchName || branchName}\n` +
                       `Department: ${event.department || department}\n` +
@@ -396,6 +408,11 @@ const Calendar = () => {
                         fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal'
                       }}>
                       {event.eventTitle}
+                      {event.time && event.time.length > 0 && (
+                        <div style={{ fontSize: 10, marginTop: 2 }}>
+                          {event.time[0]} {event.time[1] ? `- ${event.time[1]}` : ''}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {cell.events.length > 2 && (
@@ -501,7 +518,10 @@ const Calendar = () => {
                 <h3>{event.eventTitle}</h3>
               </div>
               <div style={{ marginTop: 8, color: '#666' }}>
-                {new Date(event.date).toLocaleDateString()} - {event.eventType}
+                {new Date(event.date).toLocaleDateString()}
+                {event.time && event.time.length > 0 && (
+                  <span> • {event.time.join(' - ')}</span>
+                )}
               </div>
             </div>
           ))}
@@ -557,6 +577,27 @@ const Calendar = () => {
                     style={inputStyle}
                   />
                 )}
+              </div>
+
+              <div style={{ marginBottom: 12 }}>
+                <label>Start Time</label>
+                <input
+                  type="time"
+                  name="startTime"
+                  value={newEvent.startTime}
+                  onChange={handleEventChange}
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label>End Time</label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={newEvent.endTime}
+                  onChange={handleEventChange}
+                  style={inputStyle}
+                />
               </div>
 
               <div style={{ marginBottom: 12 }}>
