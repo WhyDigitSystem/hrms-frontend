@@ -61,7 +61,15 @@ const AttendanceReport = Loadable(lazy(() => import('views/team/AttendanceReport
 const TodayAttendance = Loadable(lazy(() => import('views/team/TodayAttendance')));
 
 // manageTax
-const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')))
+const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')));
+
+// PreGoals
+const Appraisee = Loadable(lazy(() => import('views/Appraisal/Appraisee')));
+const Appraiser = Loadable(lazy(() => import('views/Appraisal/Appraiser')));
+const AdditionalGoals = Loadable(lazy(() => import('views/Appraisal/AdditionalGoals')));
+const PreGoals = Loadable(lazy(() => import('views/Appraisal/PreGoals')));
+const PreGoalsApproval = Loadable(lazy(() => import('views/Appraisal/PreGoalsApproval')));
+const SelfGoals = Loadable(lazy(() => import('views/Appraisal/SelfGoals')));
 
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
@@ -227,9 +235,32 @@ const HrmsRoute = {
     {
       path: '/ManageTax/manageTax',
       element: < ManageTax />
+    },
+    // PreGoals
+    {
+      path: '/Appraisal/Appraisee',
+      element: <Appraisee />
+    },
+    {
+      path: '/Appraisal/Appraiser',
+      element: <Appraiser />
+    },
+    {
+      path: '/Appraisal/AdditionalGoals',
+      element: <AdditionalGoals />
+    },
+    {
+      path: '/Appraisal/PreGoals',
+      element: <PreGoals />
+    },
+    {
+      path: '/Appraisal/PreGoalsApproval',
+      element: <PreGoalsApproval />
+    },
+    {
+      path: '/Appraisal/SelfGoals',
+      element: <SelfGoals />
     }
-
-
   ]
 };
 
