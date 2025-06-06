@@ -222,15 +222,52 @@ const Calendar = () => {
     setShowModal(true);
   };
 
-  const handleEventClick = (event) => {
-    if (!event) return;
+  // const handleEventClick = (event) => {
+  //   if (!event) return;
 
+  //   setNewEvent({
+  //     ...event,
+  //     isHoliday: event.isHoliday || false
+  //   });
+  //   setShowModal(true);
+  // };
+
+  const handleEventClick = (event) => {
     setNewEvent({
-      ...event,
-      isHoliday: event.isHoliday || false
+      id: event.id,
+      eventTitle: event.eventTitle || '',
+      eventType: event.eventType || 'meeting',
+      date: event.date || '',
+      description: event.description || '',
+      isHoliday: event.eventType === 'holiday',
+      startTime: event.fromTime || '',
+      endTime: event.toTime || ''
     });
     setShowModal(true);
   };
+
+  //  const getWeightageById = async (row) => {
+  //       setEditId(row.original.id);
+  //       try {
+  //           const response = await apiCalls('get', `/goalsController/getWeightageById?id=${row.original.id}`);
+  //           if (response.status) {
+  //               setListView(false);
+  //               const goal = response.paramObjectsMap.weightageVO;
+  //               setFormData({
+  //                   level: goal.level,
+  //                   businessOperations: goal.businessOperations,
+  //                   valueCreation: goal.valueCreation,
+  //                   peopleEngagement: goal.peopleEngagement,
+  //                   remarks: goal.remarks,
+  //                   invlId: goal.invlId,
+  //                   active: goal.active === 'Active' ? true : false
+  //               });
+  //           }
+  //       } catch (error) {
+  //           console.error('Error fetching goal details:', error);
+  //           showToast('error', 'Failed to fetch goal details');
+  //       }
+  //   };
 
   const handleSaveEvent = async () => {
     if (!newEvent.eventTitle?.trim()) {
@@ -243,24 +280,23 @@ const Calendar = () => {
       return;
     }
 
-    const timeArray = [];
-    if (newEvent.startTime) timeArray.push(newEvent.startTime);
-    if (newEvent.endTime) timeArray.push(newEvent.endTime);
-
     // Prepare the API payload
     const saveData = {
-      id: newEvent.id || undefined, // Send undefined instead of null
+      // id: newEvent.id || 0,
+      branchCode: branchCode,
+      branchName: branchName,
+      createdBy: loginUserName,
+      date: newEvent.date,
+      department: department,
+      description: newEvent.description || '',
       eventTitle: newEvent.eventTitle.trim(),
       eventType: newEvent.eventType,
-      date: newEvent.date,
-      description: newEvent.description,
+      fromTime: newEvent.startTime || '',
+      toTime: newEvent.endTime || '',
       orgId: orgId,
-      branchCode: branchCode,
       empCode: empCode,
-      createdBy: loginUserName,
-      time: [newEvent.startTime, newEvent.endTime].filter(Boolean) // Always send array
+      empName: loginUserName // assuming createdBy is also empName
     };
-    if (saveData.time.length === 0) delete saveData.time;
 
     try {
       const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
@@ -530,26 +566,26 @@ const Calendar = () => {
 
       {showModal && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          position: 'fixed', top: '70px', left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
           justifyContent: 'center', alignItems: 'center'
         }}>
           <div style={{
             backgroundColor: 'white', padding: 20, borderRadius: 8,
-            width: isMobile ? '90%' : 400, maxWidth: '100%'
+            width: isMobile ? '90%' : 400, maxWidth: '100%',
           }}>
-            <h2 style={{ marginBottom: 16 }}>
+            <h2 style={{ marginBottom: 6 }}>
               {newEvent.isHoliday ? '🎉 Holiday Details' : newEvent.id ? 'Edit Event' : 'New Event'}
             </h2>
 
             {newEvent.isHoliday && (
-              <div style={{ padding: 12, marginBottom: 16, backgroundColor: '#fff3cd', borderRadius: 8 }}>
+              <div style={{ padding: 12, marginBottom: 6, backgroundColor: '#fff3cd', borderRadius: 8 }}>
                 <strong>Official Organization Holiday</strong>
               </div>
             )}
 
             <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }}>
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>Title</label>
                 <input
                   name="eventTitle"
@@ -560,7 +596,7 @@ const Calendar = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>Date</label>
                 {newEvent.isHoliday ? (
                   <div style={{ padding: 12, backgroundColor: '#f8f9fa', borderRadius: 8 }}>
@@ -579,7 +615,7 @@ const Calendar = () => {
                 )}
               </div>
 
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>Start Time</label>
                 <input
                   type="time"
@@ -589,7 +625,7 @@ const Calendar = () => {
                   style={inputStyle}
                 />
               </div>
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>End Time</label>
                 <input
                   type="time"
@@ -600,7 +636,7 @@ const Calendar = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>Type</label>
                 <select
                   name="eventType"
@@ -617,7 +653,7 @@ const Calendar = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 4 }}>
                 <label>Description</label>
                 <textarea
                   name="description"

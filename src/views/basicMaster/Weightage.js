@@ -24,42 +24,43 @@ import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 function PaperComponent(props) {
-  return (
-    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
-      <Paper {...props} />
-    </Draggable>
-  );
+    return (
+        <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+            <Paper {...props} />
+        </Draggable>
+    );
 }
 const Weightage = () => {
     const [listViewData, setListViewData] = useState([]);
-    const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
-    const [createdBy] = useState(localStorage.getItem('userName'));
+    const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+    const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
 
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
     const [formData, setFormData] = useState({
-            level: '',
-            businessOperations: '',
-            valueCreation: '',
-            peopleEngagement: '',
-            ivlId: '',
-            remarks: ''
+        level: '',
+        businessOperations: '',
+        valueCreation: '',
+        peopleEngagement: '',
+        invlId: '',
+        remarks: '',
+        finYear: 2025
     });
 
     const [fieldErrors, setFieldErrors] = useState({
-            level: '',
-            businessOperations: '',
-            valueCreation: '',
-            peopleEngagement: '',
-            ivlId: '',
-            remarks: ''
+        level: '',
+        businessOperations: '',
+        valueCreation: '',
+        peopleEngagement: '',
+        invlId: '',
+        remarks: ''
     });
     const listViewColumns = [
-        { accessorKey: 'appraisalId', header: 'Level', size: 140 },
-        { accessorKey: 'code', header: 'Business Operations', size: 140 },
-        { accessorKey: 'name', header: 'Value Creation', size: 140 },
-        { accessorKey: 'supervisorCode', header: 'People Engagement', size: 140 }
+        { accessorKey: 'level', header: 'Level', size: 140 },
+        { accessorKey: 'businessOperations', header: 'Business Operations', size: 140 },
+        { accessorKey: 'valueCreation', header: 'Value Creation', size: 140 },
+        { accessorKey: 'peopleEngagement', header: 'People Engagement', size: 140 },
     ];
 
     const handleInputChange = (e) => {
@@ -81,31 +82,31 @@ const Weightage = () => {
 
     const getAllWeightage = async () => {
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsByOrgId?orgId=${orgId}`);
+            const response = await apiCalls('get', `/goalsController/getWeightageByOrgId?orgId=${orgId}`);
             if (response.status) {
-                setListViewData(response.paramObjectsMap.preGoalsVO);
+                setListViewData(response.paramObjectsMap.weightageVO);
             } else {
-                showToast('error', response.message || 'Failed to fetch goals');
+                showToast('error', response.message);
             }
         } catch (error) {
             console.error('Error fetching goals:', error);
-            showToast('error', 'Failed to fetch goals');
         }
     };
-    const getGoalsById = async (row) => {
+    const getWeightageById = async (row) => {
         setEditId(row.original.id);
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsById?id=${row.original.id}`);
+            const response = await apiCalls('get', `/goalsController/getWeightageById?id=${row.original.id}`);
             if (response.status) {
                 setListView(false);
-                const goal = response.paramObjectsMap.preGoalsVO;
+                const goal = response.paramObjectsMap.weightageVO;
                 setFormData({
-                    appraisalId: goal.appraisalId,
-                    code: goal.code,
-                    name: goal.name,
-                    supervisorCode: goal.supervisorCode,
-                    supervisorName: goal.supervisorName,
-                    active: goal.active
+                    level: goal.level,
+                    businessOperations: goal.businessOperations,
+                    valueCreation: goal.valueCreation,
+                    peopleEngagement: goal.peopleEngagement,
+                    remarks: goal.remarks,
+                    invlId: goal.invlId,
+                    active: goal.active === 'Active' ? true : false
                 });
             }
         } catch (error) {
@@ -118,8 +119,11 @@ const Weightage = () => {
         // Validate main form fields
         const errors = {};
         if (!formData.level) errors.level = 'Level is required';
-        if (!formData.code) errors.code = 'Code is required';
-        if (!formData.name) errors.name = 'Name is required';
+        if (!formData.businessOperations) errors.businessOperations = 'Business Operation is required';
+        if (!formData.valueCreation) errors.valueCreation = 'Value Creation is required';
+        if (!formData.peopleEngagement) errors.peopleEngagement = 'People Engagement is required';
+        if (!formData.invlId) errors.invlId = 'IvIId is required';
+        if (!formData.remarks) errors.remarks = 'Remarks is required';
         if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
             showToast('error', 'Please fill all required fields');
@@ -128,19 +132,21 @@ const Weightage = () => {
 
         setIsLoading(true);
         const payload = {
-            id: editId, // Always include main goal ID for updates
+            ...(editId && { id: editId }),
             active: formData.active,
-            appraisalId: formData.appraisalId,
-            code: formData.code,
-            name: formData.name,
-            supervisorCode: formData.supervisorCode,
-            supervisorName: formData.supervisorName,
-            orgId,
-            createdBy,
+            businessOperations: formData.businessOperations,
+            createdBy: loginUserName,
+            finYear: formData.finYear,
+            invlId: formData.invlId,
+            level: formData.level,
+            orgId: parseInt(orgId),
+            peopleEngagement: formData.peopleEngagement,
+            remarks: formData.remarks,
+            valueCreation: formData.valueCreation
         };
 
         try {
-            const response = await apiCalls('put', '/goalsController/createUpdateGoals', payload);
+            const response = await apiCalls('put', '/goalsController/createUpdateWeightage', payload);
             if (response.status) {
                 showToast('success', editId ? 'Weightage updated successfully' : 'Weightage created successfully');
                 handleClear();
@@ -162,7 +168,7 @@ const Weightage = () => {
             businessOperations: '',
             valueCreation: '',
             peopleEngagement: '',
-            ivlId: '',
+            invlId: '',
             remarks: ''
         });
 
@@ -171,7 +177,7 @@ const Weightage = () => {
             businessOperations: '',
             valueCreation: '',
             peopleEngagement: '',
-            ivlId: '',
+            invlId: '',
             remarks: ''
         });
         setEditId('');
@@ -253,11 +259,11 @@ const Weightage = () => {
                                         variant="outlined"
                                         size="small"
                                         fullWidth
-                                        name="ivlId"
-                                        value={formData.ivlId}
+                                        name="invlId"
+                                        value={formData.invlId}
                                         onChange={handleInputChange}
-                                        error={!!fieldErrors.ivlId}
-                                        helperText={fieldErrors.ivlId}
+                                        error={!!fieldErrors.invlId}
+                                        helperText={fieldErrors.invlId}
                                     />
                                 </div>
                                 <div className="col-md-6 mb-3">
@@ -280,7 +286,7 @@ const Weightage = () => {
                             data={listViewData}
                             columns={listViewColumns}
                             enableEditing={true}
-                            toEdit={getGoalsById}
+                            toEdit={getWeightageById}
                         />
                     )}
                 </div>
