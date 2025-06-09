@@ -24,11 +24,11 @@ import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 function PaperComponent(props) {
-  return (
-    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
-      <Paper {...props} />
-    </Draggable>
-  );
+    return (
+        <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+            <Paper {...props} />
+        </Draggable>
+    );
 }
 const Goals = () => {
     const [listViewData, setListViewData] = useState([]);
@@ -38,12 +38,13 @@ const Goals = () => {
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectAll, setSelectAll] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [fillGridData, setFillGridData] = useState([]);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectAll, setSelectAll] = useState(false);
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [fillGridData, setFillGridData] = useState([]);
     const [formData, setFormData] = useState({
         appraisalId: '',
+        active: true
     });
 
     const [fieldErrors, setFieldErrors] = useState({
@@ -88,9 +89,9 @@ const Goals = () => {
 
     const getAllGoals = async () => {
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsByOrgId?orgId=${orgId}`);
+            const response = await apiCalls('get', `/goalsController/getGoalsByOrgId?orgId=${orgId}`);
             if (response.status) {
-                setListViewData(response.paramObjectsMap.preGoalsVO);
+                setListViewData(response.paramObjectsMap.goalsVO);
             } else {
                 showToast('error', response.message || 'Failed to fetch goals');
             }
@@ -102,30 +103,21 @@ const Goals = () => {
     const getGoalsById = async (row) => {
         setEditId(row.original.id);
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsById?id=${row.original.id}`);
+            const response = await apiCalls('get', `/goalsController/getGoalsById?id=${row.original.id}`);
             if (response.status) {
                 setListView(false);
-                const goal = response.paramObjectsMap.preGoalsVO;
+                const goal = response.paramObjectsMap.goalsVO;
                 setFormData({
                     appraisalId: goal.appraisalId,
                 });
 
                 // Preserve actual database IDs
                 setGoalsDetailsData(
-                    goal.preGoalsDetailsVO.map(detail => ({
+                    goal.goalsDetailsVO.map(detail => ({
                         id: detail.id, // Actual ID from database
                         area: detail.area,
-                        indicator: detail.indicator,
+                        indicator: detail.indicators,
                         goals: detail.goals
-                    }))
-                );
-
-                // Initialize errors array
-                setGoalsDetailsErrors(
-                    goal.preGoalsDetailsVO.map(() => ({
-                        area: '',
-                        indicator: '',
-                        goals: ''
                     }))
                 );
             }
@@ -139,7 +131,7 @@ const Goals = () => {
         // Validate main form fields
         const errors = {};
         if (!formData.appraisalId) errors.appraisalId = 'Appraisal ID is required';
-        
+
         // Validate details
         const detailsErrors = goalsDetailsData.map(detail => {
             const error = {};
@@ -149,7 +141,7 @@ const Goals = () => {
             return error;
         });
 
-        const hasDetailErrors = detailsErrors.some(err => 
+        const hasDetailErrors = detailsErrors.some(err =>
             err.area || err.indicator || err.goals
         );
 
@@ -163,18 +155,21 @@ const Goals = () => {
         setIsLoading(true);
 
         // Prepare details payload with IDs
-        const preGoalsDetailsVo = goalsDetailsData.map(row => ({
+        const goalsDetailsVo = goalsDetailsData.map(row => ({
             id: row.id, // Include existing ID for updates
             area: row.area,
-            indicator: row.indicator,
+            indicators: row.indicator,
             goals: row.goals
         }));
 
         const payload = {
+            ...(editId && { id: editId }),
+            active: formData.active,
             appraisalId: formData.appraisalId,
+            finYear: formData.finYear,
             orgId,
             createdBy,
-            preGoalsDetailsDTO: preGoalsDetailsVo,
+            goalsDetailsDTO: goalsDetailsVo,
         };
 
         try {
@@ -216,7 +211,7 @@ const Goals = () => {
 
     const handleAddRow = () => {
         const lastRow = goalsDetailsData[goalsDetailsData.length - 1];
-        
+
         // Validate last row before adding new one
         if (!lastRow.area || !lastRow.indicator || !lastRow.goals) {
             const newErrors = [...goalsDetailsErrors];

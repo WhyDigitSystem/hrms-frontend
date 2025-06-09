@@ -24,24 +24,24 @@ import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 function PaperComponent(props) {
-  return (
-    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
-      <Paper {...props} />
-    </Draggable>
-  );
+    return (
+        <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+            <Paper {...props} />
+        </Draggable>
+    );
 }
 const KRAKPI = () => {
     const [listViewData, setListViewData] = useState([]);
-    const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
-    const [createdBy] = useState(localStorage.getItem('userName'));
+    const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
+    const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
     const [value, setValue] = useState(0);
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectAll, setSelectAll] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [fillGridData, setFillGridData] = useState([]);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectAll, setSelectAll] = useState(false);
+    const [selectedRows, setSelectedRows] = useState([]);
+    const [fillGridData, setFillGridData] = useState([]);
     const [formData, setFormData] = useState({
         appraisalId: ''
     });
@@ -50,19 +50,19 @@ const KRAKPI = () => {
         appraisalId: ''
     });
 
-    const [goalsDetailsData, setGoalsDetailsData] = useState([
+    const [kpiDetailsData, setkpiDetailsData] = useState([
         { id: null, kpiId: '', kpiDescription: '' }
     ]);
 
     const [goalsDetailsErrors, setGoalsDetailsErrors] = useState([
-        {  kpiId: '', kpiDescription: ''}
+        { kpiId: '', kpiDescription: '' }
     ]);
     const [detailsTableData, setDetailsTableData] = useState([
-        { id: null,kraId:'', kraDescription:'',ro:'', kpiId: '', kpiDescription: '' }
+        { id: null, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
     ]);
 
     const [detailsTableErrors, setDetailsTableErrors] = useState([
-        {kraId:'', kraDescription:'',ro:'', kpiId: '', kpiDescription: ''}
+        { kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
     ]);
 
     const listViewColumns = [
@@ -95,44 +95,44 @@ const KRAKPI = () => {
 
     const getAllKRAKPIs = async () => {
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsByOrgId?orgId=${orgId}`);
+            const response = await apiCalls('get', `/goalsController/getKpiKraByOrgId?orgId=${orgId}`);
             if (response.status) {
-                setListViewData(response.paramObjectsMap.preGoalsVO);
+                setListViewData(response.paramObjectsMap.kpiKraVO);
             } else {
-                showToast('error', response.message || 'Failed to fetch goals');
+                showToast('error', response.message || 'Failed to fetch KPIKRA');
             }
         } catch (error) {
-            console.error('Error fetching goals:', error);
-            showToast('error', 'Failed to fetch goals');
+            console.error('Error fetching KPIKRA:', error);
+            showToast('error', 'Failed to fetch KPIKRA');
         }
     };
-    const getGoalsById = async (row) => {
+    const getKraKpiById = async (row) => {
         setEditId(row.original.id);
         try {
-            const response = await apiCalls('get', `/goalsController/getPreGoalsById?id=${row.original.id}`);
+            const response = await apiCalls('get', `/goalsController/getKpiKraById?id=${row.original.id}`);
             if (response.status) {
                 setListView(false);
-                const goal = response.paramObjectsMap.preGoalsVO;
+                const goal = response.paramObjectsMap.kpiKraVO;
                 setFormData({
                     appraisalId: goal.appraisalId
                 });
 
                 // Preserve actual database IDs
-                setGoalsDetailsData(
-                    goal.preGoalsDetailsVO.map(detail => ({
-                        id: detail.id, // Actual ID from database
-                        area: detail.area,
-                        keyPerformanceIndicator: detail.keyPerformanceIndicator,
-                        goals: detail.goals
+                setkpiDetailsData(
+                    goal.kpiVO.map(detail => ({
+                        kpiId: detail.kpiId,
+                        kpiDescription: detail.kpiDescription
                     }))
                 );
 
-                // Initialize errors array
-                setGoalsDetailsErrors(
-                    goal.preGoalsDetailsVO.map(() => ({
-                        area: '',
-                        keyPerformanceIndicator: '',
-                        goals: ''
+                setDetailsTableData(
+                    goal.kpiKraDetailsVO.map(detail => ({
+                        id: detail.id,
+                        kraId: detail.kpiId,
+                        kraDescription: detail.kraDescription,
+                        ro: detail.ro,
+                        kpiId: detail.kpiId,
+                        kpiKraDescription: detail.kpiDescription
                     }))
                 );
             }
@@ -146,23 +146,16 @@ const KRAKPI = () => {
         // Validate main form fields
         const errors = {};
         if (!formData.appraisalId) errors.appraisalId = 'Appraisal ID is required';
-        // if (!formData.code) errors.code = 'Code is required';
-        // if (!formData.name) errors.name = 'Name is required';
-        
+
         // Validate details
-        const detailsErrors = goalsDetailsData.map(detail => {
+        const detailsErrors = kpiDetailsData.map(detail => {
             const error = {};
-            if (!detail.area) error.area = 'Area is required';
-            if (!detail.keyPerformanceIndicator) error.keyPerformanceIndicator = 'KPI is required';
-            if (!detail.goals) error.goals = 'Goals is required';
+            if (!detail.kpiId) error.kpiDTO = 'KPI Id is required';
+            if (!detail.kpiDescription) error.kpiDescription = 'KPI Description is required';
             return error;
         });
 
-        const hasDetailErrors = detailsErrors.some(err => 
-            err.area || err.keyPerformanceIndicator || err.goals
-        );
-
-        if (Object.keys(errors).length > 0 || hasDetailErrors) {
+        if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
             setGoalsDetailsErrors(detailsErrors);
             showToast('error', 'Please fill all required fields');
@@ -172,28 +165,36 @@ const KRAKPI = () => {
         setIsLoading(true);
 
         // Prepare details payload with IDs
-        const preGoalsDetailsVo = goalsDetailsData.map(row => ({
+        const kpiVo = kpiDetailsData.map(row => ({
+            ...(editId && { id: editId }),
             id: row.id, // Include existing ID for updates
-            area: row.area,
-            keyPerformanceIndicator: row.keyPerformanceIndicator,
-            goals: row.goals
+            kpiDescription: row.kpiDescription,
+            kpiId: row.kpiId
+        }));
+
+        const kpiKraDetailsVo = detailsTableData.map(row => ({
+            ...(editId && { id: editId }),
+            id: row.id, // Include existing ID for updates
+            kpiDescription: row.kpiKraDescription,
+            kpiId: row.kpiId,
+            kraDescription: row.kraDescription,
+            kraId: row.kraId,
+            ro: row.ro
         }));
 
         const payload = {
-            id: editId, // Always include main goal ID for updates
+            ...(editId && { id: editId }),
             active: formData.active,
             appraisalId: formData.appraisalId,
-            code: formData.code,
-            name: formData.name,
-            supervisorCode: formData.supervisorCode,
-            supervisorName: formData.supervisorName,
-            orgId,
-            createdBy,
-            preGoalsDetailsDTO: preGoalsDetailsVo,
+            createdBy: loginUserName,
+            finYear: formData.finYear,
+            kpiDTO: kpiVo,
+            kpiKraDetailsDTO: kpiKraDetailsVo,
+            orgId: orgId,
         };
 
         try {
-            const response = await apiCalls('put', '/goalsController/createUpdateGoals', payload);
+            const response = await apiCalls('put', '/goalsController/createUpdateKpiKra', payload);
             if (response.status) {
                 showToast('success', editId ? 'KRAKPI updated successfully' : 'KRAKPI created successfully');
                 handleClear();
@@ -227,74 +228,109 @@ const KRAKPI = () => {
             supervisorName: ''
         });
 
-        setGoalsDetailsData([
-            { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
+        setkpiDetailsData([
+            { id: null, area: '', kpiDescription: '', goals: '' }
         ]);
 
         setGoalsDetailsErrors([
-            { area: '', keyPerformanceIndicator: '', goals: '' }
+            { area: '', kpiDescription: '', goals: '' }
         ]);
 
         setEditId('');
     };
 
-    const handleAddRow = () => {
-        const lastRow = goalsDetailsData[goalsDetailsData.length - 1];
-        
-        // Validate last row before adding new one
-        if (!lastRow.kpiDescription || !lastRow.kpiId) {
-            const newErrors = [...goalsDetailsErrors];
-            const lastIndex = newErrors.length - 1;
-            newErrors[lastIndex] = {
-                kpiDescription: !lastRow.kpiDescription ? 'KPI Description is required' : '',
-                kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
-            };
-            setGoalsDetailsErrors(newErrors);
-            showToast('warning', 'Please fill current row before adding new');
+    // const handleAddRow = () => {
+    //     const lastRow = kpiDetailsData[kpiDetailsData.length - 1];
+
+    //     // Validate last row before adding new one
+    //     if (!lastRow.kpiId || !lastRow.kpiDescription) {
+    //         const newErrors = [...goalsDetailsErrors];
+    //         const lastIndex = newErrors.length - 1;
+    //         newErrors[lastIndex] = {
+    //             kpiId: !lastRow.kpiId ? 'KPI ID is required' : '',
+    //             kpiDescription: !lastRow.kpiDescription ? 'KPI Description is required' : '',
+    //         };
+    //         setGoalsDetailsErrors(newErrors);
+    //         showToast('warning', 'Please fill current row before adding new');
+    //         return;
+    //     }
+
+    //     const newId = kpiDetailsData.length > 0
+    //         ? Math.min(...kpiDetailsData.map(d => d.id)) - 1
+    //         : -1;
+
+    //     setkpiDetailsData(prev => [
+    //         ...prev,
+    //         { id: newId, kpiId: '', kpiDescription: '' } // ✅ use correct keys
+    //     ]);
+
+    //     setGoalsDetailsErrors(prev => [
+    //         ...prev,
+    //         { kpiId: '', kpiDescription: '' }
+    //     ]);
+    // };
+
+    const handleDeleteKpiRow = (id) => {
+        if (kpiDetailsData.length <= 1) {
+            showToast('warning', 'At least one KPI is required');
             return;
         }
 
-        // Generate temporary negative ID for new rows
-        const newId = goalsDetailsData.length > 0
-            ? Math.min(...goalsDetailsData.map(d => d.id)) - 1
+        const index = kpiDetailsData.findIndex(d => d.id === id);
+        if (index === -1) return;
+
+        const newData = kpiDetailsData.filter(d => d.id !== id);
+        const newErrors = goalsDetailsErrors.filter((_, i) => i !== index);
+
+        setkpiDetailsData(newData);
+        setGoalsDetailsErrors(newErrors);
+    };
+
+    const handleAddRow = () => {
+        if (kpiDetailsData.length > 0) {
+            const lastRow = kpiDetailsData[kpiDetailsData.length - 1];
+
+            // Validate last row before adding new one
+            if (!lastRow.kpiId || !lastRow.kpiDescription) {
+                const newErrors = [...goalsDetailsErrors];
+                const lastIndex = newErrors.length - 1;
+                newErrors[lastIndex] = {
+                    kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
+                    kpiDescription: !lastRow.kpiDescription ? 'KPI Desc is required' : '',
+                };
+                setGoalsDetailsErrors(newErrors);
+                showToast('warning', 'Please fill current row before adding new');
+                return;
+            }
+        }
+
+        // Generate unique temporary ID
+        const newId = kpiDetailsData.length > 0
+            ? Math.min(...kpiDetailsData.map(d => d.id)) - 1
             : -1;
 
-        setGoalsDetailsData(prev => [
+        // Add new row with correct keys
+        setkpiDetailsData(prev => [
             ...prev,
-            { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }
+            { id: newId, kpiId: '', kpiDescription: '' }
         ]);
 
         setGoalsDetailsErrors(prev => [
             ...prev,
-            { area: '', keyPerformanceIndicator: '', goals: '' }
+            { kpiId: '', kpiDescription: '' }
         ]);
     };
 
-    const handleDeleteRow = (id) => {
-        if (detailsTableData.length <= 1) {
-            showToast('warning', 'At least one detail is required');
-            return;
-        }
-
-        const index = detailsTableData.findIndex(d => d.id === id);
-        if (index === -1) return;
-
-        const newData = detailsTableData.filter(d => d.id !== id);
-        const newErrors = goalsDetailsErrors.filter((_, i) => i !== index);
-
-        setDetailsTableData(newData);
-        setDetailsTableErrors(newErrors);
-    };
     const handleAddRow1 = () => {
         const lastRow = detailsTableData[detailsTableData.length - 1];
-        
+
         // Validate last row before adding new one
-        if (!lastRow.kpiId || !lastRow.kpiDescription || !lastRow.kraDescription || !lastRow.kraId) {
+        if (!lastRow.kpiId || !lastRow.kpiKraDescription || !lastRow.kraDescription || !lastRow.kraId) {
             const newErrors = [...goalsDetailsErrors];
             const lastIndex = newErrors.length - 1;
             newErrors[lastIndex] = {
                 kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
-                kpiDescription: !lastRow.kpiDescription ? 'KPI Desc is required' : '',
+                kpiDescription: !lastRow.kpiKraDescription ? 'KPI Desc is required' : '',
                 kraDescription: !lastRow.kraDescription ? 'KRA Description is required' : '',
                 kraId: !lastRow.kraId ? 'KRA Id is required' : ''
             };
@@ -310,41 +346,39 @@ const KRAKPI = () => {
 
         setDetailsTableData(prev => [
             ...prev,
-            { id: newId,kraId:'', kraDescription:'',ro:'', kpiId: '', kpiDescription: '' }
+            { id: newId, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
         ]);
 
         setDetailsTableErrors(prev => [
             ...prev,
-            { kraId:'', kraDescription:'',ro:'', kpiId: '', kpiDescription: '' }
+            { kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
         ]);
     };
 
-    const handleDeleteRow1 = (id) => {
-        if (goalsDetailsData.length <= 1) {
-            showToast('warning', 'At least one goal detail is required');
+    const handleDeleteDetailRow = (id) => {
+        if (detailsTableData.length <= 1) {
+            showToast('warning', 'At least one detail is required');
             return;
         }
 
-        const index = goalsDetailsData.findIndex(d => d.id === id);
+        const index = detailsTableData.findIndex(d => d.id === id);
         if (index === -1) return;
 
-        const newData = goalsDetailsData.filter(d => d.id !== id);
-        const newErrors = goalsDetailsErrors.filter((_, i) => i !== index);
+        const newData = detailsTableData.filter(d => d.id !== id);
+        const newErrors = detailsTableErrors.filter((_, i) => i !== index);
 
-        setGoalsDetailsData(newData);
-        setGoalsDetailsErrors(newErrors);
+        setDetailsTableData(newData);
+        setDetailsTableErrors(newErrors);
     };
 
-    const handleDetailChange = (id, field, value) => {
-        const index = goalsDetailsData.findIndex(d => d.id === id);
+    const handleKpiChange = (id, field, value) => {
+        const index = kpiDetailsData.findIndex(d => d.id === id);
         if (index === -1) return;
 
-        // Update data
-        const newData = [...goalsDetailsData];
+        const newData = [...kpiDetailsData];
         newData[index] = { ...newData[index], [field]: value };
-        setGoalsDetailsData(newData);
+        setkpiDetailsData(newData);
 
-        // Clear error for this field
         if (value) {
             const newErrors = [...goalsDetailsErrors];
             newErrors[index] = { ...newErrors[index], [field]: '' };
@@ -352,75 +386,25 @@ const KRAKPI = () => {
         }
     };
 
+    const handleDetailChange = (id, field, value) => {
+        const index = detailsTableData.findIndex(d => d.id === id);
+        if (index === -1) return;
+
+        const newData = [...detailsTableData];
+        newData[index] = { ...newData[index], [field]: value };
+        setDetailsTableData(newData); // << This instead of setkpiDetailsData
+        setkpiDetailsData(newData);
+
+        if (value) {
+            const newErrors = [...detailsTableErrors];
+            newErrors[index] = { ...newErrors[index], [field]: '' };
+            setDetailsTableErrors(newErrors);
+        }
+    };
+
     const handleView = () => setListView(!listView);
     const handleTabChange = (_, newValue) => setValue(newValue);
-    const handleFullGrid = () => {
-      // if (formData.customerCode) {
-        setModalOpen(true);
-        getAllFillGrid();
-      // }else{
-      //   setModalOpen(false);
-      //   showToast('warning', formData.customerName ? `${formData.customerCode} has No Data` : 'Please Select Customer Name');
-      // }
-    };
-    const handleCloseModal = () => {
-      setModalOpen(false);
-    };
-    const handleSelectAll = () => {
-      if (selectAll) {
-        setSelectedRows([]);
-      } else {
-        setSelectedRows(fillGridData.map((_, index) => index));
-      }
-      setSelectAll(!selectAll);
-    };
-    const handleSubmitSelectedRows = async () => {
-      const selectedData = selectedRows.map((index) => fillGridData[index]);
-      console.log("charge amt", selectedData);
-      const newData = selectedData
-        .filter((data) => {
-          return !goalsDetailsData.some(
-            (item) => item.invNo === data.vid && item.invDate === data.vdate
-          );
-        })
-        .map((data) => ({
-          id: Date.now() + Math.random(), 
-          invNo: data.vid || '',
-          invDate: data.vdate ? dayjs(data.vdate).format('YYYY-MM-DD') : null,
-          amount: data.billamount || '',
-          gstAmt: data.gstamount || '',
-          chargeAmt: data.chargeAmt || '',
-          currency: data.acccurrency || '',
-          exRate: data.exrate || '',
-          refDate: data.refate ? dayjs(data.refate).format('YYYY-MM-DD') : null,
-          refNo: data.refNo || ''
-        }));
-      if (newData.length < selectedData.length) {
-        showToast('warning', 'Some of the selected items are already added!');
-      }
-      if (newData.length === 0) {
-        return;
-      }
-      setGoalsDetailsData((prev) => [...prev, ...newData]);
-      setSelectedRows([]);
-      setSelectAll(false);
-      handleCloseModal();
-    };    
-  const getAllFillGrid = async () => {
-    try {
-      const response = await apiCalls(
-        'get',
-        `/arreceivable/getReciptFillGrid?orgId=${orgId}&partyCode=${formData.customerCode}`
-        );
-      if (response.status === true) {
-        setFillGridData(response.paramObjectsMap.reciptFillGrid);
-      } else {
-        console.error('API Error:', response);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
+
     return (
         <>
             <div>
@@ -473,7 +457,7 @@ const KRAKPI = () => {
                                                 <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
                                             </div>
                                             <div className="row mt-2">
-                                                <div className="col-lg-12">
+                                                <div className="col-lg-8">
                                                     <div className="table-responsive">
                                                         <table className="table table-bordered">
                                                             <thead>
@@ -487,7 +471,7 @@ const KRAKPI = () => {
                                                                     <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                                                         S.No
                                                                     </th>
-                                                                    <th className="px-2 py-2 text-white text-center">
+                                                                    <th className="px-2 py-2 text-white text-center" style={{ width: '100px' }}>
                                                                         KPI ID
                                                                     </th>
                                                                     <th className="px-2 py-2 text-white text-center">
@@ -496,13 +480,13 @@ const KRAKPI = () => {
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                {goalsDetailsData.map((row, index) => (
+                                                                {kpiDetailsData.map((row, index) => (
                                                                     <tr key={row.id}>
                                                                         <td className="border px-2 py-2 text-center">
                                                                             <ActionButton
                                                                                 title="Delete"
                                                                                 icon={DeleteIcon}
-                                                                                onClick={() => handleDeleteRow(row.id)}
+                                                                                onClick={() => handleDeleteKpiRow(row.id)}
                                                                             />
                                                                         </td>
                                                                         <td className="text-center pt-3">
@@ -514,7 +498,7 @@ const KRAKPI = () => {
                                                                                 size="small"
                                                                                 value={row.kpiId}
                                                                                 onChange={(e) =>
-                                                                                    handleDetailChange(row.id, 'kpiId', e.target.value)
+                                                                                    handleKpiChange(row.id, 'kpiId', e.target.value)
                                                                                 }
                                                                                 error={!!goalsDetailsErrors[index]?.kpiId}
                                                                                 helperText={goalsDetailsErrors[index]?.kpiId}
@@ -524,12 +508,12 @@ const KRAKPI = () => {
                                                                             <TextField
                                                                                 fullWidth
                                                                                 size="small"
-                                                                                value={row.keyPerformanceIndicator}
+                                                                                value={row.kpiDescription}
                                                                                 onChange={(e) =>
-                                                                                    handleDetailChange(row.id, 'keyPerformanceIndicator', e.target.value)
+                                                                                    handleKpiChange(row.id, 'kpiDescription', e.target.value)
                                                                                 }
-                                                                                error={!!goalsDetailsErrors[index]?.keyPerformanceIndicator}
-                                                                                helperText={goalsDetailsErrors[index]?.keyPerformanceIndicator}
+                                                                                error={!!goalsDetailsErrors[index]?.kpiDescription}
+                                                                                helperText={goalsDetailsErrors[index]?.kpiDescription}
                                                                             />
                                                                         </td>
                                                                     </tr>
@@ -563,16 +547,16 @@ const KRAKPI = () => {
                                                                     <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                                                         S.No
                                                                     </th>
-                                                                    <th className="px-2 py-2 text-white text-center">
+                                                                    <th className="px-2 py-2 text-white text-center" style={{ width: '100px' }}>
                                                                         KRA ID
                                                                     </th>
                                                                     <th className="px-2 py-2 text-white text-center">
                                                                         KRA DESCRIPTION
                                                                     </th>
-                                                                    <th className="px-2 py-2 text-white text-center">
+                                                                    <th className="px-2 py-2 text-white text-center" style={{ width: '100px' }}>
                                                                         R/O
                                                                     </th>
-                                                                    <th className="px-2 py-2 text-white text-center">
+                                                                    <th className="px-2 py-2 text-white text-center" style={{ width: '100px' }}>
                                                                         KPI ID
                                                                     </th>
                                                                     <th className="px-2 py-2 text-white text-center">
@@ -587,7 +571,7 @@ const KRAKPI = () => {
                                                                             <ActionButton
                                                                                 title="Delete"
                                                                                 icon={DeleteIcon}
-                                                                                onClick={() => handleDeleteRow1(row.id)}
+                                                                                onClick={() => handleDeleteDetailRow(row.id)}
                                                                             />
                                                                         </td>
                                                                         <td className="text-center pt-3">
@@ -621,36 +605,36 @@ const KRAKPI = () => {
                                                                             <TextField
                                                                                 fullWidth
                                                                                 size="small"
-                                                                                value={row.goals}
+                                                                                value={row.ro}
                                                                                 onChange={(e) =>
-                                                                                    handleDetailChange(row.id, 'goals', e.target.value)
+                                                                                    handleDetailChange(row.id, 'ro', e.target.value)
                                                                                 }
-                                                                                error={!!detailsTableErrors[index]?.goals}
-                                                                                helperText={detailsTableErrors[index]?.goals}
+                                                                                error={!!detailsTableErrors[index]?.ro}
+                                                                                helperText={detailsTableErrors[index]?.ro}
                                                                             />
                                                                         </td>
                                                                         <td>
                                                                             <TextField
                                                                                 fullWidth
                                                                                 size="small"
-                                                                                value={row.goals}
+                                                                                value={row.kpiId}
                                                                                 onChange={(e) =>
-                                                                                    handleDetailChange(row.id, 'goals', e.target.value)
+                                                                                    handleDetailChange(row.id, 'kpiId', e.target.value)
                                                                                 }
-                                                                                error={!!detailsTableErrors[index]?.goals}
-                                                                                helperText={detailsTableErrors[index]?.goals}
+                                                                                error={!!detailsTableErrors[index]?.kpiId}
+                                                                                helperText={detailsTableErrors[index]?.kpiId}
                                                                             />
                                                                         </td>
                                                                         <td>
                                                                             <TextField
                                                                                 fullWidth
                                                                                 size="small"
-                                                                                value={row.goals}
+                                                                                value={row.kpiKraDescription}
                                                                                 onChange={(e) =>
-                                                                                    handleDetailChange(row.id, 'goals', e.target.value)
+                                                                                    handleDetailChange(row.id, 'kpiKraDescription', e.target.value)
                                                                                 }
-                                                                                error={!!detailsTableErrors[index]?.goals}
-                                                                                helperText={detailsTableErrors[index]?.goals}
+                                                                                error={!!detailsTableErrors[index]?.kpiKraDescription}
+                                                                                helperText={detailsTableErrors[index]?.kpiKraDescription}
                                                                             />
                                                                         </td>
                                                                     </tr>
@@ -670,7 +654,7 @@ const KRAKPI = () => {
                             data={listViewData}
                             columns={listViewColumns}
                             enableEditing={true}
-                            toEdit={getGoalsById}
+                            toEdit={getKraKpiById}
                         />
                     )}
                 </div>
