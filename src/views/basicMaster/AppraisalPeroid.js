@@ -98,7 +98,7 @@ export const City = () => {
 
     const getAllAppraisalPeriod = async () => {
         try {
-            const response = await apiCalls('get', `/goalsController/getAppraisalByOrgId?orgId=${orgId}`);
+            const response = await apiCalls('get', `/goalsController/getAppraisalPeriodByOrgId?orgId=${orgId}`);
             if (response.status) {
                 setListViewData(response.paramObjectsMap.appraisalVO);
             } else {
@@ -111,7 +111,7 @@ export const City = () => {
     const getAppraisalPeriodById = async (row) => {
         setEditId(row.original.id);
         try {
-            const response = await apiCalls('get', `/goalsController/getAppraisalById?id=${row.original.id}`);
+            const response = await apiCalls('get', `/goalsController/getAppraisalPeriodById?id=${row.original.id}`);
             if (response.status) {
                 setListView(false);
                 const appraisalPeriod = response.paramObjectsMap.appraisalVO;
@@ -158,7 +158,7 @@ export const City = () => {
         };
 
         try {
-            const response = await apiCalls('put', '/goalsController/createUpdateAppraisal', payload);
+            const response = await apiCalls('put', '/goalsController/createUpdateAppraisalPeriod', payload);
             if (response.status) {
                 showToast('success', editId ? 'Appraisal Period updated successfully' : 'Appraisal Period created successfully');
                 handleClear();

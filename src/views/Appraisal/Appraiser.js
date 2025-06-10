@@ -156,8 +156,7 @@ function Appraiser() {
             </div>
           </div>
         )}
-        {/*  */}
-        <div className="row mt-2">
+        {/* <div className="row mt-2">
           <Box sx={{ width: '100%' }}>
             <Tabs
               value={value}
@@ -176,8 +175,7 @@ function Appraiser() {
               </div>
             )}
           </Box>
-        </div>
-        {/*  */}
+        </div> */}
       </div>
     </>
   );

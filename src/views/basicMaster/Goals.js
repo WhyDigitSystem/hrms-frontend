@@ -44,11 +44,13 @@ const Goals = () => {
     const [fillGridData, setFillGridData] = useState([]);
     const [formData, setFormData] = useState({
         appraisalId: '',
+        department:'',
         active: true
     });
 
     const [fieldErrors, setFieldErrors] = useState({
         appraisalId: '',
+        department:''
     });
 
     const [goalsDetailsData, setGoalsDetailsData] = useState([
@@ -61,6 +63,7 @@ const Goals = () => {
 
     const listViewColumns = [
         { accessorKey: 'appraisalId', header: 'Appraisal ID', size: 140 },
+        { accessorKey: 'department', header: 'Department', size: 140 },
         // { accessorKey: 'code', header: 'Code', size: 140 },
         // { accessorKey: 'name', header: 'Name', size: 140 },
         // { accessorKey: 'supervisorCode', header: 'Supv Code', size: 140 },
@@ -109,6 +112,7 @@ const Goals = () => {
                 const goal = response.paramObjectsMap.goalsVO;
                 setFormData({
                     appraisalId: goal.appraisalId,
+                    department: goal.department,
                 });
 
                 // Preserve actual database IDs
@@ -131,6 +135,8 @@ const Goals = () => {
         // Validate main form fields
         const errors = {};
         if (!formData.appraisalId) errors.appraisalId = 'Appraisal ID is required';
+        if (!formData.department) errors.department = 'Department is required';
+
 
         // Validate details
         const detailsErrors = goalsDetailsData.map(detail => {
@@ -166,6 +172,7 @@ const Goals = () => {
             ...(editId && { id: editId }),
             active: formData.active,
             appraisalId: formData.appraisalId,
+            department: formData.department,
             finYear: formData.finYear,
             orgId,
             createdBy,
@@ -192,10 +199,13 @@ const Goals = () => {
     const handleClear = () => {
         setFormData({
             appraisalId: '',
+            department:'',
         });
 
         setFieldErrors({
             appraisalId: '',
+            department:'',
+
         });
 
         setGoalsDetailsData([
@@ -305,6 +315,20 @@ const Goals = () => {
                                         onChange={handleInputChange}
                                         error={!!fieldErrors.appraisalId}
                                         helperText={fieldErrors.appraisalId}
+                                    />
+                                </div>
+
+                                <div className="col-md-3 mb-3">
+                                    <TextField
+                                        label="Department"
+                                        variant="outlined"
+                                        size="small"
+                                        fullWidth
+                                        name="department"
+                                        value={formData.department}
+                                        onChange={handleInputChange}
+                                        error={!!fieldErrors.department}
+                                        helperText={fieldErrors.department}
                                     />
                                 </div>
                             </div>

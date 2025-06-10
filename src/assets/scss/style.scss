@@ -1427,12 +1427,21 @@
 }
 
 .css-19zaxpr-MuiAvatar-root {
-   border-radius: 0% !important; 
+  border-radius: 0% !important;
 }
+
 .css-1j54uvo {
-    width: 30% !important;
-    max-height: 282px;
-    object-fit: contain;
-    margin-top: 0px !important;
-    border-radius: 0px !important;
+  width: 30% !important;
+  max-height: 282px;
+  object-fit: contain;
+  margin-top: 0px !important;
+  border-radius: 0px !important;
+}
+
+.css-15qvpff,
+.css-1pe4mpk-MuiButtonBase-root-MuiIconButton-root {
+  color: #1c1a1a !important;
+}
+.css-1hfbcp0:hover{
+  color: #ffffff !important;
 }
