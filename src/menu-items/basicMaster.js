@@ -49,7 +49,8 @@ const screenMapping = {
   KRAKPI: 'KRAKPI',
   Weightage: "Weightage",
   Grade: "Grade",
-  Goals: "Goals"
+  Goals: "Goals",
+  Score: "Score"
 };
 
 const allScreens = [
@@ -66,6 +67,8 @@ const allScreens = [
   { id: 'Weightage', title: 'Weightage', type: 'item', url: '/basicMaster/Weightage', icon: icons6.IconIdBadge2 },
   { id: 'Grade', title: 'Grade', type: 'item', url: '/basicMaster/Grade', icon: icons6.IconIdBadge2 },
   { id: 'Goals', title: 'Goals', type: 'item', url: '/basicMaster/Goals', icon: icons6.IconIdBadge2 },
+  { id: 'Score', title: 'Score', type: 'item', url: '/basicMaster/Score', icon: icons6.IconIdBadge2 },
+
 
 
 ];
@@ -175,6 +178,13 @@ const basicMaster = {
           title: 'Goals',
           type: 'item',
           url: '/basicMaster/Goals',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'Score',
+          title: 'Score',
+          type: 'item',
+          url: '/basicMaster/Score',
           icon: icons6.IconIdBadge2
         }
       ].filter((item) => allowedScreenIds.includes(item.id))

@@ -33,6 +33,8 @@ const KRAKPI = Loadable(lazy(() => import('views/basicMaster/KRAKPI')));
 const Weightage = Loadable(lazy(() => import('views/basicMaster/Weightage')));
 const Grade = Loadable(lazy(() => import('views/basicMaster/Grade')));
 const Goals = Loadable(lazy(() => import('views/basicMaster/Goals')));
+const Score = Loadable(lazy(() => import('views/basicMaster/Score')));
+
 
 
 // Employee Master
@@ -160,6 +162,10 @@ const HrmsRoute = {
     {
       path: '/basicMaster/Goals',
       element: <Goals />
+    },
+    {
+      path: '/basicMaster/Score',
+      element: <Score />
     },
     {
       path: '/companysetup/ScreenNames',
