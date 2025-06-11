@@ -82,12 +82,6 @@ function Appraiser() {
     setFieldErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
-  // useEffect(() => {
-  //   if (formData.appraisalID) {
-  //     setOpen(true);
-  //   }
-  // }, [formData.appraisalID]);
-
   const handleAllClear = () => {
     setFormData({
       appraisalID: '',
@@ -111,6 +105,7 @@ function Appraiser() {
       }
     ]);
     setEmpDetails([]);
+    setTableDataErrors([{}]);
   };
   const handleTabChange = (_, newValue) => setValue(newValue);
   //
@@ -528,7 +523,7 @@ function Appraiser() {
                                   Supervisor 1 Rating
                                 </th>
                                 <th className="px-2 py-2 text-white text-center" style={{ width: '5%' }}>
-                                  Score (1-5)
+                                  Score
                                 </th>
                               </tr>
                             </thead>
