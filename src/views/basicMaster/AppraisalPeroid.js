@@ -17,301 +17,160 @@ import EditIcon from '@mui/icons-material/Edit';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import apiCalls from 'apicall';
-import { getAllActiveCountries, getAllActiveStatesByCountry } from 'utils/CommonFunctions';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import COASample from '../../assets/sample-files/COASample.xlsx';
-import { FaFileExcel } from 'react-icons/fa';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import { FaFilePdf } from 'react-icons/fa';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
 
 export const City = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [editId, setEditId] = useState('');
     const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
     const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-    const [countryList, setCountryList] = useState([]);
-    const [stateList, setStateList] = useState([]);
-    const [showForm, setShowForm] = useState(true);
-    const [uploadOpen, setUploadOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [finyearList, setFinyearList] = useState([]);
+    const [typeList, setTypeList] = useState([]);
 
     const [formData, setFormData] = useState({
-        cityCode: '',
-        cityName: '',
-        state: '',
-        country: 'INDIA',
+        finYear: null,
+        type: '',
+        appraisalId: '',
+        effectiveFrom: null,
+        effectiveTo: null,
         active: true
     });
 
     const [fieldErrors, setFieldErrors] = useState({
-        cityCode: '',
-        cityName: '',
-        state: '',
-        country: ''
+        finYear: '',
+        type: '',
+        appraisalId: '',
+        effectiveFrom: '',
+        effectiveTo: ''
     });
     const [listView, setListView] = useState(false);
     const [listViewData, setListViewData] = useState([]);
-    useEffect(() => {
-        getAllCities();
-        getAllCountries();
-        if (formData.country) {
-            getAllStates();
-        }
-    }, [formData.country]);
-
-    const getAllCountries = async () => {
-        try {
-            const countryData = await getAllActiveCountries(orgId);
-            setCountryList(countryData);
-        } catch (error) {
-            console.error('Error fetching country data:', error);
-        }
-    };
-    const getAllStates = async () => {
-        try {
-            const stateData = await getAllActiveStatesByCountry(formData.country, orgId);
-            setStateList(stateData);
-        } catch (error) {
-            console.error('Error fetching country data:', error);
-        }
-    };
-    const handleExcelFileDownload = () => {
-        console.log("Downloading Excel...");  // Debugging step
-        console.log("List View Data:", listViewData); // Check if data exists
-
-        if (!listViewData || listViewData.length === 0) {
-            showToast('error', 'No data available to download');
-            return;
-        }
-
-        try {
-            const filteredData = listViewData.map(({ cityCode, cityName, state, country, active }) => ({
-                'City Code': cityCode,
-                'City Name': cityName,
-                'State': state,
-                'Country': country,
-                'Active': (active === true || active === 'Active') ? 'Yes' : 'No'
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(filteredData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, 'Cities');
-
-            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-            const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-
-            saveAs(blob, 'City_List.xlsx');
-            showToast('success', 'Excel file downloaded successfully');
-        } catch (error) {
-            console.error('Error generating Excel:', error);
-            showToast('error', 'Failed to generate Excel');
-        }
-    };
-
-
-
-    const handleBulkUploadClose = () => {
-        setUploadOpen(false); // Close dialog
-    };
-
-    const handleSubmit = () => {
-        console.log('Submit clicked');
-        handleBulkUploadClose();
-    };
-
-    const handleFileUpload = (event) => {
-        console.log(event.target.files[0]);
-    };
-
-    const handlePDFDownload = async () => {
-        setLoading(true);
-
-        if (!listViewData || listViewData.length === 0) {
-            showToast('error', 'No city data available to download');
-            setLoading(false);
-            return;
-        }
-
-        try {
-            const doc = new jsPDF();
-            doc.text('City List', 14, 10);
-
-            const tableColumn = ['City Name', 'State', 'Country', 'Active'];
-            const tableRows = [];
-
-            listViewData.forEach(({ cityName, state, country, active }) => {
-                tableRows.push([
-                    cityName,
-                    state,
-                    country,
-                    active === true || active === 'Active' ? 'Yes' : 'No',
-                ]);
-            });
-
-            autoTable(doc, {  // ✅ Use 'autoTable' function directly with doc
-                head: [tableColumn],
-                body: tableRows,
-                startY: 20
-            });
-
-            doc.save('City_List.pdf');
-            showToast('success', 'City List PDF downloaded successfully');
-        } catch (error) {
-            console.error('Error generating City List PDF:', error);
-            showToast('error', 'Failed to generate City List PDF');
-        }
-
-        setLoading(false);
-    };
 
     const handleInputChange = (e) => {
-        const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-        const codeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-        const nameRegex = /^[A-Za-z ]*$/;
+        const { name, value, checked, type } = e.target;
+        const updatedValue = value;
+        setFormData(prev => ({
+            ...prev,
+            [name]: updatedValue
+        }));
+        setFieldErrors(prev => ({
+            ...prev,
+            [name]: ''
+        }));
+    };
 
-        if (name === 'cityCode' && !codeRegex.test(value)) {
-            setFieldErrors({ ...fieldErrors, [name]: 'Only AlphaNumerics are Allowed' });
-        } else if (name === 'cityCode' && value.length > 3) {
-            setFieldErrors({ ...fieldErrors, [name]: 'Max Length is 3' });
-        } else if (name === 'cityName' && !nameRegex.test(value)) {
-            setFieldErrors({ ...fieldErrors, [name]: 'Only Alphabets Allowed' });
-        } else if (name === 'cityName' && value.length > 40) {
-            setFieldErrors({ ...fieldErrors, [name]: 'Exceeded Max Length' });
+    const handleDateChange = (name, date) => {
+        if (date && dayjs(date).isValid()) {
+            const dateString = dayjs(date).format('YYYY-MM-DD'); // Ensure correct format
+            setFormData((prev) => ({ ...prev, [name]: dateString }));
+            setFieldErrors((prev) => ({ ...prev, [name]: false }));
         } else {
-            setFormData({
-                ...formData,
-                [name]: name === 'active' ? checked : value.toUpperCase()
-            });
-            setFieldErrors({ ...fieldErrors, [name]: '' });
-
-            // Update the cursor position after the input change
-            if (type === 'text' || type === 'textarea') {
-                setTimeout(() => {
-                    const inputElement = document.getElementsByName(name)[0];
-                    if (inputElement) {
-                        inputElement.setSelectionRange(selectionStart, selectionEnd);
-                    }
-                }, 0);
-            }
+            setFormData((prev) => ({ ...prev, [name]: null }));
+            setFieldErrors((prev) => ({ ...prev, [name]: true }));
         }
     };
 
     const handleClear = () => {
         setFormData({
-            cityCode: '',
-            cityName: '',
-            state: '',
-            country: 'INDIA',
+            finYear: '',
+            type: '',
+            appraisalId: '',
+            effectiveFrom: '',
+            effectiveTo: '',
             active: true
         });
         setFieldErrors({
-            cityCode: '',
-            cityName: '',
-            state: '',
-            country: ''
+            finYear: '',
+            type: '',
+            appraisalId: '',
+            effectiveFrom: '',
+            effectiveTo: ''
         });
         setEditId('');
     };
 
-    const getAllCities = async () => {
-        try {
-            const response = await apiCalls('get', `commonmaster/city?orgid=${orgId}`);
-            console.log('API Response:', response);
+    useEffect(() => {
+        getAllAppraisalPeriod();
+    }, []);
 
-            if (response.status === true) {
-                setListViewData(response.paramObjectsMap.cityVO.reverse());
+    const getAllAppraisalPeriod = async () => {
+        try {
+            const response = await apiCalls('get', `/goalsController/getAppraisalPeriodByOrgId?orgId=${orgId}`);
+            if (response.status) {
+                setListViewData(response.paramObjectsMap.appraisalVO);
             } else {
-                console.error('API Error:', response);
+                showToast('error', response.message);
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error fetching goals:', error);
         }
     };
-
-    const getCityById = async (row) => {
-        console.log('THE SELECTED CITY ID IS:', row.original.id);
+    const getAppraisalPeriodById = async (row) => {
         setEditId(row.original.id);
         try {
-            const response = await apiCalls('get', `commonmaster/city/${row.original.id}`);
-            console.log('API Response:', response);
-
-            if (response.status === true) {
+            const response = await apiCalls('get', `/goalsController/getAppraisalPeriodById?id=${row.original.id}`);
+            if (response.status) {
                 setListView(false);
-                const particularCity = response.paramObjectsMap.cityVO;
-
+                const appraisalPeriod = response.paramObjectsMap.appraisalVO;
                 setFormData({
-                    cityCode: particularCity.cityCode,
-                    cityName: particularCity.cityName,
-                    country: particularCity.country,
-                    state: particularCity.state,
-                    active: particularCity.active === 'Active' ? true : false
+                    finYear: appraisalPeriod.finYear,
+                    type: appraisalPeriod.type,
+                    appraisalId: appraisalPeriod.appraisalId,
+                    effectiveFrom: appraisalPeriod.effectiveForm,
+                    effectiveTo: appraisalPeriod.effectiveTo,
+                    active: appraisalPeriod.active === 'Active' ? true : false
                 });
-            } else {
-                console.error('API Error:', response);
             }
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error fetching Appraisal Period details:', error);
+            showToast('error', 'Failed to fetch Appraisal Period details');
         }
     };
 
     const handleSave = async () => {
+        // Validate main form fields
         const errors = {};
-        if (!formData.cityCode) {
-            errors.cityCode = 'City Code is required';
-        } else if (formData.cityCode.length <= 1) {
-            errors.cityCode = 'Min Length is 2';
-        }
-
-        if (!formData.cityName) {
-            errors.cityName = 'City Name is required';
-        } else if (formData.cityName.length <= 2) {
-            errors.cityName = 'Min Length is 3';
-        }
-
-        if (!formData.state) {
-            errors.state = 'State is required';
-        }
-        if (!formData.country) {
-            errors.country = 'Country is required';
-        }
-
-        if (Object.keys(errors).length === 0) {
-            setIsLoading(true);
-            const saveData = {
-                ...(editId && { id: editId }),
-                active: formData.active,
-                cityCode: formData.cityCode,
-                cityName: formData.cityName,
-                state: formData.state,
-                country: formData.country,
-                orgId: orgId,
-                createdBy: loginUserName
-            };
-
-            console.log('DATA TO SAVE', saveData);
-
-            try {
-                const response = await apiCalls('post', `commonmaster/createUpdateCity`, saveData);
-                if (response.status === true) {
-                    console.log('Response:', response);
-                    showToast('success', editId ? ' City Updated Successfully' : 'City created successfully');
-                    handleClear();
-                    getAllCities();
-                    setIsLoading(false);
-                } else {
-                    showToast('error', response.paramObjectsMap.errorMessage || 'City creation failed');
-                    setIsLoading(false);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('error', 'City creation failed');
-                setIsLoading(false);
-            }
-        } else {
+        if (!formData.finYear) errors.finYear = 'Financial Year is required';
+        if (!formData.type) errors.type = 'Type is required';
+        // if (!formData.appraisalId) errors.appraisalId = 'Appraisal Id is required';
+        if (!formData.effectiveFrom) errors.effectiveFrom = 'Effective From is required';
+        if (!formData.effectiveTo) errors.effectiveTo = 'Effective To is required';
+        if (Object.keys(errors).length > 0) {
             setFieldErrors(errors);
+            showToast('error', 'Please fill all required fields');
+            return;
+        }
+
+        setIsLoading(true);
+        const payload = {
+            ...(editId && { id: editId }),
+            active: formData.active,
+            appraisalId: parseInt(formData.appraisalId),
+            createdBy: loginUserName,
+            effectiveForm: formData.effectiveFrom,
+            effectiveTo: formData.effectiveTo,
+            finYear: parseInt(formData.finYear),
+            orgId: parseInt(orgId),
+            type: formData.type
+        };
+
+        try {
+            const response = await apiCalls('put', '/goalsController/createUpdateAppraisalPeriod', payload);
+            if (response.status) {
+                showToast('success', editId ? 'Appraisal Period updated successfully' : 'Appraisal Period created successfully');
+                handleClear();
+                getAllAppraisalPeriod();
+            } else {
+                showToast('error', response.message || 'Operation failed');
+            }
+        } catch (error) {
+            console.error('Error saving Appraisal Period:', error);
+            showToast('error', 'Failed to save Appraisal Period');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -320,10 +179,11 @@ export const City = () => {
     };
 
     const listViewColumns = [
-        { accessorKey: 'cityCode', header: 'Code', size: 140 },
-        { accessorKey: 'cityName', header: 'City', size: 140 },
-        { accessorKey: 'state', header: 'State', size: 140 },
-        { accessorKey: 'country', header: 'Country', size: 140 },
+        { accessorKey: 'finYear', header: 'Fin Year', size: 140 },
+        { accessorKey: 'type', header: 'Type', size: 140 },
+        { accessorKey: 'appraisalId', header: 'Appraise Id', size: 140 },
+        { accessorKey: 'effectiveForm', header: 'Effective From', size: 140 },
+        { accessorKey: 'effectiveTo', header: 'Effective To', size: 140 },
         { accessorKey: 'active', header: 'Active', size: 140 }
     ];
 
@@ -336,110 +196,124 @@ export const City = () => {
                         <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
                         <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
                         <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
-                        {uploadOpen && (
-                            <CommonBulkUpload
-                                open={uploadOpen}
-                                handleClose={handleBulkUploadClose}
-                                title="Upload Files"
-                                uploadText="Upload file"
-                                downloadText="Sample File"
-                                onSubmit={handleSubmit}
-                                sampleFileDownload={COASample}
-                                handleFileUpload={handleFileUpload}
-                                apiUrl={`master/excelUploadForGroupLedger`}
-                                screen="COA"
-                                loginUser={loginUserName}
-                                orgId={orgId}
-                            ></CommonBulkUpload>
-                        )}
-                        {/* <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
-            <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} /> */}
-                        {listView && (
-                            <div className='ps-2'>
-                                <ActionButton icon={FaFileExcel} title="Excel Download" onClick={handleExcelFileDownload} />
-                                <ActionButton icon={FaFilePdf} title="PDF Download" onClick={handlePDFDownload} />
-                            </div>
-                        )}
                     </div>
                 </div>
                 {listView ? (
                     <div className="mt-0">
-                        <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getCityById} enableEditing={true} />
+                        <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAppraisalPeriodById} enableEditing={true} />
                     </div>
                 ) : (
                     <>
                         <div className="row">
 
-                            <div className="col-md-3 mb-3">
-                                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
-                                    <InputLabel id="country-label">Finanicial Year</InputLabel>
-                                    <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
-                                        {Array.isArray(countryList) &&
-                                            countryList?.map((row) => (
-                                                <MenuItem key={row.id} value={row.countryName}>
-                                                    {row.countryName}
+                            {/* <div className="col-md-3 mb-3">
+                                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.finYear}>
+                                    <InputLabel id="FinanicialYear-label">Finanicial Year</InputLabel>
+                                    <Select labelId="finYear-label" label="finYear" value={formData.finYear} onChange={handleInputChange} name="finYear">
+                                        {Array.isArray(finyearList) &&
+                                            finyearList?.map((row) => (
+                                                <MenuItem key={row.id} value={row.finyear}>
+                                                    {row.finyear}
                                                 </MenuItem>
                                             ))}
                                     </Select>
-                                    {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
+                                    {fieldErrors.finYear && <FormHelperText>{fieldErrors.finYear}</FormHelperText>}
                                 </FormControl>
                             </div>
 
                             <div className="col-md-3 mb-3">
                                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.country}>
-                                    <InputLabel id="country-label">Type</InputLabel>
-                                    <Select labelId="country-label" label="Country" value={formData.country} onChange={handleInputChange} name="country">
-                                        {Array.isArray(countryList) &&
-                                            countryList?.map((row) => (
-                                                <MenuItem key={row.id} value={row.countryName}>
-                                                    {row.countryName}
+                                    <InputLabel id="type-label">Type</InputLabel>
+                                    <Select labelId="type-label" label="type" value={formData.type} onChange={handleInputChange} name="type">
+                                        {Array.isArray(typeList) &&
+                                            typeList?.map((row) => (
+                                                <MenuItem key={row.id} value={row.type}>
+                                                    {row.type}
                                                 </MenuItem>
                                             ))}
                                     </Select>
-                                    {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
+                                    {fieldErrors.type && <FormHelperText>{fieldErrors.type}</FormHelperText>}
                                 </FormControl>
-                            </div>
+                            </div> */}
 
+                            <div className="col-md-3 mb-3">
+                                <TextField
+                                    label="Financial Year"
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    name="finYear"
+                                    value={formData.finYear}
+                                    onChange={handleInputChange}
+                                    error={!!fieldErrors.finYear}
+                                    helperText={fieldErrors.finYear}
+                                />
+                            </div>
+                            <div className="col-md-3 mb-3">
+                                <TextField
+                                    label="Type"
+                                    variant="outlined"
+                                    size="small"
+                                    fullWidth
+                                    name="type"
+                                    value={formData.type}
+                                    onChange={handleInputChange}
+                                    error={!!fieldErrors.type}
+                                    helperText={fieldErrors.type}
+                                />
+                            </div>
                             <div className="col-md-3 mb-3">
                                 <TextField
                                     label="Appraise ID"
                                     variant="outlined"
                                     size="small"
                                     fullWidth
-                                    name="cityCode"
-                                    value={formData.cityCode}
+                                    name="appraisalId"
+                                    value={formData.appraisalId}
                                     onChange={handleInputChange}
-                                    error={!!fieldErrors.cityCode}
-                                    helperText={fieldErrors.cityCode}
+                                    error={!!fieldErrors.appraisalId}
+                                    helperText={fieldErrors.appraisalId}
                                 />
                             </div>
                             <div className="col-md-3 mb-3">
-                                <TextField
-                                    label="Effective From"
-                                    variant="outlined"
-                                    size="small"
-                                    fullWidth
-                                    name="cityName"
-                                    value={formData.cityName}
-                                    onChange={handleInputChange}
-                                    error={!!fieldErrors.cityName}
-                                    helperText={fieldErrors.cityName}
-                                />
-                            </div>
-
-                            <div className="col-md-3 mb-3">
-                                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.state}>
-                                    <InputLabel id="state-label">Effective To</InputLabel>
-                                    <Select labelId="state-label" label="State" value={formData.state} onChange={handleInputChange} name="state">
-                                        {stateList?.map((row) => (
-                                            <MenuItem key={row.id} value={row.stateName}>
-                                                {row.stateName}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                    {fieldErrors.state && <FormHelperText>{fieldErrors.state}</FormHelperText>}
+                                <FormControl fullWidth variant="filled" size="small">
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            label="Effective From"
+                                            value={formData.effectiveFrom ? dayjs(formData.effectiveFrom) : null}
+                                            onChange={(date) => handleDateChange('effectiveFrom', date)}
+                                            format="DD-MM-YYYY"
+                                            slotProps={{
+                                                textField: {
+                                                    size: 'small',
+                                                    error: !!fieldErrors.effectiveFrom,
+                                                    helperText: fieldErrors.effectiveFrom
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
                                 </FormControl>
                             </div>
+                            <div className="col-md-3 mb-3">
+                                <FormControl fullWidth variant="filled" size="small">
+                                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                        <DatePicker
+                                            label="Effective To"
+                                            value={formData.effectiveTo ? dayjs(formData.effectiveTo) : null}
+                                            onChange={(date) => handleDateChange('effectiveTo', date)}
+                                            format="DD-MM-YYYY"
+                                            slotProps={{
+                                                textField: {
+                                                    size: 'small',
+                                                    error: !!fieldErrors.effectiveTo,
+                                                    helperText: fieldErrors.effectiveTo
+                                                }
+                                            }}
+                                        />
+                                    </LocalizationProvider>
+                                </FormControl>
+                            </div>
+
                             <div className="col-md-3 mb-3">
                                 <FormControlLabel
                                     control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}

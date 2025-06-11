@@ -1,16 +1,20 @@
+import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
 import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import GridOnIcon from '@mui/icons-material/GridOn';
 import {
+    Button,
+    TextField,
+    Box,
     Tab,
     Tabs,
     FormControlLabel,
     Checkbox
 } from '@mui/material';
 import dayjs from 'dayjs';
+import GridOnIcon from '@mui/icons-material/GridOn';
 import Paper from '@mui/material/Paper';
 import Draggable from 'react-draggable';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
@@ -18,7 +22,6 @@ import apiCalls from 'apicall';
 import { useState, useEffect } from 'react';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
-import { FormControl, FormHelperText, Box, Button, Chip, Stack, TextField, Grid, InputLabel, MenuItem, Select } from '@mui/material';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 function PaperComponent(props) {
   return (
@@ -28,11 +31,6 @@ function PaperComponent(props) {
   );
 }
 const SelfGoals = () => {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [selectAll, setSelectAll] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [fillGridData, setFillGridData] = useState([]);
     const [listViewData, setListViewData] = useState([]);
     const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
     const [createdBy] = useState(localStorage.getItem('userName'));
@@ -40,25 +38,30 @@ const SelfGoals = () => {
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [fillGridData, setFillGridData] = useState([]);
     const [formData, setFormData] = useState({
         appraisalId: '',
-        department: '',
         code: '',
         name: '',
         supervisorCode: '',
         supervisorName: '',
+        active: true
     });
 
     const [fieldErrors, setFieldErrors] = useState({
         appraisalId: '',
-        department: '',
         code: '',
         name: '',
         supervisorCode: '',
         supervisorName: ''
     });
 
-    const [goalsDetailsData, setGoalsDetailsData] = useState([]);
+    const [goalsDetailsData, setGoalsDetailsData] = useState([
+        { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
+    ]);
 
     const [goalsDetailsErrors, setGoalsDetailsErrors] = useState([
         { area: '', keyPerformanceIndicator: '', goals: '' }
@@ -66,16 +69,16 @@ const SelfGoals = () => {
 
     const listViewColumns = [
         { accessorKey: 'appraisalId', header: 'Appraisal ID', size: 140 },
-        { accessorKey: 'department', header: 'Department', size: 140 },
         { accessorKey: 'code', header: 'Code', size: 140 },
         { accessorKey: 'name', header: 'Name', size: 140 },
         { accessorKey: 'supervisorCode', header: 'Supv Code', size: 140 },
-        { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 }
+        { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 },
+        { accessorKey: 'active', header: 'Active', size: 140 }
     ];
 
     const handleInputChange = (e) => {
         const { name, value, checked, type } = e.target;
-        const updatedValue = value;
+        const updatedValue = type === 'checkbox' ? checked : value;
 
         setFormData(prev => ({
             ...prev,
@@ -105,7 +108,6 @@ const SelfGoals = () => {
             showToast('error', 'Failed to fetch goals');
         }
     };
-
     const getGoalsById = async (row) => {
         setEditId(row.original.id);
         try {
@@ -115,7 +117,6 @@ const SelfGoals = () => {
                 const goal = response.paramObjectsMap.preGoalsVO;
                 setFormData({
                     appraisalId: goal.appraisalId,
-                    department: goal.department,
                     code: goal.code,
                     name: goal.name,
                     supervisorCode: goal.supervisorCode,
@@ -186,7 +187,8 @@ const SelfGoals = () => {
         }));
 
         const payload = {
-            department: formData.department,
+            id: editId, // Always include main goal ID for updates
+            active: formData.active,
             appraisalId: formData.appraisalId,
             code: formData.code,
             name: formData.name,
@@ -217,23 +219,24 @@ const SelfGoals = () => {
     const handleClear = () => {
         setFormData({
             appraisalId: '',
-            department: '',
             code: '',
             name: '',
             supervisorCode: '',
-            supervisorName: ''
+            supervisorName: '',
+            active: true
         });
 
         setFieldErrors({
             appraisalId: '',
-            department: '',
             code: '',
             name: '',
             supervisorCode: '',
             supervisorName: ''
         });
 
-        setGoalsDetailsData([]);
+        setGoalsDetailsData([
+            { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
+        ]);
 
         setGoalsDetailsErrors([
             { area: '', keyPerformanceIndicator: '', goals: '' }
@@ -242,38 +245,38 @@ const SelfGoals = () => {
         setEditId('');
     };
 
-    // const handleAddRow = () => {
-    //     const lastRow = goalsDetailsData[goalsDetailsData.length - 1];
+    const handleAddRow = () => {
+        const lastRow = goalsDetailsData[goalsDetailsData.length - 1];
         
-    //     // Validate last row before adding new one
-    //     if (!lastRow.area || !lastRow.keyPerformanceIndicator || !lastRow.goals) {
-    //         const newErrors = [...goalsDetailsErrors];
-    //         const lastIndex = newErrors.length - 1;
-    //         newErrors[lastIndex] = {
-    //             area: !lastRow.area ? 'Area is required' : '',
-    //             keyPerformanceIndicator: !lastRow.keyPerformanceIndicator ? 'KPI is required' : '',
-    //             goals: !lastRow.goals ? 'Goals is required' : ''
-    //         };
-    //         setGoalsDetailsErrors(newErrors);
-    //         showToast('warning', 'Please fill current row before adding new');
-    //         return;
-    //     }
+        // Validate last row before adding new one
+        if (!lastRow.area || !lastRow.keyPerformanceIndicator || !lastRow.goals) {
+            const newErrors = [...goalsDetailsErrors];
+            const lastIndex = newErrors.length - 1;
+            newErrors[lastIndex] = {
+                area: !lastRow.area ? 'Area is required' : '',
+                keyPerformanceIndicator: !lastRow.keyPerformanceIndicator ? 'KPI is required' : '',
+                goals: !lastRow.goals ? 'Goals is required' : ''
+            };
+            setGoalsDetailsErrors(newErrors);
+            showToast('warning', 'Please fill current row before adding new');
+            return;
+        }
 
-    //     // Generate temporary negative ID for new rows
-    //     const newId = goalsDetailsData.length > 0
-    //         ? Math.min(...goalsDetailsData.map(d => d.id)) - 1
-    //         : -1;
+        // Generate temporary negative ID for new rows
+        const newId = goalsDetailsData.length > 0
+            ? Math.min(...goalsDetailsData.map(d => d.id)) - 1
+            : -1;
 
-    //     setGoalsDetailsData(prev => [
-    //         ...prev,
-    //         { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }
-    //     ]);
+        setGoalsDetailsData(prev => [
+            ...prev,
+            { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }
+        ]);
 
-    //     setGoalsDetailsErrors(prev => [
-    //         ...prev,
-    //         { area: '', keyPerformanceIndicator: '', goals: '' }
-    //     ]);
-    // };
+        setGoalsDetailsErrors(prev => [
+            ...prev,
+            { area: '', keyPerformanceIndicator: '', goals: '' }
+        ]);
+    };
 
     const handleDeleteRow = (id) => {
         if (goalsDetailsData.length <= 1) {
@@ -410,32 +413,6 @@ const SelfGoals = () => {
                                 </div>
                                 <div className="col-md-3 mb-3">
                                     <TextField
-                                        label="Department"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="name"
-                                        value={formData.department}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.department}
-                                        helperText={fieldErrors.department}
-                                    />
-                                </div>                                
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Name"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.name}
-                                        helperText={fieldErrors.name}
-                                    />
-                                </div>                                
-                                <div className="col-md-3 mb-3">
-                                    <TextField
                                         label="Code"
                                         variant="outlined"
                                         size="small"
@@ -449,15 +426,15 @@ const SelfGoals = () => {
                                 </div>
                                 <div className="col-md-3 mb-3">
                                     <TextField
-                                        label="Supervisor Name"
+                                        label="Name"
                                         variant="outlined"
                                         size="small"
                                         fullWidth
-                                        name="supervisorName"
-                                        value={formData.supervisorName}
+                                        name="name"
+                                        value={formData.name}
                                         onChange={handleInputChange}
-                                        error={!!fieldErrors.supervisorName}
-                                        helperText={fieldErrors.supervisorName}
+                                        error={!!fieldErrors.name}
+                                        helperText={fieldErrors.name}
                                     />
                                 </div>
                                 <div className="col-md-3 mb-3">
@@ -473,7 +450,33 @@ const SelfGoals = () => {
                                         helperText={fieldErrors.supervisorCode}
                                     />
                                 </div>
+                                <div className="col-md-3 mb-3">
+                                    <TextField
+                                        label="Supervisor Name"
+                                        variant="outlined"
+                                        size="small"
+                                        fullWidth
+                                        name="supervisorName"
+                                        value={formData.supervisorName}
+                                        onChange={handleInputChange}
+                                        error={!!fieldErrors.supervisorName}
+                                        helperText={fieldErrors.supervisorName}
+                                    />
+                                </div>
+                                <div className="col-md-3 mb-3 flex items-center">
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={formData.active}
+                                                onChange={handleInputChange}
+                                                name="active"
+                                            />
+                                        }
+                                        label="Approve"
+                                    />
+                                </div>
                             </div>
+
                             <div className="row mt-2">
                                 <Box sx={{ width: '100%' }}>
                                     <Tabs
@@ -485,11 +488,12 @@ const SelfGoals = () => {
                                         <Tab value={0} label="Goals Details" />
                                     </Tabs>
                                 </Box>
+
                                 <Box sx={{ padding: 2 }}>
                                     {value === 0 && (
                                         <>
                                             <div className="mb-1">
-                                               <ActionButton title="Fill Grid" icon={GridOnIcon} onClick={handleFullGrid} />
+                                                <ActionButton title="Fill Grid" icon={GridOnIcon} onClick={handleFullGrid} />
                                             </div>
                                             <div className="row mt-2">
                                                 <div className="col-lg-12">
