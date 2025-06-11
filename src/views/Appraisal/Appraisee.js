@@ -87,7 +87,7 @@ const Appraisee = () => {
         { accessorKey: 'designation', header: 'Designation', size: 140 },
         { accessorKey: 'reportingHead', header: 'Reporting Head', size: 140 },
         { accessorKey: 'reportingHeadDesignation', header: 'Reporting Head Designation', size: 140 },
-        { accessorKey: 'active', header: 'Active', size: 140 }
+        // { accessorKey: 'active', header: 'Active', size: 140 }
     ];
 
     useEffect(() => {
@@ -572,7 +572,7 @@ const Appraisee = () => {
                                 </div>
 
                                 {/* active */}
-                                <div className="col-md-3 mb-3 flex items-center">
+                                {/* <div className="col-md-3 mb-3 flex items-center">
                                     <FormControlLabel
                                         control={
                                             <Checkbox
@@ -583,7 +583,7 @@ const Appraisee = () => {
                                         }
                                         label="Active"
                                     />
-                                </div>
+                                </div> */}
                             </div>
 
                             <div className="row mt-2">
