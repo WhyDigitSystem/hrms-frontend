@@ -238,6 +238,9 @@
 
 .ps {
   background: linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%) !important;
+  height: calc(-88px + 100vh);
+  padding-left: 5px !important;
+  padding-right: 10px !important;
 }
 
 .css-40exn0-MuiInputBase-root-MuiOutlinedInput-root {
@@ -804,7 +807,7 @@
 }
 
 .css-rs0zx6 {
-  width: 190px;
+  width: 200px !important;
 }
 
 .css-h4y409-MuiList-root {
@@ -1442,6 +1445,7 @@
 .css-1pe4mpk-MuiButtonBase-root-MuiIconButton-root {
   color: #1c1a1a !important;
 }
-.css-1hfbcp0:hover{
+
+.css-1hfbcp0:hover {
   color: #ffffff !important;
 }

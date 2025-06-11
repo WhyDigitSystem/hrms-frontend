@@ -29,6 +29,13 @@ const Appraisal = {
       icon: icons.IconCash,
       children: [
         {
+          id: 'SelfGoals',
+          title: 'Self Goals',
+          type: 'item',
+          url: '/Appraisal/SelfGoals',
+          icon: icons.IconReceipt
+        },
+        {
           id: 'Appraisee',
           title: 'Appraisee',
           type: 'item',
@@ -43,17 +50,17 @@ const Appraisal = {
           icon: icons.IconReceipt
         },
         {
-          id: 'AdditionalGoals',
-          title: 'Additional Goals',
-          type: 'item',
-          url: '/Appraisal/AdditionalGoals',
-          icon: icons.IconReceipt
-        },
-        {
           id: 'PreGoals',
           title: 'Pre Goals',
           type: 'item',
           url: '/Appraisal/PreGoals',
+          icon: icons.IconReceipt
+        },
+        {
+          id: 'AdditionalGoals',
+          title: 'Additional Goals',
+          type: 'item',
+          url: '/Appraisal/AdditionalGoals',
           icon: icons.IconReceipt
         },
         {
@@ -64,10 +71,17 @@ const Appraisal = {
           icon: icons.IconReceipt
         },
         {
-          id: 'SelfGoals',
-          title: 'Self Goals',
+          id: 'Supervisor1_Input',
+          title: 'Supervisor-1 Input',
           type: 'item',
-          url: '/Appraisal/SelfGoals',
+          url: '/Appraisal/Supervisor1_Input',
+          icon: icons.IconReceipt
+        },
+        {
+          id: 'HR_Review',
+          title: 'HR Review',
+          type: 'item',
+          url: '/Appraisal/HR_Review',
           icon: icons.IconReceipt
         },
       ]

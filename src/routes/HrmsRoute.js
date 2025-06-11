@@ -79,6 +79,9 @@ const AdditionalGoals = Loadable(lazy(() => import('views/Appraisal/AdditionalGo
 const PreGoals = Loadable(lazy(() => import('views/Appraisal/PreGoals')));
 const PreGoalsApproval = Loadable(lazy(() => import('views/Appraisal/PreGoalsApproval')));
 const SelfGoals = Loadable(lazy(() => import('views/Appraisal/SelfGoals')));
+const Supervisor1_Input = Loadable(lazy(() => import('views/Appraisal/Supervisor1_Input')));
+const HR_Review = Loadable(lazy(() => import('views/Appraisal/HR_Review')));
+
 
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
@@ -293,6 +296,14 @@ const HrmsRoute = {
     {
       path: '/Appraisal/SelfGoals',
       element: <SelfGoals />
+    },
+    {
+      path: '/Appraisal/Supervisor1_Input',
+      element: <Supervisor1_Input />
+    },
+    {
+      path: '/Appraisal/HR_Review',
+      element: <HR_Review />
     }
   ]
 };

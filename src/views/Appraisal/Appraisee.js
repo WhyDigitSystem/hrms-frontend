@@ -176,6 +176,13 @@ const Appraisee = () => {
         }));
     };
 
+    const isRowEmpty = (row) => {
+        return (!row.area || row.area.trim() === '') &&
+            (!row.keyPerformanceIndicator || row.keyPerformanceIndicator.trim() === '') &&
+            (!row.goals || row.goals.trim() === '') &&
+            (!row.reMarks || row.reMarks.trim() === '');
+    };
+
     const getAppraiseeById = async (row) => {
         setEditId(row.original.id);
         try {
@@ -198,7 +205,6 @@ const Appraisee = () => {
                     active: appraisee.active === 'Active',
                 });
 
-                // FIXED: Handle appraiseeDetails data properly
                 const details = appraisee.appraiseeDetailsVO || [];
                 setAppraiseeDetailsData(
                     details.map(detail => ({
@@ -226,6 +232,10 @@ const Appraisee = () => {
     };
 
     const handleSave = async () => {
+        // First remove any empty rows
+        const nonEmptyDetailsData = appraiseeDetailsData.filter(row => !isRowEmpty(row));
+        setAppraiseeDetailsData(nonEmptyDetailsData);
+
         // Validate main form fields
         const errors = {};
         if (!formData.code) errors.code = 'Code is required';
@@ -235,7 +245,7 @@ const Appraisee = () => {
 
         setIsLoading(true);
 
-        const appraiseeDetailsVo = appraiseeDetailsData.map(row => ({
+        const appraiseeDetailsVo = nonEmptyDetailsData.map(row => ({
             ...(editId && { id: editId }),
             area: row.area,
             keyPerformanceIndicator: row.keyPerformanceIndicator,
@@ -329,6 +339,7 @@ const Appraisee = () => {
         setAppraiseeDetailsErrors(newErrors);
     };
 
+
     const handleDetailChange = (id, field, value) => {
         const index = appraiseeDetailsData.findIndex(d => d.id === id);
         if (index === -1) return;
@@ -341,8 +352,10 @@ const Appraisee = () => {
         // Clear error for this field
         if (value) {
             const newErrors = [...appraiseeDetailsErrors];
-            newErrors[index] = { ...newErrors[index], [field]: '' };
-            setAppraiseeDetailsErrors(newErrors);
+            if (newErrors[index]) {
+                newErrors[index] = { ...newErrors[index], [field]: '' };
+                setAppraiseeDetailsErrors(newErrors);
+            }
         }
     };
 
@@ -377,7 +390,7 @@ const Appraisee = () => {
         setSelectAll(!selectAll);
     };
 
-    // FIX: Added handler for remarks input in modal
+    // FIXED: Proper implementation for updating fill grid remarks
     const handleFillGridRemarkChange = (index, value) => {
         setFillGridData(prevData => {
             const newData = [...prevData];
@@ -389,6 +402,7 @@ const Appraisee = () => {
     const handleSubmitSelectedRows = () => {
         const selectedData = selectedRows.map((index) => fillGridData[index]);
 
+        // Filter out items that already exist in appraiseeDetailsData
         const newData = selectedData
             .filter((data) => {
                 return !appraiseeDetailsData.some(
@@ -396,7 +410,7 @@ const Appraisee = () => {
                 );
             })
             .map((data) => ({
-                id: Date.now() + Math.random(),
+                id: Date.now() + Math.random(), // Generate a unique ID
                 area: data.area || '',
                 keyPerformanceIndicator: data.keyPerformanceIndicator || '',
                 goals: data.goals || '',
@@ -411,7 +425,18 @@ const Appraisee = () => {
             return;
         }
 
-        setAppraiseeDetailsData((prev) => [...prev, ...newData]);
+        // Check if the first row is empty
+        const firstRowIsEmpty = appraiseeDetailsData.length === 1 &&
+            isRowEmpty(appraiseeDetailsData[0]);
+
+        // If first row is empty, replace it with new data
+        if (firstRowIsEmpty) {
+            setAppraiseeDetailsData(newData);
+        } else {
+            // Otherwise, append the new data
+            setAppraiseeDetailsData((prev) => [...prev, ...newData]);
+        }
+
         setSelectedRows([]);
         setSelectAll(false);
         handleCloseModal();
@@ -710,7 +735,9 @@ const Appraisee = () => {
                                                                 <th className="table-header">Area</th>
                                                                 <th className="table-header">Key Performance Indicator</th>
                                                                 <th className="table-header">Goals</th>
-                                                                <th className="table-header">Remarks</th>
+                                                                <th className="px-2 py-2 text-white text-center">
+                                                                    Remarks
+                                                                </th>
                                                             </tr>
                                                         </thead>
                                                         <tbody>
@@ -730,12 +757,13 @@ const Appraisee = () => {
                                                                     <td className="border px-2 py-2 disable">{row.area || ''}</td>
                                                                     <td className="border px-2 py-2">{row.keyPerformanceIndicator || ''}</td>
                                                                     <td className="border px-2 py-2">{row.goals || ''}</td>
-                                                                    <td className="border px-2 py-2">
-                                                                        {/* FIXED: Added proper handler for remarks input */}
-                                                                        <input
-                                                                            type="text"
-                                                                            value={row.reMarks || ''}
+                                                                    <td>
+                                                                        <TextField
+                                                                            fullWidth
+                                                                            size="small"
+                                                                            value={row.reMarks}
                                                                             onChange={(e) =>
+                                                                                // FIXED: Use correct handler for fill grid remarks
                                                                                 handleFillGridRemarkChange(index, e.target.value)
                                                                             }
                                                                         />
@@ -759,8 +787,8 @@ const Appraisee = () => {
                                             sx={{
                                                 backgroundColor: 'green',
                                                 '&:hover': {
-                                                    backgroundColor: 'green',
-                                                },
+                                                    backgroundColor: 'green'
+                                                }
                                             }}
                                         >
                                             Proceed
