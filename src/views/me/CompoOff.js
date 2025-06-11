@@ -90,52 +90,6 @@ export const CompoOff = () => {
     setListView(!listView);
   };
 
-  // const handleAddRow = () => {
-  //   const lastIndex = leaveTypeTable.length - 1;
-  //   const lastRow = leaveTypeTable[lastIndex];
-
-  //   const errors = {
-  //     compoOff: !lastRow.compoOff ? 'Compensatory Off Date is required' : '',
-  //     description: !lastRow.description ? 'Description is required' : '',
-  //     notify: !lastRow.notify || lastRow.notify.length === 0 ? 'Notify is required' : '',
-  //     assignedBy: !lastRow.assignedBy ? 'Assigned By is required' : ''
-  //   };
-
-  //   const hasErrors = Object.values(errors).some((msg) => msg);
-
-  //   if (hasErrors) {
-  //     setLeaveTypeErrors((prev) => {
-  //       const updated = [...prev];
-  //       updated[lastIndex] = errors;
-  //       return updated;
-  //     });
-  //     return; // Stop adding new row
-  //   }
-
-  //   // No errors — Add new row
-  //   const newRow = {
-  //     id: Date.now(),
-  //     compoOff: null,
-  //     compoOffDay: '',
-  //     assignedBy: '',
-  //     description: '',
-  //     notify: []
-  //   };
-
-  //   setLeaveTypeTable((prev) => [...prev, newRow]);
-
-  //   // Add blank error entry for new row
-  //   setLeaveTypeErrors((prev) => [
-  //     ...prev,
-  //     {
-  //       compoOff: '',
-  //       description: '',
-  //       notify: '',
-  //       assignedBy: ''
-  //     }
-  //   ]);
-  // };
-
   const handleAddRow = () => {
     const editableRows = leaveTypeTable.filter(row => !row.disabled);
     const lastEditableIndex = editableRows.length - 1;
@@ -209,8 +163,8 @@ export const CompoOff = () => {
   const getCompanyWeekOff = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
-      const weekOffDays = result.paramObjectsMap.companyVO[0].companyWeekOffVO.map((item) => item.weekOffDays.toUpperCase());
-      setWeekOff(weekOffDays);
+      const weekOffList = result.paramObjectsMap.companyVO[0].companyWeekOffVO || [];
+      setWeekOff(weekOffList); // ← Save full rule objects
     } catch (error) {
       console.error('Error fetching week offs:', error);
     }
@@ -231,33 +185,50 @@ export const CompoOff = () => {
     }
   };
 
-  // // Check if the given date is enabled (week off or holiday)
   // const isDateEnabled = (dateStr) => {
   //   const date = new Date(dateStr);
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0); // reset time for accurate comparison
+
   //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
 
-  //   // Check if it's a week off day
-  //   if (weekOffDays.includes(dayName)) return true;
+  //   const isHoliday = holidayList.some((h) => h.holidayDate === dateStr);
+  //   const isWeekOff = weekOffDays.includes(dayName);
 
-  //   // Check if it's a holiday
-  //   if (holidayList.some((h) => h.holidayDate === dateStr)) return true;
-
-  //   return false;
+  //   // Allow only if it's a holiday or week-off AND it's today or in the past
+  //   return (isHoliday || isWeekOff) && date <= today;
   // };
 
   const isDateEnabled = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // reset time for accurate comparison
-
+    today.setHours(0, 0, 0, 0);
+  
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-    const isHoliday = holidayList.some((h) => h.holidayDate === dateStr);
-    const isWeekOff = weekOffDays.includes(dayName);
-
-    // Allow only if it's a holiday or week-off AND it's today or in the past
-    return (isHoliday || isWeekOff) && date <= today;
-  };
+  
+    const isHoliday = holidayList.some(h => h.holidayDate === dateStr);
+  
+    let isWeekOff = false;
+  
+    for (const rule of weekOffDays) {
+      if (!rule.weekOffDays || !Array.isArray(rule.weekNumbers)) continue;
+  
+      const ruleDay = rule.weekOffDays.toUpperCase();
+  
+      if (ruleDay === dayName) {
+        const weekNumber = Math.ceil(date.getDate() / 7); // e.g., 1st Saturday = 1
+        if (rule.weekNumbers.includes(-1)) {
+          isWeekOff = true; // all Sundays, etc.
+        } else if (rule.weekNumbers.includes(weekNumber)) {
+          isWeekOff = true;
+        }
+      }
+  
+      if (isWeekOff) break; // no need to check more
+    }
+  
+    return (isWeekOff || isHoliday) && date <= today;
+  };    
 
   // Get compoOffDay text for a selected date
   const getCompoOffDayText = (dateStr) => {
@@ -351,83 +322,6 @@ export const CompoOff = () => {
       prev.map((err, idx) => (idx === index ? { ...err, notify: selectedValues.length > 0 ? '' : err.notify } : err))
     );
   };
-
-  // const handleSave = async () => {
-  //   const allErrors = [];
-  //   let hasAnyErrors = false;
-
-  //   // Validate all rows
-  //   leaveTypeTable.forEach((row) => {
-  //     const rowErrors = {
-  //       compoOff: !row.compoOff ? 'Compensatory Off Date is required' : '',
-  //       description: !row.description ? 'Description is required' : '',
-  //       notify: !row.notify || row.notify.length === 0 ? 'Notify is required' : '',
-  //       assignedBy: !row.assignedBy ? 'Assigned By is required' : ''
-  //     };
-
-  //     allErrors.push(rowErrors);
-  //     if (Object.values(rowErrors).some((msg) => msg)) hasAnyErrors = true;
-  //   });
-
-  //   setLeaveTypeErrors(allErrors);
-  //   if (hasAnyErrors) {
-  //     showToast('error', 'Please fix all required fields before saving');
-  //     return;
-  //   }
-
-  //   // ✅ prepare payload
-  //   const finalPayload = leaveTypeTable.map((row) => {
-  //     const selectedNotifyPersons = allReportingPersonList.filter((person) => (row.notify || []).includes(person.employeeCode));
-
-  //     // ✅ Get first reporting person from notifyList (from getAllNotify API)
-  //     const firstNotifyPerson = notifyList[0] || {};
-
-  //     return {
-  //       assignedBy: row.assignedBy,
-  //       branch,
-  //       branchCode,
-  //       compOffDate: row.compoOff,
-  //       compOffDay: row.compoOffDay,
-  //       compoffNotifyDTO: selectedNotifyPersons.map((person) => ({
-  //         notify2: person.employeeName,
-  //         notify2Code: person.employeeCode,
-  //         notify2Email: person.email
-  //       })),
-  //       createdBy: loginUserName,
-  //       department,
-  //       designation,
-  //       employeeCode: empCode,
-  //       employeeName: empName,
-  //       leaveCode: 'COMP-OFF',
-  //       leaveType: 'Compensatory Off',
-  //       notes: row.description,
-  //       notify: firstNotifyPerson.reportingPerson || '',
-  //       notifyCode: firstNotifyPerson.reportingPersonCode || '',
-  //       notifyEmail: firstNotifyPerson.email || '',
-  //       orgId : parseInt(orgId),
-  //       totalDays: 1
-  //     };
-  //   });
-
-  //   setIsLoading(true);
-
-  //   try {
-  //     const result = await apiCalls('put', 'leaveprocess/createUpdateCompOff', finalPayload);
-  //     if (result.status === true) {
-  //       showToast('success', editId ? 'Compo Off Updated Successfully' : 'Compo Off created successfully');
-  //       await sendEmailNotification(finalPayload);
-  //       handleClear();
-  //       getAllCompoOff();
-  //     } else {
-  //       showToast('error', result.paramObjectsMap?.errorMessage || 'Compo Off creation failed');
-  //     }
-  //   } catch (err) {
-  //     console.error('Error:', err);
-  //     showToast('error', 'Compo Off creation failed');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const handleSave = async () => {
     // 1. Get only editable rows (new unsaved rows)
@@ -561,54 +455,6 @@ export const CompoOff = () => {
       showToast('error', 'Failed to send email notification. Please try again.');
     }
   };
-
-  // const getAllCompoOff = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
-  //     const compoOffData = result?.paramObjectsMap?.compensatoryOffVO || [];
-
-  //     const formattedData = compoOffData.map((item) => ({
-  //       id: item.id,
-  //       compoOff: item.compOffDate,
-  //       compoOffDay: item.compOffDay,
-  //       assignedBy: item.assignedBy,
-  //       description: item.notes,
-  //       notify: (item.compoffNotifyVO || []).map((p) => p.notify2Code)
-  //     }));
-
-  //     setLeaveTypeTable(formattedData);
-  //   } catch (err) {
-  //     console.log('Error fetching comp-off data', err);
-  //   }
-  // };
-
-  // const getAllCompoOff = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
-  //     if (response.status && Array.isArray(response.data)) {
-  //       const fetchedRows = response.data.map((item) => ({
-  //         id: Date.now() + Math.random(),
-  //         compoOff: item.compOffDate || null,
-  //         compoOffDay: item.compOffDay || '',
-  //         assignedBy: item.assignedBy || '',
-  //         description: item.notes || '',
-  //         notify: [], // You can optionally populate this if notify2Code is present
-  //         disabled: true
-  //       }));
-
-  //       setLeaveTypeTable(fetchedRows); // overwrite with read-only rows
-  //       setLeaveTypeErrors(fetchedRows.map(() => ({
-  //         compoOff: '',
-  //         assignedBy: '',
-  //         description: '',
-  //         notify: ''
-  //       })));
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching comp-off data:', error);
-  //     showToast('error', 'Failed to fetch comp-off data');
-  //   }
-  // };
 
   const addNewRow = () => {
     setLeaveTypeTable((prev) => [
