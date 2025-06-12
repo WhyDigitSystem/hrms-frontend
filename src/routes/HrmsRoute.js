@@ -35,8 +35,6 @@ const Grade = Loadable(lazy(() => import('views/basicMaster/Grade')));
 const Goals = Loadable(lazy(() => import('views/basicMaster/Goals')));
 const Score = Loadable(lazy(() => import('views/basicMaster/Score')));
 
-
-
 // Employee Master
 const EmployeeDetails = Loadable(lazy(() => import('views/employeeMaster/EmployeeDetails')));
 const EmployeeCodeGeneration = Loadable(lazy(() => import('views/employeeMaster/EmployeeCodeGeneration')));
@@ -68,6 +66,7 @@ const LeaveApproval = Loadable(lazy(() => import('views/team/LeaveApproval')));
 const PermissionApproval = Loadable(lazy(() => import('views/team/PermissionApproval')));
 const AttendanceReport = Loadable(lazy(() => import('views/team/AttendanceReport')));
 const TodayAttendance = Loadable(lazy(() => import('views/team/TodayAttendance')));
+const EmployeeAttanceReport = Loadable(lazy(() => import('views/team/EmployeeAttanceReport')));
 
 // manageTax
 const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')));
@@ -82,13 +81,15 @@ const SelfGoals = Loadable(lazy(() => import('views/Appraisal/SelfGoals')));
 const Supervisor1_Input = Loadable(lazy(() => import('views/Appraisal/Supervisor1_Input')));
 const HR_Review = Loadable(lazy(() => import('views/Appraisal/HR_Review')));
 
-
-
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
 
 const HrmsRoute = {
   path: '/',
-  element: <PrivateRoute><MainLayout /></PrivateRoute>,
+  element: (
+    <PrivateRoute>
+      <MainLayout />
+    </PrivateRoute>
+  ),
   children: [
     {
       path: '/',
@@ -253,24 +254,28 @@ const HrmsRoute = {
     // Team path
     {
       path: '/team/LeaveApproval',
-      element: < LeaveApproval />
+      element: <LeaveApproval />
     },
     {
       path: '/team/PermissionApproval',
-      element: < PermissionApproval />
+      element: <PermissionApproval />
     },
     {
       path: '/team/AttendanceReport',
-      element: < AttendanceReport />
+      element: <AttendanceReport />
     },
     {
       path: '/team/TodayAttendance',
-      element: < TodayAttendance />
+      element: <TodayAttendance />
+    },
+    {
+      path: '/team/EmployeeAttanceReport',
+      element: <EmployeeAttanceReport />
     },
     // manageTax
     {
       path: '/ManageTax/manageTax',
-      element: < ManageTax />
+      element: <ManageTax />
     },
     // PreGoals
     {
@@ -300,6 +305,10 @@ const HrmsRoute = {
     {
       path: '/Appraisal/Supervisor1_Input',
       element: <Supervisor1_Input />
+    },
+    {
+      path: '/Appraisal/HR_Review',
+      element: <HR_Review />
     },
     {
       path: '/Appraisal/HR_Review',
