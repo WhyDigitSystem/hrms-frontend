@@ -26,6 +26,7 @@ function Appraiser() {
   const [scoreAllData, setScoreAllData] = useState([]);
   const [listViewData, setListViewData] = useState([]);
   const orgId = localStorage.getItem('orgId');
+  const branch = localStorage.getItem('branch');
   const createdBy = localStorage.getItem('userName');
   const finYear = localStorage.getItem('finYear');
   const [editId, setEditId] = useState(null);
@@ -44,8 +45,8 @@ function Appraiser() {
     code: '',
     department: '',
     supervisorName: '',
-    supervisorCode: '',
-    active: true
+    supervisorCode: ''
+    // active: true
   });
   const [fieldErrors, setFieldErrors] = useState({});
 
@@ -55,23 +56,23 @@ function Appraiser() {
       area: '',
       goals: '',
       keyPerformanceIndicator: '',
-      reMarks: '',
-      rating: '',
+      remarks: '',
+      input: '',
       score: ''
     }
   ]);
   const [tableDataErrors, setTableDataErrors] = useState([{}]);
 
-  const handleCheckboxChange = (event) => {
-    setFormData({
-      ...formData,
-      active: event.target.checked
-    });
-  };
+  // const handleCheckboxChange = (event) => {
+  //   setFormData({
+  //     ...formData,
+  //     active: event.target.checked
+  //   });
+  // };
 
   const listViewColumns = [
-    { accessorKey: 'name', header: 'Name', size: 140 },
-    { accessorKey: 'code', header: 'Code', size: 140 },
+    { accessorKey: 'empName', header: 'Name', size: 140 },
+    { accessorKey: 'empCode', header: 'Code', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 }
   ];
 
@@ -89,8 +90,8 @@ function Appraiser() {
       supervisorName: '',
       name: '',
       code: '',
-      department: '',
-      active: true
+      department: ''
+      // active: true
     });
     setFieldErrors({});
     setTableData([
@@ -99,8 +100,8 @@ function Appraiser() {
         area: '',
         goals: '',
         keyPerformanceIndicator: '',
-        reMarks: '',
-        rating: '',
+        remarks: '',
+        input: '',
         score: ''
       }
     ]);
@@ -143,7 +144,7 @@ function Appraiser() {
         area: data.area,
         goals: data.goals,
         keyPerformanceIndicator: data.keyPerformanceIndicator,
-        reMarks: data.reMarks
+        remarks: data.remarks
       }));
     if (newData.length < selectedData.length) {
       showToast('warning', 'Some of the selected items are already added!');
@@ -151,7 +152,13 @@ function Appraiser() {
     if (newData.length === 0) {
       return;
     }
-    setTableData((prev) => [...prev, ...newData]);
+    if (tableData.length === 1 && !tableData[0].area && !tableData[0].goals && !tableData[0].keyPerformanceIndicator) {
+      setTableData(newData);
+    } else {
+      setTableData((prev) => [...prev, ...newData]);
+    }
+
+    // setTableData((prev) => [...prev, ...newData]);
     setSelectedRows([]);
     setSelectAll(false);
     handleCloseModal();
@@ -160,7 +167,7 @@ function Appraiser() {
   const handleAddRow = () => {
     const newId = tableData.length > 0 ? Math.min(...tableData.map((d) => d.id)) - 1 : -1;
 
-    setTableData((prev) => [...prev, { id: newId, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }]);
+    setTableData((prev) => [...prev, { id: newId, area: '', keyPerformanceIndicator: '', goals: '', remarks: '' }]);
   };
 
   //
@@ -193,16 +200,15 @@ function Appraiser() {
   useEffect(() => {
     if (formData.supervisorCode) {
       getAllEmployeeDetails();
-
       const selected = supervisorsCode.find((row) => row.reportingPersonCode === formData.supervisorCode);
 
       if (selected) {
         setFormData((prev) => ({
           ...prev,
-          supervisorName: selected.reportingPerson,
-          code: '',
-          name: '',
-          department: ''
+          supervisorName: selected.reportingPerson
+          // code: '',
+          // name: '',
+          // department: ''
         }));
       }
     }
@@ -247,8 +253,8 @@ function Appraiser() {
     }
     tableData.forEach((row, index) => {
       const rowErrors = {};
-      if (!row.rating) {
-        rowErrors.rating = 'Rating is required';
+      if (!row.input) {
+        rowErrors.input = 'Rating is required';
       }
       tableErrors[index] = rowErrors;
     });
@@ -269,9 +275,9 @@ function Appraiser() {
       area: row.area,
       keyPerformanceIndicator: row.keyPerformanceIndicator,
       goals: row.goals,
-      reMarks: row.reMarks,
-      rating: row.rating,
-      score: row.score
+      reMarks: row.remarks,
+      input: row.input,
+      score: parseInt(row.score)
     }));
     const sendData = {
       ...(editId && { id: editId }),
@@ -279,13 +285,14 @@ function Appraiser() {
       modifiedBy: createdBy,
       orgId: orgId,
       finYear: finYear,
-      appraisalID: formData.appraisalID,
+      branch: branch,
+      appraisalId: formData.appraisalID,
       supCode: formData.supervisorCode,
       supName: formData.supervisorName,
       empName: formData.name,
       empCode: formData.code,
       department: formData.department,
-      zctive: formData.active,
+      // active: formData.active,
       appraiserDetailsDTO: detailVO
     };
     try {
@@ -308,29 +315,31 @@ function Appraiser() {
     setTableDataErrors([{}]);
     setListView(true);
     try {
-      const results = await apiCalls('get', `/reportController/getQutationById?id=${row.original.id}`);
+      const results = await apiCalls('get', `/goalsController/getAppraiserById?id=${row.original.id}`);
       console.log('Edit API Response:', results);
       if (results.status === true) {
-        const item = results.paramObjectsMap.quotationVO;
+        const item = results.paramObjectsMap.appraiserVO;
         setFormData({
           createdBy: createdBy,
           modifiedBy: createdBy,
           orgId: orgId,
           finYear: finYear,
-          appraisalID: item.appraisalID,
-          supervisorCode: item.supervisorCode,
-          supervisorName: item.supervisorName,
+          appraisalID: item.appraisalId,
+          supervisorCode: item.supCode,
+          supervisorName: item.supName,
           code: item.empCode,
           name: item.empName,
           department: item.department
         });
         setTableData(
-          item.quotationDetailsVO.map((data) => ({
+          item.appraiserDetailsVO.map((data) => ({
             id: data.id,
             area: data.area,
             goals: data.goals,
             keyPerformanceIndicator: data.keyPerformanceIndicator,
-            reMarks: data.reMarks
+            remarks: data.reMarks,
+            score: data.score,
+            input: data.input
           }))
         );
       } else {
@@ -343,8 +352,8 @@ function Appraiser() {
 
   const getAllData = async () => {
     try {
-      const res = await apiCalls('get', `/reportController/getQuotationByorgId?orgId=${orgId}`);
-      setListViewData(res.paramObjectsMap.quotationVO);
+      const res = await apiCalls('get', `/goalsController/getAppraiserByOrgId?orgId=${orgId}`);
+      setListViewData(res.paramObjectsMap.appraiserVO.reverse());
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -469,13 +478,13 @@ function Appraiser() {
                   onChange={handleInputChange}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleCheckboxChange} />}
                   label="Active"
                   labelPlacement="end"
                 />
-              </div>
+              </div> */}
             </div>
 
             {/*  */}
@@ -527,6 +536,7 @@ function Appraiser() {
                                 </th>
                               </tr>
                             </thead>
+
                             <tbody>
                               {tableData.map((row, index) => (
                                 <tr key={row.id}>
@@ -576,34 +586,34 @@ function Appraiser() {
                                     <TextField
                                       fullWidth
                                       size="small"
-                                      value={row.reMarks}
+                                      value={row.remarks}
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         setTableData((prev) =>
-                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, reMarks: value } : rowData))
+                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, remarks: value } : rowData))
                                         );
                                       }}
                                     />
                                   </td>
                                   <td>
-                                    <FormControl variant="outlined" size="small" error={!!tableDataErrors[index]?.rating} fullWidth>
-                                      <InputLabel id="rating-label">Rating</InputLabel>
+                                    <FormControl variant="outlined" size="small" error={!!tableDataErrors[index]?.input} fullWidth>
+                                      <InputLabel id="input-label">Rating</InputLabel>
                                       <Select
-                                        labelId="rating-label"
+                                        labelId="input-label"
                                         label="Rating"
-                                        name="rating"
-                                        value={row.rating}
+                                        name="input"
+                                        value={row.input}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           const selectedScore = scoreAllData.find((item) => item.input === value)?.score || '';
                                           setTableData((prev) =>
                                             prev.map((rowData) =>
-                                              rowData.id === row.id ? { ...rowData, rating: value, score: selectedScore } : rowData
+                                              rowData.id === row.id ? { ...rowData, input: value, score: selectedScore } : rowData
                                             )
                                           );
                                           setTableDataErrors((prev) => {
                                             const newErrors = Array.isArray(prev) ? [...prev] : [];
-                                            newErrors[index] = { ...newErrors[index], rating: '' };
+                                            newErrors[index] = { ...newErrors[index], input: '' };
                                             return newErrors;
                                           });
                                         }}
@@ -614,7 +624,7 @@ function Appraiser() {
                                           </MenuItem>
                                         ))}
                                       </Select>
-                                      {tableDataErrors.rating && <FormHelperText>{tableDataErrors.rating}</FormHelperText>}
+                                      {tableDataErrors.input && <FormHelperText>{tableDataErrors.input}</FormHelperText>}
                                     </FormControl>
                                   </td>
                                   <td>
@@ -716,7 +726,7 @@ function Appraiser() {
                                   {row.goals || ''}
                                 </td>
                                 <td className="border px-2 py-2 text-center" style={{ whiteSpace: 'nowrap' }}>
-                                  {row.reMarks || ''}
+                                  {row.remarks || ''}
                                 </td>
                               </tr>
                             ))}
