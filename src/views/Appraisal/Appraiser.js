@@ -283,7 +283,7 @@ function Appraiser() {
       ...(editId && { id: editId }),
       createdBy: createdBy,
       modifiedBy: createdBy,
-      orgId: orgId,
+      orgId: parseInt(orgId),
       finYear: finYear,
       branch: branch,
       appraisalId: formData.appraisalID,
@@ -546,6 +546,7 @@ function Appraiser() {
                                       fullWidth
                                       size="small"
                                       value={row.area}
+                                      disabled
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         setTableData((prev) =>
@@ -559,6 +560,7 @@ function Appraiser() {
                                       fullWidth
                                       size="small"
                                       value={row.keyPerformanceIndicator}
+                                      disabled
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         setTableData((prev) =>
@@ -574,6 +576,7 @@ function Appraiser() {
                                       fullWidth
                                       size="small"
                                       value={row.goals}
+                                      disabled
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         setTableData((prev) =>
@@ -587,6 +590,7 @@ function Appraiser() {
                                       fullWidth
                                       size="small"
                                       value={row.remarks}
+                                      disabled
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         setTableData((prev) =>
