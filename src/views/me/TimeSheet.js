@@ -595,51 +595,103 @@ const TimeSheet = () => {
     return weekOff.includes(dayjs(date).format('YYYY-MM-DD'));
   };
 
+  // const getCompanyWeekOff = async () => {
+  //   try {
+  //     const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+  //     const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO;
+
+  //     const currentMonth = dayjs().month(); // 0-based (June = 5)
+  //     const currentYear = dayjs().year();
+
+  //     const offDates = [];
+
+  //     for (const config of weekOffConfig) {
+  //       const dayName = config.weekOffDays.toUpperCase(); // e.g., 'MONDAY'
+  //       const weekNumbers = config.weekNumbers; // e.g., [-1] or [1, 3]
+
+  //       const dayIndex = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(dayName);
+  //       if (dayIndex === -1) continue;
+
+  //       // Get all dates in the current month matching the given weekday
+  //       const daysInMonth = dayjs(`${currentYear}-${currentMonth + 1}-01`).daysInMonth();
+  //       const matchedDates = [];
+
+  //       for (let day = 1; day <= daysInMonth; day++) {
+  //         const date = dayjs(`${currentYear}-${currentMonth + 1}-${day}`);
+  //         if (date.day() === dayIndex) {
+  //           matchedDates.push(date);
+  //         }
+  //       }
+
+  //       // Check if -1 is present => all occurrences of that day are off
+  //       if (weekNumbers.includes(-1)) {
+  //         matchedDates.forEach((date) => {
+  //           offDates.push(date.format('YYYY-MM-DD'));
+  //         });
+  //       } else {
+  //         // Only specific week numbers like 1st, 3rd etc.
+  //         for (const weekNumber of weekNumbers) {
+  //           if (weekNumber >= 1 && weekNumber <= matchedDates.length) {
+  //             const specificDate = matchedDates[weekNumber - 1];
+  //             if (specificDate) offDates.push(specificDate.format('YYYY-MM-DD'));
+  //           }
+  //         }
+  //       }
+  //     }
+
+  //     setWeekOff(offDates); // Example: ['2025-06-01', '2025-06-02', ...]
+  //   } catch (error) {
+  //     console.error('Error fetching week off:', error);
+  //   }
+  // };
+
   const getCompanyWeekOff = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
       const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO;
 
-      const currentMonth = dayjs().month(); // 0-based (June = 5)
       const currentYear = dayjs().year();
+      const startYear = currentYear - 1;
+      const endYear = currentYear;
 
       const offDates = [];
 
-      for (const config of weekOffConfig) {
-        const dayName = config.weekOffDays.toUpperCase(); // e.g., 'MONDAY'
-        const weekNumbers = config.weekNumbers; // e.g., [-1] or [1, 3]
+      for (let year = startYear; year <= endYear; year++) {
+        for (let month = 0; month < 12; month++) {
+          for (const config of weekOffConfig) {
+            const dayName = config.weekOffDays.toUpperCase();
+            const weekNumbers = config.weekNumbers;
 
-        const dayIndex = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(dayName);
-        if (dayIndex === -1) continue;
+            const dayIndex = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(dayName);
+            if (dayIndex === -1) continue;
 
-        // Get all dates in the current month matching the given weekday
-        const daysInMonth = dayjs(`${currentYear}-${currentMonth + 1}-01`).daysInMonth();
-        const matchedDates = [];
+            const daysInMonth = dayjs(`${year}-${month + 1}-01`).daysInMonth();
+            const matchedDates = [];
 
-        for (let day = 1; day <= daysInMonth; day++) {
-          const date = dayjs(`${currentYear}-${currentMonth + 1}-${day}`);
-          if (date.day() === dayIndex) {
-            matchedDates.push(date);
-          }
-        }
+            for (let day = 1; day <= daysInMonth; day++) {
+              const date = dayjs(`${year}-${month + 1}-${day}`);
+              if (date.day() === dayIndex) {
+                matchedDates.push(date);
+              }
+            }
 
-        // Check if -1 is present => all occurrences of that day are off
-        if (weekNumbers.includes(-1)) {
-          matchedDates.forEach((date) => {
-            offDates.push(date.format('YYYY-MM-DD'));
-          });
-        } else {
-          // Only specific week numbers like 1st, 3rd etc.
-          for (const weekNumber of weekNumbers) {
-            if (weekNumber >= 1 && weekNumber <= matchedDates.length) {
-              const specificDate = matchedDates[weekNumber - 1];
-              if (specificDate) offDates.push(specificDate.format('YYYY-MM-DD'));
+            if (weekNumbers.includes(-1)) {
+              matchedDates.forEach((date) => {
+                offDates.push(date.format('YYYY-MM-DD'));
+              });
+            } else {
+              for (const weekNumber of weekNumbers) {
+                if (weekNumber >= 1 && weekNumber <= matchedDates.length) {
+                  const specificDate = matchedDates[weekNumber - 1];
+                  if (specificDate) offDates.push(specificDate.format('YYYY-MM-DD'));
+                }
+              }
             }
           }
         }
       }
 
-      setWeekOff(offDates); // Example: ['2025-06-01', '2025-06-02', ...]
+      setWeekOff(offDates);
     } catch (error) {
       console.error('Error fetching week off:', error);
     }
@@ -699,9 +751,24 @@ const TimeSheet = () => {
                 handleDateClick(date);
               }
             }}
-            tileDisabled={({ date, view }) => view === 'month' && isWeekOff(date)}
+            // tileDisabled={({ date, view }) => view === 'month' && isWeekOff(date)}
             tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
+            tileClassName={({ date, view }) => {
+              if (view === 'month' && isWeekOff(date)) {
+                return 'custom-disabled';
+              }
+              return null;
+            }}
           />
+          <style>
+            {`
+                .custom-disabled {
+                color: rgba(133, 138, 142, 1);
+                  cursor: not-allowed;
+                  disabled: true;
+                }
+              `}
+          </style>
         </div>
       </div>
 
