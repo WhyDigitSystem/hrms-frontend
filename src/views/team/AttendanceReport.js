@@ -28,7 +28,7 @@ const AttendanceReport = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    employeecode: ''
+    employeeCode: ''
   });
   const [fieldErrors, setFieldErrors] = useState({});
   const [orgId] = useState(localStorage.getItem('orgId'));
@@ -69,7 +69,7 @@ const AttendanceReport = () => {
     }
 
     // Case: Only Employee selected but no employee chosen
-    if (showEmployee && !formData.employeecode && !showDate) {
+    if (showEmployee && !formData.employeeCode && !showDate) {
       showToast('error', 'Please select an employee');
       return;
     }
@@ -83,7 +83,7 @@ const AttendanceReport = () => {
     // Case: Both selected but missing one or more values
     if (showEmployee && showDate) {
       const missingFields = [];
-      if (!formData.employeecode) missingFields.push('Employee');
+      if (!formData.employeeCode) missingFields.push('Employee');
       if (!selectedMonth) missingFields.push('Month');
       if (!selectedYear) missingFields.push('Year');
 
@@ -94,7 +94,7 @@ const AttendanceReport = () => {
     }
 
     // Construct parameters
-    const employeeCode = showEmployee ? formData.employeecode || '' : 'All';
+    const employeeCode = showEmployee ? formData.employeeCode || '' : 'All';
     const monthVal = showDate ? (selectedMonth ? selectedMonth.month() + 1 : '') : 'All';
     const yearVal = showDate ? (selectedYear ? selectedYear.year() : '') : 'All';
 
@@ -146,7 +146,7 @@ const AttendanceReport = () => {
   const handleClear = () => {
     setSelectedMonth(null);
     setSelectedYear(null);
-    setFormData({ employeecode: '' });
+    setFormData({ employeeCode: '' });
     setError('');
     setFieldErrors({});
     setShowEmployee(false);
@@ -198,7 +198,7 @@ const AttendanceReport = () => {
                 const checked = e.target.checked;
                 setShowEmployee(checked);
                 if (!checked) {
-                  setFormData((prev) => ({ ...prev, employeecode: '' })); // clear employee
+                  setFormData((prev) => ({ ...prev, employeeCode: '' })); // clear employee
                 }
               }}
             />
@@ -228,13 +228,13 @@ const AttendanceReport = () => {
           <div className="col-md-3 mb-3">
             <Autocomplete
               options={empList}
-              getOptionLabel={(option) => option.employeecode || ''}
-              value={empList.find((emp) => emp.employeecode === formData.employeecode) || null}
+              getOptionLabel={(option) => option.employeeCode || ''}
+              value={empList.find((emp) => emp.employeeCode === formData.employeeCode) || null}
               onChange={(event, newValue) => {
                 handleSelectChange({
                   target: {
-                    name: 'employeecode',
-                    value: newValue ? newValue.employeecode : ''
+                    name: 'employeeCode',
+                    value: newValue ? newValue.employeeCode : ''
                   }
                 });
               }}
@@ -244,11 +244,11 @@ const AttendanceReport = () => {
                   label="Employee Code"
                   variant="outlined"
                   fullWidth
-                  error={!!fieldErrors.employeecode}
-                  helperText={fieldErrors.employeecode}
+                  error={!!fieldErrors.employeeCode}
+                  helperText={fieldErrors.employeeCode}
                 />
               )}
-              isOptionEqualToValue={(option, value) => option.employeecode === value.employeecode}
+              isOptionEqualToValue={(option, value) => option.employeeCode === value.employeeCode}
             />
           </div>
         )}
