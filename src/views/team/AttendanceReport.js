@@ -45,6 +45,20 @@ const AttendanceReport = () => {
     doc.setFontSize(16);
     doc.text('Attendance Report', 14, 20);
 
+    const monthText = selectedMonth ? selectedMonth.format('MMMM') : '';
+    const yearText = selectedYear ? selectedYear.format('YYYY') : '';
+    doc.setFontSize(12);
+    // doc.text(`Month: ${monthText}`, 14, 28);
+    // doc.text(`Year: ${yearText}`, 45, 28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Month:', 14, 28);
+    doc.setFont('helvetica', 'normal');
+    doc.text(monthText, 29, 28);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Year:', 50, 28);
+    doc.setFont('helvetica', 'normal');
+    doc.text(yearText, 61, 28);
+
     autoTable(doc, {
       startY: 30,
       head: [['Code', 'Employee', 'LOP', 'Working Days', 'Total Working Days', 'Total Leave']],
@@ -315,6 +329,16 @@ const AttendanceReport = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {showDate && selectedMonth && selectedYear && (
+              <div style={{ marginBottom: '5px', fontSize: '10px', display: 'flex', gap: '10px' }}>
+                <label>
+                  <strong>Month:</strong> {selectedMonth.format('MMMM')}
+                </label>
+                <label>
+                  <strong>Year:</strong> {selectedYear.format('YYYY')}
+                </label>
+              </div>
+            )}
           </div>
 
           <Table stickyHeader>
