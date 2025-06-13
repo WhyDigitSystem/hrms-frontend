@@ -16,11 +16,10 @@ import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import FileDownloadIcon from '@mui/icons-material/FileDownload';
-// import DownloadIcon from '@mui/icons-material/Download';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ToastContainer } from 'react-toastify';
 import Tooltip from '@mui/material/Tooltip';
+import DownloadIcon from '@mui/icons-material/Download';
 const EmployeeAttanceReport = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [attendanceReport, setAttendanceReport] = useState([]);
@@ -287,49 +286,16 @@ const EmployeeAttanceReport = () => {
               <DownloadIcon color="primary" />
             </IconButton> */}
             <div style={{ display: 'flex', gap: '10px' }}>
-              {/* <Tooltip title="PDF">
+              <Tooltip title="Download Excel">
+                <IconButton onClick={handleDownloadExcel}>
+                  <DownloadIcon color="primary" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Download PDF">
                 <IconButton onClick={handleDownloadPDF}>
                   <PictureAsPdfIcon color="error" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="EXCEL">
-                <IconButton onClick={handleDownloadExcel}>
-                  <FileDownloadIcon sx={{ color: 'green' }} />
-                </IconButton>
-              </Tooltip> */}
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                startIcon={<PictureAsPdfIcon />}
-                onClick={handleDownloadPDF}
-                sx={{
-                  borderRadius: '20px',
-                  px: 2,
-                  textTransform: 'none',
-                  bgcolor: '#D32F2F',
-                  '&:hover': { bgcolor: '#B71C1C' }
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                variant="contained"
-                color="success"
-                size="small"
-                startIcon={<FileDownloadIcon />}
-                onClick={handleDownloadExcel}
-                sx={{
-                  borderRadius: '20px',
-                  px: 2,
-                  textTransform: 'none',
-                  bgcolor: '#388E3C',
-                  color: '#FFF',
-                  '&:hover': { bgcolor: '#1B5E20', color: '#FFF' }
-                }}
-              >
-                Excel
-              </Button>
             </div>
           </DialogTitle>
           <DialogContent>
@@ -350,6 +316,7 @@ const EmployeeAttanceReport = () => {
                       key={index}
                       sx={{
                         backgroundColor: '#1976d2',
+                        // backgroundColor: '#364152',
                         color: '#fff',
                         fontWeight: 'bold',
                         textAlign: 'center'
@@ -365,7 +332,7 @@ const EmployeeAttanceReport = () => {
                 {attendanceReport.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ padding: 3, fontStyle: 'italic', color: '#777' }}>
-                      No matching records found
+                      No data available
                     </TableCell>
                   </TableRow>
                 ) : (
