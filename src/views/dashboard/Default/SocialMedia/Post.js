@@ -215,13 +215,6 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
     setEditId('');
   };
 
-  // const handleImageUpload = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     setImageFile(file); // Store the file for preview
-  //   }
-  // };
-
   const handleRemoveImage = () => {
     setLogo(null);
     setFormData((prev) => ({ ...prev, imageUrl: '' })); // Reset the form data's image URL to empty
@@ -231,15 +224,14 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
     position: 'relative',
     margin: 2,
     minHeight: 200,
-    background: `linear-gradient(145deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
+    background: 'linear-gradient(193deg, #D1E0F3 30%, #D1E0F3 90%) ',
     borderRadius: 4,
     color: theme.palette.common.white,
     overflow: 'hidden',
-    '&:hover': { animation: `${glow} 2s infinite` },
   };
 
   const announcementStyle = {
-    background: 'rgba(255, 255, 255, 0.1)',
+    background: 'rgba(73, 53, 53, 0.1)',
     borderRadius: 3,
     padding: isMobile ? 2 : 3,
     backdropFilter: 'blur(5px)',
@@ -262,24 +254,6 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
       showToast('error', 'Please upload a valid image (PNG or JPEG).');
     }
   };
-  //   const uploadImageToBlob = async (file) => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append("file", file);
-  //     const result = await apiCalls("post", "/basicmaster/uploadPostImageInBloob", formData, {
-  //       headers: { "Content-Type": "multipart/form-data" },
-  //     });
-  //     if (result?.paramObjectsMap?.fileUrl) {
-  //       return result.paramObjectsMap.fileUrl;
-  //     } else {
-  //       throw new Error('Image upload failed');
-  //     }
-  //   } catch (err) {
-  //     toast.error("Image upload failed");
-  //     console.error("Image upload error:", err);
-  //     return ""; // Return an empty string on error
-  //   }
-  // };
   const handleFileUpload = async (generatedId) => {
     if (!generatedId) {
       console.warn('Generated ID is missing');
@@ -299,10 +273,10 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
       console.log('Img Upload Response:', response);
 
       if (response.status === true) {
-        showToast('success', response.message || 'Image Uploaded successfully!');
+        // showToast('success', response.message || 'Image Uploaded successfully!');
       } else {
         console.warn('Img upload failed:', response);
-        showToast('error', 'Img upload failed');
+        // showToast('error', 'Img upload failed');
       }
     } catch (error) {
       console.error('Img Upload Error:', error);
@@ -324,16 +298,8 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
         <Box sx={announcementStyle}>
           {circularData.length > 0 ? (
             <Box>
-              <div className='d-flex justify-content-between align-items-center'>
-
-                <div>
-                  <Typography variant="h6" gutterBottom>
-                    {circularData[0].circularTopic}
-                  </Typography>
-                  <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                    {circularData[0].circularcontent}
-                  </Typography>
-                </div>
+              <div className='d-flex align-items-center'>
+                {/* Image */}
                 <div>
                   {circularData?.[0]?.postImage && (
                     <Box
@@ -341,15 +307,24 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                       src={`data:image/png;base64,${circularData[0].postImage}`}
                       alt="Circular Attachment"
                       sx={{
-                        width: '100%',
-                        maxHeight: 300,
-                        objectFit: 'contain',
+                        width: 100, // or any fixed size
+                        height: 100, // ensure height and width are equal
+                        objectFit: 'cover',
                         mt: 2,
-                        borderRadius: 2,
+                        borderRadius: '50%', // makes it circular
+                        border: '2px solid #ccc', // optional: adds a border
                       }}
                       onClick={() => setLogoPreviewOpen(true)}
                     />
                   )}
+                </div>
+                <div className='ps-3'>
+                  <Typography variant="h6" gutterBottom>
+                    {circularData[0].circularTopic}
+                  </Typography>
+                  <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                    {circularData[0].circularcontent}
+                  </Typography>
                 </div>
               </div>
 
@@ -361,10 +336,6 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
               <Typography variant="caption">
                 {praiseCounts[circularData[0].id] || "0"}
               </Typography>
-
-              {/* Display image if available */}
-
-
             </Box>
           ) : (
             <Box sx={{ textAlign: 'center' }}>
@@ -459,7 +430,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                 <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
               </Button>
 
-              { logo && (
+              {logo && (
                 <IconButton variant="contained" sx={{ whiteSpace: 'nowrap', color: 'rgb(103 58 183)' }} onClick={handleOpen}>
                   <ControlCameraIcon />
                 </IconButton>
@@ -513,16 +484,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
               </DialogContent>
             </Dialog>
           </div>
-          {/* {(imageFile || formData.imageUrl) && (
-            <Box sx={{ mb: 2 }}>
-              <img
-                src={imageFile ? URL.createObjectURL(imageFile) : formData.imageUrl}
-                alt="Circular Preview"
-                style={{ width: '100%', maxHeight: 200, objectFit: 'cover' }}
-              />
-              <Button onClick={handleRemoveImage} color="error" fullWidth sx={{ mt: 1 }}>Remove Image</Button>
-            </Box>
-          )} */}
+
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button onClick={handleCloseCreateModal} color="secondary">Cancel</Button>
             <Button onClick={handleSave} variant="contained" color="primary" disabled={isLoading}>

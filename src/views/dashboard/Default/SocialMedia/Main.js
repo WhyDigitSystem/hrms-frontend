@@ -10,7 +10,7 @@ import apiCalls from 'apicall';
 
 // Styled Components
 const CardWrapper = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.background.paper,
+  // backgroundColor: theme.palette.background.paper,
   color: theme.palette.text.primary,
   overflow: 'hidden',
   position: 'relative',
