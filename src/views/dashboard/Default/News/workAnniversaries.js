@@ -180,7 +180,7 @@ function WorkAnniversaries() {
         `}
       </style>
       <div className='d-flex justify-content-between align-items-center'>
-        <Typography
+        {/* <Typography
           variant="h4"
           sx={{
             color: '#1976d2',
@@ -195,9 +195,9 @@ function WorkAnniversaries() {
           }}
         >
           🎉 Today’s Work Anniversaries
-        </Typography>
+        </Typography> */}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 0 }}>
           {todayAnniversaries.length > 0 && (
             <Tooltip title="View All Work Anniversaries">
               <IconButton
@@ -215,7 +215,7 @@ function WorkAnniversaries() {
               </IconButton>
             </Tooltip>
           )}
-        </Box>
+        </Box> */}
       </div>
 
       {isLoading ? (
@@ -231,6 +231,22 @@ function WorkAnniversaries() {
       ) : todayAnniversaries.length > 0 ? (
         <>
           <Box>{renderAnniversaryCard(todayAnniversaries[0])}</Box>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, mt:1 }}>
+            {todayAnniversaries.length > 0 && (
+              <Tooltip title="View All Work Anniversaries">
+                <IconButton
+                  onClick={() => setOpenDialog(true)}
+                  sx={{
+                    color: '#1976d2', // optional: keep icon color if needed
+                    boxShadow: 2,
+                  }}
+                >
+                  <VisibilityIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Box>
+
 
           {todayAnniversaries.length > 1 && (
             <Box mt={2} textAlign="center">
@@ -251,6 +267,7 @@ function WorkAnniversaries() {
                 </IconButton>
               </Tooltip>
             </Box>
+
           )}
         </>
       ) : (
