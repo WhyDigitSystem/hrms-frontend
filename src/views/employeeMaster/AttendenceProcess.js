@@ -629,7 +629,7 @@ const AttendenceProcess = () => {
                                     ))
                                   ) : (
                                     <TableRow>
-                                      <TableCell colSpan={8} align="center">
+                                      <TableCell colSpan={9} align="center">
                                         No data available
                                       </TableCell>
                                     </TableRow>
@@ -751,13 +751,14 @@ const AttendenceProcess = () => {
         <DialogTitle>Select Employees</DialogTitle>
         <DialogContent>
           <Table>
-            <TableHead>
+            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
                     indeterminate={selectedRows.length > 0 && selectedRows.length < dialogTableData.length}
                     checked={dialogTableData.length > 0 && selectedRows.length === dialogTableData.length}
                     onChange={handleSelectAllClick}
+                    sx={{ color: 'white' }}
                   />
                 </TableCell>
                 <TableCell>

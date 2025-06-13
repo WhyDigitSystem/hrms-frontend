@@ -14,8 +14,23 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import { MenuItem } from '@mui/material';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, FormHelperText, Checkbox } from '@mui/material';
+import { FormControlLabel, FormHelperText } from '@mui/material';
 import { FaEllipsisV } from 'react-icons/fa';
+import { TableCell, TableContainer, TableHead, TablePagination, Tooltip, Typography, Checkbox, IconButton } from '@mui/material';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  Paper,
+  Table,
+  TableRow,
+  TableBody,
+  TextField
+} from '@mui/material';
 
 const months = [
   { name: 'January', value: '01' },
@@ -36,6 +51,8 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, index) => currentYear - index);
 
 const SalaryProcess = () => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
@@ -343,7 +360,7 @@ const SalaryProcess = () => {
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-            <ActionButton title="Search" icon={SearchIcon} onClick={handleGetSalaryProcess} />
+            {/* <ActionButton title="Search" icon={SearchIcon} onClick={handleGetSalaryProcess} /> */}
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleCancel} />
             {/* <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} /> */}
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
@@ -376,6 +393,22 @@ const SalaryProcess = () => {
               {fieldErrors.year && <FormHelperText>{fieldErrors.year}</FormHelperText>}
             </FormControl>
           </div>
+          {/*  */}
+          <div className="col-md-3 mb-3">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleGetSalaryProcess}
+              sx={{
+                borderRadius: '8px',
+                boxShadow: '0px 3px 5px rgba(0,0,0,0.2)',
+                textTransform: 'none'
+              }}
+            >
+              Go
+            </Button>
+          </div>
+          {/*  */}
         </div>
 
         <>
@@ -397,121 +430,219 @@ const SalaryProcess = () => {
             <div className="col-lg-12">
               <div className="d-flex justify-content-end mb-2">
                 {/* "Approve All" button */}
-                <button className="btn btn-success-Approve" onClick={handleApproveAll}>
+                {/* <button className="btn btn-success-Approve" onClick={handleApproveAll}>
                   Approve All
-                </button>
+                </button> */}
+                {/* <button className="btn">
+                  <Tooltip title="Approve All">
+                    <IconButton color="success" onClick={handleApproveAll}>
+                      <DoneAllIcon />
+                    </IconButton>
+                  </Tooltip>
+                </button> */}
+                <Tooltip title="Approve All">
+                  <Button
+                    sx={{
+                      backgroundColor: '#b5e8df',
+                      color: 'black',
+                      minWidth: 45,
+                      '&:hover': {
+                        backgroundColor: '#364152',
+                        color: 'white'
+                      }
+                    }}
+                    startIcon={<DoneAllIcon sx={{ fontSize: '3rem' }} />}
+                    onClick={handleApproveAll}
+                  />
+                </Tooltip>
               </div>
               <div className="table-responsive">
-                <table className="table table-bordered">
-                  <thead>
-                    <tr style={{ background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%, #2a4b4d 90%)', color: 'white' }}>
-                      <th className="px-2 py-2 text-white text-center">S.No</th>
-                      <th className="px-2 py-2 text-white text-center">Code</th>
-                      <th className="px-2 py-2 text-white text-center">Employee</th>
-                      <th className="px-2 py-2 text-white text-center">Total Leave</th>
-                      <th className="px-2 py-2 text-white text-center">LOP</th>
-                      <th className="px-2 py-2 text-white text-center">Working Days</th>
-                      <th className="px-2 py-2 text-white text-center">Total Working Days</th>
-                      <th className="px-2 py-2 text-white text-center">Gross Salary</th>
-                      <th className="px-2 py-2 text-white text-center">Net Pay Salary</th>
-                      <th className="px-2 py-2 text-white text-center">Pay On Hand</th>
-                      <th className="px-2 py-2 text-white text-center">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mainTableData.length > 0 ? (
-                      mainTableData.map((leave, index) => (
-                        <tr key={leave.employeeCode}>
-                          <td className="text-center">{index + 1}</td>
-                          <td className="text-center">{leave.employeeCode}</td>
-                          <td className="text-center">{leave.employeeName}</td>
-                          <td className="text-center">{leave.totalLeave}</td>
-                          <td className="text-center">{leave.lopLeave}</td>
-                          <td className="text-center">{leave.empTotalWorkingDays}</td>
-                          <td className="text-center">{leave.totalCompanyWorkingDays}</td>
-                          <td>{leave.grossPay || 'Pending'}</td>
-                          <td>{leave.netPay || 'Pending'}</td>
-                          <td>{leave.payOnHand || 'Pending'}</td>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                      <TableRow>
+                        <TableCell>
+                          <strong>S.No</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Code</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Employee</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Total Leave</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>LOP</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Working Days</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Total Working Days</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Gross Salary</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Net Pay Salary</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Pay On Hand</strong>
+                        </TableCell>
+                        <TableCell>
+                          <strong>Status</strong>
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    {/*  */}
+                    <TableBody>
+                      {mainTableData.length > 0 ? (
+                        mainTableData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((leave, index) => (
+                          // mainTableData.map((leave, index) => (
+                          <TableRow key={leave.employeeCode} hover>
+                            <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                            <TableCell>{leave.employeeCode}</TableCell>
+                            <TableCell>{leave.employeeName}</TableCell>
+                            <TableCell>{leave.totalLeave}</TableCell>
+                            <TableCell>{leave.lopLeave}</TableCell>
+                            <TableCell>{leave.empTotalWorkingDays}</TableCell>
+                            <TableCell>{leave.totalCompanyWorkingDays}</TableCell>
+                            <TableCell>{leave.grossPay || 'Pending'}</TableCell>
+                            <TableCell>{leave.netPay || 'Pending'}</TableCell>
+                            <TableCell>{leave.payOnHand || 'Pending'}</TableCell>
 
-                          <td className="text-center position-relative">
-                            <button className="btn btn-light" type="button" onClick={() => toggleDropdown(leave.employeeCode)}>
-                              <FaEllipsisV />
-                            </button>
+                            <td className="text-center position-relative">
+                              <button className="btn btn-light" type="button" onClick={() => toggleDropdown(leave.employeeCode)}>
+                                <FaEllipsisV />
+                              </button>
 
-                            {dropdownOpen[leave.employeeCode] && (
-                              <div className="dropdown-menu show position-absolute">
-                                <button className="dropdown-item" onClick={() => handleStatusChange(leave.employeeCode, 'Approved')}>
-                                  Approved
-                                </button>
-                                <button className="dropdown-item" onClick={() => handleStatusChange(leave.employeeCode, 'Pending')}>
-                                  Pending
-                                </button>
-                              </div>
-                            )}
-                            <div className="mt-2">{rowStatus[leave.employeeCode] || 'Pending'}</div>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="10" className="text-center text-danger">
-                          {fieldErrors.table || ''}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                              {dropdownOpen[leave.employeeCode] && (
+                                <div className="dropdown-menu show position-absolute">
+                                  <button className="dropdown-item" onClick={() => handleStatusChange(leave.employeeCode, 'Approved')}>
+                                    Approved
+                                  </button>
+                                  <button className="dropdown-item" onClick={() => handleStatusChange(leave.employeeCode, 'Pending')}>
+                                    Pending
+                                  </button>
+                                </div>
+                              )}
+                              <div className="mt-2">{rowStatus[leave.employeeCode] || 'Pending'}</div>
+                            </td>
+                          </TableRow>
+                        ))
+                      ) : (
+                        // <tr>
+                        //   <td colSpan="10" className="text-center text-secondary">
+                        //     No data available
+                        //     {/* {fieldErrors.table || ''} */}
+                        //   </td>
+                        // </tr>
+                        <TableRow>
+                          <TableCell colSpan={11} align="center">
+                            No data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                  <TablePagination
+                    rowsPerPageOptions={[5, 10, 25]}
+                    component="div"
+                    count={mainTableData.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={(e, newPage) => setPage(newPage)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
+                  />
+                </TableContainer>
               </div>
             </div>
           </div>
+
           <ToastContainer />
         </>
       </div>
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="lg">
         <DialogTitle>Select Employees</DialogTitle>
         <DialogContent>
-          <table className="table table-bordered">
-            <thead>
-              <tr>
-                <th>
-                  <FormControlLabel control={<Checkbox checked={selectAll} onChange={handleSelectAll} />} label="Select All" />
-                </th>
-                <th>Code</th>
-                <th>Employee</th>
-                <th>Total Leave</th>
-                <th>LOP</th>
-                <th>Working Days</th>
-                <th>Total Working Days</th>
-                <th>Gross Salary</th>
-                <th>Net Pay Salary</th>
-                <th>Pay On Hand</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allSalary.map((leave) => (
-                <tr key={leave.employeeCode}>
-                  <td>
-                    <Checkbox checked={selectedRows.includes(leave.employeeCode)} onChange={() => handleRowSelect(leave.employeeCode)} />
-                  </td>
-                  <td>{leave.employeeCode}</td>
-                  <td>{leave.employeeName}</td>
-                  <td>{leave.totalLeave}</td>
-                  <td>{leave.lopLeave}</td>
-                  <td>{leave.empTotalWorkingDays}</td>
-                  <td>{leave.totalCompanyWorkingDays}</td>
-                  <td>{leave.grossPay || 'Pending'}</td>
-                  <td>{leave.netPay || 'Pending'}</td>
-                  <td>{leave.payOnHand || 'Pending'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <Table>
+            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableRow>
+                <TableCell>
+                  <FormControlLabel
+                    control={<Checkbox checked={selectAll} onChange={handleSelectAll} sx={{ color: 'white' }} />}
+                    label="Select All"
+                  />
+                </TableCell>
+                <TableCell>
+                  <strong>Code</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Employee</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Total Leave</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>LOP</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Working Days</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Total Working</strong> Days
+                </TableCell>
+                <TableCell>
+                  <strong>Gross Salary</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Net Pay Salary</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Pay On Hand</strong>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {/* {allSalary.lenght >= 0 ? ( */}
+              {
+                allSalary.map((leave) => (
+                  <TableRow key={leave.employeeCode} hover role="checkbox" sx={{ cursor: 'pointer' }}>
+                    <TableCell padding="checkbox">
+                      <Checkbox checked={selectedRows.includes(leave.employeeCode)} onChange={() => handleRowSelect(leave.employeeCode)} />
+                    </TableCell>
+                    <TableCell>{leave.employeeCode}</TableCell>
+                    <TableCell>{leave.employeeName}</TableCell>
+                    <TableCell>{leave.totalLeave}</TableCell>
+                    <TableCell>{leave.lopLeave}</TableCell>
+                    <TableCell>{leave.empTotalWorkingDays}</TableCell>
+                    <TableCell>{leave.totalCompanyWorkingDays}</TableCell>
+                    <TableCell>{leave.grossPay || 'Pending'}</TableCell>
+                    <TableCell>{leave.netPay || 'Pending'}</TableCell>
+                    <TableCell>{leave.payOnHand || 'Pending'}</TableCell>
+                  </TableRow>
+                ))
+                // ) : (
+                // <tr>
+                //   <td colSpan="10" className="text-center text-secondary">
+                //     No data available
+                //   </td>
+                // </tr>
+                // )}
+              }
+            </TableBody>
+          </Table>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleDialogClose} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleConfirmSelection} color="primary">
+          <Button variant="contained" onClick={handleConfirmSelection} disabled={selectedRows.length === 0}>
             Confirm Selection
           </Button>
         </DialogActions>
