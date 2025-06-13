@@ -13,8 +13,14 @@ import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, Table, TableHead, TableRow, TableCell, TableBody, Button, IconButton } from '@mui/material';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import DownloadIcon from '@mui/icons-material/Download';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
+// import DownloadIcon from '@mui/icons-material/Download';
 import CircularProgress from '@mui/material/CircularProgress';
+import { ToastContainer } from 'react-toastify';
+import Tooltip from '@mui/material/Tooltip';
 const EmployeeAttanceReport = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [attendanceReport, setAttendanceReport] = useState([]);
@@ -70,9 +76,11 @@ const EmployeeAttanceReport = () => {
         setIsLoading(false);
       } else {
         showToast('error', 'No records found');
+        setIsLoading(false);
       }
     } catch (err) {
       showToast('error', 'Error fetching attendance report');
+      setIsLoading(false);
       console.error(err);
     }
   };
@@ -96,6 +104,10 @@ const EmployeeAttanceReport = () => {
 
   //
   const handleDownloadPDF = () => {
+    if (attendanceReport.length === 0) {
+      showToast('error', 'No data to download');
+      return;
+    }
     const doc = new jsPDF();
     doc.setFontSize(16);
     doc.text('Check In/Out Report', 14, 20);
@@ -128,8 +140,36 @@ const EmployeeAttanceReport = () => {
     doc.save('Check In/Out Report_.pdf');
   };
 
+  const handleDownloadExcel = () => {
+    if (attendanceReport.length === 0) {
+      showToast('error', 'No data to download');
+      return;
+    }
+
+    const exportData = attendanceReport.map((row) => ({
+      Code: row.employeeCode,
+      Employee: row.employeeName,
+      Date: row.entryDate,
+      'Check In': row.checkInTime,
+      'Check Out': row.checkOutTime,
+      'Total Hours': row.grossHours
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Check In-Out Report');
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+    });
+
+    saveAs(blob, 'CheckInOutReport.xlsx');
+  };
+
   return (
     <>
+      <ToastContainer />
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
@@ -243,12 +283,57 @@ const EmployeeAttanceReport = () => {
             }}
           >
             Check In/Out Report
-            <IconButton onClick={handleDownloadPDF} title="Download PDF">
+            {/* <IconButton onClick={handleDownloadPDF} title="Download PDF">
               <DownloadIcon color="primary" />
-            </IconButton>
+            </IconButton> */}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {/* <Tooltip title="PDF">
+                <IconButton onClick={handleDownloadPDF}>
+                  <PictureAsPdfIcon color="error" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="EXCEL">
+                <IconButton onClick={handleDownloadExcel}>
+                  <FileDownloadIcon sx={{ color: 'green' }} />
+                </IconButton>
+              </Tooltip> */}
+              <Button
+                variant="contained"
+                color="error"
+                size="small"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleDownloadPDF}
+                sx={{
+                  borderRadius: '20px',
+                  px: 2,
+                  textTransform: 'none',
+                  bgcolor: '#D32F2F',
+                  '&:hover': { bgcolor: '#B71C1C' }
+                }}
+              >
+                PDF
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                startIcon={<FileDownloadIcon />}
+                onClick={handleDownloadExcel}
+                sx={{
+                  borderRadius: '20px',
+                  px: 2,
+                  textTransform: 'none',
+                  bgcolor: '#388E3C',
+                  color: '#FFF',
+                  '&:hover': { bgcolor: '#1B5E20', color: '#FFF' }
+                }}
+              >
+                Excel
+              </Button>
+            </div>
           </DialogTitle>
           <DialogContent>
-            <div style={{ marginBottom: '5px', fontSize: '10px', display: 'flex', gap: '10px' }}>
+            <div style={{ marginBottom: '5px', fontSize: '14px', display: 'flex', gap: '10px' }}>
               <label>
                 <strong>From Date:</strong> {formData.fromDate ? dayjs(formData.fromDate).format('DD-MM-YYYY') : 'N/A'}
               </label>
