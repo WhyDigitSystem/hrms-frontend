@@ -11,6 +11,8 @@ function NewJoiner() {
     const [loginUserName] = useState(localStorage.getItem('userName'));
     const [todayJoiners, setTodayJoiners] = useState([]);
     const [upcomingJoiners, setUpcomingJoiners] = useState([]);
+    const [openProfileDialog, setOpenProfileDialog] = useState(false);
+
 
     useEffect(() => {
         if (orgId && loginUserName) {
@@ -24,7 +26,7 @@ function NewJoiner() {
             if (result?.status && result?.paramObjectsMap?.employee?.length > 0) {
                 const allJoiners = result.paramObjectsMap.employee;
                 const today = dayjs();
-                
+
                 const todayList = [];
                 const upcomingList = [];
 
@@ -39,16 +41,17 @@ function NewJoiner() {
                             name: emp.employee || emp.employeecode,
                             initials: (emp.employee || emp.employeecode)[0],
                             employeeId: emp.employeecode,
+                            image: emp.profileImage || '',
                             role: emp.designation || 'Employee',
                         });
-                    } 
+                    }
                     // Handling 'upcoming' joiners within the next 7 days
                     else if (diffDays > 0 && diffDays <= 7) {
                         upcomingList.push({
                             name: emp.employee || emp.employeecode,
                             employeeId: emp.employeecode,
                             date: joinDate.format('MMM DD'),
-                            image: '', // You can update this if there's an image field in the response
+                            image: emp.profileImage || '',
                             role: emp.designation || 'Employee',
                         });
                     }
@@ -75,8 +78,19 @@ function NewJoiner() {
                     </Typography>
                     {todayJoiners.map((person, index) => (
                         <Card key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
-                            <Avatar sx={{ backgroundColor: '#1976d2', color: '#fff', border: '2px solid #fff' }}>
-                                {person.initials}
+                            <Avatar
+                                src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                                onClick={() => setOpenProfileDialog(true)}
+                                sx={{
+                                    width: 64,
+                                    height: 64,
+                                    bgcolor: '#1976d2',
+                                    color: '#fff',
+                                    fontWeight: 'bold',
+                                    fontSize: 20,
+                                }}
+                            >
+                                {!person.image && person.name[0]}
                             </Avatar>
                             <Box>
                                 <Typography sx={{ fontWeight: 'bold', color: '#333' }}>
@@ -105,8 +119,19 @@ function NewJoiner() {
                     </Typography>
                     {upcomingJoiners.map((person, index) => (
                         <Card key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
-                            <Avatar sx={{ backgroundColor: '#1976d2', color: '#fff', border: '2px solid #fff' }}>
-                                {person.initials || person.name[0]} {/* Default initials if missing */}
+                            <Avatar
+                                src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                                onClick={() => setOpenProfileDialog(true)}
+                                sx={{
+                                    width: 64,
+                                    height: 64,
+                                    bgcolor: '#1976d2',
+                                    color: '#fff',
+                                    fontWeight: 'bold',
+                                    fontSize: 20,
+                                }}
+                            >
+                                {!person.image && person.name[0]}
                             </Avatar>
                             <Box>
                                 <Typography sx={{ fontWeight: 'bold', color: '#333' }}>

@@ -44,7 +44,7 @@ const getMenuItems = () => {
       };
     case 'USER':
       return {
-        items: [dashboard, calendar, me, finance,Appraisal]
+        items: [dashboard, calendar, me, finance,Appraisal,manageTax]
       };
     case 'DEPARTMENT HEAD':
       return {

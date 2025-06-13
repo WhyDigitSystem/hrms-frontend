@@ -23,8 +23,26 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
-import { FormHelperText, MenuItem, Autocomplete,Box } from '@mui/material';
+import { FormHelperText, MenuItem, Autocomplete, Box } from '@mui/material';
 import { date } from 'yup';
+import {
+  Avatar,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell
+} from '@mui/material';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import IconButton from '@mui/material/IconButton';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
+
 
 const Holidays = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,11 +53,13 @@ const Holidays = () => {
   const [editId, setEditId] = useState('');
   const [branchList, setBranchList] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [logo, setLogo] = useState(null);
   const [formData, setFormData] = useState({
     holidayDate: '',
     day: '',
     festival: '',
     branchName: '',
+    holidaysImage: '',
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -53,7 +73,7 @@ const Holidays = () => {
     { accessorKey: 'holidayDate', header: 'Holiday Date', size: 140 }, // Check correct field name
     { accessorKey: 'day', header: 'Day', size: 140 },
     { accessorKey: 'festival', header: 'Festival', size: 140 },
-    // { accessorKey: 'branchName', header: 'Branch Name', size: 140 }
+    // { accessorKey: 'holidaysImage', header: 'Holidays Image', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
@@ -83,6 +103,7 @@ const Holidays = () => {
         }));
 
         setListViewData(formattedData);
+        setLogo(response.paramObjectsMap.companyVO[0].holidaysImage);
       } else {
         console.error('API Error:', response);
       }
@@ -90,9 +111,6 @@ const Holidays = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-
-
 
   // Edit API
   const getHolidayById = async (row) => {
@@ -113,6 +131,7 @@ const Holidays = () => {
           day: holidayDetails.day,
           festival: holidayDetails.festival,
           branchName: holidayDetails.branchName,
+          holidaysImage: holidayDetails.holidaysImage,
         });
       } else {
         console.error('API Error:', response);
@@ -182,6 +201,7 @@ const Holidays = () => {
       day: '',
       festival: '',
       branchName: '',
+      holidaysImage: '',
     });
     setFieldErrors({
       holidayDate: '',
@@ -210,6 +230,8 @@ const Holidays = () => {
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
+      let holidaysImage = formData.holidaysImage;
+
       const saveData = {
         ...(editId && { id: editId }),
         // active: formData.active,
@@ -230,9 +252,13 @@ const Holidays = () => {
         const response = await apiCalls('put', '/basicmaster/createUpdateHolidays', saveData);
 
         if (response.status === true) {
+          const generatedId = response.paramObjectsMap.holidayVO.id;
+
+          if (generatedId && formData.logo && typeof formData.logo === 'object') {
+            await handleFileUpload(generatedId, formData.logo);
+          }
           console.log('Response:', response);
           showToast('success', editId ? ' Holidays Updated Successfully' : 'Holidays created successfully');
-
           handleClear();
           getAllHolidayByOrgId();
           setIsLoading(false);
@@ -240,6 +266,11 @@ const Holidays = () => {
           showToast('error', response.paramObjectsMap.errorMessage || 'Holidays creation failed');
           setIsLoading(false);
         }
+
+        setFormData({ day: '', festival: '', branchName: '', holidaysImage: '' });
+        setLogo(null);
+        setEditId('');
+
       } catch (error) {
         console.error('Error:', error);
         showToast('error', 'Company creation failed');
@@ -251,9 +282,73 @@ const Holidays = () => {
     }
   };
 
+  // const [logo, setLogo] = useState(null);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      setFormData(prev => ({ ...prev, logo: file })); // UPDATED: Set logo in formData
+    } else {
+      showToast('error', 'Please upload a valid image (PNG or JPEG).');
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setLogo(null);
+    setFormData((prev) => ({ ...prev, holidaysImage: '' })); // Reset the form data's image URL to empty
+  };
+
+
+  const handleFileUpload = async (generatedId, logoFile) => { // ADDED: logoFile parameter
+    if (!generatedId) {
+      showToast('error', 'Generated ID is required');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', logoFile); // UPDATED: Use passed logoFile
+
+    try {
+      const response = await apiCalls(
+        'post',
+        `/basicmaster/uploadHolidayImageInBloob?id=${generatedId}`,
+        formData,
+        {},
+        { 'Content-Type': 'multipart/form-data' }
+      );
+
+      if (response.status === true) {
+        showToast('success', 'Image Uploaded successfully!');
+        getAllHolidayByOrgId(); // Refresh data instead of reloading page
+      } else {
+        showToast('error', 'Image upload failed');
+      }
+    } catch (error) {
+      showToast('error', 'Failed to upload image');
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (logo && typeof logo === 'object') {
+        URL.revokeObjectURL(logo);
+      }
+    };
+  }, [logo]);
+
+  const handleRemoveLogo = () => setLogo(null);
   const handleView = () => {
+    console.log('LIST VIEW DATAS ARE:', listViewData);
+
     setListView(!listView);
   };
+
+
+  // const handleView = () => {
+  //   setListView(!listView);
+  // };
 
   const handleDateChange = (newValue) => {
     if (!newValue || !dayjs(newValue).isValid()) {
@@ -285,9 +380,11 @@ const Holidays = () => {
     handleBulkUploadClose();
   };
 
-  const handleFileUpload = (event) => {
+  const handleFilesUpload = (event) => {
     console.log(event.target.files[0]);
   };
+
+
 
 
   return (
@@ -308,7 +405,7 @@ const Holidays = () => {
                   dialogTitle="Upload Files"
                   uploadText="Upload File"
                   onSubmit={handleSubmit}
-                  handleFileUpload={handleFileUpload}
+                  handleFilesUpload={handleFilesUpload}
                   apiUrl="/basicmaster/excelUploadForHolidays"
                   screen="HolidayReport"
                   loginUser={loginUserName}
@@ -420,19 +517,53 @@ const Holidays = () => {
                   )}
                 />
               </div>
-              {/* <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.branchName}>
-                  <InputLabel id="branchName-label">Branch</InputLabel>
-                  <Select labelId="branchName-label" label="Branch" value={formData.branchName} onChange={handleInputChange} name="branchName">
-                    {branchList?.map((row) => (
-                      <MenuItem key={row.id} value={row.branch}>
-                        {row.branch}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.branchName && <FormHelperText>{fieldErrors.branchName}</FormHelperText>}
-                </FormControl>
-              </div> */}
+              <div className="col-md-3 mb-3">
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    multiline
+                    startIcon={<CloudUploadIcon />}
+                    sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
+                  >
+                    {/* {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Logo👉') : 'Upload Logo'} */}
+                    {formData.logo?.name || 'Upload Logo'}
+                    <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
+                  </Button>
+
+                  {formData.logo && (
+                    <IconButton
+                      onClick={handleOpen}
+                      sx={{ color: 'rgb(103 58 183)' }}
+                    >
+                      <ControlCameraIcon />
+                    </IconButton>
+                  )}
+                </Box>
+                <Dialog open={open} onClose={handleClose}>
+                  <DialogContent>
+                    <Typography variant="h5" sx={{ color: 'rgb(103 58 183)' }}>
+                      Holiday Image
+                    </Typography>
+                    {formData.logo ? (
+                      <Box mt={2}>
+                        <Avatar
+                          src={URL.createObjectURL(formData.logo)}
+                          alt="Holiday Image"
+                          sx={{ width: 200, height: 200 }}
+                        />
+                      </Box>
+                    ) : (
+                      <Typography variant="body1" mt={2}>
+                        No image uploaded
+                      </Typography>
+                    )}
+                    <DialogActions>
+                      <Button onClick={handleClose}>Close</Button>
+                    </DialogActions>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
           </>
         )}

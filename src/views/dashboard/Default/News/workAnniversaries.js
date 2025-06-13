@@ -26,12 +26,14 @@ import 'slick-carousel/slick/slick-theme.css';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 
+
 function WorkAnniversaries() {
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [todayAnniversaries, setTodayAnniversaries] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [employeeData, setEmployeeData] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [openProfileDialog, setOpenProfileDialog] = useState(false);
 
   useEffect(() => {
     if (orgId) fetchWorkAnniversaries();
@@ -49,7 +51,7 @@ function WorkAnniversaries() {
           role: emp.designation || 'Employee',
           gender: emp.gender || '',
           years: emp.noofyears || 0,
-          image: '',
+          image: emp.profileImage || '',
           department: emp.department || '',
         }));
         setTodayAnniversaries(anniversaries);
@@ -104,22 +106,18 @@ function WorkAnniversaries() {
         <Box display="flex" flexDirection="column" alignItems="center" textAlign="center">
           <Box display="flex" alignItems="center" gap={2} flexDirection={{ xs: 'column', sm: 'row' }}>
             <Avatar
-              src={
-                employeeData?.profileImage
-                  ? `data:image/png;base64,${employeeData?.profileImage}`
-                  : ''
-              }
+              src={person.image ? `data:image/png;base64,${person.image}` : ''}
+              onClick={() => setOpenProfileDialog(true)}
               sx={{
-                width: 80,
-                height: 80,
+                width: 64,
+                height: 64,
                 bgcolor: '#1976d2',
-                fontSize: 32,
-                border: '3px solid white',
-                boxShadow: 2,
-                animation: 'pulse 2s infinite',
+                color: '#fff',
+                fontWeight: 'bold',
+                fontSize: 20,
               }}
             >
-              {!employeeData?.profileImage && person.initials}
+              {!person.image && person.name[0]}
             </Avatar>
             <Box textAlign={{ xs: 'center', sm: 'left' }}>
               <Typography variant="h6" fontWeight="bold">
@@ -318,20 +316,18 @@ function WorkAnniversaries() {
                 >
                   <Box display="flex" alignItems="center" flexDirection="column" textAlign="center">
                     <Avatar
-                      src={
-                        employeeData?.profileImage
-                          ? `data:image/png;base64,${employeeData?.profileImage}`
-                          : ''
-                      }
+                      src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                      onClick={() => setOpenProfileDialog(true)}
                       sx={{
-                        width: 60,
-                        height: 60,
-                        mb: 1,
+                        width: 64,
+                        height: 64,
                         bgcolor: '#1976d2',
-                        fontSize: 24,
+                        color: '#fff',
+                        fontWeight: 'bold',
+                        fontSize: 20,
                       }}
                     >
-                      {!employeeData?.profileImage && person.initials}
+                      {!person.image && person.name[0]}
                     </Avatar>
                     <Typography variant="subtitle1" fontWeight="bold">
                       {person.name}

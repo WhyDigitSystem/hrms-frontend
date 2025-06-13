@@ -122,7 +122,7 @@ const Index = () => {
                     <Paper
                         elevation={2}
                         sx={{
-                            p: isMobile ? 1.5 : 3,
+                            p: isMobile ? 1.5 : 1,
                             background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)',
                             borderRadius: isMobile ? 2 : 3,
                             border: '1px solid #e0e0e0',

@@ -439,7 +439,7 @@ const SelfGoals = () => {
           {!listView ? (
             <>
               <div className="row d-flex ml">
-                <div className="col-md-3 mb-3">
+                <div className="col-md-2 mb-3">
                   <TextField
                     label="Appraisal ID"
                     variant="outlined"
@@ -452,7 +452,7 @@ const SelfGoals = () => {
                     helperText={fieldErrors.appraisalId}
                   />
                 </div>
-                <div className="col-md-3 mb-3">
+                <div className="col-md-2 mb-3">
                   <TextField
                     label="Employee Code"
                     variant="outlined"
@@ -467,7 +467,7 @@ const SelfGoals = () => {
 
                   />
                 </div>
-                <div className="col-md-3 mb-3">
+                <div className="col-md-2 mb-3">
                   <TextField
                     label="Employee Name"
                     variant="outlined"
@@ -481,7 +481,7 @@ const SelfGoals = () => {
                     disabled
                   />
                 </div>
-                <div className="col-md-3 mb-3">
+                <div className="col-md-2 mb-3">
                   <TextField
                     label="Supervisor Code"
                     variant="outlined"
@@ -495,7 +495,7 @@ const SelfGoals = () => {
                     disabled
                   />
                 </div>
-                <div className="col-md-3 mb-3">
+                <div className="col-md-2 mb-3">
                   <TextField
                     label="Supervisor Name"
                     variant="outlined"

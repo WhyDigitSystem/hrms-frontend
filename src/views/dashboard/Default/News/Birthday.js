@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Avatar, Box, Typography, Divider, Paper
+    Avatar,
+    Box,
+    Typography,
+    Paper,
+    Grid,
+    Divider,
+    useMediaQuery
 } from '@mui/material';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import apiCalls from 'apicall';
 import dayjs from 'dayjs';
 import isBetween from 'dayjs/plugin/isBetween';
+import birthdayBackground from '../../../../assets/images/happy-birthday-flags-banner-with-confetti-vector.webp';
 
 dayjs.extend(isBetween);
 
@@ -15,6 +22,7 @@ function Birthday() {
     const [loginUserName] = useState(localStorage.getItem('userName'));
     const [todayBirthdays, setTodayBirthdays] = useState([]);
     const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
+    const [openProfileDialog, setOpenProfileDialog] = useState(false);
 
     useEffect(() => {
         if (orgId && loginUserName) {
@@ -38,29 +46,22 @@ function Birthday() {
                     const birthDate = dayjs(emp.dob, ['YYYY-MM-DD', 'YYYY/MM/DD', 'DD-MM-YYYY']);
                     let birthdayThisYear = dayjs(`${today.year()}-${birthDate.format('MM-DD')}`);
 
-                    // If birthday already occurred this year, consider next year's
+                    // Adjust to next year if already passed
                     if (birthdayThisYear.isBefore(today, 'day')) {
                         birthdayThisYear = birthdayThisYear.add(1, 'year');
                     }
 
-                    // Check if today is the birthday
+                    const personData = {
+                        name: emp.empCode,
+                        employeeId: emp.empName,
+                        image: emp.profileImage || '', // base64 string or empty
+                        date: birthdayThisYear.format('MMM DD'),
+                    };
+
                     if (birthDate.format('MM-DD') === todayFormatted) {
-                        todayList.push({
-                            name: emp.empCode,
-                            initials: emp.empCode[0],
-                            employeeId: emp.empName,
-                            role: 'Employee',
-                            image: '', // Optional: Add image if available
-                        });
-                    }
-                    // Check if upcoming within next 7 days
-                    else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(endDate)) {
-                        upcomingList.push({
-                            name: emp.empCode,
-                            employeeId: emp.empName,
-                            date: birthdayThisYear.format('MMM DD'),
-                            image: '', // Optional: Add image if available
-                        });
+                        todayList.push(personData);
+                    } else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(endDate)) {
+                        upcomingList.push(personData);
                     }
                 });
 
@@ -76,84 +77,125 @@ function Birthday() {
         <Paper
             elevation={3}
             sx={{
-                p: 2,
-                mb: 2,
+                p: 0,
+                width: '100%',
                 display: 'flex',
-                alignItems: 'center',
-                borderLeft: isToday ? '6px solid #1976d2' : '6px solid #ffa726',
-                borderRadius: 2,
-                background: 'linear-gradient(to right, #fdfcfb, #e2d1c3)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                transition: 'background-color 0.3s ease',
-                '&:hover': {
-                    background: 'linear-gradient(to right, #f3e5f5, #e2d1c3)',
-                }
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                backgroundColor: 'transparent',
             }}
         >
-            <Avatar
-                src={person.image || ''}
-                sx={{
-                    bgcolor: isToday ? '#1976d2' : '#fb8c00',
-                    color: '#fff',
-                    width: 56,
-                    height: 56,
-                    fontSize: 22,
-                    mr: 2
-                }}
-            >
-                {person.name[0]}
-            </Avatar>
-            <Box sx={{ flexGrow: 1 }}>
-                <Typography fontWeight="bold">{person.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                    {person.employeeId}
-                </Typography>
-            </Box>
-            <Box>
-                <Typography variant="caption" color={isToday ? '#1976d2' : '#fb8c00'}>
-                    {isToday ? 'Today 🎉' : person.date}
-                </Typography>
-            </Box>
+            <div className='pt-4 mt-5 mb-3'>
+                <div className='d-flex align-item:center justify-content-center align-items-center'>
+                    <div>
+                        <Avatar
+                            src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                            onClick={() => setOpenProfileDialog(true)}
+                            sx={{
+                                width: 64,
+                                height: 64,
+                                bgcolor: '#1976d2',
+                                color: '#fff',
+                                fontWeight: 'bold',
+                                fontSize: 20,
+                            }}
+                        >
+                            {!person.image && person.name[0]}
+                        </Avatar>
+                    </div>
+                    <div className='.pt-5 .mt-5 ps-4'>
+                        <Typography fontWeight="bold">{person.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {person.employeeId}
+                        </Typography>
+                        {/* {!isToday && (
+                            <Typography variant="caption" color="text.secondary">
+                                🎂 {person.date}
+                            </Typography>
+                        )} */}
+                    </div>
+                </div>
+            </div>
         </Paper>
     );
 
     return (
         <Box sx={{ p: 3 }}>
-            {/* Birthdays Today */}
+            {/* Today's Birthdays Section */}
             {todayBirthdays.length > 0 ? (
-                todayBirthdays.map((person, idx) => (
-                    <BirthdayCard key={idx} person={person} isToday />
-                ))
+                <Box
+                    sx={{
+                        p: 1,
+                        mb: 4,
+                        borderRadius: 3,
+                        backgroundImage: `url(${birthdayBackground})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                        backgroundPosition: 'center',
+                    }}
+                >
+                    <Typography
+                        variant="h5"
+                        sx={{
+                            fontWeight: 'bold',
+                            color: '#fff',
+                            mb: 2,
+                            textAlign: 'center',
+                            textShadow: '1px 1px 4px rgba(0,0,0,0.4)',
+                        }}
+                    >
+                    </Typography>
+
+                    <Grid container spacing={2} justifyContent="center">
+                        {todayBirthdays.map((person, idx) => (
+                            <Grid item key={idx} xs={12} sm={6} md={4} lg={3}>
+                                <BirthdayCard person={person} isToday />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
             ) : (
-                <Typography variant="body2" sx={{ color: '#888', mb: 2 }}>
+                <Typography
+                    variant="body2"
+                    sx={{
+                        color: '#888',
+                        textAlign: 'center',
+                    }}
+                >
                     No birthdays today.
                 </Typography>
             )}
 
-            <Divider sx={{ my: 3 }} />
-
-            {/* Upcoming Birthdays */}
-            <Typography
-                variant="h6"
-                sx={{
-                    mb: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    color: '#fb8c00'
-                }}
-            >
-                <CalendarMonthIcon /> Upcoming Birthdays
-            </Typography>
-            {upcomingBirthdays.length > 0 ? (
-                upcomingBirthdays.map((person, idx) => (
-                    <BirthdayCard key={idx} person={person} isToday={false} />
-                ))
-            ) : (
-                <Typography variant="body2" sx={{ color: '#888' }}>
-                    No upcoming birthdays in the next 7 days.
-                </Typography>
+            {/* Divider */}
+            {upcomingBirthdays.length > 0 && todayBirthdays.length > 0 && (
+                <Divider sx={{ my: 3 }} />
             )}
+
+            {/* Upcoming Birthdays Section */}
+            {upcomingBirthdays.length > 0 && (
+                <Box sx={{ borderRadius: 3, backgroundColor: 'transparent' }}>
+                    <Typography
+                        variant="h6"
+                        sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            color: '#fb8c00',
+                        }}
+                    >
+                        <CalendarMonthIcon /> Upcoming Birthdays
+                    </Typography>
+
+                    <Grid container >
+                        {upcomingBirthdays.map((person, idx) => (
+                            <Grid item key={idx} xs={12} sm={12} md={12} lg={12}>
+                                <BirthdayCard person={person} isToday={false} />
+                            </Grid>
+                        ))}
+                    </Grid>
+                </Box>
+            )}
+
         </Box>
     );
 }
