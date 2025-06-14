@@ -3,7 +3,6 @@ import apiCalls from 'apicall';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import dayjs from 'dayjs';
 
-
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
@@ -17,7 +16,6 @@ const Calendar = () => {
   const [todayBirthdays, setTodayBirthdays] = useState([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [birthdayEvents, setBirthdayEvents] = useState([]);
-
 
   // Local storage values
   const [orgId] = useState(localStorage.getItem('orgId'));
@@ -49,9 +47,16 @@ const Calendar = () => {
     eventType: 'meeting',
     date: '',
     description: '',
-    startTime: '', // New field
-    endTime: ''   // New field
+    startTime: '',
+    endTime: ''
   });
+
+  // Helper function to get week number
+  const getWeekNumber = (date) => {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    return Math.ceil((date.getDate() + firstDayOfWeek) / 7);
+  };
 
   useEffect(() => {
     const updateCalendar = () => {
@@ -59,7 +64,6 @@ const Calendar = () => {
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
       const days = [];
       const firstDayIndex = startOfMonth.getDay();
-      const firstDayOfMonth = startOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
       const combinedEvents = [...calendarEvents, ...holidays, ...birthdayEvents];
 
@@ -78,23 +82,18 @@ const Calendar = () => {
               dayCount
             );
 
-            // Calculate correct week number (1-6)
-            const weekNumber = Math.ceil((dayCount + firstDayOfMonth) / 7);
+            const dayName = currentDay.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+            const weekNumber = getWeekNumber(currentDay);
 
-            // Get day name (e.g., "SUNDAY")
-            const dayName = weekdays[currentDay.getDay()].toUpperCase();
-
-            // Check if this is a week-off day
             const isWeekOff = weekOffs.some(off => {
-              if (off.weekOffDays !== dayName) return false;
-
-              // Handle "every week" (-1) or specific week numbers
+              if (off.weekOffDays.toUpperCase() !== dayName) return false;
               if (off.weekNumbers.includes(-1)) return true;
               return off.weekNumbers.includes(weekNumber);
             });
 
             const dayWithEvents = {
               day: dayCount,
+              date: currentDay,
               events: combinedEvents.filter(event => {
                 try {
                   const [year, month, day] = event.date.split('-').map(Number);
@@ -137,7 +136,7 @@ const Calendar = () => {
       clearInterval(timeInterval);
       window.removeEventListener('resize', handleResize);
     };
-  }, [currentDate, calendarEvents, holidays, weekOffs]);
+  }, [currentDate, calendarEvents, holidays, weekOffs, birthdayEvents]);
 
   // Fetch data functions
   const getAllCalendarByOrgId = async () => {
@@ -153,11 +152,8 @@ const Calendar = () => {
           empName: event.empName || empName,
           branchName: event.branchName || branchName,
           department: event.department || department,
-          time: event.time || [], // Ensure time array exists
-          // startTime: event.time && event.time.length > 0 ? event.time[0] : '',
-          // endTime: event.time && event.time.length > 1 ? event.time[1] : ''
-          startTime: event.fromTime || '',  // Make sure these field names match your API
-          endTime: event.toTime || ''       // Make sure these field names match your API
+          startTime: event.fromTime || '',
+          endTime: event.toTime || ''
         }));
         setCalendarEvents(transformed);
       }
@@ -178,7 +174,9 @@ const Calendar = () => {
           date: holiday.holidayDate,
           description: `Date: ${holiday.holidayDate}\nDay: ${holiday.day}\nType: Official Holiday`,
           id: `holiday-${holiday.id}`,
-          isHoliday: true
+          isHoliday: true,
+          startTime: '',
+          endTime: ''
         }));
         setHolidays(transformed);
       }
@@ -187,16 +185,14 @@ const Calendar = () => {
     }
   };
 
-  // Fetch company week-offs
   const getCompanyWeekOff = async () => {
     try {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
       const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO || [];
 
-      // Transform week off configuration into a format we can use in the calendar
       const transformedWeekOffs = weekOffConfig.map(off => ({
         weekOffDays: off.weekOffDays.toUpperCase(),
-        weekNumbers: off.weekNumbers || [-1] // Default to all weeks if not specified
+        weekNumbers: off.weekNumbers || [-1]
       }));
 
       setWeekOffs(transformedWeekOffs);
@@ -217,7 +213,6 @@ const Calendar = () => {
         return;
       }
 
-      // Handle different response structures
       const allBirthdays = result?.paramObjectsMap?.empDob ||
         result?.data?.empDob ||
         result?.empDob ||
@@ -236,26 +231,17 @@ const Calendar = () => {
       const upcomingList = [];
 
       allBirthdays.forEach(emp => {
-        if (!emp.dob || !emp.empName) {
-          console.warn('Invalid employee data:', emp);
-          return;
-        }
+        if (!emp.dob || !emp.empName) return;
 
         try {
-          // Parse the date with multiple possible formats
           const dob = dayjs(emp.dob, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM-DD-YYYY'], true);
-
-          if (!dob.isValid()) {
-            console.warn('Invalid date format for:', emp.empName, emp.dob);
-            return;
-          }
+          if (!dob.isValid()) return;
 
           const birthdayThisYear = dayjs()
             .year(today.year())
             .month(dob.month())
             .date(dob.date());
 
-          // Check if birthday is today
           if (dob.format('MM-DD') === todayFormatted) {
             todayList.push({
               name: emp.empName,
@@ -263,7 +249,6 @@ const Calendar = () => {
               department: emp.department || 'N/A'
             });
           }
-          // Check if birthday is within next 7 days (excluding today)
           else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(nextWeek)) {
             upcomingList.push({
               name: emp.empName,
@@ -279,7 +264,6 @@ const Calendar = () => {
       setTodayBirthdays(todayList);
       setUpcomingBirthdays(upcomingList);
 
-      // Create calendar events for birthdays
       const events = [
         ...todayList.map(bd => ({
           eventTitle: `${bd.name}'s Birthday 🎂`,
@@ -287,7 +271,9 @@ const Calendar = () => {
           date: bd.date,
           description: `Wish ${bd.name} a happy birthday!`,
           id: `birthday-${bd.name.replace(/\s+/g, '-')}-${bd.date}`,
-          isBirthday: true
+          isBirthday: true,
+          startTime: '',
+          endTime: ''
         })),
         ...upcomingList.map(bd => ({
           eventTitle: `${bd.name}'s Birthday (Upcoming)`,
@@ -295,7 +281,9 @@ const Calendar = () => {
           date: bd.date,
           description: `Upcoming birthday on ${bd.date}`,
           id: `birthday-upcoming-${bd.name.replace(/\s+/g, '-')}-${bd.date}`,
-          isBirthday: true
+          isBirthday: true,
+          startTime: '',
+          endTime: ''
         }))
       ];
 
@@ -311,91 +299,7 @@ const Calendar = () => {
     getAllHolidaysByOrgId();
     getCompanyWeekOff();
     fetchBirthdayData();
-    // getCompany();
   }, []);
-
-  // Update your useEffect that generates the calendar days with this version
-  useEffect(() => {
-    const updateCalendar = () => {
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-      const days = [];
-      const firstDayIndex = startOfMonth.getDay();
-      const totalDays = endOfMonth.getDate();
-      const combinedEvents = [...calendarEvents, ...holidays, ...birthdayEvents];
-
-      let dayCount = 1;
-      for (let i = 0; i < 6; i++) {
-        const week = [];
-        for (let j = 0; j < 7; j++) {
-          if (i === 0 && j < firstDayIndex) {
-            week.push(null);
-          } else if (dayCount > totalDays) {
-            break;
-          } else {
-            const currentDay = new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth(),
-              dayCount
-            );
-
-            // Get day name in consistent format (e.g., "MONDAY")
-            const dayName = currentDay.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-            // Calculate ISO week number (1-5/6)
-            const weekNumber = getWeekNumber(currentDay);
-
-            // Check if this is a week-off day
-            const isWeekOff = weekOffs.some(off => {
-              // Check if day matches (case-insensitive)
-              if (off.weekOffDays.toUpperCase() !== dayName) return false;
-
-              // Handle "every week" (-1) or specific week numbers
-              if (off.weekNumbers.includes(-1)) return true;
-              return off.weekNumbers.includes(weekNumber);
-            });
-
-            const dayWithEvents = {
-              day: dayCount,
-              date: currentDay,
-              events: combinedEvents.filter(event => {
-                try {
-                  const [year, month, day] = event.date.split('-').map(Number);
-                  const eventDate = new Date(year, month - 1, day);
-                  return (
-                    eventDate.getDate() === dayCount &&
-                    eventDate.getMonth() === currentDate.getMonth() &&
-                    eventDate.getFullYear() === currentDate.getFullYear()
-                  );
-                } catch (error) {
-                  console.error('Invalid date format:', event.date);
-                  return false;
-                }
-              }),
-              isWeekOff
-            };
-            week.push(dayWithEvents);
-            dayCount++;
-          }
-        }
-        days.push(week);
-        if (dayCount > totalDays) break;
-      }
-      setCalendarDays(days);
-    };
-
-    // Add this helper function outside your component
-    const getWeekNumber = (date) => {
-      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 (Sun) to 6 (Sat)
-
-      // Calculate which week of the month it is (1-6)
-      return Math.ceil((date.getDate() + firstDayOfWeek) / 7);
-    };
-
-    updateCalendar();
-  }, [currentDate, calendarEvents, holidays, weekOffs, birthdayEvents]);
-
 
   // Event handlers
   const handleAddEvent = () => {
@@ -405,6 +309,8 @@ const Calendar = () => {
       eventType: 'meeting',
       date: formatDateForInput(today.getFullYear(), today.getMonth() + 1, today.getDate()),
       description: '',
+      startTime: '',
+      endTime: '',
       id: null
     });
     setShowModal(true);
@@ -418,12 +324,11 @@ const Calendar = () => {
       date: event.date || '',
       description: event.description || '',
       isHoliday: event.eventType === 'holiday',
-      startTime: event.fromTime || '',
-      endTime: event.toTime || ''
+      startTime: event.startTime || event.fromTime || '',
+      endTime: event.endTime || event.toTime || ''
     });
     setShowModal(true);
   };
-
 
   const handleSaveEvent = async () => {
     if (!newEvent.eventTitle?.trim()) {
@@ -436,9 +341,7 @@ const Calendar = () => {
       return;
     }
 
-    // Prepare the API payload
     const saveData = {
-      // id: newEvent.id || 0,
       branchCode: branchCode,
       branchName: branchName,
       createdBy: loginUserName,
@@ -451,7 +354,7 @@ const Calendar = () => {
       toTime: newEvent.endTime || '',
       orgId: orgId,
       empCode: empCode,
-      empName: loginUserName // assuming createdBy is also empName
+      empName: loginUserName
     };
 
     try {
@@ -467,6 +370,30 @@ const Calendar = () => {
     } catch (err) {
       console.error('Save Error:', err);
       showToast('error', 'Error saving event. Please try again.');
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!newEvent.id || newEvent.isHoliday) {
+      showToast('error', 'Cannot delete this event');
+      return;
+    }
+
+    try {
+      const result = await apiCalls('delete', 
+        `/basicmaster/deleteCalendarById?orgId=${orgId}&id=${newEvent.id}`
+      );
+
+      if (result?.status) {
+        showToast('success', 'Event deleted successfully');
+        setShowModal(false);
+        await getAllCalendarByOrgId();
+      } else {
+        showToast('error', result?.message || 'Failed to delete event');
+      }
+    } catch (err) {
+      console.error('Delete Error:', err);
+      showToast('error', 'Error deleting event. Please try again.');
     }
   };
 
@@ -560,7 +487,9 @@ const Calendar = () => {
                     eventType: 'meeting',
                     date: dateStr,
                     description: '',
-                    id: null
+                    id: null,
+                    startTime: '',
+                    endTime: ''
                   });
                   setShowModal(true);
                 }
@@ -577,7 +506,7 @@ const Calendar = () => {
                     {cell.day}
                   </div>
 
-                  {/* Week Off Label - only show if it's a week-off day */}
+                  {/* Week Off Label */}
                   {cell.isWeekOff && (
                     <div style={{
                       position: 'absolute',
@@ -618,9 +547,9 @@ const Calendar = () => {
                           maxWidth: '100%'
                         }}>
                         {event.eventTitle}
-                        {event.time?.length > 0 && (
+                        {event.startTime && (
                           <div style={{ fontSize: 8, marginTop: 1 }}>
-                            {event.time[0]} {event.time[1] ? `- ${event.time[1]}` : ''}
+                            {event.startTime} {event.endTime ? `- ${event.endTime}` : ''}
                           </div>
                         )}
                       </div>
@@ -636,6 +565,46 @@ const Calendar = () => {
             </div>
           ))
         )}
+      </div>
+    </div>
+  );
+
+  const EventListView = () => (
+    <div style={{ marginTop: 16, maxHeight: 400, overflowY: 'auto' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+        {[...calendarEvents].map((event, index) => (
+          <div
+            key={index}
+            onClick={() => handleEventClick(event)}
+            title={`${event.eventTitle}\nDate: ${event.date}\n${event.description || ''}`}
+            style={{
+              padding: 8,
+              borderRadius: 6,
+              backgroundColor: '#fff',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              fontSize: 12,
+              cursor: 'pointer'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  backgroundColor: eventTypeColors[event.eventType]
+                }}
+              />
+              <h4 style={{ fontSize: 13, margin: 0 }}>{event.eventTitle}</h4>
+            </div>
+            <div style={{ marginTop: 6, color: '#777', fontSize: 11 }}>
+              {new Date(event.date).toLocaleDateString()}
+              {(event.startTime || event.endTime) && (
+                <span> • {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}</span>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -663,11 +632,11 @@ const Calendar = () => {
       eventType: 'meeting',
       date: '',
       description: '',
+      startTime: '',
+      endTime: '',
       id: null
     });
   };
-
-
 
   return (
     <div style={{ margin: '0 auto', padding: isMobile ? 16 : '10px 24px 24px 24px', fontFamily: 'Arial, sans-serif' }}>
@@ -735,43 +704,7 @@ const Calendar = () => {
           <CalendarGrid />
         </>
       ) : (
-        <div style={{ marginTop: 16, maxHeight: 400, overflowY: 'auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-            {[...calendarEvents, ...holidays].map((event, index) => (
-              <div
-                key={index}
-                onClick={() => handleEventClick(event)}
-                title={`${event.eventType === 'birthday' ? 'Birthday: ' : ''}${event.eventTitle}\nDate: ${event.date}${event.description ? `\n\n${event.description}` : ''}`}
-                style={{
-                  padding: 8,
-                  borderRadius: 6,
-                  backgroundColor: '#fff',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                  fontSize: 12,
-                  cursor: 'pointer'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div
-                    style={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: '50%',
-                      backgroundColor: eventTypeColors[event.eventType]
-                    }}
-                  />
-                  <h4 style={{ fontSize: 13, margin: 0 }}>{event.eventTitle}</h4>
-                </div>
-                <div style={{ marginTop: 6, color: '#777', fontSize: 11 }}>
-                  {new Date(event.date).toLocaleDateString()}
-                  {(event.startTime || event.endTime) && (
-                    <span> • {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}</span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <EventListView />
       )}
 
       {showModal && (
@@ -847,6 +780,7 @@ const Calendar = () => {
                   name="startTime"
                   value={newEvent.startTime}
                   onChange={handleEventChange}
+                  disabled={newEvent.isHoliday}
                   style={inputStyleSmall}
                 />
               </div>
@@ -858,6 +792,7 @@ const Calendar = () => {
                   name="endTime"
                   value={newEvent.endTime}
                   onChange={handleEventChange}
+                  disabled={newEvent.isHoliday}
                   style={inputStyleSmall}
                 />
               </div>
@@ -899,18 +834,36 @@ const Calendar = () => {
                 >
                   Cancel
                 </button>
-                {!newEvent.isHoliday && (
-                  <button
-                    type="submit"
-                    style={{
-                      ...buttonStyleSmall,
-                      backgroundColor: '#1d4ed8',
-                      color: 'white'
-                    }}
-                  >
-                    Save
-                  </button>
-                )}
+                
+                <div>
+                  {!newEvent.isHoliday && newEvent.id && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteEvent}
+                      style={{
+                        ...buttonStyleSmall,
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        marginRight: 8
+                      }}
+                    >
+                      Delete
+                    </button>
+                  )}
+                  
+                  {!newEvent.isHoliday && (
+                    <button
+                      type="submit"
+                      style={{
+                        ...buttonStyleSmall,
+                        backgroundColor: '#1d4ed8',
+                        color: 'white'
+                      }}
+                    >
+                      Save
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </div>
@@ -921,23 +874,6 @@ const Calendar = () => {
 };
 
 // Style constants
-const buttonStyle = {
-  padding: '10px 16px',
-  borderRadius: 6,
-  border: '1px solid #ddd',
-  backgroundColor: '#fff',
-  cursor: 'pointer',
-  transition: 'all 0.2s'
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: 12,
-  borderRadius: 8,
-  border: '1px solid #eee',
-  marginTop: 4
-};
-
 const tabStyle = (isActive) => ({
   padding: '4px 10px',
   fontSize: 12,
@@ -950,6 +886,7 @@ const tabStyle = (isActive) => ({
   minWidth: 100,
   textAlign: 'center'
 });
+
 const smallButtonStyle = {
   padding: '4px 8px',
   fontSize: 12,
@@ -960,6 +897,7 @@ const smallButtonStyle = {
   cursor: 'pointer',
   transition: 'all 0.2s ease'
 };
+
 const inputStyleSmall = {
   width: '100%',
   padding: '6px 10px',
@@ -979,6 +917,5 @@ const buttonStyleSmall = {
   color: '#333',
   cursor: 'pointer'
 };
-
 
 export default Calendar;
