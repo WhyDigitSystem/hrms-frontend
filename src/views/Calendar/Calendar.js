@@ -380,7 +380,7 @@ const Calendar = () => {
     }
 
     try {
-      const result = await apiCalls('delete', 
+      const result = await apiCalls('delete',
         `/basicmaster/deleteCalendarById?orgId=${orgId}&id=${newEvent.id}`
       );
 
@@ -420,173 +420,192 @@ const Calendar = () => {
   const CalendarGrid = () => (
     <div style={{
       marginTop: 12,
-      padding: isMobile ? 6 : 10,
+      padding: isMobile ? 4 : 10,
       backgroundColor: '#fff',
       borderRadius: 6,
       boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
       border: '1px solid #e0e0e0',
-      fontSize: 12
+      fontSize: 12,
+      overflowX: isMobile ? 'auto' : 'hidden'
     }}>
-      {/* Weekdays Header */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${isMobile ? 4 : 7}, 1fr)`,
-        gap: 4,
-        borderBottom: '1px solidrgb(179, 18, 18)',
-        paddingBottom: 4,
-        marginBottom: 4
-      }}>
-        {weekdays.map(day => (
-          <div key={day} style={{
-            padding: '4px 0',
-            textAlign: 'center',
-            fontWeight: 600,
-            fontSize: 11,
-            color: '#333',
-            backgroundColor: 'rgb(214, 220, 226)',
-            borderRadius: 4,
-            border: '1px solid #d1d5db'
-          }}>
-            {day}
-          </div>
-        ))}
-      </div>
+      <div style={{ minWidth: isMobile ? '500px' : 'auto' }}>
+        {/* Weekdays Header */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: 4,
+          borderBottom: '1px solid rgb(179, 18, 18)',
+          paddingBottom: 4,
+          marginBottom: 4
+        }}>
+          {weekdays.map(day => (
+            <div key={day} style={{
+              padding: '4px 0',
+              textAlign: 'center',
+              fontWeight: 600,
+              fontSize: 11,
+              color: '#333',
+              backgroundColor: 'rgb(214, 220, 226)',
+              borderRadius: 4,
+              border: '1px solid #d1d5db'
+            }}>
+              {day}
+            </div>
+          ))}
+        </div>
 
-      {/* Calendar Days Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: `repeat(${isMobile ? 2 : 7}, 1fr)`,
-        gap: isMobile ? 4 : 5
-      }}>
-        {calendarDays.map((week, wIdx) =>
-          week.map((cell, cIdx) => (
-            <div
-              key={`${wIdx}-${cIdx}`}
-              style={{
-                minHeight: isMobile ? 44 : 60,
-                padding: 4,
-                borderRadius: 5,
-                backgroundColor: cell?.isWeekOff ? '#ffeaea' : (cell ? '#fdfdfd' : 'transparent'),
-                border: `1px solid ${cell?.isWeekOff ? '#ff6666' : '#dcdcdc'}`,
-                cursor: cell ? 'pointer' : 'default',
-                position: 'relative'
-              }}
-              onClick={() => {
-                if (!cell) return;
+        {/* Calendar Days Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(7, 1fr)',
+          gap: isMobile ? 4 : 5
+        }}>
+          {calendarDays.map((week, wIdx) =>
+            week.map((cell, cIdx) => (
+              <div
+                key={`${wIdx}-${cIdx}`}
+                style={{
+                  minHeight: isMobile ? 44 : 60,
+                  padding: 4,
+                  borderRadius: 5,
+                  backgroundColor: cell?.isWeekOff ? '#ffeaea' : (cell ? '#fdfdfd' : 'transparent'),
+                  border: `1px solid ${cell?.isWeekOff ? '#ff6666' : '#dcdcdc'}`,
+                  cursor: cell ? 'pointer' : 'default',
+                  position: 'relative'
+                }}
+                onClick={() => {
+                  if (!cell) return;
 
-                if (cell.events.length > 0) {
-                  handleEventClick(cell.events[0]);
-                } else {
-                  const dateStr = formatDateForInput(
-                    currentDate.getFullYear(),
-                    currentDate.getMonth() + 1,
-                    cell.day
-                  );
-                  setNewEvent({
-                    eventTitle: '',
-                    eventType: 'meeting',
-                    date: dateStr,
-                    description: '',
-                    id: null,
-                    startTime: '',
-                    endTime: ''
-                  });
-                  setShowModal(true);
-                }
-              }}
-            >
-              {cell && (
-                <>
-                  {/* Date Number */}
-                  <div style={{
-                    color: cell.isWeekOff ? '#d32f2f' : '#1976d2',
-                    fontWeight: 'bold',
-                    fontSize: 11
-                  }}>
-                    {cell.day}
-                  </div>
-
-                  {/* Week Off Label */}
-                  {cell.isWeekOff && (
+                  if (cell.events.length > 0) {
+                    handleEventClick(cell.events[0]);
+                  } else {
+                    const dateStr = formatDateForInput(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth() + 1,
+                      cell.day
+                    );
+                    setNewEvent({
+                      eventTitle: '',
+                      eventType: 'meeting',
+                      date: dateStr,
+                      description: '',
+                      id: null,
+                      startTime: '',
+                      endTime: ''
+                    });
+                    setShowModal(true);
+                  }
+                }}
+              >
+                {cell && (
+                  <>
+                    {/* Date Number */}
                     <div style={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      fontSize: 9,
-                      color: ' #fff',
+                      color: cell.isWeekOff ? '#d32f2f' : '#1976d2',
                       fontWeight: 'bold',
-                      backgroundColor: 'rgba(70, 5, 15, 0.7)',
-                      padding: '1px 3px',
-                      borderRadius: 3,
-                      border: '1px solid #ffcdd2'
+                      fontSize: 11
                     }}>
-                      Week  OFF
+                      {cell.day}
                     </div>
-                  )}
 
-                  {/* Events */}
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 2,
-                    marginTop: 2
-                  }}>
-                    {cell.events.slice(0, 2).map((event, eIdx) => (
-                      <div key={eIdx}
-                        title={`Date: ${event.date}\n${event.startTime ? `Time: ${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}\n` : ''}Type: ${event.eventType}\nBranch: ${event.branchName || branchName}\nDepartment: ${event.department || department}\nCreated by: ${event.empName || empName}\n\n${event.description}`}
-                        style={{
-                          padding: '1px 4px',
-                          backgroundColor: eventTypeColors[event.eventType],
-                          color: '#fff',
-                          borderRadius: 4,
-                          fontSize: 9,
-                          fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          maxWidth: '100%'
-                        }}>
-                        {event.eventTitle}
-                        {event.startTime && (
-                          <div style={{ fontSize: 8, marginTop: 1 }}>
-                            {event.startTime} {event.endTime ? `- ${event.endTime}` : ''}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {cell.events.length > 2 && (
-                      <div style={{ fontSize: 9, color: '#666' }}>
-                        +{cell.events.length - 2} more
+                    {/* Week Off Label */}
+                    {cell.isWeekOff && (
+                      <div style={{
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        fontSize: 9,
+                        color: ' #fff',
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(70, 5, 15, 0.7)',
+                        padding: '1px 3px',
+                        borderRadius: 3,
+                        border: '1px solid #ffcdd2'
+                      }}>
+                        Week OFF
                       </div>
                     )}
-                  </div>
-                </>
-              )}
-            </div>
-          ))
-        )}
+
+                    {/* Events */}
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 2,
+                      marginTop: 2
+                    }}>
+                      {cell.events.slice(0, 2).map((event, eIdx) => (
+                        <div key={eIdx}
+                          title={`Date: ${event.date}\n${event.startTime ? `Time: ${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}\n` : ''}Type: ${event.eventType}\nBranch: ${event.branchName || branchName}\nDepartment: ${event.department || department}\nCreated by: ${event.empName || empName}\n\n${event.description}`}
+                          style={{
+                            padding: '1px 4px',
+                            backgroundColor: eventTypeColors[event.eventType],
+                            color: '#fff',
+                            borderRadius: 4,
+                            fontSize: 9,
+                            fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '100%'
+                          }}>
+                          {event.eventTitle}
+                          {event.startTime && (
+                            <div style={{ fontSize: 8, marginTop: 1 }}>
+                              {event.startTime} {event.endTime ? `- ${event.endTime}` : ''}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      {cell.events.length > 2 && (
+                        <div style={{ fontSize: 9, color: '#666' }}>
+                          +{cell.events.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
 
   const EventListView = () => (
     <div style={{ marginTop: 16, maxHeight: 400, overflowY: 'auto' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: 16
+        }}
+      >
         {[...calendarEvents].map((event, index) => (
           <div
             key={index}
             onClick={() => handleEventClick(event)}
             title={`${event.eventTitle}\nDate: ${event.date}\n${event.description || ''}`}
             style={{
-              padding: 8,
-              borderRadius: 6,
+              padding: 16,
+              borderRadius: 10,
+              border: '1px solid #e0e0e0',
               backgroundColor: '#fff',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
               fontSize: 12,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'transform 0.2s, box-shadow 0.2s',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = 'none';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <div
                 style={{
                   width: 10,
@@ -595,9 +614,9 @@ const Calendar = () => {
                   backgroundColor: eventTypeColors[event.eventType]
                 }}
               />
-              <h4 style={{ fontSize: 13, margin: 0 }}>{event.eventTitle}</h4>
+              <h4 style={{ fontSize: 14, margin: 0 }}>{event.eventTitle}</h4>
             </div>
-            <div style={{ marginTop: 6, color: '#777', fontSize: 11 }}>
+            <div style={{ color: '#555', fontSize: 12 }}>
               {new Date(event.date).toLocaleDateString()}
               {(event.startTime || event.endTime) && (
                 <span> • {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}</span>
@@ -607,6 +626,7 @@ const Calendar = () => {
         ))}
       </div>
     </div>
+
   );
 
   const handlePrevMonth = () => {
@@ -834,9 +854,9 @@ const Calendar = () => {
                 >
                   Cancel
                 </button>
-                
+
                 <div>
-                  {!newEvent.isHoliday && newEvent.id && (
+                  {/* {!newEvent.isHoliday && newEvent.id && (
                     <button
                       type="button"
                       onClick={handleDeleteEvent}
@@ -849,8 +869,8 @@ const Calendar = () => {
                     >
                       Delete
                     </button>
-                  )}
-                  
+                  )} */}
+
                   {!newEvent.isHoliday && (
                     <button
                       type="submit"

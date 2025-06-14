@@ -113,7 +113,7 @@ const CommonListViewTable = ({ data, columns, blockEdit, toEdit, disableEditIcon
           muiTableBodyCellProps: {
             sx: {
               fontSize: "14px",
-              padding: "10px",
+              padding: "8px",
               color: "#374151",
               textAlign: "left",
               borderBottom: "1px solid #E5E7EB",
