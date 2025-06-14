@@ -445,13 +445,14 @@ const SalaryProcess = () => {
                     sx={{
                       backgroundColor: '#b5e8df',
                       color: 'black',
-                      minWidth: 45,
+                      minWidth: 40,
+                      height: 40,
                       '&:hover': {
                         backgroundColor: '#364152',
                         color: 'white'
                       }
                     }}
-                    startIcon={<DoneAllIcon sx={{ fontSize: '3rem' }} />}
+                    startIcon={<DoneAllIcon sx={{ fontSize: '3rem', marginLeft: '8px' }} />}
                     onClick={handleApproveAll}
                   />
                 </Tooltip>

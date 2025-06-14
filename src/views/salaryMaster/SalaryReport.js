@@ -14,9 +14,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import { MenuItem } from '@mui/material';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Checkbox } from '@mui/material';
+import { Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel } from '@mui/material';
 import { FaEllipsisV } from 'react-icons/fa';
-
+import { TableCell, TableContainer, TableHead, TablePagination, Tooltip, Typography, Checkbox, Button } from '@mui/material';
+import { Table, TableBody, TableRow, TableFooter, TableSortLabel, Paper, Box } from '@mui/material';
+import PrintIcon from '@mui/icons-material/Print';
 const months = [
   { name: 'All', value: '0' },
   { name: 'January', value: '01' },
@@ -37,6 +39,8 @@ const currentYear = new Date().getFullYear();
 const years = Array.from({ length: 10 }, (_, index) => currentYear - index);
 
 const SalaryReport = () => {
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
@@ -181,7 +185,7 @@ const SalaryReport = () => {
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-            <ActionButton title="Search" icon={SearchIcon} onClick={getAllSalaryReport} />
+            {/* <ActionButton title="Search" icon={SearchIcon} onClick={getAllSalaryReport} /> */}
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleCancel} />
             {/* <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} /> */}
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
@@ -213,6 +217,23 @@ const SalaryReport = () => {
               </Select>
             </FormControl>
           </div>
+          {/*  */}
+          <div className="col-md-3 mb-3">
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={getAllSalaryReport}
+              sx={{
+                borderRadius: '8px',
+                boxShadow: '0px 3px 5px rgba(0,0,0,0.2)',
+                textTransform: 'none'
+              }}
+            >
+              Go
+            </Button>
+          </div>
+
+          {/*  */}
         </div>
 
         {/* <div className="row mt-3">
@@ -251,45 +272,103 @@ const SalaryReport = () => {
               <div className="row mt-2">
                 <div className="col-lg-12">
                   <div className="d-flex justify-content-end mb-2">
-                    <button className="btn btn-primary" onClick={handlePrint}>
+                    {/* <button className="btn btn-primary" onClick={handlePrint}>
                       Print
-                    </button>
+                    </button> */}
+                    <Tooltip title="Print">
+                      <Button
+                        sx={{
+                          backgroundColor: '#b5e8df',
+                          color: 'black',
+                          minWidth: 40,
+                          height: 40,
+                          '&:hover': {
+                            backgroundColor: '#364152',
+                            color: 'white'
+                          }
+                        }}
+                        startIcon={<PrintIcon sx={{ fontSize: '3rem', marginLeft: '8px' }} />}
+                        onClick={handlePrint}
+                      ></Button>
+                    </Tooltip>
                   </div>
                   <div className="table-responsive">
-                    <table className="table table-bordered" id="salaryTable">
-                      <thead>
-                        <tr style={{ backgroundColor: '#673AB7' }}>
-                          <th className="px-2 py-2 text-white text-center">S.No</th>
-                          <th className="px-2 py-2 text-white text-center">Employee Name</th>
-                          <th className="px-2 py-2 text-white text-center">Employee Code</th>
-                          <th className="px-2 py-2 text-white text-center">Total Leave</th>
-                          <th className="px-2 py-2 text-white text-center">LOP (Loss of Pay)</th>
-                          <th className="px-2 py-2 text-white text-center">Total Employee Working Days</th>
-                          <th className="px-2 py-2 text-white text-center">Total Working Days</th>
-                          <th className="px-2 py-2 text-white text-center">Employee Salary</th>
-                          <th className="px-2 py-2 text-white text-center">Net Pay Salary</th>
-                          <th className="px-2 py-2 text-white text-center">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allSalary.map((leave, index) => (
-                          <tr key={leave.employeeCode}>
-                            <td className="text-center">{index + 1}</td>
-                            <td className="text-center">{leave.employeeName}</td>
-                            <td className="text-center">{leave.employeeCode}</td>
-                            <td className="text-center">{leave.totalLeave}</td>
-                            <td className="text-center">{leave.lopLeave}</td>
-                            <td className="text-center">{leave.empTotalWorkingDays}</td>
-                            <td className="text-center">{leave.empSalaryDays}</td>
-                            <td className="text-center">{leave.grossPay}</td>
-                            <td className="text-center">{leave.netPay}</td>
-                            <td className="text-center" style={{ color: leave.approvedStatus === 'Approved' ? 'green' : 'inherit' }}>
-                              {leave.approvedStatus}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <TableContainer component={Paper}>
+                      <Table id="salaryTable">
+                        <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+                          <TableRow>
+                            <TableCell>
+                              <strong>S.No</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Employee Name</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Employee Code</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Total Leave</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>LOP (Loss of Pay)</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Total Employee Working Days</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Total Working Days</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Employee Salary</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Net Pay Salary</strong>
+                            </TableCell>
+                            <TableCell>
+                              <strong>Status</strong>
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {allSalary.length > 0 ? (
+                            allSalary.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((leave, index) => (
+                              <TableRow key={leave.employeeCode} hover>
+                                <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                                <TableCell>{leave.employeeName}</TableCell>
+                                <TableCell>{leave.employeeCode}</TableCell>
+                                <TableCell>{leave.totalLeave}</TableCell>
+                                <TableCell>{leave.lopLeave}</TableCell>
+                                <TableCell>{leave.empTotalWorkingDays}</TableCell>
+                                <TableCell>{leave.empSalaryDays}</TableCell>
+                                <TableCell>{leave.grossPay}</TableCell>
+                                <TableCell>{leave.netPay}</TableCell>
+                                <TableCell style={{ color: leave.approvedStatus === 'Approved' ? 'green' : 'inherit' }}>
+                                  {leave.approvedStatus}
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={10} className="text-center">
+                                No data available
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                      <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={mainTableData.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={(e, newPage) => setPage(newPage)}
+                        onRowsPerPageChange={(e) => {
+                          setRowsPerPage(parseInt(e.target.value, 10));
+                          setPage(0);
+                        }}
+                      />
+                    </TableContainer>
                   </div>
                 </div>
               </div>
