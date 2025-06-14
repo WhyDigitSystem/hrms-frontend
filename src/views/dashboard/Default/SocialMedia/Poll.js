@@ -26,7 +26,8 @@ import {
   Close as CloseIcon,
   Add as AddIcon,
   People as PeopleIcon,
-  AccessTime as AccessTimeIcon
+  AccessTime as AccessTimeIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { ToastContainer, toast } from 'react-toastify';
@@ -163,8 +164,11 @@ function Poll({ tabValue, setPollData, pollData }) {
   };
 
   const handleSave = async () => {
-    if (!newPoll.question.trim() || pollDetails.length < 2 || pollDetails.some(opt => !opt.trim())) {
-      showToast('error', 'Please fill in all required fields properly.');
+    // Filter out empty options
+    const validOptions = pollDetails.filter(opt => opt.trim() !== '');
+    
+    if (!newPoll.question.trim() || validOptions.length < 2) {
+      showToast('error', 'Please fill in all required fields and provide at least two options.');
       return;
     }
 
@@ -179,7 +183,7 @@ function Poll({ tabValue, setPollData, pollData }) {
       maxSelection: newPoll.maxSelection,
       multiSelect: newPoll.multiSelect,
       orgId,
-      pollDetailsDTO: pollDetails.map(opt => ({ options: opt })),
+      pollDetailsDTO: validOptions.map(opt => ({ options: opt })),
       question: newPoll.question,
       expiresDate: newPoll.expiresDate,
       updatedBy: loginUserName,
@@ -207,6 +211,20 @@ function Poll({ tabValue, setPollData, pollData }) {
   const handlePollDetailsChange = (index, value) => {
     const updatedPollDetails = [...pollDetails];
     updatedPollDetails[index] = value;
+    setPollDetails(updatedPollDetails);
+  };
+
+  const addOption = () => {
+    setPollDetails([...pollDetails, ""]);
+  };
+
+  const removeOption = (index) => {
+    if (pollDetails.length <= 2) {
+      showToast('error', 'Poll must have at least two options');
+      return;
+    }
+    const updatedPollDetails = [...pollDetails];
+    updatedPollDetails.splice(index, 1);
     setPollDetails(updatedPollDetails);
   };
 
@@ -394,6 +412,7 @@ function Poll({ tabValue, setPollData, pollData }) {
             value={newPoll.question}
             onChange={(e) => setNewPoll({ ...newPoll, question: e.target.value })}
             sx={{ mb: 2 }}
+            required
           />
 
           <TextField
@@ -411,34 +430,52 @@ function Poll({ tabValue, setPollData, pollData }) {
             type="number"
             fullWidth
             value={newPoll.maxSelection}
-            onChange={(e) => setNewPoll({ ...newPoll, maxSelection: e.target.value })}
+            onChange={(e) => setNewPoll({ ...newPoll, maxSelection: parseInt(e.target.value) || 1 })}
             sx={{ mb: 2 }}
+            inputProps={{ min: 1 }}
           />
 
           <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
             {pollDetails.map((detail, index) => (
-              <TextField
-                key={index}
-                label={`Option ${index + 1}`}
-                fullWidth
-                value={detail}
-                onChange={(e) => handlePollDetailsChange(index, e.target.value)}
-                sx={{ mb: 1 }}
-              />
+              <Box key={index} sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <TextField
+                  label={`Option ${index + 1}`}
+                  fullWidth
+                  value={detail}
+                  onChange={(e) => handlePollDetailsChange(index, e.target.value)}
+                  required
+                />
+                {index >= 2 && (
+                  <IconButton 
+                    onClick={() => removeOption(index)}
+                    sx={{ ml: 1, color: 'error.main' }}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                )}
+              </Box>
             ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={addOption}
+              sx={{ mt: 1, alignSelf: 'flex-start' }}
+            >
+              Add Option
+            </Button>
           </Box>
 
           <Button
             variant="contained"
             onClick={handleSave}
             sx={{ width: '100%' }}
+            disabled={isLoading}
           >
-            {editId ? 'Save Changes' : 'Create Poll'}
+            {isLoading ? 'Saving...' : editId ? 'Save Changes' : 'Create Poll'}
           </Button>
         </Box>
       </Modal>
 
-      {/* View All Polls Modal */}
       {/* View All Polls Modal */}
       <Modal open={viewAllModalOpen} onClose={() => setViewAllModalOpen(false)}>
         <Box sx={{

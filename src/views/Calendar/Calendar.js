@@ -16,7 +16,8 @@ const Calendar = () => {
   const [todayBirthdays, setTodayBirthdays] = useState([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState([]);
   const [birthdayEvents, setBirthdayEvents] = useState([]);
-
+  const [loadingEvent, setLoadingEvent] = useState(false);
+  
   // Local storage values
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -66,7 +67,10 @@ const Calendar = () => {
       const days = [];
       const firstDayIndex = startOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
-      const combinedEvents = [...calendarEvents, ...holidays, ...birthdayEvents];
+      
+      // Sort combined events by date (newest first)
+      const combinedEvents = [...calendarEvents, ...holidays, ...birthdayEvents]
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
 
       let dayCount = 1;
       for (let i = 0; i < 6; i++) {
@@ -92,10 +96,28 @@ const Calendar = () => {
               return off.weekNumbers.includes(weekNumber);
             });
 
+            // Get only the most recent event for this day
+            const latestEvent = combinedEvents.find(event => {
+              try {
+                const [year, month, day] = event.date.split('-').map(Number);
+                const eventDate = new Date(year, month - 1, day);
+                return (
+                  eventDate.getDate() === dayCount &&
+                  eventDate.getMonth() === currentDate.getMonth() &&
+                  eventDate.getFullYear() === currentDate.getFullYear()
+                );
+              } catch (error) {
+                console.error('Invalid date format:', event.date);
+                return false;
+              }
+            });
+
             const dayWithEvents = {
               day: dayCount,
               date: currentDay,
-              events: combinedEvents.filter(event => {
+              event: latestEvent || null, // Store only the latest event or null
+              isWeekOff,
+              allEvents: combinedEvents.filter(event => {
                 try {
                   const [year, month, day] = event.date.split('-').map(Number);
                   const eventDate = new Date(year, month - 1, day);
@@ -108,8 +130,7 @@ const Calendar = () => {
                   console.error('Invalid date format:', event.date);
                   return false;
                 }
-              }),
-              isWeekOff
+              })
             };
             week.push(dayWithEvents);
             dayCount++;
@@ -295,6 +316,35 @@ const Calendar = () => {
     }
   };
 
+  // Fetch event details by ID
+  const getCalendarEventById = async (id) => {
+    setLoadingEvent(true);
+    try {
+      const result = await apiCalls('get', `/basicmaster/getCalendarById?id=${id}`);
+      
+      if (result?.status && result?.paramObjectsMap?.calendarVO) {
+        const eventData = result.paramObjectsMap.calendarVO;
+        setNewEvent(prev => ({
+          ...prev,
+          id: eventData.id,
+          eventTitle: eventData.eventTitle || '',
+          eventType: eventData.eventType || 'meeting',
+          date: eventData.date || '',
+          description: eventData.description || '',
+          startTime: eventData.fromTime || '',
+          endTime: eventData.toTime || ''
+        }));
+      } else {
+        showToast('error', result?.message || 'Failed to load event details');
+      }
+    } catch (err) {
+      console.error('Fetch Event Error:', err);
+      showToast('error', 'Error loading event details');
+    } finally {
+      setLoadingEvent(false);
+    }
+  };
+
   useEffect(() => {
     getAllCalendarByOrgId();
     getAllHolidaysByOrgId();
@@ -317,18 +367,27 @@ const Calendar = () => {
     setShowModal(true);
   };
 
-  const handleEventClick = (event) => {
-    setNewEvent({
+  const handleEventClick = async (event) => {
+    // Set initial state for the modal
+    const initialEventState = {
       id: event.id,
       eventTitle: event.eventTitle || '',
       eventType: event.eventType || 'meeting',
       date: event.date || '',
       description: event.description || '',
       isHoliday: event.eventType === 'holiday',
+      isBirthday: event.eventType === 'birthday',
       startTime: event.startTime || event.fromTime || '',
       endTime: event.endTime || event.toTime || ''
-    });
+    };
+    
+    setNewEvent(initialEventState);
     setShowModal(true);
+    
+    // Only fetch details for calendar events (not holidays or birthdays)
+    if (!event.isHoliday && !event.isBirthday && event.id) {
+      await getCalendarEventById(event.id);
+    }
   };
 
   const handleSaveEvent = async () => {
@@ -343,6 +402,7 @@ const Calendar = () => {
     }
 
     const saveData = {
+      ...(newEvent.id && { id: newEvent.id }),
       branchCode: branchCode,
       branchName: branchName,
       createdBy: loginUserName,
@@ -374,31 +434,6 @@ const Calendar = () => {
     }
   };
 
-  const handleDeleteEvent = async () => {
-    if (!newEvent.id || newEvent.isHoliday) {
-      showToast('error', 'Cannot delete this event');
-      return;
-    }
-
-    try {
-      const result = await apiCalls('delete', 
-        `/basicmaster/deleteCalendarById?orgId=${orgId}&id=${newEvent.id}`
-      );
-
-      if (result?.status) {
-        showToast('success', 'Event deleted successfully');
-        setShowModal(false);
-        await getAllCalendarByOrgId();
-      } else {
-        showToast('error', result?.message || 'Failed to delete event');
-      }
-    } catch (err) {
-      console.error('Delete Error:', err);
-      showToast('error', 'Error deleting event. Please try again.');
-    }
-  };
-
-  // Helper functions
   const formatDateForInput = (year, month, day) => {
     return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   };
@@ -478,8 +513,8 @@ const Calendar = () => {
                 onClick={() => {
                   if (!cell) return;
 
-                  if (cell.events.length > 0) {
-                    handleEventClick(cell.events[0]);
+                  if (cell.event) {
+                    handleEventClick(cell.event);
                   } else {
                     const dateStr = formatDateForInput(
                       currentDate.getFullYear(),
@@ -517,8 +552,7 @@ const Calendar = () => {
                         top: 4,
                         right: 4,
                         fontSize: 8,
-                        color: ' #fff',
-                      
+                        color: ' #fff',   
                         padding: '1px 3px',
                         borderRadius: 3,
                         border: '1px solid #ffcdd2'
@@ -527,47 +561,37 @@ const Calendar = () => {
                       </div>
                     )}
 
-                    {/* Events */}
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                      marginTop: 2
-                    }}>
-                      {cell.events.slice(0, isMobile ? 1 : 2).map((event, eIdx) => (
-                        <div key={eIdx}
-                          title={`Date: ${event.date}\n${event.startTime ? `Time: ${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}\n` : ''}Type: ${event.eventType}\nBranch: ${event.branchName || branchName}\nDepartment: ${event.department || department}\nCreated by: ${event.empName || empName}\n\n${event.description}`}
-                          style={{
-                            padding: '1px 4px',
-                            backgroundColor: eventTypeColors[event.eventType],
-                            color: '#fff',
-                            borderRadius: 4,
-                            fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '100%',
-                            fontSize: isMobile ? 8 : 9
-                          }}>
-                          {isMobile ? 
-                            (event.eventTitle.length > 10 ? 
-                              event.eventTitle.substring(0, 8) + '...' : 
-                              event.eventTitle) : 
-                            event.eventTitle
-                          }
-                          {event.startTime && !isMobile && (
-                            <div style={{ fontSize: 8, marginTop: 1 }}>
-                              {event.startTime} {event.endTime ? `- ${event.endTime}` : ''}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                      {cell.events.length > (isMobile ? 1 : 2) && (
-                        <div style={{ fontSize: 8, color: '#666' }}>
-                          +{cell.events.length - (isMobile ? 1 : 2)} more
-                        </div>
-                      )}
-                    </div>
+                    {/* Event */}
+                    {cell.event && (
+                      <div
+                        title={`${cell.event.eventTitle}\nDate: ${cell.event.date}\n${cell.event.startTime ? `Time: ${cell.event.startTime}${cell.event.endTime ? ` - ${cell.event.endTime}` : ''}\n` : ''}Type: ${cell.event.eventType}\nBranch: ${cell.event.branchName || branchName}\nDepartment: ${cell.event.department || department}\nCreated by: ${cell.event.empName || empName}\n\n${cell.event.description}`}
+                        style={{
+                          padding: '1px 4px',
+                          backgroundColor: eventTypeColors[cell.event.eventType],
+                          color: '#fff',
+                          borderRadius: 4,
+                          fontWeight: cell.event.eventType === 'holiday' ? 'bold' : 'normal',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          maxWidth: '100%',
+                          fontSize: isMobile ? 8 : 9,
+                          marginTop: 2
+                        }}
+                      >
+                        {isMobile ? 
+                          (cell.event.eventTitle.length > 10 ? 
+                            cell.event.eventTitle.substring(0, 8) + '...' : 
+                            cell.event.eventTitle) : 
+                          cell.event.eventTitle
+                        }
+                        {cell.event.startTime && !isMobile && (
+                          <div style={{ fontSize: 8, marginTop: 1 }}>
+                            {cell.event.startTime} {cell.event.endTime ? `- ${cell.event.endTime}` : ''}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -645,6 +669,7 @@ const Calendar = () => {
       endTime: '',
       id: null
     });
+    setLoadingEvent(false);
   };
 
   return (
@@ -749,7 +774,10 @@ const Calendar = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 16 }}>
-                {newEvent.isHoliday ? '🎉 Holiday Details' : newEvent.id ? 'Edit Event' : 'New Event'}
+                {loadingEvent ? 'Loading Event...' : 
+                 newEvent.isHoliday ? '🎉 Holiday Details' : 
+                 newEvent.isBirthday ? '🎂 Birthday Details' :
+                 newEvent.id ? 'Edit Event' : 'New Event'}
               </h3>
               <button 
                 onClick={handleCloseModal}
@@ -765,7 +793,7 @@ const Calendar = () => {
               </button>
             </div>
 
-            {newEvent.isHoliday && (
+            {(newEvent.isHoliday || newEvent.isBirthday) && (
               <div style={{
                 padding: 10,
                 margin: '8px 0',
@@ -773,141 +801,137 @@ const Calendar = () => {
                 borderRadius: 6,
                 fontSize: 12
               }}>
-                <strong>Official Organization Holiday</strong>
+                <strong>{newEvent.isHoliday ? 'Official Organization Holiday' : 'Employee Birthday'}</strong>
               </div>
             )}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }} style={{ marginTop: 8 }}>
-              <div style={{ marginBottom: 8 }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Title</label>
-                <input
-                  name="eventTitle"
-                  value={newEvent.eventTitle}
-                  onChange={handleEventChange}
-                  disabled={newEvent.isHoliday}
-                  style={inputStyleSmall}
-                />
+            {loadingEvent ? (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                padding: 20 
+              }}>
+                <div>Loading event details...</div>
               </div>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }} style={{ marginTop: 8 }}>
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Title</label>
+                  <input
+                    name="eventTitle"
+                    value={newEvent.eventTitle}
+                    onChange={handleEventChange}
+                    disabled={newEvent.isHoliday || newEvent.isBirthday}
+                    style={inputStyleSmall}
+                  />
+                </div>
 
-              <div style={{ marginBottom: 8 }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Date</label>
-                {newEvent.isHoliday ? (
-                  <div style={{
-                    padding: 8,
-                    backgroundColor: '#f8f9fa',
-                    borderRadius: 6,
-                    fontSize: 13
-                  }}>
-                    {new Date(newEvent.date).toLocaleDateString('en-US', {
-                      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-                    })}
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Date</label>
+                  {(newEvent.isHoliday || newEvent.isBirthday) ? (
+                    <div style={{
+                      padding: 8,
+                      backgroundColor: '#f8f9fa',
+                      borderRadius: 6,
+                      fontSize: 13
+                    }}>
+                      {new Date(newEvent.date).toLocaleDateString('en-US', {
+                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                      })}
+                    </div>
+                  ) : (
+                    <input
+                      type="date"
+                      name="date"
+                      value={newEvent.date}
+                      onChange={handleEventChange}
+                      style={inputStyleSmall}
+                    />
+                  )}
+                </div>
+
+                <div style={{ display: isMobile ? 'block' : 'flex', gap: 8 }}>
+                  <div style={{ marginBottom: 8, flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Start Time</label>
+                    <input
+                      type="time"
+                      name="startTime"
+                      value={newEvent.startTime}
+                      onChange={handleEventChange}
+                      disabled={newEvent.isHoliday || newEvent.isBirthday}
+                      style={inputStyleSmall}
+                    />
                   </div>
-                ) : (
-                  <input
-                    type="date"
-                    name="date"
-                    value={newEvent.date}
-                    onChange={handleEventChange}
-                    style={inputStyleSmall}
-                  />
-                )}
-              </div>
 
-              <div style={{ display: isMobile ? 'block' : 'flex', gap: 8 }}>
-                <div style={{ marginBottom: 8, flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Start Time</label>
-                  <input
-                    type="time"
-                    name="startTime"
-                    value={newEvent.startTime}
+                  <div style={{ marginBottom: 8, flex: 1 }}>
+                    <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>End Time</label>
+                    <input
+                      type="time"
+                      name="endTime"
+                      value={newEvent.endTime}
+                      onChange={handleEventChange}
+                      disabled={newEvent.isHoliday || newEvent.isBirthday}
+                      style={inputStyleSmall}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Type</label>
+                  <select
+                    name="eventType"
+                    value={newEvent.eventType}
                     onChange={handleEventChange}
-                    disabled={newEvent.isHoliday}
+                    disabled={newEvent.isHoliday || newEvent.isBirthday}
+                    style={inputStyleSmall}
+                  >
+                    <option value="meeting">Meeting</option>
+                    <option value="birthday">Birthday</option>
+                    <option value="training">Training</option>
+                    <option value="holiday">Holiday</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Description</label>
+                  <textarea
+                    name="description"
+                    value={newEvent.description}
+                    onChange={handleEventChange}
+                    disabled={newEvent.isHoliday || newEvent.isBirthday}
+                    rows={3}
                     style={inputStyleSmall}
                   />
                 </div>
 
-                <div style={{ marginBottom: 8, flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>End Time</label>
-                  <input
-                    type="time"
-                    name="endTime"
-                    value={newEvent.endTime}
-                    onChange={handleEventChange}
-                    disabled={newEvent.isHoliday}
-                    style={inputStyleSmall}
-                  />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: 8 }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Type</label>
-                <select
-                  name="eventType"
-                  value={newEvent.eventType}
-                  onChange={handleEventChange}
-                  disabled={newEvent.isHoliday}
-                  style={inputStyleSmall}
-                >
-                  <option value="meeting">Meeting</option>
-                  <option value="birthday">Birthday</option>
-                  <option value="training">Training</option>
-                  <option value="holiday">Holiday</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Description</label>
-                <textarea
-                  name="description"
-                  value={newEvent.description}
-                  onChange={handleEventChange}
-                  disabled={newEvent.isHoliday}
-                  rows={3}
-                  style={inputStyleSmall}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  style={buttonStyleSmall}
-                >
-                  Cancel
-                </button>
-                
-                <div>
-                  {!newEvent.isHoliday && newEvent.id && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', gap: 8 }}>
                     <button
                       type="button"
-                      onClick={handleDeleteEvent}
-                      style={{
-                        ...buttonStyleSmall,
-                        backgroundColor: '#dc3545',
-                        color: 'white',
-                        marginRight: 8
-                      }}
+                      onClick={handleCloseModal}
+                      style={buttonStyleSmall}
                     >
-                      Delete
+                      Cancel
                     </button>
-                  )}
-                  
-                  {!newEvent.isHoliday && (
-                    <button
-                      type="submit"
-                      style={{
-                        ...buttonStyleSmall,
-                        backgroundColor: '#1d4ed8',
-                        color: 'white'
-                      }}
-                    >
-                      Save
-                    </button>
-                  )}
+                    
+                    {!newEvent.isHoliday && !newEvent.isBirthday && (
+                      <button
+                        type="submit"
+                        style={{
+                          ...buttonStyleSmall,
+                          backgroundColor: '#1d4ed8',
+                          color: 'white'
+                        }}
+                      >
+                        Save
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </form>
+              </form>
+            )}
           </div>
         </div>
       )}
