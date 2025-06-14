@@ -1044,7 +1044,7 @@ const EmployeeDetails = () => {
     const tableData = listViewData.map((employee, index) => [
       index + 1,
       employee.employeeCode,
-      employee.employeeName,
+      employee.employee,
       employee.branch,
       employee.doj || employee.joiningDate,
       employee.grade,
@@ -1056,7 +1056,7 @@ const EmployeeDetails = () => {
 
     // Auto Table
     doc.autoTable({
-      head: [['S.No', 'Employee Name', 'Employee Code', 'Branch', 'Date of Join', 'Grade', 'Team', 'Department', 'Designation', 'Status']],
+      head: [['S.No', 'Code', 'Employee', 'Branch', 'Date of Join', 'Grade', 'Team', 'Department', 'Designation', 'Status']],
       body: tableData,
       startY: 40, // Positioning below title
       theme: 'grid', // Uses full-page width

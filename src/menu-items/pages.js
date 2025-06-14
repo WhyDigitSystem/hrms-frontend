@@ -34,7 +34,14 @@ const pages = {
           type: 'item',
           url: '/pages/register/register3',
           target: true
-        }
+        },
+        {
+          id: 'confirmationPage',
+          title: 'ConfirmationPage',
+          type: 'item',
+          url: '/pages/confirmationPage/confirmationPage',
+          target: true
+        },
       ]
     }
   ]

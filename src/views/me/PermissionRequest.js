@@ -366,6 +366,11 @@ const PermissionRequest = () => {
 
         if (response.status === true) {
           console.log('Response:', response);
+          const newId = response.paramObjectsMap.permissionRequestVO?.id;
+          console.log('newId', newId);
+          if (newId) {
+            saveData.id = newId; // 🔁 Add the ID to sendEmailNotification payload
+          }
           showToast('success', editId ? 'Permission Request Updated Successfully' : 'Permission Request created successfully');
           await sendEmailNotification([saveData]);
           handleClear();
@@ -397,6 +402,10 @@ const PermissionRequest = () => {
       for (const row of newRows) {
         const notify2Emails = (row.permissionRequestNotifyDTO || []).map((p) => p.notify2Email).join(', ');
 
+        const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+        const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
+        const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
+
         const emailParams = {
           name: row.notify,
           from_name: employeeName,
@@ -406,7 +415,12 @@ const PermissionRequest = () => {
           from_time: fromTimeFormatted,
           to_time: toTimeFormatted,
           total_hours: totalHoursFormatted,
-          message: row.notes
+          message: row.notes,
+          permission_id: row.id,
+          approve_link: approveLink,
+          reject_link: rejectLink,
+          notifyCode: row.notifyCode,
+          notify: row.notify
         };
 
         console.log('Email Params:', emailParams);

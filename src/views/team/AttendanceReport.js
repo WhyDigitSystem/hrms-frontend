@@ -330,7 +330,7 @@ const AttendanceReport = () => {
               />
             </div>
             {showDate && selectedMonth && selectedYear && (
-              <div style={{ marginBottom: '5px', fontSize: '10px', display: 'flex', gap: '10px' }}>
+              <div style={{ marginBottom: '5px', fontSize: '14px', display: 'flex', gap: '10px' }}>
                 <label>
                   <strong>Month:</strong> {selectedMonth.format('MMMM')}
                 </label>

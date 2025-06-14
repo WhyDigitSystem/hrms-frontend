@@ -251,7 +251,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
@@ -262,8 +262,8 @@ const PendingApproval = ({ isLoading }) => {
         name: request.employeeName,
         from_name: employeeName,
         leave_type: request.leaveType,
-        start_date: dayjs(request.fromDate).format('DD-MM-YYYY'),
-        end_date: dayjs(request.toDate).format('DD-MM-YYYY'),
+        start_date: dayjs(request.startDate).format('DD-MM-YYYY'),
+        end_date: dayjs(request.endDate).format('DD-MM-YYYY'),
         total_days: request.totalDays,
         status: action,
         status_message: isApproved ? 'Approved' : 'Rejected',
@@ -271,6 +271,7 @@ const PendingApproval = ({ isLoading }) => {
         remarks: request.remarks || 'N/A',
         email: request.employeeEmail
       };
+      console.log('Payload',request.fromDate )
 
       // 3. Send email notification
       await emailjs.send('service_hff8dd7', 'template_0pmh0cu', templateParams, 'G6cKiPBXzCvlFaOuo');
@@ -299,7 +300,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));

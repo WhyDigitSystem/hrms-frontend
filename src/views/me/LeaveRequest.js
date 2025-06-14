@@ -333,6 +333,11 @@ const LeaveRequest = () => {
 
         if (response.status === true) {
           console.log('Response:', response);
+          const newId = response.paramObjectsMap.leaveRequestVO?.id;
+          console.log('newId', newId);
+          if (newId) {
+            saveData.id = newId; // 🔁 Add the ID to sendEmailNotification payload
+          }
           showToast('success', editId ? 'Leave Request Updated Successfully' : 'Leave Request created successfully');
           await sendEmailNotification([saveData]);
           handleClear();
@@ -352,10 +357,49 @@ const LeaveRequest = () => {
     }
   };
 
+  // const sendEmailNotification = async (newRows) => {
+  //   try {
+  //     for (const row of newRows) {
+  //       const notify2Emails = (row.leaveRequestNotifyDTO || []).map((p) => p.notify2Email).join(', ');
+
+  //       const emailParams = {
+  //         name: row.notify,
+  //         from_name: employeeName,
+  //         email: row.notifyEmail,
+  //         leave_type: row.leaveType,
+  //         start_date: dayjs(row.fromDate).format('DD-MM-YYYY'),
+  //         end_date: dayjs(row.toDate).format('DD-MM-YYYY'),
+  //         total_days: row.totalDays,
+  //         notify2Email: notify2Emails,
+  //         message: row.notes,
+  //         leave_id: row.id,
+  //       };
+
+  //       console.log('Email Params:', emailParams);
+
+  //       if (!emailParams.email) {
+  //         console.error('Error: Recipient email is missing!');
+  //         showToast('error', 'Recipient email is missing!');
+  //         continue;
+  //       }
+
+  //       await emailjs.send('service_hff8dd7', 'template_bs08toa', emailParams, 'G6cKiPBXzCvlFaOuo');
+  //       console.log('Email Sent Successfully for', emailParams.email);
+  //     }
+  //   } catch (error) {
+  //     console.error('Email Sending Failed:', error);
+  //     showToast('error', 'Failed to send email notification. Please try again.');
+  //   }
+  // };
+
   const sendEmailNotification = async (newRows) => {
     try {
       for (const row of newRows) {
         const notify2Emails = (row.leaveRequestNotifyDTO || []).map((p) => p.notify2Email).join(', ');
+
+        const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+        const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
+        const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
 
         const emailParams = {
           name: row.notify,
@@ -366,7 +410,12 @@ const LeaveRequest = () => {
           end_date: dayjs(row.toDate).format('DD-MM-YYYY'),
           total_days: row.totalDays,
           notify2Email: notify2Emails,
-          message: row.notes
+          message: row.notes || 'N/A',
+          leave_id: row.id,
+          approve_link: approveLink,
+          reject_link: rejectLink,
+          notifyCode: row.notifyCode,
+          notify: row.notify
         };
 
         console.log('Email Params:', emailParams);
@@ -377,6 +426,7 @@ const LeaveRequest = () => {
           continue;
         }
 
+        // ✅ Send email with EmailJS
         await emailjs.send('service_hff8dd7', 'template_bs08toa', emailParams, 'G6cKiPBXzCvlFaOuo');
         console.log('Email Sent Successfully for', emailParams.email);
       }

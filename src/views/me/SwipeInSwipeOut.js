@@ -12,57 +12,100 @@ import {
   Modal,
   Box,
   Typography,
-  Button
+  Button,
+  MenuItem
 } from '@mui/material';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 import { ToastContainer } from 'react-toastify';
 import emailjs from '@emailjs/browser';
+import dayjs from 'dayjs';
+import { CircularProgress } from '@mui/material';
+
+const modalStyle = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  bgcolor: 'white',
+  p: 4,
+  borderRadius: 2,
+  boxShadow: 24,
+  width: 300
+};
 
 const SwipeInSwipeOut = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userName] = useState(localStorage.getItem('userName'));
   const [empName, setEmpName] = useState(localStorage.getItem('employeeName'));
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
   const [empCode] = useState(localStorage.getItem('employeeCode'));
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [listViewData, setListViewData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  // const [modalOpen, setModalOpen] = useState(false);
+  // const [selectedRow, setSelectedRow] = useState(null);
+  // const [checkOutTime, setCheckOutTime] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
+  const [checkInTime, setCheckInTime] = useState('');
   const [checkOutTime, setCheckOutTime] = useState('');
+  const [checkInModalOpen, setCheckInModalOpen] = useState(false);
+  const [checkOutModalOpen, setCheckOutModalOpen] = useState(false);
+
   const [searchText, setSearchText] = useState('');
   const [reportingPersonMail, setReportingPersonMail] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const monthOptions = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
+  const [selectedMonth, setSelectedMonth] = useState(dayjs().month()); // default current month (0-11)
 
   useEffect(() => {
     getAllSwipeInandOut();
     getReportingPerson();
   }, []);
 
-  const handleRowClick = (row) => {
-    setSelectedRow(row);
-    setCheckOutTime(row.checkOutTime || '');
-    setModalOpen(true);
-  };
+  useEffect(() => {
+    getAllSwipeInandOut(selectedMonth);
+  }, []);
 
-  const getAllSwipeInandOut = async () => {
+  const getAllSwipeInandOut = async (monthIndex = selectedMonth) => {
     setLoading(true);
     try {
-      const result = await apiCalls('get', `basicmaster/attendance/${userName}`);
+      const monthToSend = monthIndex + 1; // Convert 0-based index to 1-based (e.g., May = 5)
+
+      const result = await apiCalls(
+        'get',
+        `basicmaster/attendance?branch=${branch}&branchCode=${branchCode}&empcode=${empCode}&month=${monthToSend}&orgId=${orgId}`
+      );
+
       if (result?.paramObjectsMap?.Attendance) {
         const transformed = result.paramObjectsMap.Attendance.map((item) => ({
           ...item,
           date: formatDate(item.entrydate),
           day: getDay(item.entrydate),
-          totalWorkingHours: formatTime(item.TotalWorkingHours),
-          effectiveFrom: formatTime(item.effectivefrom),
+          totalWorkingHours: formatTime(item.grosshours),
+          effectiveFrom: formatTime(item.effectivehours),
           checkInTime: formatTime(item.checkInTime),
           checkOutTime: formatTime(item.checkOutTime)
         }));
+
         const sorted = transformed.sort((a, b) => new Date(b.entrydate) - new Date(a.entrydate));
+
         setListViewData(sorted);
         setFilteredData(sorted);
       }
@@ -114,11 +157,26 @@ const SwipeInSwipeOut = () => {
     setPage(0);
   };
 
+  // const handleCheckOutClick = (row) => {
+  //   const now = new Date().toTimeString().slice(0, 5);
+  //   setSelectedRow(row);
+  //   setCheckOutTime(now);
+  //   setModalOpen(true);
+  // };
+
+  const handleCheckInClick = (row) => {
+    const now = new Date().toTimeString().slice(0, 5);
+    setSelectedRow(row);
+    setCheckInTime(row.checkInTime !== '00:00' ? row.checkInTime : now);
+    setCheckOutTime(row.checkOutTime || '00:00');
+    setCheckInModalOpen(true);
+  };
+
   const handleCheckOutClick = (row) => {
     const now = new Date().toTimeString().slice(0, 5);
     setSelectedRow(row);
-    setCheckOutTime(now);
-    setModalOpen(true);
+    setCheckOutTime(row.checkOutTime !== '00:00' ? row.checkOutTime : now);
+    setCheckOutModalOpen(true);
   };
 
   const handleSave = async () => {
@@ -163,7 +221,8 @@ const SwipeInSwipeOut = () => {
           )
         );
 
-        setModalOpen(false);
+        setCheckOutModalOpen(false);
+        getAllSwipeInandOut();
       } else {
         showToast('error', response.paramObjectsMap?.errorMessage || 'Check-out submission failed');
       }
@@ -200,25 +259,129 @@ const SwipeInSwipeOut = () => {
     }
   };
 
+  const handleCheckInSave = async () => {
+    if (!selectedRow) return;
+
+    // Convert from "dd/mm/yyyy" to "yyyy-mm-dd"
+    let formattedDate = '';
+    if (selectedRow.date.includes('/')) {
+      const [day, month, year] = selectedRow.date.split('/');
+      formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    } else {
+      formattedDate = selectedRow.date;
+    }
+
+    const payload = {
+      branch: branch,
+      date: formattedDate,
+      empCode: empCode,
+      empName: empName,
+      entryIn: checkInTime,
+      entryOut: checkOutTime,
+      orgId: orgId,
+      reportingPersonMail: reportingPersonMail
+    };
+
+    setIsLoading(true);
+
+    try {
+      const response = await apiCalls('put', '/basicmaster/createCheckInOutAdjustment', payload);
+
+      if (response.status === true) {
+        showToast('success', 'Check-In & Check-Out time submitted successfully');
+        await sendEmailNotificationForCheckIn(payload);
+
+        const updatedData = listViewData.map((row) => (row.date === selectedRow.date ? { ...row, checkInTime, checkOutTime } : row));
+
+        setListViewData(updatedData);
+        setFilteredData(
+          updatedData.filter(
+            (row) =>
+              row.date.toLowerCase().includes(searchText) ||
+              row.day.toLowerCase().includes(searchText) ||
+              row.checkInTime.toLowerCase().includes(searchText)
+          )
+        );
+
+        setCheckInModalOpen(false);
+        getAllSwipeInandOut();
+      } else {
+        showToast('error', response.paramObjectsMap?.errorMessage || 'Check-In/Out submission failed');
+      }
+    } catch (error) {
+      console.error('Error submitting Check-In/Out:', error);
+      showToast('error', 'Check-In/Out submission failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendEmailNotificationForCheckIn = async (row) => {
+    try {
+      const emailParams = {
+        name: row.empName,
+        from_name: empName,
+        entryTime: `${row.entryIn} - ${row.entryOut}`,
+        email: row.reportingPersonMail
+      };
+
+      console.log('Email Params:', emailParams);
+
+      if (!emailParams.email) {
+        console.error('Error: Recipient email is missing!');
+        showToast('error', 'Recipient email is missing!');
+        return;
+      }
+
+      await emailjs.send('service_d3c7xso', 'template_0pef9wb', emailParams, 'uMcVJdror6W86lK6z');
+      console.log('Email Sent Successfully for', emailParams.email);
+    } catch (error) {
+      console.error('Email Sending Failed:', error);
+      showToast('error', 'Failed to send email notification. Please try again.');
+    }
+  };
+
+  // const handleMonthChange = (e) => {
+  //   setSelectedMonth(e.target.value);
+  //   // Optionally trigger API call or filter
+  // };
+
+  const handleMonthChange = (e) => {
+    const selected = e.target.value;
+    setSelectedMonth(selected);
+    getAllSwipeInandOut(selected); // Trigger fetch with selected month
+  };
+
   return (
     <div style={{ padding: 20 }}>
-      {/* <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold', color: '#1976d2' }}>
-        Swipe In / Swipe Out Records
-      </Typography> */}
+      <Box display="flex" alignItems="center" justifyContent="space-between" flexWrap="wrap" mb={2} gap={2}>
+        {/* Left: Month & Search */}
+        <Box display="flex" alignItems="center" gap={2}>
+          <TextField select label="Select Month" size="small" value={selectedMonth} onChange={handleMonthChange} sx={{ minWidth: 150 }}>
+            {monthOptions.map((month, index) => (
+              <MenuItem key={index} value={index}>
+                {month}
+              </MenuItem>
+            ))}
+          </TextField>
 
-      <TextField variant="outlined" label="Search" value={searchText} onChange={handleSearch} sx={{ mb: 2 }} />
-      <Box display="flex" alignItems="center" justifyContent="right" gap={2} mb={2}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Box width={16} height={16} bgcolor="green" borderRadius="50%" />
-          <span>Approved</span>
+          <TextField variant="outlined" label="Search" size="small" value={searchText} onChange={handleSearch} />
         </Box>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Box width={16} height={16} bgcolor="#FFA500" borderRadius="50%" />
-          <span>Pending</span>
-        </Box>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Box width={16} height={16} bgcolor="black" borderRadius="50%" />
-          <span>Not Submitted</span>
+
+        {/* Right: Status Legends */}
+        <Box display="flex" alignItems="center" gap={2}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box width={16} height={16} bgcolor="green" borderRadius="50%" />
+            <span>Approved</span>
+          </Box>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box width={16} height={16} bgcolor="#FFA500" borderRadius="50%" />
+            <span>Pending</span>
+          </Box>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Box width={16} height={16} bgcolor="black" borderRadius="50%" />
+            <span>Not Submitted</span>
+          </Box>
         </Box>
       </Box>
 
@@ -246,38 +409,128 @@ const SwipeInSwipeOut = () => {
               </TableCell>
             </TableRow>
           </TableHead>
+
           <TableBody>
-            {filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
-              <TableRow key={row.id} hover>
-                <TableCell>{row.date}</TableCell>
-                <TableCell>{row.day}</TableCell>
-                <TableCell>{row.checkInTime}</TableCell>
-                <TableCell
-                  onClick={() => {
-                    if (row.checkOutTime === '00:00') {
-                      handleCheckOutClick(row);
-                    }
-                  }}
-                  style={{
-                    color:
-                      row.approvalstatus === 'APPROVED'
-                        ? 'green'
-                        : row.approvalstatus === 'PENDING'
-                          ? '#FFA500' // More reliable than "orange"
-                          : 'black',
-                    cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
-                    textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
-                    fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
-                  }}
-                >
-                  {row.checkOutTime}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <Box display="flex" justifyContent="center" alignItems="center" minHeight="150px" width="100%">
+                    <CircularProgress />
+                  </Box>
                 </TableCell>
-                <TableCell>{row.totalWorkingHours}</TableCell>
-                <TableCell>{row.effectiveFrom}</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>{row.date}</TableCell>
+                  <TableCell>{row.day}</TableCell>
+                  {/* <TableCell>{row.checkInTime}</TableCell>
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkOutTime === '00:00') {
+                        handleCheckOutClick(row);
+                      }
+                    }}
+                    style={{
+                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
+                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
+                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
+                    }}
+                  >
+                    {row.checkOutTime}
+                  </TableCell> */}
+                  {/* <TableCell
+                    onClick={() => {
+                      if (row.checkInTime === '00:00') {
+                        handleCheckInClick(row);
+                      }
+                    }}
+                    style={{
+                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
+                      cursor: row.checkInTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkInTime === '00:00' ? 'underline' : 'none',
+                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
+                    }}
+                  >
+                    {row.checkInTime}
+                  </TableCell>
+
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkOutTime === '00:00') {
+                        handleCheckOutClick(row);
+                      }
+                    }}
+                    style={{
+                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
+                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
+                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
+                    }}
+                  >
+                    {row.checkOutTime}
+                  </TableCell> */}
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkInTime === '00:00') {
+                        handleCheckInClick(row);
+                      }
+                    }}
+                    style={{
+                      color:
+                        row.checkInTime === '00:00'
+                          ? 'black'
+                          : row.approvalstatus === 'APPROVED'
+                            ? 'green'
+                            : row.approvalstatus === 'PENDING'
+                              ? '#FFA500'
+                              : 'black',
+                      cursor: row.checkInTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkInTime === '00:00' ? 'underline' : 'none',
+                      fontWeight:
+                        row.checkInTime === '00:00' || row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING'
+                          ? 'bold'
+                          : 'normal'
+                    }}
+                  >
+                    {row.checkInTime}
+                  </TableCell>
+
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkOutTime === '00:00') {
+                        handleCheckOutClick(row);
+                      }
+                    }}
+                    style={{
+                      color:
+                        row.checkOutTime === '00:00'
+                          ? 'black'
+                          : row.approvalstatus === 'APPROVED'
+                            ? 'green'
+                            : row.approvalstatus === 'PENDING'
+                              ? '#FFA500'
+                              : 'black',
+                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
+                      fontWeight:
+                        row.checkOutTime === '00:00' || row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING'
+                          ? 'bold'
+                          : 'normal'
+                    }}
+                  >
+                    {row.checkOutTime}
+                  </TableCell>
+
+                  <TableCell>{row.totalWorkingHours}</TableCell>
+                  <TableCell>{row.effectiveFrom}</TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
+
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
@@ -292,7 +545,7 @@ const SwipeInSwipeOut = () => {
         />
       </TableContainer>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+      {/* <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
         <Box
           sx={{
             position: 'absolute',
@@ -321,7 +574,61 @@ const SwipeInSwipeOut = () => {
             Save
           </Button>
         </Box>
+      </Modal> */}
+
+      <Modal open={checkInModalOpen} onClose={() => setCheckInModalOpen(false)}>
+        <Box sx={{ ...modalStyle }}>
+          <Typography variant="h6" gutterBottom>
+            Set Check-In & Check-Out Time
+          </Typography>
+
+          <TextField
+            type="time"
+            label="Check-In Time"
+            fullWidth
+            value={checkInTime}
+            onChange={(e) => setCheckInTime(e.target.value)}
+            sx={{ mt: 2 }}
+            inputProps={{ step: 60 }}
+          />
+
+          <TextField
+            type="time"
+            label="Check-Out Time"
+            fullWidth
+            value={checkOutTime}
+            onChange={(e) => setCheckOutTime(e.target.value)}
+            sx={{ mt: 2 }}
+            inputProps={{ step: 60 }}
+          />
+
+          <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }} onClick={handleCheckInSave}>
+            Save
+          </Button>
+        </Box>
       </Modal>
+      <Modal open={checkOutModalOpen} onClose={() => setCheckOutModalOpen(false)}>
+        <Box sx={{ ...modalStyle }}>
+          <Typography variant="h6" gutterBottom>
+            Set Check-Out Time
+          </Typography>
+
+          <TextField
+            type="time"
+            label="Check-Out Time"
+            fullWidth
+            value={checkOutTime}
+            onChange={(e) => setCheckOutTime(e.target.value)}
+            sx={{ mt: 2 }}
+            inputProps={{ step: 60 }}
+          />
+
+          <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }} onClick={handleSave}>
+            Save
+          </Button>
+        </Box>
+      </Modal>
+
       <ToastContainer />
     </div>
   );

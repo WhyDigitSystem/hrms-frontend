@@ -19,7 +19,7 @@ const screenMapping = {
   'PERMISSION APPROVAL': 'permissionApproval',
   'ATTENDANCE REPORT': 'attendanceReport',
   'TODAY ATTENDANCE': 'todayAttendance',
-  'CHECK IN/OUT REPORT': 'employeeAttanceReport'
+  'CHECK IN AND OUT REPORT': 'checkInOutReport'
 };
 
 const allScreens = [
@@ -52,8 +52,8 @@ const allScreens = [
     icon: icons.IconCalendarEvent
   },
   {
-    id: 'employeeAttanceReport',
-    title: 'Check In/Out Report',
+    id: 'checkInOutReport',
+    title: 'CHECK IN AND OUT REPORT',
     type: 'item',
     url: '/team/EmployeeAttanceReport',
     icon: icons.IconUsers

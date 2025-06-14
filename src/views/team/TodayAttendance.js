@@ -39,8 +39,8 @@ const TodayAttendance = () => {
   }, [getTodayAttendanceReportByOrgId]);
 
   const listViewColumns = [
-    { accessorKey: 'empcode', header: 'Employee Code' },
-    { accessorKey: 'empname', header: 'Employee Name' },
+    { accessorKey: 'empcode', header: 'Code' },
+    { accessorKey: 'empname', header: 'Employee' },
     { accessorKey: 'CheckInTime', header: 'Check-In Time' },
     { accessorKey: 'CheckOutTime', header: 'Check-Out Time' },
     { accessorKey: 'TotalWorkingHours', header: 'Working Hours' },
