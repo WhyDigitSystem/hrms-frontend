@@ -28,7 +28,8 @@ const Calendar = () => {
   const [empName] = useState(localStorage.getItem('employeeName'));
   const [weekOff, setWeekOff] = useState([]);
 
-  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const fullWeekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -122,7 +123,7 @@ const Calendar = () => {
 
     const updateTime = () => {
       const now = new Date();
-      setCurrentTime(now.toLocaleTimeString());
+      setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     };
 
     const handleResize = () => setIsMobile(window.innerWidth <= 600);
@@ -380,7 +381,7 @@ const Calendar = () => {
     }
 
     try {
-      const result = await apiCalls('delete',
+      const result = await apiCalls('delete', 
         `/basicmaster/deleteCalendarById?orgId=${orgId}&id=${newEvent.id}`
       );
 
@@ -405,12 +406,12 @@ const Calendar = () => {
   // UI components
   const EventLegend = () => (
     <div style={{ marginTop: 8, padding: 8, backgroundColor: '#f9f9f9', borderRadius: 6 }}>
-      <h5 style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 14 }}>Calendar Legend</h5>
+      <h5 style={{ fontWeight: 'bold', marginBottom: 8, fontSize: 12 }}>Calendar Legend</h5>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {Object.entries(eventTypeColors).map(([type, color]) => (
           <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{ width: 12, height: 12, backgroundColor: color, borderRadius: '50%' }} />
-            <span style={{ fontSize: 12, textTransform: 'capitalize' }}>{type}</span>
+            <div style={{ width: 10, height: 10, backgroundColor: color, borderRadius: '50%' }} />
+            <span style={{ fontSize: 10, textTransform: 'capitalize' }}>{type}</span>
           </div>
         ))}
       </div>
@@ -428,28 +429,28 @@ const Calendar = () => {
       fontSize: 12,
       overflowX: isMobile ? 'auto' : 'hidden'
     }}>
-      <div style={{ minWidth: isMobile ? '500px' : 'auto' }}>
+      <div style={{ minWidth: isMobile ? '320px' : 'auto' }}>
         {/* Weekdays Header */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: 4,
+          gap: 2,
           borderBottom: '1px solid rgb(179, 18, 18)',
           paddingBottom: 4,
           marginBottom: 4
         }}>
-          {weekdays.map(day => (
-            <div key={day} style={{
+          {weekdays.map((day, index) => (
+            <div key={index} style={{
               padding: '4px 0',
               textAlign: 'center',
               fontWeight: 600,
-              fontSize: 11,
+              fontSize: isMobile ? 10 : 11,
               color: '#333',
               backgroundColor: 'rgb(214, 220, 226)',
               borderRadius: 4,
               border: '1px solid #d1d5db'
             }}>
-              {day}
+              {isMobile ? day : fullWeekdays[index]}
             </div>
           ))}
         </div>
@@ -458,20 +459,21 @@ const Calendar = () => {
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
-          gap: isMobile ? 4 : 5
+          gap: isMobile ? 2 : 4
         }}>
           {calendarDays.map((week, wIdx) =>
             week.map((cell, cIdx) => (
               <div
                 key={`${wIdx}-${cIdx}`}
                 style={{
-                  minHeight: isMobile ? 44 : 60,
+                  minHeight: isMobile ? 40 : 60,
                   padding: 4,
                   borderRadius: 5,
                   backgroundColor: cell?.isWeekOff ? '#ffeaea' : (cell ? '#fdfdfd' : 'transparent'),
                   border: `1px solid ${cell?.isWeekOff ? '#ff6666' : '#dcdcdc'}`,
                   cursor: cell ? 'pointer' : 'default',
-                  position: 'relative'
+                  position: 'relative',
+                  fontSize: isMobile ? 10 : 11
                 }}
                 onClick={() => {
                   if (!cell) return;
@@ -503,7 +505,7 @@ const Calendar = () => {
                     <div style={{
                       color: cell.isWeekOff ? '#d32f2f' : '#1976d2',
                       fontWeight: 'bold',
-                      fontSize: 11
+                      fontSize: isMobile ? 10 : 11
                     }}>
                       {cell.day}
                     </div>
@@ -514,26 +516,25 @@ const Calendar = () => {
                         position: 'absolute',
                         top: 4,
                         right: 4,
-                        fontSize: 9,
+                        fontSize: 8,
                         color: ' #fff',
-                        fontWeight: 'bold',
-                        backgroundColor: 'rgba(70, 5, 15, 0.7)',
+                      
                         padding: '1px 3px',
                         borderRadius: 3,
                         border: '1px solid #ffcdd2'
                       }}>
-                        Week OFF
+                        
                       </div>
                     )}
 
                     {/* Events */}
                     <div style={{
                       display: 'flex',
-                      flexWrap: 'wrap',
+                      flexDirection: 'column',
                       gap: 2,
                       marginTop: 2
                     }}>
-                      {cell.events.slice(0, 2).map((event, eIdx) => (
+                      {cell.events.slice(0, isMobile ? 1 : 2).map((event, eIdx) => (
                         <div key={eIdx}
                           title={`Date: ${event.date}\n${event.startTime ? `Time: ${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}\n` : ''}Type: ${event.eventType}\nBranch: ${event.branchName || branchName}\nDepartment: ${event.department || department}\nCreated by: ${event.empName || empName}\n\n${event.description}`}
                           style={{
@@ -541,24 +542,29 @@ const Calendar = () => {
                             backgroundColor: eventTypeColors[event.eventType],
                             color: '#fff',
                             borderRadius: 4,
-                            fontSize: 9,
                             fontWeight: event.eventType === 'holiday' ? 'bold' : 'normal',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
-                            maxWidth: '100%'
+                            maxWidth: '100%',
+                            fontSize: isMobile ? 8 : 9
                           }}>
-                          {event.eventTitle}
-                          {event.startTime && (
+                          {isMobile ? 
+                            (event.eventTitle.length > 10 ? 
+                              event.eventTitle.substring(0, 8) + '...' : 
+                              event.eventTitle) : 
+                            event.eventTitle
+                          }
+                          {event.startTime && !isMobile && (
                             <div style={{ fontSize: 8, marginTop: 1 }}>
                               {event.startTime} {event.endTime ? `- ${event.endTime}` : ''}
                             </div>
                           )}
                         </div>
                       ))}
-                      {cell.events.length > 2 && (
-                        <div style={{ fontSize: 9, color: '#666' }}>
-                          +{cell.events.length - 2} more
+                      {cell.events.length > (isMobile ? 1 : 2) && (
+                        <div style={{ fontSize: 8, color: '#666' }}>
+                          +{cell.events.length - (isMobile ? 1 : 2)} more
                         </div>
                       )}
                     </div>
@@ -574,38 +580,22 @@ const Calendar = () => {
 
   const EventListView = () => (
     <div style={{ marginTop: 16, maxHeight: 400, overflowY: 'auto' }}>
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: 16
-        }}
-      >
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8 }}>
         {[...calendarEvents].map((event, index) => (
           <div
             key={index}
             onClick={() => handleEventClick(event)}
             title={`${event.eventTitle}\nDate: ${event.date}\n${event.description || ''}`}
             style={{
-              padding: 16,
-              borderRadius: 10,
-              border: '1px solid #e0e0e0',
+              padding: 8,
+              borderRadius: 6,
               backgroundColor: '#fff',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               fontSize: 12,
-              cursor: 'pointer',
-              transition: 'transform 0.2s, box-shadow 0.2s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.transform = 'none';
-              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+              cursor: 'pointer'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div
                 style={{
                   width: 10,
@@ -614,9 +604,9 @@ const Calendar = () => {
                   backgroundColor: eventTypeColors[event.eventType]
                 }}
               />
-              <h4 style={{ fontSize: 14, margin: 0 }}>{event.eventTitle}</h4>
+              <h4 style={{ fontSize: 13, margin: 0 }}>{event.eventTitle}</h4>
             </div>
-            <div style={{ color: '#555', fontSize: 12 }}>
+            <div style={{ marginTop: 6, color: '#777', fontSize: 11 }}>
               {new Date(event.date).toLocaleDateString()}
               {(event.startTime || event.endTime) && (
                 <span> • {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}</span>
@@ -626,7 +616,6 @@ const Calendar = () => {
         ))}
       </div>
     </div>
-
   );
 
   const handlePrevMonth = () => {
@@ -659,7 +648,7 @@ const Calendar = () => {
   };
 
   return (
-    <div style={{ margin: '0 auto', padding: isMobile ? 16 : '10px 24px 24px 24px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ margin: '0 auto', padding: isMobile ? 12 : '10px 24px 24px 24px', fontFamily: 'Arial, sans-serif' }}>
       <div style={{
         display: 'flex',
         gap: 8,
@@ -688,20 +677,26 @@ const Calendar = () => {
       {activeTab === 'calendar' ? (
         <>
           {/* Calendar Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center' }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            flexDirection: isMobile ? 'column' : 'row', 
+            alignItems: 'center',
+            gap: isMobile ? 12 : 0
+          }}>
             <div>
-              <h1 style={{ fontSize: isMobile ? '15px' : '18px', fontWeight: 'bold', color: '#4a4a4a' }}>
+              <h1 style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: 'bold', color: '#4a4a4a', margin: 0 }}>
                 {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-                <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
-                  <label style={{ fontSize: isMobile ? '14px' : '14px', color: '#4a4a4a' }}>Time:</label>
-                  <span style={{ marginLeft: '8px', fontSize: isMobile ? '14px' : '16px', color: '#4a4a4a' }}>{currentTime}</span>
+                <div style={{ display: 'flex', alignItems: 'center', marginTop: '4px' }}>
+                  <label style={{ fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a' }}>Time:</label>
+                  <span style={{ marginLeft: '6px', fontSize: isMobile ? '12px' : '14px', color: '#4a4a4a' }}>{currentTime}</span>
                 </div>
               </h1>
             </div>
 
             {/* Add New Event */}
             <div>
-              <div style={{ display: 'flex', gap: '6px', marginTop: isMobile ? '12px' : '0' }}>
+              <div style={{ display: 'flex', gap: '6px', marginTop: isMobile ? '8px' : '0' }}>
                 <button onClick={handlePrevMonth} style={smallButtonStyle}>←</button>
                 <button onClick={handleNextMonth} style={smallButtonStyle}>→</button>
                 <button
@@ -710,8 +705,9 @@ const Calendar = () => {
                     ...smallButtonStyle,
                     backgroundColor: '#1d4ed8',
                     color: '#fff',
-                    padding: '6px 12px',
-                    fontWeight: 500
+                    padding: '6px 10px',
+                    fontWeight: 500,
+                    fontSize: isMobile ? 12 : 13
                   }}
                 >
                   Add Event
@@ -729,26 +725,50 @@ const Calendar = () => {
 
       {showModal && (
         <div style={{
-          position: 'fixed', top: '70px', left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-          justifyContent: 'center', alignItems: 'center', zIndex: 9999
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', 
+          display: 'flex',
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          zIndex: 9999,
+          padding: isMobile ? 12 : 0
         }}>
           <div style={{
             backgroundColor: 'white',
-            padding: 16,
+            padding: isMobile ? 12 : 16,
             borderRadius: 8,
-            width: isMobile ? '90%' : 360,
-            maxWidth: '100%',
+            width: isMobile ? '100%' : 360,
+            maxWidth: isMobile ? '100%' : 360,
+            maxHeight: isMobile ? '100vh' : 'auto',
+            overflowY: 'auto',
             fontSize: 13
           }}>
-            <h3 style={{ marginBottom: 8, fontSize: 16 }}>
-              {newEvent.isHoliday ? '🎉 Holiday Details' : newEvent.id ? 'Edit Event' : 'New Event'}
-            </h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16 }}>
+                {newEvent.isHoliday ? '🎉 Holiday Details' : newEvent.id ? 'Edit Event' : 'New Event'}
+              </h3>
+              <button 
+                onClick={handleCloseModal}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  fontSize: 18, 
+                  cursor: 'pointer',
+                  color: '#666'
+                }}
+              >
+                ×
+              </button>
+            </div>
 
             {newEvent.isHoliday && (
               <div style={{
                 padding: 10,
-                marginBottom: 8,
+                margin: '8px 0',
                 backgroundColor: '#fff3cd',
                 borderRadius: 6,
                 fontSize: 12
@@ -757,9 +777,9 @@ const Calendar = () => {
               </div>
             )}
 
-            <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }}>
-              <div style={{ marginBottom: 6 }}>
-                <label>Title</label>
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }} style={{ marginTop: 8 }}>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Title</label>
                 <input
                   name="eventTitle"
                   value={newEvent.eventTitle}
@@ -769,8 +789,8 @@ const Calendar = () => {
                 />
               </div>
 
-              <div style={{ marginBottom: 6 }}>
-                <label>Date</label>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Date</label>
                 {newEvent.isHoliday ? (
                   <div style={{
                     padding: 8,
@@ -793,32 +813,34 @@ const Calendar = () => {
                 )}
               </div>
 
-              <div style={{ marginBottom: 6 }}>
-                <label>Start Time</label>
-                <input
-                  type="time"
-                  name="startTime"
-                  value={newEvent.startTime}
-                  onChange={handleEventChange}
-                  disabled={newEvent.isHoliday}
-                  style={inputStyleSmall}
-                />
+              <div style={{ display: isMobile ? 'block' : 'flex', gap: 8 }}>
+                <div style={{ marginBottom: 8, flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Start Time</label>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={newEvent.startTime}
+                    onChange={handleEventChange}
+                    disabled={newEvent.isHoliday}
+                    style={inputStyleSmall}
+                  />
+                </div>
+
+                <div style={{ marginBottom: 8, flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>End Time</label>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={newEvent.endTime}
+                    onChange={handleEventChange}
+                    disabled={newEvent.isHoliday}
+                    style={inputStyleSmall}
+                  />
+                </div>
               </div>
 
-              <div style={{ marginBottom: 6 }}>
-                <label>End Time</label>
-                <input
-                  type="time"
-                  name="endTime"
-                  value={newEvent.endTime}
-                  onChange={handleEventChange}
-                  disabled={newEvent.isHoliday}
-                  style={inputStyleSmall}
-                />
-              </div>
-
-              <div style={{ marginBottom: 6 }}>
-                <label>Type</label>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Type</label>
                 <select
                   name="eventType"
                   value={newEvent.eventType}
@@ -834,8 +856,8 @@ const Calendar = () => {
                 </select>
               </div>
 
-              <div style={{ marginBottom: 10 }}>
-                <label>Description</label>
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Description</label>
                 <textarea
                   name="description"
                   value={newEvent.description}
@@ -854,9 +876,9 @@ const Calendar = () => {
                 >
                   Cancel
                 </button>
-
+                
                 <div>
-                  {/* {!newEvent.isHoliday && newEvent.id && (
+                  {!newEvent.isHoliday && newEvent.id && (
                     <button
                       type="button"
                       onClick={handleDeleteEvent}
@@ -869,8 +891,8 @@ const Calendar = () => {
                     >
                       Delete
                     </button>
-                  )} */}
-
+                  )}
+                  
                   {!newEvent.isHoliday && (
                     <button
                       type="submit"
@@ -895,7 +917,7 @@ const Calendar = () => {
 
 // Style constants
 const tabStyle = (isActive) => ({
-  padding: '4px 10px',
+  padding: '6px 12px',
   fontSize: 12,
   borderRadius: 6,
   border: `1px solid ${isActive ? '#1976d2' : '#ccc'}`,
@@ -915,21 +937,20 @@ const smallButtonStyle = {
   backgroundColor: '#f5f5f5',
   color: '#333',
   cursor: 'pointer',
-  transition: 'all 0.2s ease'
+  height: 32
 };
 
 const inputStyleSmall = {
   width: '100%',
-  padding: '6px 10px',
+  padding: '8px',
   fontSize: 13,
   borderRadius: 6,
   border: '1px solid #ccc',
-  boxSizing: 'border-box',
-  marginTop: 4
+  boxSizing: 'border-box'
 };
 
 const buttonStyleSmall = {
-  padding: '6px 12px',
+  padding: '8px 16px',
   fontSize: 13,
   borderRadius: 6,
   border: '1px solid #ccc',

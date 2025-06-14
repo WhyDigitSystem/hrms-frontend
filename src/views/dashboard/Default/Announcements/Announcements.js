@@ -151,18 +151,6 @@ const Announcements = () => {
     borderRadius: 4,
     color: theme.palette.common.white,
     overflow: 'hidden',
-    transition: 'box-shadow 0.3s ease-in-out',
-
-    '&:hover': {
-      boxShadow: `
-      0 0 5px #582222,
-      0 0 10px #6d5c9f,
-      0 0 15px #6d5c9f,
-      0 0 20px #582222
-    `,
-      // Optional glow animation if you have a keyframe defined:
-      // animation: `${glow} 2s infinite`,
-    },
   };
 
   const announcementStyle = {
