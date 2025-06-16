@@ -4,14 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  TextField,
-  Box,
-  Tab,
-  Tabs,
-  FormControlLabel,
-  Checkbox
-} from '@mui/material';
+import { TextField, Box, Tab, Tabs, FormControlLabel, Checkbox } from '@mui/material';
 import { useState, useEffect } from 'react';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
@@ -27,14 +20,14 @@ const SelfGoals = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [isFetchingEmployee, setIsFetchingEmployee] = useState(false);
+  const finYear = localStorage.getItem('finYear');
 
   const [formData, setFormData] = useState({
     appraisalId: '',
     code: localStorage.getItem('employeeCode') || '',
     name: '',
     supervisorCode: '',
-    supervisorName: '',
-    finYear: '',
+    supervisorName: ''
     // active: true
   });
 
@@ -46,23 +39,18 @@ const SelfGoals = () => {
     supervisorName: ''
   });
 
-  const [goalsDetailsData, setGoalsDetailsData] = useState([
-    { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
-  ]);
+  const [goalsDetailsData, setGoalsDetailsData] = useState([{ id: null, area: '', keyPerformanceIndicator: '', goals: '' }]);
 
-  const [goalsDetailsErrors, setGoalsDetailsErrors] = useState([
-    { area: '', keyPerformanceIndicator: '', goals: '' }
-  ]);
+  const [goalsDetailsErrors, setGoalsDetailsErrors] = useState([{ area: '', keyPerformanceIndicator: '', goals: '' }]);
 
   const listViewColumns = [
     { accessorKey: 'appraisalId', header: 'Appraisal ID', size: 140 },
     { accessorKey: 'code', header: 'Code', size: 140 },
     { accessorKey: 'name', header: 'Name', size: 140 },
     { accessorKey: 'supervisorCode', header: 'Supv Code', size: 140 },
-    { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 },
+    { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 }
     // { accessorKey: 'active', header: 'Active', size: 140 }
   ];
-
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -98,19 +86,17 @@ const SelfGoals = () => {
 
       if (response?.status) {
         // Try different response structures
-        const employeeData = response.paramObjectsMap?.employeeVO?.[0] ||
-          response.paramObjectsMap?.employeeDetails ||
-          response.data;
+        const employeeData = response.paramObjectsMap?.employeeVO?.[0] || response.paramObjectsMap?.employeeDetails || response.data;
 
         if (employeeData) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             name: employeeData.empName || employeeData.name || '',
             supervisorCode: employeeData.reportingPersonCode || employeeData.supervisorCode || '',
             supervisorName: employeeData.reportingPerson || employeeData.supervisorName || ''
           }));
 
-          setFieldErrors(prev => ({
+          setFieldErrors((prev) => ({
             ...prev,
             name: '',
             supervisorCode: '',
@@ -136,12 +122,12 @@ const SelfGoals = () => {
     const { name, value, checked, type } = e.target;
     const updatedValue = type === 'checkbox' ? checked : value;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: updatedValue
     }));
 
-    setFieldErrors(prev => ({
+    setFieldErrors((prev) => ({
       ...prev,
       [name]: ''
     }));
@@ -157,7 +143,7 @@ const SelfGoals = () => {
     // Set default employee code on component mount
     const defaultEmployeeCode = localStorage.getItem('employeeCode') || '';
     if (defaultEmployeeCode) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         code: defaultEmployeeCode
       }));
@@ -178,16 +164,18 @@ const SelfGoals = () => {
           name: goal.name,
           supervisorCode: goal.supervisorCode,
           supervisorName: goal.supervisorName,
+          orgId: parseInt(orgId),
+          finYear: finYear
           // active: goal.active === true
         });
 
         // Preserve actual database IDs
         setGoalsDetailsData(
-          goal.selfGoalsDetailsVO.map(detail => ({
+          goal.selfGoalsDetailsVO.map((detail) => ({
             id: detail.id,
             area: detail.area,
             keyPerformanceIndicator: detail.keyPerformanceIndicator,
-            goals: detail.goals,
+            goals: detail.goals
           }))
         );
       }
@@ -196,7 +184,6 @@ const SelfGoals = () => {
       showToast('error', 'Failed to fetch goal details');
     }
   };
-
 
   // const getGoalsById = async (row) => {
   //   setEditId(row.original.id);
@@ -265,7 +252,7 @@ const SelfGoals = () => {
     if (!formData.name) errors.name = 'Name is required';
 
     // Validate details
-    const detailsErrors = goalsDetailsData.map(detail => {
+    const detailsErrors = goalsDetailsData.map((detail) => {
       const error = {};
       if (!detail.area) error.area = 'Area is required';
       if (!detail.keyPerformanceIndicator) error.keyPerformanceIndicator = 'KPI is required';
@@ -283,7 +270,7 @@ const SelfGoals = () => {
     setIsLoading(true);
 
     // Prepare details payload with IDs
-    const selfGoalsDetailsVo = goalsDetailsData.map(row => ({
+    const selfGoalsDetailsVo = goalsDetailsData.map((row) => ({
       // ...(editId && { id: editId }),
       ...(row.id && { id: row.id }),
       // id: row.id,
@@ -298,12 +285,12 @@ const SelfGoals = () => {
       appraisalId: formData.appraisalId,
       code: formData.code,
       name: formData.name,
-      finYear: formData.finYear,
       supervisorCode: formData.supervisorCode,
       supervisorName: formData.supervisorName,
-      orgId,
+      orgId: parseInt(orgId),
+      finYear: finYear,
       createdBy,
-      selfGoalsDetailsDTO: selfGoalsDetailsVo,
+      selfGoalsDetailsDTO: selfGoalsDetailsVo
     };
 
     try {
@@ -329,7 +316,7 @@ const SelfGoals = () => {
       code: localStorage.getItem('employeeCode') || '',
       name: '',
       supervisorCode: '',
-      supervisorName: '',
+      supervisorName: ''
       // active: true
     });
 
@@ -341,13 +328,9 @@ const SelfGoals = () => {
       supervisorName: ''
     });
 
-    setGoalsDetailsData([
-      { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+    setGoalsDetailsData([{ id: null, area: '', keyPerformanceIndicator: '', goals: '' }]);
 
-    setGoalsDetailsErrors([
-      { area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+    setGoalsDetailsErrors([{ area: '', keyPerformanceIndicator: '', goals: '' }]);
 
     setEditId('');
 
@@ -373,19 +356,11 @@ const SelfGoals = () => {
       return;
     }
 
-    const newId = goalsDetailsData.length > 0
-      ? Math.min(...goalsDetailsData.map(d => d.id)) - 1
-      : -1;
+    const newId = goalsDetailsData.length > 0 ? Math.min(...goalsDetailsData.map((d) => d.id)) - 1 : -1;
 
-    setGoalsDetailsData(prev => [
-      ...prev,
-      { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+    setGoalsDetailsData((prev) => [...prev, { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }]);
 
-    setGoalsDetailsErrors(prev => [
-      ...prev,
-      { area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+    setGoalsDetailsErrors((prev) => [...prev, { area: '', keyPerformanceIndicator: '', goals: '' }]);
   };
 
   const handleDeleteRow = (id) => {
@@ -394,10 +369,10 @@ const SelfGoals = () => {
       return;
     }
 
-    const index = goalsDetailsData.findIndex(d => d.id === id);
+    const index = goalsDetailsData.findIndex((d) => d.id === id);
     if (index === -1) return;
 
-    const newData = goalsDetailsData.filter(d => d.id !== id);
+    const newData = goalsDetailsData.filter((d) => d.id !== id);
     const newErrors = goalsDetailsErrors.filter((_, i) => i !== index);
 
     setGoalsDetailsData(newData);
@@ -405,7 +380,7 @@ const SelfGoals = () => {
   };
 
   const handleDetailChange = (id, field, value) => {
-    const index = goalsDetailsData.findIndex(d => d.id === id);
+    const index = goalsDetailsData.findIndex((d) => d.id === id);
     if (index === -1) return;
 
     const newData = [...goalsDetailsData];
@@ -464,7 +439,6 @@ const SelfGoals = () => {
                     error={!!fieldErrors.code}
                     helperText={fieldErrors.code}
                     disabled
-
                   />
                 </div>
                 <div className="col-md-2 mb-3">
@@ -520,17 +494,11 @@ const SelfGoals = () => {
                     label="Active"
                   />
                 </div> */}
-
               </div>
 
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
-                  <Tabs
-                    value={value}
-                    onChange={handleTabChange}
-                    textColor="secondary"
-                    indicatorColor="secondary"
-                  >
+                  <Tabs value={value} onChange={handleTabChange} textColor="secondary" indicatorColor="secondary">
                     <Tab value={0} label="Goals Details" />
                   </Tabs>
                 </Box>
@@ -539,59 +507,43 @@ const SelfGoals = () => {
                   {value === 0 && (
                     <>
                       <div className="mb-1">
-                        <ActionButton
-                          title="Add Row"
-                          icon={AddIcon}
-                          onClick={handleAddRow}
-                        />
+                        <ActionButton title="Add Row" icon={AddIcon} onClick={handleAddRow} />
                       </div>
                       <div className="row mt-2">
                         <div className="col-lg-12">
                           <div className="table-responsive">
                             <table className="table table-bordered">
                               <thead>
-                                <tr style={{
-                                  background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%)',
-                                  color: 'white'
-                                }}>
+                                <tr
+                                  style={{
+                                    background: 'linear-gradient(193deg, #3a6b6d 30%, #2a4b4d 90%)',
+                                    color: 'white'
+                                  }}
+                                >
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                     Action
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                     S.No
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center">
-                                    Area
-                                  </th>
-                                  <th className="px-2 py-2 text-white text-center">
-                                    Key Performance Indicators
-                                  </th>
-                                  <th className="px-2 py-2 text-white text-center">
-                                    Goals
-                                  </th>
+                                  <th className="px-2 py-2 text-white text-center">Area</th>
+                                  <th className="px-2 py-2 text-white text-center">Key Performance Indicators</th>
+                                  <th className="px-2 py-2 text-white text-center">Goals</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {goalsDetailsData.map((row, index) => (
                                   <tr key={row.id}>
                                     <td className="border px-2 py-2 text-center">
-                                      <ActionButton
-                                        title="Delete"
-                                        icon={DeleteIcon}
-                                        onClick={() => handleDeleteRow(row.id)}
-                                      />
+                                      <ActionButton title="Delete" icon={DeleteIcon} onClick={() => handleDeleteRow(row.id)} />
                                     </td>
-                                    <td className="text-center pt-3">
-                                      {index + 1}
-                                    </td>
+                                    <td className="text-center pt-3">{index + 1}</td>
                                     <td>
                                       <TextField
                                         fullWidth
                                         size="small"
                                         value={row.area}
-                                        onChange={(e) =>
-                                          handleDetailChange(row.id, 'area', e.target.value)
-                                        }
+                                        onChange={(e) => handleDetailChange(row.id, 'area', e.target.value)}
                                         error={!!goalsDetailsErrors[index]?.area}
                                         helperText={goalsDetailsErrors[index]?.area}
                                       />
@@ -601,9 +553,7 @@ const SelfGoals = () => {
                                         fullWidth
                                         size="small"
                                         value={row.keyPerformanceIndicator}
-                                        onChange={(e) =>
-                                          handleDetailChange(row.id, 'keyPerformanceIndicator', e.target.value)
-                                        }
+                                        onChange={(e) => handleDetailChange(row.id, 'keyPerformanceIndicator', e.target.value)}
                                         error={!!goalsDetailsErrors[index]?.keyPerformanceIndicator}
                                         helperText={goalsDetailsErrors[index]?.keyPerformanceIndicator}
                                       />
@@ -613,9 +563,7 @@ const SelfGoals = () => {
                                         fullWidth
                                         size="small"
                                         value={row.goals}
-                                        onChange={(e) =>
-                                          handleDetailChange(row.id, 'goals', e.target.value)
-                                        }
+                                        onChange={(e) => handleDetailChange(row.id, 'goals', e.target.value)}
                                         error={!!goalsDetailsErrors[index]?.goals}
                                         helperText={goalsDetailsErrors[index]?.goals}
                                       />
@@ -633,12 +581,7 @@ const SelfGoals = () => {
               </div>
             </>
           ) : (
-            <CommonListViewTable
-              data={listViewData}
-              columns={listViewColumns}
-              enableEditing={true}
-              toEdit={getGoalsById}
-            />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} enableEditing={true} toEdit={getGoalsById} />
           )}
         </div>
       </div>

@@ -133,11 +133,49 @@ function Appraiser() {
     setSelectAll(!selectAll);
   };
 
+  // const handleSubmitSelectedRows = async () => {
+  //   const selectedData = selectedRows.map((index) => fillGridData[index]);
+  //   const newData = selectedData
+  //     .filter((data) => {
+  //       return !tableData.some((item) => item.area === data.area && item.goals === data.goals);
+  //     })
+  //     .map((data) => ({
+  //       id: Date.now() + Math.random(),
+  //       area: data.area,
+  //       goals: data.goals,
+  //       keyPerformanceIndicator: data.keyPerformanceIndicator,
+  //       remarks: data.remarks
+  //     }));
+  //   if (newData.length < selectedData.length) {
+  //     showToast('warning', 'Some of the selected items are already added!');
+  //   }
+  //   if (newData.length === 0) {
+  //     return;
+  //   }
+  //   if (tableData.length === 1 && !tableData[0].area && !tableData[0].goals && !tableData[0].keyPerformanceIndicator) {
+  //     setTableData(newData);
+  //   } else {
+  //     setTableData((prev) => [...prev, ...newData]);
+  //   }
+
+  //   // setTableData((prev) => [...prev, ...newData]);
+  //   setSelectedRows([]);
+  //   setSelectAll(false);
+  //   handleCloseModal();
+  // };
+
   const handleSubmitSelectedRows = async () => {
     const selectedData = selectedRows.map((index) => fillGridData[index]);
+
     const newData = selectedData
       .filter((data) => {
-        return !tableData.some((item) => item.area === data.area && item.goals === data.goals);
+        return !tableData.some(
+          (item) =>
+            item.area === data.area &&
+            item.goals === data.goals &&
+            item.keyPerformanceIndicator === data.keyPerformanceIndicator &&
+            item.remarks === data.remarks
+        );
       })
       .map((data) => ({
         id: Date.now() + Math.random(),
@@ -146,29 +184,31 @@ function Appraiser() {
         keyPerformanceIndicator: data.keyPerformanceIndicator,
         remarks: data.remarks
       }));
+
     if (newData.length < selectedData.length) {
       showToast('warning', 'Some of the selected items are already added!');
     }
-    if (newData.length === 0) {
-      return;
-    }
-    if (tableData.length === 1 && !tableData[0].area && !tableData[0].goals && !tableData[0].keyPerformanceIndicator) {
+
+    if (newData.length === 0) return;
+
+    const isTableEmpty = tableData.length === 1 && !tableData[0].area && !tableData[0].goals && !tableData[0].keyPerformanceIndicator;
+
+    if (isTableEmpty) {
       setTableData(newData);
     } else {
       setTableData((prev) => [...prev, ...newData]);
     }
 
-    // setTableData((prev) => [...prev, ...newData]);
     setSelectedRows([]);
     setSelectAll(false);
     handleCloseModal();
   };
 
-  const handleAddRow = () => {
-    const newId = tableData.length > 0 ? Math.min(...tableData.map((d) => d.id)) - 1 : -1;
+  // const handleAddRow = () => {
+  //   const newId = tableData.length > 0 ? Math.min(...tableData.map((d) => d.id)) - 1 : -1;
 
-    setTableData((prev) => [...prev, { id: newId, area: '', keyPerformanceIndicator: '', goals: '', remarks: '' }]);
-  };
+  //   setTableData((prev) => [...prev, { id: newId, area: '', keyPerformanceIndicator: '', goals: '', remarks: '' }]);
+  // };
 
   //
   const getAllSupervisorCode = async () => {
@@ -322,7 +362,7 @@ function Appraiser() {
         setFormData({
           createdBy: createdBy,
           modifiedBy: createdBy,
-          orgId: orgId,
+          orgId: parseInt(orgId),
           finYear: finYear,
           appraisalID: item.appraisalId,
           supervisorCode: item.supCode,
@@ -338,7 +378,7 @@ function Appraiser() {
             goals: data.goals,
             keyPerformanceIndicator: data.keyPerformanceIndicator,
             remarks: data.reMarks,
-            score: data.score,
+            score: parseInt(data.score),
             input: data.input
           }))
         );
@@ -538,115 +578,123 @@ function Appraiser() {
                             </thead>
 
                             <tbody>
-                              {tableData.map((row, index) => (
-                                <tr key={row.id}>
-                                  <td className="text-center pt-3">{index + 1}</td>
-                                  <td>
-                                    <TextField
-                                      fullWidth
-                                      size="small"
-                                      value={row.area}
-                                      disabled
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setTableData((prev) =>
-                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, area: value } : rowData))
-                                        );
-                                      }}
-                                    />
-                                  </td>
-                                  <td>
-                                    <TextField
-                                      fullWidth
-                                      size="small"
-                                      value={row.keyPerformanceIndicator}
-                                      disabled
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setTableData((prev) =>
-                                          prev.map((rowData) =>
-                                            rowData.id === row.id ? { ...rowData, keyPerformanceIndicator: value } : rowData
-                                          )
-                                        );
-                                      }}
-                                    />
-                                  </td>
-                                  <td>
-                                    <TextField
-                                      fullWidth
-                                      size="small"
-                                      value={row.goals}
-                                      disabled
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setTableData((prev) =>
-                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, goals: value } : rowData))
-                                        );
-                                      }}
-                                    />
-                                  </td>
-                                  <td>
-                                    <TextField
-                                      fullWidth
-                                      size="small"
-                                      value={row.remarks}
-                                      disabled
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setTableData((prev) =>
-                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, remarks: value } : rowData))
-                                        );
-                                      }}
-                                    />
-                                  </td>
-                                  <td>
-                                    <FormControl variant="outlined" size="small" error={!!tableDataErrors[index]?.input} fullWidth>
-                                      <InputLabel id="input-label">Rating</InputLabel>
-                                      <Select
-                                        labelId="input-label"
-                                        label="Rating"
-                                        name="input"
-                                        value={row.input}
+                              {tableData.length > 0 && tableData.some((row) => row.area || row.goals || row.keyPerformanceIndicator) ? (
+                                tableData.map((row, index) => (
+                                  <tr key={row.id}>
+                                    <td className="text-center pt-3">{index + 1}</td>
+                                    <td>
+                                      <TextField
+                                        fullWidth
+                                        size="small"
+                                        value={row.area}
+                                        disabled
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          const selectedScore = scoreAllData.find((item) => item.input === value)?.score || '';
+                                          setTableData((prev) =>
+                                            prev.map((rowData) => (rowData.id === row.id ? { ...rowData, area: value } : rowData))
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <TextField
+                                        fullWidth
+                                        size="small"
+                                        value={row.keyPerformanceIndicator}
+                                        disabled
+                                        onChange={(e) => {
+                                          const value = e.target.value;
                                           setTableData((prev) =>
                                             prev.map((rowData) =>
-                                              rowData.id === row.id ? { ...rowData, input: value, score: selectedScore } : rowData
+                                              rowData.id === row.id ? { ...rowData, keyPerformanceIndicator: value } : rowData
                                             )
                                           );
-                                          setTableDataErrors((prev) => {
-                                            const newErrors = Array.isArray(prev) ? [...prev] : [];
-                                            newErrors[index] = { ...newErrors[index], input: '' };
-                                            return newErrors;
-                                          });
                                         }}
-                                      >
-                                        {scoreAllData?.map((row) => (
-                                          <MenuItem key={row.id} value={row.input}>
-                                            {row.input}
-                                          </MenuItem>
-                                        ))}
-                                      </Select>
-                                      {tableDataErrors.input && <FormHelperText>{tableDataErrors.input}</FormHelperText>}
-                                    </FormControl>
-                                  </td>
-                                  <td>
-                                    <TextField
-                                      fullWidth
-                                      size="small"
-                                      value={row.score}
-                                      disabled
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setTableData((prev) =>
-                                          prev.map((rowData) => (rowData.id === row.id ? { ...rowData, score: value } : rowData))
-                                        );
-                                      }}
-                                    />
+                                      />
+                                    </td>
+                                    <td>
+                                      <TextField
+                                        fullWidth
+                                        size="small"
+                                        value={row.goals}
+                                        disabled
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setTableData((prev) =>
+                                            prev.map((rowData) => (rowData.id === row.id ? { ...rowData, goals: value } : rowData))
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <TextField
+                                        fullWidth
+                                        size="small"
+                                        value={row.remarks}
+                                        disabled
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setTableData((prev) =>
+                                            prev.map((rowData) => (rowData.id === row.id ? { ...rowData, remarks: value } : rowData))
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                    <td>
+                                      <FormControl variant="outlined" size="small" error={!!tableDataErrors[index]?.input} fullWidth>
+                                        <InputLabel id="input-label">Rating</InputLabel>
+                                        <Select
+                                          labelId="input-label"
+                                          label="Rating"
+                                          name="input"
+                                          value={row.input}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            const selectedScore = scoreAllData.find((item) => item.input === value)?.score || '';
+                                            setTableData((prev) =>
+                                              prev.map((rowData) =>
+                                                rowData.id === row.id ? { ...rowData, input: value, score: selectedScore } : rowData
+                                              )
+                                            );
+                                            setTableDataErrors((prev) => {
+                                              const newErrors = Array.isArray(prev) ? [...prev] : [];
+                                              newErrors[index] = { ...newErrors[index], input: '' };
+                                              return newErrors;
+                                            });
+                                          }}
+                                        >
+                                          {scoreAllData?.map((row) => (
+                                            <MenuItem key={row.id} value={row.input}>
+                                              {row.input}
+                                            </MenuItem>
+                                          ))}
+                                        </Select>
+                                        {tableDataErrors.input && <FormHelperText>{tableDataErrors.input}</FormHelperText>}
+                                      </FormControl>
+                                    </td>
+                                    <td>
+                                      <TextField
+                                        fullWidth
+                                        size="small"
+                                        value={row.score}
+                                        disabled
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setTableData((prev) =>
+                                            prev.map((rowData) => (rowData.id === row.id ? { ...rowData, score: value } : rowData))
+                                          );
+                                        }}
+                                      />
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={7} className="text-center">
+                                    No data available
                                   </td>
                                 </tr>
-                              ))}
+                              )}
                             </tbody>
                           </table>
                         </div>
