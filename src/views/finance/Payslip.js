@@ -248,12 +248,12 @@ const Payslip = () => {
   };
 
   const handleDownload = () => {
-     if (!showPayslip || !employeeDetails || noDataFound) {
+    if (!showPayslip || !employeeDetails || noDataFound) {
       showToast('Please generate a valid payslip first', 'warning');
       return;
     }
 
-  const input = document.getElementById('payslip-container');
+    const input = document.getElementById('payslip-container');
     html2canvas(input, {
       scale: 2,
       useCORS: true,
@@ -292,6 +292,88 @@ const Payslip = () => {
     console.error('Failed to load company logo');
     setLogoLoadError(true);
   };
+
+  const convertNumberToWords = (amount) => {
+    const units = [
+      'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+      'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+      'Seventeen', 'Eighteen', 'Nineteen'
+    ];
+
+    const tens = [
+      '', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'
+    ];
+
+    const convertThreeDigits = (n) => {
+      if (n === 0) return '';
+      let str = '';
+      const hundreds = Math.floor(n / 100);
+      if (hundreds > 0) {
+        str += `${units[hundreds]} Hundred `;
+        n %= 100;
+      }
+      if (n > 0) {
+        if (n < 20) {
+          str += units[n];
+        } else {
+          const tensDigit = Math.floor(n / 10);
+          const onesDigit = n % 10;
+          str += tens[tensDigit];
+          if (onesDigit > 0) {
+            str += ` ${units[onesDigit]}`;
+          }
+        }
+      }
+      return str.trim();
+    };
+
+    // if (isNaN(amount) return 'Invalid Amount';
+    if (amount === 0) return 'Zero';
+
+    // Separate rupees and paise
+    const rupees = Math.floor(amount);
+    let paise = Math.round((amount - rupees) * 100);
+
+    // Handle potential floating-point issues
+    if (paise >= 100) {
+      paise = 0;
+    }
+
+    const groups = [];
+    let num = rupees;
+
+    // Break into groups (last 3 digits, then pairs of 2 digits)
+    groups.push(num % 1000);
+    num = Math.floor(num / 1000);
+
+    while (num > 0) {
+      groups.push(num % 100);
+      num = Math.floor(num / 100);
+    }
+
+    const unitsText = ['', 'Thousand', 'Lakh', 'Crore'];
+    let words = '';
+
+    // Process groups from highest to lowest
+    for (let i = groups.length - 1; i >= 0; i--) {
+      if (groups[i] !== 0) {
+        words += `${convertThreeDigits(groups[i])} ${unitsText[i]} `;
+      }
+    }
+
+    // Add paise if exists
+    if (paise > 0) {
+      words = words.trim();
+      words += ` and ${convertThreeDigits(paise)} Paise`;
+    }
+
+    return words.trim();
+  };
+
+  const amountInWords = useMemo(() => {
+    if (!showPayslip || noDataFound || !employeeDetails || netPay === undefined) return '';
+    return convertNumberToWords(netPay);
+  }, [netPay, showPayslip, noDataFound, employeeDetails]);
 
   return (
     <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -498,7 +580,8 @@ const Payslip = () => {
             <p>
               <strong>Net Pay for the month ( Total Earnings - Total Deductions): Rs. {netPay.toFixed(2)}</strong>
             </p>
-            <p style={{ fontStyle: 'italic' }}>(Rupees __________ Only)</p>
+            {/* <p style={{ fontStyle: 'italic' }}>(Rupees {netPay.toFixed(2)} Only)</p> */}
+            <p style={{ fontStyle: 'italic' }}>(Rupees {amountInWords} Only)</p>
           </div>
 
           <p style={{ fontSize: '12px', textAlign: 'center', marginTop: '20px' }}>
