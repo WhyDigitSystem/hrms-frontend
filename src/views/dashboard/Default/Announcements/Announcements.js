@@ -146,7 +146,7 @@ const Announcements = () => {
   const cardStyle = {
     position: 'relative',
     margin: 2,
-    minHeight: 200,
+    // minHeight: 200,
     background: 'linear-gradient(145deg, #582222 0%, #6d5c9f 100%)',
     borderRadius: 4,
     color: theme.palette.common.white,
@@ -154,11 +154,11 @@ const Announcements = () => {
   };
 
   const announcementStyle = {
-    background: 'rgba(255, 255, 255, 0.1)',
+    // background: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 3,
     padding: isMobile ? 2 : 3,
     backdropFilter: 'blur(5px)',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
+    // border: '1px solid rgba(255, 255, 255, 0.2)',
     position: 'relative',
     minHeight: 150,
     display: 'flex',
@@ -188,7 +188,7 @@ const Announcements = () => {
             </Box>
           )}
         </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', paddingTop: 4 }}>
           <IconButton color="primary" onClick={() => setOpenCreateModal(true)}><AddIcon /></IconButton>
           <IconButton color="inherit" onClick={() => { setViewAllAnnouncements(listViewData); setOpenViewMoreModal(true); }}><VisibilityIcon /></IconButton>
         </Box>

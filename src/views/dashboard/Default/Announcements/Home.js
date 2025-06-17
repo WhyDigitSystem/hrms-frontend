@@ -70,7 +70,7 @@ const Home = () => {
                     </Typography>
                 </HeaderBox>
                 <StyledDivider />
-                <Box sx={{ mt: 0}}>
+                <Box sx={{ mt:3}}>
                     <Announcements />
                 </Box>
             </CardWrapper>
