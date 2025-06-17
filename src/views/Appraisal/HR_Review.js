@@ -113,7 +113,7 @@ const HR_Review = () => {
                         supervisorName: ''
                     }));
 
-                    showToast('success', `Employee details loaded`);
+                    // showToast('success', `Employee details loaded`);
                 } else {
                     // showToast('warning', 'Employee details not found in response');
                 }

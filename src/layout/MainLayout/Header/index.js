@@ -250,30 +250,7 @@ const Header = ({ handleLeftDrawerToggle }) => {
 
       {/* Right Side Actions */}
       <Stack direction="row" alignItems="center" spacing={{ xs: 1, sm: 2 }}>
-        {/* Theme Toggle Button */}
-        {/* <ButtonBase sx={{ borderRadius: '12px', overflow: 'hidden' }}>
-          <Avatar
-            variant="rounded"
-            sx={{
-              ...theme.typography.commonAvatar,
-              ...theme.typography.mediumAvatar,
-              transition: 'all .2s ease-in-out',
-              background: theme.palette.primary.light,
-              color: theme.palette.primary.dark,
-              '&:hover': {
-                background: theme.palette.primary.dark,
-                color: theme.palette.primary.light
-              }
-            }}
-            color="inherit"
-          >
-            {theme.palette.mode === 'dark' ? (
-              <IconSun stroke={1.5} size="1.3rem" />
-            ) : (
-              <IconMoon stroke={1.5} size="1.3rem" />
-            )}
-          </Avatar>
-        </ButtonBase> */}
+        
 
         {/* Notification */}
         <NotificationSection />

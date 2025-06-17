@@ -458,7 +458,7 @@ const Branch = () => {
             <div className="row">
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Company Name"
+                  // label="Company Name"
                   variant="outlined"
                   size="small"
                   fullWidth

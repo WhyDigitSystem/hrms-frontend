@@ -1,5 +1,5 @@
 // assets
-import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2,IconMapQuestion, IconUsersGroup, IconWorld ,IconMap ,IconBuildingSkyscraper } from '@tabler/icons-react';
+import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2, IconMapQuestion, IconUsersGroup, IconWorld, IconMap, IconBuildingSkyscraper } from '@tabler/icons-react';
 
 // constant
 const icons = {
@@ -20,16 +20,16 @@ const icons3 = {
   IconCashBanknote
 };
 const icons4 = {
-  IconBuildingFactory2 
+  IconBuildingFactory2
 };
 const icons6 = {
   IconIdBadge2
 };
 const icons7 = {
-  IconMapQuestion 
+  IconMapQuestion
 };
 const icons8 = {
-  IconUsersGroup 
+  IconUsersGroup
 };
 
 
@@ -53,7 +53,13 @@ const manageTax = {
           url: '/ManageTax/manageTax',
           icon: icons.IconWorld
         },
-        
+        {
+          id: 'DeclarationDate',
+          title: 'Declaration Date',
+          type: 'item',
+          url: '/ManageTax/DeclarationDate',
+          icon: icons.IconWorld
+        },
       ]
     }
   ]

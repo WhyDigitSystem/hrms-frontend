@@ -70,6 +70,8 @@ const EmployeeAttanceReport = Loadable(lazy(() => import('views/team/EmployeeAtt
 
 // manageTax
 const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')));
+const DeclarationDate = Loadable(lazy(() => import('views/ManageTax/DeclarationDate')));
+
 
 // PreGoals
 const Appraisee = Loadable(lazy(() => import('views/Appraisal/Appraisee')));
@@ -276,6 +278,10 @@ const HrmsRoute = {
     {
       path: '/ManageTax/manageTax',
       element: <ManageTax />
+    },
+     {
+      path: '/ManageTax/DeclarationDate',
+      element: <DeclarationDate />
     },
     // PreGoals
     {

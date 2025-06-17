@@ -60,10 +60,10 @@ function NewJoiner() {
                 setTodayJoiners(todayList);
                 setUpcomingJoiners(upcomingList);
             } else {
-                showToast('No new joiners found', 'info');
+                // showToast('No new joiners found', 'info');
             }
         } catch (error) {
-            console.error('Error fetching new joiner data:', error);
+            console.error('Error fetching new joiner data:', error);    
             showToast('Failed to fetch new joiner data', 'error');
         }
     };

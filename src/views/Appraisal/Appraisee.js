@@ -148,7 +148,7 @@ const Appraisee = () => {
                         reportingHeadDesignation: ''
                     }));
 
-                    showToast('success', `Employee details loaded`);
+                    // showToast('success', `Employee details loaded`);
                 }
             } else {
                 showToast('error', response.message || 'Failed to fetch employee details');
@@ -288,29 +288,29 @@ const Appraisee = () => {
     };
 
     const handleClear = () => {
-        setFormData({
-            id: '',
-            code: localStorage.getItem('employeeCode') || '',
-            name: '',
-            branch: '',
-            department: '',
-            designation: '',
-            reportingHead: '',
-            reportingHeadCode: '',
-            reportingHeadDesignation: '',
-            finYear: new Date().getFullYear(),
-            active: true
-        });
+        // setFormData({
+        //     id: '',
+        //     code: localStorage.getItem('employeeCode') || '',
+        //     name: '',
+        //     branch: '',
+        //     department: '',
+        //     designation: '',
+        //     reportingHead: '',
+        //     reportingHeadCode: '',
+        //     reportingHeadDesignation: '',
+        //     finYear: new Date().getFullYear(),
+        //     active: true
+        // });
 
-        setFieldErrors({
-            code: '',
-            name: '',
-            department: '',
-            designation: '',
-            reportingHeadCode: '',
-            reportingHead: '',
-            reportingHeadDesignation: '',
-        });
+        // setFieldErrors({
+        //     code: '',
+        //     name: '',
+        //     department: '',
+        //     designation: '',
+        //     reportingHeadCode: '',
+        //     reportingHead: '',
+        //     reportingHeadDesignation: '',
+        // });
 
         setAppraiseeDetailsData([
             { id: -1, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
