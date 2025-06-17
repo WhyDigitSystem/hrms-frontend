@@ -1,11 +1,25 @@
-import React from 'react';
-import {
-    Box, Card, CardContent, Typography, Grid, Select, MenuItem, Chip, Divider,
-    useTheme, useMediaQuery, Tabs, Tab
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import CurrencyRupeeIcon from '@mui/icons-material/CurrencyRupee';
 import InsertChartIcon from '@mui/icons-material/InsertChart';
+import {
+    Box, Card, CardContent, Typography, Grid, Button, useTheme,
+    TextField, TableContainer, Paper, Table, TableHead, TableRow,
+    TableCell, TableBody, IconButton, Chip, Select, MenuItem, useMediaQuery, Divider, Tabs, Tab
+} from '@mui/material';
+import {
+    Add as AddIcon,
+    Clear as ClearIcon,
+    Delete as DeleteIcon,
+    FormatListBulletedTwoTone as FormatListBulletedTwoToneIcon,
+    Save as SaveIcon,
+    CheckCircleOutline,
+    CancelOutlined
+} from '@mui/icons-material';
+
+import apiCalls from 'apicall';
+import ActionButton from 'utils/ActionButton';
+import ToastComponent, { showToast } from 'utils/toast-component';
 
 import MyDeclaration from './MyDeclaration/MyDeclaration';
 import LacDeclaration from './MyDeclaration/LacDeclaration';
@@ -41,6 +55,157 @@ const Declaration = () => {
         { title: "Total Tax Payable", amount: "INR 0" },
         { title: "Tax Already Paid", amount: "INR 0" }
     ];
+
+
+    const [isLoading, setIsLoading] = useState(false);
+    const [listView, setListView] = useState(false);
+    const [finYear] = useState('APR 2025 - MAR 2026');
+    const orgId = parseInt(localStorage.getItem('orgId'));
+    const createdBy = localStorage.getItem('userName');
+    const branch = localStorage.getItem('branch') || '';
+    const branchCode = localStorage.getItem('branchCode') || '';
+    const department = localStorage.getItem('department') || '';
+    const employeeCode = localStorage.getItem('employeeCode') || '';
+    const employeeName = localStorage.getItem('userName') || '';
+
+    // State for deductions data
+    const [deductions, setDeductions] = useState([
+        {
+            id: 1,
+            section: '80C',
+            deductions: 'Life Insurance Premium',
+            maxLimit: '150000',
+            declaration: '',
+            proof: '',
+            status: 'Auto Accepted'
+        }
+    ]);
+
+    // Function to handle input changes in deductions table
+    const handleDeductionChange = (id, field, value) => {
+        setDeductions(
+            deductions.map((item) =>
+                item.id === id ? { ...item, [field]: value } : item
+            )
+        );
+    };
+
+    // Function to handle status change
+    const handleStatusChange = (id, status) => {
+        setDeductions(
+            deductions.map((item) =>
+                item.id === id ? { ...item, status } : item
+            )
+        );
+    };
+
+    // Function to add new deduction row
+    const handleAddRow = () => {
+        const newRow = {
+            id: Date.now(),
+            section: '',
+            deductions: '',
+            maxLimit: '',
+            declaration: '',
+            proof: '',
+            status: 'Auto Accepted'
+        };
+        setDeductions([...deductions, newRow]);
+    };
+
+    // Function to delete deduction row
+    const handleDeleteRow = (id) => {
+        if (deductions.length > 1) {
+            setDeductions(deductions.filter(item => item.id !== id));
+        }
+    };
+
+    // Function to clear all deductions
+    const handleClear = () => {
+        setDeductions([
+            {
+                id: 1,
+                section: '80C',
+                deductions: 'Life Insurance Premium',
+                maxLimit: '150000',
+                declaration: '',
+                proof: '',
+                status: 'Auto Accepted'
+            }
+        ]);
+    };
+
+    // Function to save deductions data
+    const handleSaveDeductions = async () => {
+        setIsLoading(true);
+
+        // Validate that all declarations have values
+        const hasEmptyDeclaration = deductions.some(d =>
+            d.declaration === '' || d.declaration === null || d.declaration === undefined
+        );
+
+        if (hasEmptyDeclaration) {
+            showToast('error', 'Please fill in all declaration amounts');
+            setIsLoading(false);
+            return;
+        }
+
+        const payload = {
+            branch,
+            branchCode,
+            createdBy,
+            department,
+            employeeCode,
+            employeeName,
+            finYear: finYear.replace('APR ', '').replace(' - MAR', ''),
+            oneCroreFiveLacDeductionsDTO: deductions.map(deduction => ({
+                section: deduction.section,
+                deductions: deduction.deductions,
+                maxLimit: parseFloat(deduction.maxLimit) || 0,
+                declaration: deduction.declaration.toString(),
+                proof: deduction.proof,
+                status: deduction.status
+            })),
+            otherDeclarationDTO: [],
+            orgId
+        };
+
+        try {
+            const response = await apiCalls(
+                'put',
+                '/managetax/createUpdateDeclaration',
+                payload
+            );
+
+            if (response.status) {
+                showToast('success', 'Deductions saved successfully');
+            } else {
+                showToast('error', response.message || 'Failed to save deductions');
+            }
+        } catch (error) {
+            console.error('Error saving deductions:', error);
+            showToast('error', 'Failed to save deductions');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Function to handle view toggle
+    const handleView = () => setListView(!listView);
+
+    // Calculate summary values
+    const declaredAmount = deductions.reduce((sum, item) =>
+        sum + parseFloat(item.declaration || 0), 0);
+
+    const autoApprovedAmount = deductions.reduce((sum, item) =>
+        item.status === 'Auto Accepted' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+
+    const acceptedAmount = deductions.reduce((sum, item) =>
+        item.status === 'Accepted' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+
+    const rejectedAmount = deductions.reduce((sum, item) =>
+        item.status === 'Rejected' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+
 
     return (
         <>
