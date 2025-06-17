@@ -13,7 +13,8 @@ import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { Dialog, DialogTitle, DialogContent, Table, TableHead, TableRow, TableCell, TableBody, Button, IconButton } from '@mui/material';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+// import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 import { saveAs } from 'file-saver';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -139,6 +140,33 @@ const EmployeeAttanceReport = () => {
     doc.save('Check In/Out Report_.pdf');
   };
 
+  // const handleDownloadExcel = () => {
+  //   if (attendanceReport.length === 0) {
+  //     showToast('error', 'No data to download');
+  //     return;
+  //   }
+
+  //   const exportData = attendanceReport.map((row) => ({
+  //     Code: row.employeeCode,
+  //     Employee: row.employeeName,
+  //     Date: row.entryDate,
+  //     'Check In': row.checkInTime,
+  //     'Check Out': row.checkOutTime,
+  //     'Total Hours': row.grossHours
+  //   }));
+
+  //   const worksheet = XLSX.utils.json_to_sheet(exportData);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, 'Check In-Out Report');
+
+  //   const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+  //   const blob = new Blob([excelBuffer], {
+  //     type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8'
+  //   });
+
+  //   saveAs(blob, 'CheckInOutReport.xlsx');
+  // };
+
   const handleDownloadExcel = () => {
     if (attendanceReport.length === 0) {
       showToast('error', 'No data to download');
@@ -155,6 +183,27 @@ const EmployeeAttanceReport = () => {
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+    // Style header row (1st row)
+    const headerKeys = Object.keys(exportData[0]);
+    headerKeys.forEach((_, colIdx) => {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: colIdx }); // r: row, c: column
+      if (!worksheet[cellAddress]) return;
+      worksheet[cellAddress].s = {
+        fill: {
+          patternType: 'solid',
+          fgColor: { rgb: '34449B' } // dark blue
+        },
+        font: {
+          bold: true,
+          color: { rgb: 'FFFFFF' }
+        },
+        alignment: {
+          horizontal: 'center'
+        }
+      };
+    });
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Check In-Out Report');
 
