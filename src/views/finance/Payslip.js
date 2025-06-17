@@ -156,7 +156,7 @@ const Payslip = () => {
       const handleApiError = (response, defaultMessage) => {
         if (!response?.status) {
           const errorMsg = response?.paramObjectsMap?.errorMessage || defaultMessage;
-          showToast(errorMsg, 'error');
+          // showToast(errorMsg, 'error');
           throw new Error(errorMsg);
         }
       };
