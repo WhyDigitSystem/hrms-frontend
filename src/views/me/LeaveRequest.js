@@ -298,6 +298,7 @@ const LeaveRequest = () => {
 
       const saveData = {
         ...(editId && { id: editId }),
+        screenName: 'LEAVE REQUEST',
         leaveType: formData.leaveType,
         leaveCode: formData.leaveTypeCode,
         fromDate: formattedFromDate,
@@ -398,8 +399,8 @@ const LeaveRequest = () => {
         const notify2Emails = (row.leaveRequestNotifyDTO || []).map((p) => p.notify2Email).join(', ');
 
         const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
-        const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
-        const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}`;
+        const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}&screenName=${row.screenName}`;
+        const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}&screenName=${row.screenName}`;
 
         const emailParams = {
           name: row.notify,
@@ -415,7 +416,8 @@ const LeaveRequest = () => {
           approve_link: approveLink,
           reject_link: rejectLink,
           notifyCode: row.notifyCode,
-          notify: row.notify
+          notify: row.notify,
+          screenName: row.screenName
         };
 
         console.log('Email Params:', emailParams);

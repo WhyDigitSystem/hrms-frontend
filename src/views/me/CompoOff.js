@@ -91,7 +91,7 @@ export const CompoOff = () => {
   };
 
   const handleAddRow = () => {
-    const editableRows = leaveTypeTable.filter(row => !row.disabled);
+    const editableRows = leaveTypeTable.filter((row) => !row.disabled);
     const lastEditableIndex = editableRows.length - 1;
     const lastRow = editableRows[lastEditableIndex];
 
@@ -109,7 +109,7 @@ export const CompoOff = () => {
       if (hasErrors) {
         setLeaveTypeErrors((prev) => {
           const updated = [...prev];
-          const actualIndex = leaveTypeTable.findIndex(r => r.id === lastRow.id);
+          const actualIndex = leaveTypeTable.findIndex((r) => r.id === lastRow.id);
           updated[actualIndex] = errors;
           return updated;
         });
@@ -185,36 +185,22 @@ export const CompoOff = () => {
     }
   };
 
-  // const isDateEnabled = (dateStr) => {
-  //   const date = new Date(dateStr);
-  //   const today = new Date();
-  //   today.setHours(0, 0, 0, 0); // reset time for accurate comparison
-
-  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-
-  //   const isHoliday = holidayList.some((h) => h.holidayDate === dateStr);
-  //   const isWeekOff = weekOffDays.includes(dayName);
-
-  //   // Allow only if it's a holiday or week-off AND it's today or in the past
-  //   return (isHoliday || isWeekOff) && date <= today;
-  // };
-
   const isDateEnabled = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-  
+
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  
-    const isHoliday = holidayList.some(h => h.holidayDate === dateStr);
-  
+
+    const isHoliday = holidayList.some((h) => h.holidayDate === dateStr);
+
     let isWeekOff = false;
-  
+
     for (const rule of weekOffDays) {
       if (!rule.weekOffDays || !Array.isArray(rule.weekNumbers)) continue;
-  
+
       const ruleDay = rule.weekOffDays.toUpperCase();
-  
+
       if (ruleDay === dayName) {
         const weekNumber = Math.ceil(date.getDate() / 7); // e.g., 1st Saturday = 1
         if (rule.weekNumbers.includes(-1)) {
@@ -223,29 +209,58 @@ export const CompoOff = () => {
           isWeekOff = true;
         }
       }
-  
+
       if (isWeekOff) break; // no need to check more
     }
-  
+
     return (isWeekOff || isHoliday) && date <= today;
-  };    
+  };
 
   // Get compoOffDay text for a selected date
+  // const getCompoOffDayText = (dateStr) => {
+  //   if (!dateStr) return '';
+
+  //   const date = new Date(dateStr);
+  //   const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+
+  //   // Check week off
+  //   if (weekOffDays.includes(dayName)) {
+  //     return `Week-Off - ${dayName}`;
+  //   }
+
+  //   // Check holiday
+  //   const holiday = holidayList.find((h) => h.holidayDate === dateStr);
+  //   if (holiday) {
+  //     return `${holiday.festival} - ${holiday.day}`;
+  //   }
+
+  //   return '';
+  // };
+
   const getCompoOffDayText = (dateStr) => {
     if (!dateStr) return '';
 
     const date = new Date(dateStr);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
+    const weekNumber = Math.ceil(date.getDate() / 7);
 
-    // Check week off
-    if (weekOffDays.includes(dayName)) {
-      return `Week-Off - ${dayName}`;
-    }
-
-    // Check holiday
+    // Check holiday first
     const holiday = holidayList.find((h) => h.holidayDate === dateStr);
     if (holiday) {
       return `${holiday.festival} - ${holiday.day}`;
+    }
+
+    // Check week off
+    for (const rule of weekOffDays) {
+      if (!rule.weekOffDays || !Array.isArray(rule.weekNumbers)) continue;
+
+      const ruleDay = rule.weekOffDays.toUpperCase();
+
+      if (ruleDay === dayName) {
+        if (rule.weekNumbers.includes(-1) || rule.weekNumbers.includes(weekNumber)) {
+          return `WeekOff - ${dayName}`;
+        }
+      }
     }
 
     return '';
@@ -262,10 +277,10 @@ export const CompoOff = () => {
       prev.map((row) =>
         row.id === id
           ? {
-            ...row,
-            compoOff: selectedDateStr,
-            compoOffDay: getCompoOffDayText(selectedDateStr)
-          }
+              ...row,
+              compoOff: selectedDateStr,
+              compoOffDay: getCompoOffDayText(selectedDateStr)
+            }
           : row
       )
     );
@@ -297,10 +312,10 @@ export const CompoOff = () => {
       prev.map((row) =>
         row.id === id
           ? {
-            ...row,
-            assignedBy: selectedCode,
-            assignedByName: selectedPerson ? `${selectedPerson.role} - ${selectedPerson.employeeName}` : ''
-          }
+              ...row,
+              assignedBy: selectedCode,
+              assignedByName: selectedPerson ? `${selectedPerson.role} - ${selectedPerson.employeeName}` : ''
+            }
           : row
       )
     );
@@ -325,7 +340,7 @@ export const CompoOff = () => {
 
   const handleSave = async () => {
     // 1. Get only editable rows (new unsaved rows)
-    const editableRows = leaveTypeTable.filter(row => !row.disabled);
+    const editableRows = leaveTypeTable.filter((row) => !row.disabled);
 
     // 2. Validate only editable rows
     const allErrors = [];
@@ -343,8 +358,8 @@ export const CompoOff = () => {
     });
 
     // 3. Map validation errors back to the full table
-    const mergedErrors = leaveTypeTable.map(row => {
-      const index = editableRows.findIndex(r => r.id === row.id);
+    const mergedErrors = leaveTypeTable.map((row) => {
+      const index = editableRows.findIndex((r) => r.id === row.id);
       return row.disabled
         ? { compoOff: '', assignedBy: '', description: '', notify: '' }
         : allErrors[index] || { compoOff: '', assignedBy: '', description: '', notify: '' };
@@ -359,13 +374,12 @@ export const CompoOff = () => {
 
     // 4. Prepare payload from editable rows
     const finalPayload = editableRows.map((row) => {
-      const selectedNotifyPersons = allReportingPersonList.filter((person) =>
-        (row.notify || []).includes(person.employeeCode)
-      );
+      const selectedNotifyPersons = allReportingPersonList.filter((person) => (row.notify || []).includes(person.employeeCode));
 
       const firstNotifyPerson = notifyList?.[0] || {};
 
       return {
+        screenName: 'COMPENSATORY OFF',
         assignedBy: row.assignedBy,
         branch,
         branchCode,
@@ -399,15 +413,23 @@ export const CompoOff = () => {
       const result = await apiCalls('put', 'leaveprocess/createUpdateCompOff', finalPayload);
 
       if (result.status === true) {
+        // const newId = result.paramObjectsMap.compensatoryOffVO?.id;
+        // console.log('newId', newId);
+        // if (newId) {
+        //   finalPayload.id = newId; // 🔁 Add the ID to sendEmailNotification payload
+        // }
+        if (Array.isArray(result.paramObjectsMap.compensatoryOffVO)) {
+          const newId = result.paramObjectsMap.compensatoryOffVO[0]?.id;
+
+          if (newId) {
+            finalPayload[0].id = newId; // ✅ Assign ID to the first payload object
+          }
+        }
         showToast('success', 'Compensatory Off saved successfully');
         await sendEmailNotification(finalPayload);
 
         // ✅ Mark all editable rows as saved (disabled)
-        setLeaveTypeTable((prev) =>
-          prev.map((row) =>
-            !row.disabled ? { ...row, disabled: true } : row
-          )
-        );
+        setLeaveTypeTable((prev) => prev.map((row) => (!row.disabled ? { ...row, disabled: true } : row)));
 
         setLeaveTypeErrors([]); // Clear errors
         // Optional: reset editId or form if needed
@@ -429,6 +451,10 @@ export const CompoOff = () => {
       for (const row of newRows) {
         const notify2Emails = (row.compoffNotifyDTO || []).map((p) => p.notify2Email).join(', ');
 
+        const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+        const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.employeeCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}&screenName=${row.screenName}`;
+        const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.employeeCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${row.notifyCode}&notify=${row.notify}&screenName=${row.screenName}`;
+
         const emailParams = {
           name: row.notify,
           from_name: empName,
@@ -436,7 +462,13 @@ export const CompoOff = () => {
           email: row.notifyEmail,
           notify2Email: notify2Emails,
           notes: row.notes,
-          approve_link: `/team/LeaveApproval/${row.id || 'leave_request_id'}`
+          // approve_link: `/team/LeaveApproval/${row.id || 'leave_request_id'}`
+          compoOff_id: row.id,
+          approve_link: approveLink,
+          reject_link: rejectLink,
+          notifyCode: row.notifyCode,
+          notify: row.notify,
+          screenName: row.screenName
         };
 
         console.log('Email Params:', emailParams);
@@ -456,55 +488,21 @@ export const CompoOff = () => {
     }
   };
 
-  const addNewRow = () => {
-    setLeaveTypeTable((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        compoOff: '',
-        compoOffDay: '',
-        assignedBy: '',
-        description: '',
-        notify: [],
-        disabled: false, // 👈 important
-      },
-    ]);
-
-    setLeaveTypeErrors((prev) => [
-      ...prev,
-      {
-        compoOff: '',
-        assignedBy: '',
-        description: '',
-        notify: '',
-      },
-    ]);
-  };
-
   const getAllCompoOff = async () => {
     try {
-      const response = await apiCalls(
-        'get',
-        `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`
-      );
+      const response = await apiCalls('get', `leaveprocess/getCompensatoryOffByOrgId?empCode=${empCode}&orgId=${orgId}`);
 
       console.log('API response:', response);
 
-      if (
-        response.status &&
-        response.paramObjectsMap?.compensatoryOffVO &&
-        Array.isArray(response.paramObjectsMap.compensatoryOffVO)
-      ) {
+      if (response.status && response.paramObjectsMap?.compensatoryOffVO && Array.isArray(response.paramObjectsMap.compensatoryOffVO)) {
         const fetchedRows = response.paramObjectsMap.compensatoryOffVO.map((item, index) => ({
           id: item.id || Date.now() + index,
           compoOff: item.compOffDate || null,
           compoOffDay: item.compOffDay || '',
           assignedBy: item.assignedBy || '',
           description: item.notes || '',
-          notify: Array.isArray(item.compoffNotifyVO)
-            ? item.compoffNotifyVO.map(n => n.notify2 || '').filter(Boolean)
-            : [],
-          disabled: true,
+          notify: Array.isArray(item.compoffNotifyVO) ? item.compoffNotifyVO.map((n) => n.notify2 || '').filter(Boolean) : [],
+          disabled: true
         }));
 
         setLeaveTypeTable(fetchedRows);
@@ -513,7 +511,7 @@ export const CompoOff = () => {
             compoOff: '',
             assignedBy: '',
             description: '',
-            notify: '',
+            notify: ''
           }))
         );
       } else {
@@ -521,7 +519,6 @@ export const CompoOff = () => {
         setLeaveTypeErrors([]);
         showToast('error', 'No compensatory off data found');
       }
-
     } catch (error) {
       console.error('Error fetching comp-off data:', error);
       showToast('error', 'Failed to fetch comp-off data');

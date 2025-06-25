@@ -198,6 +198,7 @@ const PendingApproval = ({ isLoading }) => {
         permissionRequests = [permissionRequests];
       }
 
+      // Extract comp-off requests
       let compoOffRequests = compoOffResponse.paramObjectsMap?.compensatoryOffVO || [];
       if (!Array.isArray(compoOffRequests)) {
         compoOffRequests = [compoOffRequests];
@@ -209,13 +210,19 @@ const PendingApproval = ({ isLoading }) => {
         checkOutRequests = [checkOutRequests];
       }
 
-      // Filter to only pending
+      // ✅ Ensure each checkout request contains employeeEmail
+      checkOutRequests = checkOutRequests.map((item) => ({
+        ...item,
+        employeeEmail: item.email || item.employeeEmail || '' // fallback if needed
+      }));
+
+      // Filter only pending approvals
       const pendingLeaveRequests = leaveRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
       const pendingPermissionRequests = permissionRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
       const pendingCompoOffRequests = compoOffRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
       const pendingCheckoutRequests = checkOutRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
 
-      // Merge all pending requests
+      // Combine all pending requests
       const combinedRequests = [
         ...pendingLeaveRequests,
         ...pendingPermissionRequests,
@@ -223,7 +230,7 @@ const PendingApproval = ({ isLoading }) => {
         ...pendingCheckoutRequests
       ];
 
-      // Set to state
+      // Set data to state
       setLeaveRequests(combinedRequests);
       setScreenNames(combinedRequests.map((item) => item.screenName));
     } catch (error) {
@@ -271,7 +278,7 @@ const PendingApproval = ({ isLoading }) => {
         remarks: request.remarks || 'N/A',
         email: request.employeeEmail
       };
-      console.log('Payload',request.fromDate )
+      console.log('Payload', request.fromDate);
 
       // 3. Send email notification
       await emailjs.send('service_hff8dd7', 'template_0pmh0cu', templateParams, 'G6cKiPBXzCvlFaOuo');
@@ -358,7 +365,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}`
+        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
@@ -398,18 +405,18 @@ const PendingApproval = ({ isLoading }) => {
 
   const handleActionCheckout = async (request, action) => {
     setProcessingId(request.id);
-  
+
     try {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/basicmaster/createApprovalCheckOut?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}`
+        `/basicmaster/createApprovalCheckOut?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
       );
-  
+
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
-  
+
       const isApproved = action === 'APPROVED';
-  
+
       const templateParams = {
         name: request.employeeName,
         from_name: employeeName,
@@ -420,19 +427,19 @@ const PendingApproval = ({ isLoading }) => {
         status_class: isApproved ? 'status-approved' : 'status-rejected',
         email: request.employeeEmail
       };
-  
+
       // 3. Send email notification
       await emailjs.send('service_d3c7xso', 'template_tf8a8po', templateParams, 'uMcVJdror6W86lK6z');
-  
+
       toast.success(`Request ${action.toLowerCase()} successfully`, {
         autoClose: 3000
       });
     } catch (error) {
       console.error(`Error ${action.toLowerCase()}ing request:`, error);
-  
+
       // Revert UI if error occurs
       setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
-  
+
       toast.error(`Failed to ${action.toLowerCase()} request`, {
         autoClose: 3000
       });
@@ -471,9 +478,11 @@ const PendingApproval = ({ isLoading }) => {
                 }
                 if (request.screenName === 'PERMISSION REQUEST') {
                   handleActionPermission(request, 'APPROVED');
-                } if (request.screenName === 'COMPENSATORY OFF') {
+                }
+                if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'APPROVED'); // You can customize this if you need different logic
-                } if (request.screenName === 'CHECKINOUT') {
+                }
+                if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'APPROVED'); // You can customize this if you need different logic
                 }
               }}
@@ -495,9 +504,11 @@ const PendingApproval = ({ isLoading }) => {
                 }
                 if (request.screenName === 'PERMISSION REQUEST') {
                   handleActionPermission(request, 'REJECTED');
-                } if (request.screenName === 'COMPENSATORY OFF') {
+                }
+                if (request.screenName === 'COMPENSATORY OFF') {
                   handleActionCompoOff(request, 'REJECTED'); // You can customize this if you need different logic
-                } if (request.screenName === 'CHECKINOUT') {
+                }
+                if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'REJECTED'); // You can customize this if you need different logic
                 }
               }}

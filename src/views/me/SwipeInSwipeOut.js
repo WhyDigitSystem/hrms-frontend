@@ -56,6 +56,8 @@ const SwipeInSwipeOut = () => {
 
   const [searchText, setSearchText] = useState('');
   const [reportingPersonMail, setReportingPersonMail] = useState('');
+  const [reportingPerson, setReportingPerson] = useState('');
+  const [reportingPersonCode, setReportingPersonCode] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const monthOptions = [
@@ -120,9 +122,12 @@ const SwipeInSwipeOut = () => {
     setLoading(true);
     try {
       const result = await apiCalls('get', `master/getAllEmployeeByOrgIdAndEmployeeCode?employeeCode=${empCode}&orgId=${orgId}`);
+
       if (result?.paramObjectsMap?.employeeVO?.length) {
-        const mail = result.paramObjectsMap.employeeVO[0]?.reportnigPersonEmail;
-        setReportingPersonMail(mail || '');
+        const employee = result.paramObjectsMap.employeeVO[0];
+        setReportingPerson(employee?.reportnigPerson || '');
+        setReportingPersonCode(employee?.reportningPersonCode || '');
+        setReportingPersonMail(employee?.reportnigPersonEmail || '');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -182,7 +187,6 @@ const SwipeInSwipeOut = () => {
   const handleSave = async () => {
     if (!selectedRow) return;
 
-    // Convert from "dd/mm/yyyy" to "yyyy-mm-dd"
     let formattedDate = '';
     if (selectedRow.date.includes('/')) {
       const [day, month, year] = selectedRow.date.split('/');
@@ -192,12 +196,17 @@ const SwipeInSwipeOut = () => {
     }
 
     const payload = {
+      screenName: 'CHECKINOUT',
       branch: branch,
+      date: formattedDate,
       empCode: empCode,
-      orgId: orgId,
+      empName: empName,
       entryTime: checkOutTime,
-      reportingPersonMail: reportingPersonMail,
-      date: formattedDate // correctly formatted here
+      notify: reportingPerson,
+      notifyCode: reportingPersonCode,
+      notifyEmail: reportingPersonMail,
+      orgId: orgId,
+      // reportingPersonMail: reportingPersonMail
     };
 
     setIsLoading(true);
@@ -206,11 +215,21 @@ const SwipeInSwipeOut = () => {
       const response = await apiCalls('put', '/basicmaster/createRequestCheckOut', payload);
 
       if (response.status === true) {
+        // const newId = response.paramObjectsMap.checkInVO?.id;
+        // if (newId) {
+        //   payload.id = newId;
+        // }
+        // showToast('success', 'Check-out time submitted successfully');
+        // await sendEmailNotification(payload); // ✅ payload contains notify fields
+        const checkInVO = response.paramObjectsMap.checkInVO || {};
         showToast('success', 'Check-out time submitted successfully');
-        await sendEmailNotification(payload);
 
+        await sendEmailNotification({
+          ...payload,
+          ...checkInVO, // ✅ Merge server data to include checkInDate and others
+          // email: reportingPersonMail // Ensure email is set
+        });
         const updatedData = listViewData.map((row) => (row.date === selectedRow.date ? { ...row, checkOutTime } : row));
-
         setListViewData(updatedData);
         setFilteredData(
           updatedData.filter(
@@ -236,11 +255,22 @@ const SwipeInSwipeOut = () => {
 
   const sendEmailNotification = async (row) => {
     try {
+      const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+      const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkInDate=${row.checkInDate}`;
+      const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkInDate=${row.checkInDate}`;
+
       const emailParams = {
+        checkInDate: row.checkInDate,
         name: row.notify, // ensure 'notify' is part of `selectedRow`
         from_name: empName,
         entryTime: row.entryTime, // should be `entryTime` not checkOutTime
-        email: row.reportingPersonMail
+        email: reportingPersonMail,
+        checkOut_id: row.id,
+        approve_link: approveLink,
+        reject_link: rejectLink,
+        notifyCode: reportingPersonCode,
+        notify: reportingPerson,
+        screenName: row.screenName
       };
 
       console.log('Email Params:', emailParams);
@@ -288,6 +318,10 @@ const SwipeInSwipeOut = () => {
       const response = await apiCalls('put', '/basicmaster/createCheckInOutAdjustment', payload);
 
       if (response.status === true) {
+        const chIOid = response.paramObjectsMap.checkInVO?.id;
+        if (chIOid) {
+          payload.id = chIOid;
+        }
         showToast('success', 'Check-In & Check-Out time submitted successfully');
         await sendEmailNotificationForCheckIn(payload);
 
@@ -318,11 +352,21 @@ const SwipeInSwipeOut = () => {
 
   const sendEmailNotificationForCheckIn = async (row) => {
     try {
+      const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+      const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}`;
+      const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}`;
+
       const emailParams = {
         name: row.empName,
         from_name: empName,
         entryTime: `${row.entryIn} - ${row.entryOut}`,
-        email: row.reportingPersonMail
+        email: row.reportingPersonMail,
+        checkInOut_id: row.id,
+        approve_link: approveLink,
+        reject_link: rejectLink,
+        notifyCode: reportingPersonCode,
+        notify: reportingPerson,
+        screenName: row.screenName
       };
 
       console.log('Email Params:', emailParams);
