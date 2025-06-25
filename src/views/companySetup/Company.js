@@ -41,6 +41,7 @@ import apiCalls from 'apicall';
 import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationPicker from 'views/basicMaster/LocationPicker';
 
 const Company = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
@@ -102,7 +103,11 @@ const Company = () => {
     shiftIn: null,
     shiftOut: null,
     gstRegistered: true,
-    active: true
+    active: true,
+    latitude: null,
+    longitude: null,
+    locationAddress: '',
+    hybrid: false
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -124,7 +129,10 @@ const Company = () => {
     shiftIn: null,
     shiftOut: null,
     gstRegistered: true,
-    active: true
+    active: true,
+    latitude: null,
+    longitude: null,
+    locationAddress: ''
   });
 
   const [tempWeekOff, setTempWeekOff] = useState(formData.weekOff || []);
@@ -340,7 +348,11 @@ const Company = () => {
           active: particularCompany.active === 'Active',
           // weekOff: weekOffDays,
           shiftIn: particularCompany.shiftIn || null,
-          shiftOut: particularCompany.shiftOut || null
+          shiftOut: particularCompany.shiftOut || null,
+          latitude: particularCompany.latitude || 0,
+          longitude: particularCompany.longitude || 0,
+          locationAddress: particularCompany.locationAddress || '',
+          hybrid: particularCompany.hybrid === true // if it's already a boolean
         });
 
         // console.log('WEEK OFF DAYS:', weekOffDays);
@@ -427,6 +439,37 @@ const Company = () => {
     getCompanyDetails();
   };
 
+  const getCurrentLocation = async () => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=AIzaSyCg2Peu6mH9J6uKh3mvTVvXp4EAeKFIgKU`
+        );
+        const data = await response.json();
+        const address = data.results[0]?.formatted_address || '';
+
+        setFormData((prev) => ({
+          ...prev,
+          latitude: lat,
+          longitude: lng,
+          locationAddress: address
+        }));
+
+        console.log('📍 LOCATION SET:', lat, lng, address);
+
+        // ✅ Show success toast here
+        showToast('success', 'Location fetched successfully');
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        showToast('error', 'Unable to fetch location. Please enable location services.');
+      }
+    );
+  };
+
   const handleSave = async () => {
     const errors = {};
     if (!formData.ceo) {
@@ -494,7 +537,11 @@ const Company = () => {
         state: formData.state,
         zip: formData.pincode,
         shiftIn: formData.shiftIn,
-        shiftOut: formData.shiftOut
+        shiftOut: formData.shiftOut,
+        locationAddress: formData.locationAddress,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
+        hybrid: formData.hybrid
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 
@@ -840,39 +887,12 @@ const Company = () => {
                 </FormControl>
               </div>
 
-              {/* <div className="col-md-3 mb-3">
-                <FormControl fullWidth size="small" error={!!fieldErrors.weekOff}>
-                  <InputLabel id="weekOff">Week Off</InputLabel>
-                  <Select
-                    labelId="weekOff"
-                    label="Week Off"
-                    id="weekOff"
-                    name="weekOff"
-                    multiple // Enable multi-select
-                    value={formData.weekOff || []} // Ensure it's an array
-                    onChange={handleInputChange}
-                    renderValue={(selected) => selected.join(', ')} // Display selected values as comma-separated
-                  >
-                    {['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].map((day) => (
-                      <MenuItem key={day} value={day}>
-                        {day}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {fieldErrors.weekOff && <FormHelperText>{fieldErrors.weekOff}</FormHelperText>}
-                </FormControl>
-              </div> */}
               <div className="col-md-3 mb-3">
-                {/* <Button variant="outlined" onClick={handleOpenDialog} fullWidth>
-                  Week Off
-                </Button> */}
-                {/* Week Off button + summary display */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
                   <Button variant="outlined" onClick={handleOpenDialog}>
                     Week Off
                   </Button>
 
-                  {/* Display saved Week Off data summary */}
                   <div>
                     {weekOffRows.length === 0 ? (
                       <em>No Week Off Selected</em>
@@ -1005,6 +1025,21 @@ const Company = () => {
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
                   label="Active"
                 />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.hybrid}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, hybrid: e.target.checked }))}
+                      color="primary"
+                    />
+                  }
+                  label="Hybrid (Work from Office + Home)"
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <Button onClick={getCurrentLocation}>Detect Location</Button>
               </div>
             </div>
           </>

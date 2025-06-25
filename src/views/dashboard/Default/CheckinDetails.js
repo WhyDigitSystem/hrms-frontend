@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import { useState, useEffect } from 'react';
-import { Avatar, Box, Grid, Typography, Button, useMediaQuery, Dialog, DialogContent } from '@mui/material';
+import { Avatar, Box, Grid, Typography, Button, useMediaQuery, Dialog, DialogContent, Checkbox, FormControlLabel } from '@mui/material';
 import { styled, useTheme } from '@mui/material/styles';
 import MainCard from 'ui-component/cards/MainCard';
 import SkeletonEarningCard from 'ui-component/cards/Skeleton/EarningCard';
@@ -37,6 +37,16 @@ const CheckinDetails = ({ isLoading }) => {
   const [hoursWorked, setHoursWorked] = useState(null);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
+  const [reportingPersonMail, setReportingPersonMail] = useState('');
+  const [reportingPerson, setReportingPerson] = useState('');
+  const [reportingPersonCode, setReportingPersonCode] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [empCode] = useState(localStorage.getItem('employeeCode'));
+  const [isWorkFromHome, setIsWorkFromHome] = useState(false);
+  const [isHybrid, setIsHybrid] = useState(false);
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [locationAddress, setLocationAddress] = useState('');
 
   useEffect(() => {
     const storedImage = localStorage.getItem('profileImage');
@@ -67,7 +77,46 @@ const CheckinDetails = ({ isLoading }) => {
 
   useEffect(() => {
     getCheckInOutStatus();
+    getReportingPerson();
+    getCompanyDetails();
   }, []);
+
+  const getReportingPerson = async () => {
+    setLoading(true);
+    try {
+      const result = await apiCalls('get', `master/getAllEmployeeByOrgIdAndEmployeeCode?employeeCode=${empCode}&orgId=${orgId}`);
+
+      if (result?.paramObjectsMap?.employeeVO?.length) {
+        const employee = result.paramObjectsMap.employeeVO[0];
+        setReportingPerson(employee?.reportnigPerson || '');
+        setReportingPersonCode(employee?.reportningPersonCode || '');
+        setReportingPersonMail(employee?.reportnigPersonEmail || '');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCompanyDetails = async () => {
+    setLoading(true);
+    try {
+      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
+
+      if (result?.paramObjectsMap?.companyVO?.length) {
+        const company = result.paramObjectsMap.companyVO[0];
+        setIsHybrid(company.hybrid === true);
+        setLatitude(company.latitude || null);
+        setLongitude(company.longitude || null);
+        setLocationAddress(company.locationAddress || '');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCheckIn = async () => {
     const now = new Date(); // Freeze current time
@@ -76,7 +125,14 @@ const CheckinDetails = ({ isLoading }) => {
       orgId,
       branch,
       empcode,
-      empName
+      empName,
+      notify: reportingPerson,
+      notifyCode: reportingPersonCode,
+      notifyEmail: reportingPersonMail,
+      latitude: latitude ?? 0,
+      longitude: longitude ?? 0,
+      locationAddress: locationAddress || '',
+      workFromHome: isWorkFromHome ? 'YES' : 'NO'
     };
 
     try {
@@ -105,7 +161,14 @@ const CheckinDetails = ({ isLoading }) => {
       orgId,
       branch,
       empcode,
-      empName
+      empName,
+      notify: reportingPerson,
+      notifyCode: reportingPersonCode,
+      notifyEmail: reportingPersonMail,
+      latitude: latitude ?? 0,
+      longitude: longitude ?? 0,
+      locationAddress: locationAddress || '',
+      workFromHome: isWorkFromHome ? 'YES' : 'NO'
     };
 
     try {
@@ -172,7 +235,7 @@ const CheckinDetails = ({ isLoading }) => {
           </Typography>
         </Grid>
 
-        <CardWrapper border={false} content={false} sx={{ mt: 4, }}>
+        <CardWrapper border={false} content={false} sx={{ mt: 4 }}>
           <Box sx={{ p: isMobile ? 1.5 : 2.25 }}>
             <Grid container direction="column" spacing={2}>
               <Grid item>
@@ -209,7 +272,8 @@ const CheckinDetails = ({ isLoading }) => {
                     mb: 2,
                     pl: { lg: 5 },
                     ml: { lg: 5 },
-                    width: '100%'
+                    width: '100%',
+                    alignItems: 'center'
                   }}
                 >
                   {!isCheckedIn && !checkInTime ? (
@@ -303,6 +367,29 @@ const CheckinDetails = ({ isLoading }) => {
                       </Typography>
                     </Box>
                   ) : null}
+                  {isHybrid && (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={isWorkFromHome}
+                          onChange={(e) => setIsWorkFromHome(e.target.checked)}
+                          sx={{
+                            color: 'white',
+                            '&.Mui-checked': {
+                              color: 'success.main'
+                            }
+                          }}
+                        />
+                      }
+                      label="Work From Home"
+                      sx={{
+                        ml: 2,
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    />
+                  )}
                 </Box>
 
                 {/* <List sx={{ color: '#fff', pl: { lg: 5 }, ml: { lg: 5 } }}>
