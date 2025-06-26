@@ -67,11 +67,6 @@ const KRAKPI = () => {
 
     const listViewColumns = [
         { accessorKey: 'appraisalId', header: 'Appraisal ID', size: 140 },
-        // { accessorKey: 'code', header: 'Code', size: 140 },
-        // { accessorKey: 'name', header: 'Name', size: 140 },
-        // { accessorKey: 'supervisorCode', header: 'Supv Code', size: 140 },
-        // { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 },
-        // { accessorKey: 'active', header: 'Active', size: 140 }
     ];
 
     const handleInputChange = (e) => {
@@ -120,6 +115,7 @@ const KRAKPI = () => {
                 // Preserve actual database IDs
                 setkpiDetailsData(
                     goal.kpiVO.map(detail => ({
+                        id: detail.id,
                         kpiId: detail.kpiId,
                         kpiDescription: detail.kpiDescription
                     }))
@@ -128,11 +124,26 @@ const KRAKPI = () => {
                 setDetailsTableData(
                     goal.kpiKraDetailsVO.map(detail => ({
                         id: detail.id,
-                        kraId: detail.kpiId,
+                        kraId: detail.kraId,
                         kraDescription: detail.kraDescription,
                         ro: detail.ro,
                         kpiId: detail.kpiId,
                         kpiKraDescription: detail.kpiDescription
+                    }))
+                );
+                
+                // Initialize errors arrays
+                setGoalsDetailsErrors(
+                    goal.kpiVO.map(() => ({ kpiId: '', kpiDescription: '' }))
+                );
+                
+                setDetailsTableErrors(
+                    goal.kpiKraDetailsVO.map(() => ({ 
+                        kraId: '', 
+                        kraDescription: '', 
+                        ro: '', 
+                        kpiId: '', 
+                        kpiKraDescription: '' 
                     }))
                 );
             }
@@ -147,17 +158,33 @@ const KRAKPI = () => {
         const errors = {};
         if (!formData.appraisalId) errors.appraisalId = 'Appraisal ID is required';
 
-        // Validate details
-        const detailsErrors = kpiDetailsData.map(detail => {
+        // Validate KPI details
+        const detailsErrors = kpiDetailsData.map((detail, index) => {
             const error = {};
-            if (!detail.kpiId) error.kpiDTO = 'KPI Id is required';
+            if (!detail.kpiId) error.kpiId = 'KPI Id is required';
             if (!detail.kpiDescription) error.kpiDescription = 'KPI Description is required';
             return error;
         });
 
-        if (Object.keys(errors).length > 0) {
+        // Validate Details tab
+        const detailsTableErrs = detailsTableData.map((detail, index) => {
+            const error = {};
+            if (!detail.kraId) error.kraId = 'KRA Id is required';
+            if (!detail.kraDescription) error.kraDescription = 'KRA Description is required';
+            if (!detail.kpiId) error.kpiId = 'KPI Id is required';
+            if (!detail.kpiKraDescription) error.kpiKraDescription = 'KPI Description is required';
+            return error;
+        });
+
+        const hasKpiErrors = detailsErrors.some(err => err.kpiId || err.kpiDescription);
+        const hasDetailErrors = detailsTableErrs.some(err => 
+            err.kraId || err.kraDescription || err.kpiId || err.kpiKraDescription
+        );
+
+        if (Object.keys(errors).length > 0 || hasKpiErrors || hasDetailErrors) {
             setFieldErrors(errors);
             setGoalsDetailsErrors(detailsErrors);
+            setDetailsTableErrors(detailsTableErrs);
             showToast('error', 'Please fill all required fields');
             return;
         }
@@ -166,15 +193,13 @@ const KRAKPI = () => {
 
         // Prepare details payload with IDs
         const kpiVo = kpiDetailsData.map(row => ({
-            ...(editId && { id: editId }),
-            id: row.id, // Include existing ID for updates
+            ...(row.id && { id: row.id }), // Include ID if exists
             kpiDescription: row.kpiDescription,
             kpiId: row.kpiId
         }));
 
         const kpiKraDetailsVo = detailsTableData.map(row => ({
-            ...(editId && { id: editId }),
-            id: row.id, // Include existing ID for updates
+            ...(row.id && { id: row.id }), // Include ID if exists
             kpiDescription: row.kpiKraDescription,
             kpiId: row.kpiId,
             kraDescription: row.kraDescription,
@@ -184,10 +209,8 @@ const KRAKPI = () => {
 
         const payload = {
             ...(editId && { id: editId }),
-            active: formData.active,
             appraisalId: formData.appraisalId,
             createdBy: loginUserName,
-            finYear: formData.finYear,
             kpiDTO: kpiVo,
             kpiKraDetailsDTO: kpiKraDetailsVo,
             orgId: orgId,
@@ -212,63 +235,32 @@ const KRAKPI = () => {
 
     const handleClear = () => {
         setFormData({
-            appraisalId: '',
-            code: '',
-            name: '',
-            supervisorCode: '',
-            supervisorName: '',
-            active: true
+            appraisalId: ''
         });
 
         setFieldErrors({
-            appraisalId: '',
-            code: '',
-            name: '',
-            supervisorCode: '',
-            supervisorName: ''
+            appraisalId: ''
         });
 
         setkpiDetailsData([
-            { id: null, area: '', kpiDescription: '', goals: '' }
+            { id: null, kpiId: '', kpiDescription: '' }
         ]);
 
         setGoalsDetailsErrors([
-            { area: '', kpiDescription: '', goals: '' }
+            { kpiId: '', kpiDescription: '' }
+        ]);
+        
+        setDetailsTableData([
+            { id: null, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
+        ]);
+
+        setDetailsTableErrors([
+            { kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
         ]);
 
         setEditId('');
     };
 
-    // const handleAddRow = () => {
-    //     const lastRow = kpiDetailsData[kpiDetailsData.length - 1];
-
-    //     // Validate last row before adding new one
-    //     if (!lastRow.kpiId || !lastRow.kpiDescription) {
-    //         const newErrors = [...goalsDetailsErrors];
-    //         const lastIndex = newErrors.length - 1;
-    //         newErrors[lastIndex] = {
-    //             kpiId: !lastRow.kpiId ? 'KPI ID is required' : '',
-    //             kpiDescription: !lastRow.kpiDescription ? 'KPI Description is required' : '',
-    //         };
-    //         setGoalsDetailsErrors(newErrors);
-    //         showToast('warning', 'Please fill current row before adding new');
-    //         return;
-    //     }
-
-    //     const newId = kpiDetailsData.length > 0
-    //         ? Math.min(...kpiDetailsData.map(d => d.id)) - 1
-    //         : -1;
-
-    //     setkpiDetailsData(prev => [
-    //         ...prev,
-    //         { id: newId, kpiId: '', kpiDescription: '' } // ✅ use correct keys
-    //     ]);
-
-    //     setGoalsDetailsErrors(prev => [
-    //         ...prev,
-    //         { kpiId: '', kpiDescription: '' }
-    //     ]);
-    // };
 
     const handleDeleteKpiRow = (id) => {
         if (kpiDetailsData.length <= 1) {
@@ -296,7 +288,7 @@ const KRAKPI = () => {
                 const lastIndex = newErrors.length - 1;
                 newErrors[lastIndex] = {
                     kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
-                    kpiDescription: !lastRow.kpiDescription ? 'KPI Desc is required' : '',
+                    kpiDescription: !lastRow.kpiDescription ? 'KPI Description is required' : '',
                 };
                 setGoalsDetailsErrors(newErrors);
                 showToast('warning', 'Please fill current row before adding new');
@@ -322,17 +314,31 @@ const KRAKPI = () => {
     };
 
     const handleAddRow1 = () => {
+        if (detailsTableData.length === 0) {
+            // Generate temporary ID for first row
+            const newId = -1;
+            
+            setDetailsTableData([
+                { id: newId, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
+            ]);
+            
+            setDetailsTableErrors([
+                { kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
+            ]);
+            return;
+        }
+
         const lastRow = detailsTableData[detailsTableData.length - 1];
 
         // Validate last row before adding new one
-        if (!lastRow.kpiId || !lastRow.kpiKraDescription || !lastRow.kraDescription || !lastRow.kraId) {
-            const newErrors = [...goalsDetailsErrors];
+        if (!lastRow.kraId || !lastRow.kraDescription || !lastRow.kpiId || !lastRow.kpiKraDescription) {
+            const newErrors = [...detailsTableErrors];
             const lastIndex = newErrors.length - 1;
             newErrors[lastIndex] = {
-                kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
-                kpiDescription: !lastRow.kpiKraDescription ? 'KPI Desc is required' : '',
+                kraId: !lastRow.kraId ? 'KRA Id is required' : '',
                 kraDescription: !lastRow.kraDescription ? 'KRA Description is required' : '',
-                kraId: !lastRow.kraId ? 'KRA Id is required' : ''
+                kpiId: !lastRow.kpiId ? 'KPI Id is required' : '',
+                kpiKraDescription: !lastRow.kpiKraDescription ? 'KPI Description is required' : ''
             };
             setDetailsTableErrors(newErrors);
             showToast('warning', 'Please fill current row before adding new');
@@ -392,8 +398,7 @@ const KRAKPI = () => {
 
         const newData = [...detailsTableData];
         newData[index] = { ...newData[index], [field]: value };
-        setDetailsTableData(newData); // << This instead of setkpiDetailsData
-        setkpiDetailsData(newData);
+        setDetailsTableData(newData);
 
         if (value) {
             const newErrors = [...detailsTableErrors];

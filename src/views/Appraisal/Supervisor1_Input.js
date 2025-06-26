@@ -73,7 +73,7 @@ const Supervisor1_Input = () => {
   });
 
   const [appraiseeDetailsData, setAppraiseeDetailsData] = useState([
-    { id: -1, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+    { id: Date.now(), area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
   ]);
 
   const [appraiseeDetailsErrors, setAppraiseeDetailsErrors] = useState([
@@ -202,7 +202,7 @@ const Supervisor1_Input = () => {
         const details = appraisee.appraiseeDetailsVO || [];
         setAppraiseeDetailsData(
           details.map(detail => ({
-            id: detail.id,
+            id: detail.id || Date.now() + Math.random(),
             area: detail.area,
             keyPerformanceIndicator: detail.keyPerformanceIndicator,
             goals: detail.goals,
@@ -225,6 +225,29 @@ const Supervisor1_Input = () => {
     }
   };
 
+  const validateAppraiseeDetails = () => {
+    let isValid = true;
+    const newErrors = [];
+
+    appraiseeDetailsData.forEach((row) => {
+      const errors = {};
+      
+      if (!row.area) {
+        errors.area = 'Area is required';
+        isValid = false;
+      }
+      if (!row.goals) {
+        errors.goals = 'Goals are required';
+        isValid = false;
+      }
+
+      newErrors.push(errors);
+    });
+
+    setAppraiseeDetailsErrors(newErrors);
+    return isValid;
+  };
+
   const handleSave = async () => {
     // Validate main form fields
     const errors = {};
@@ -233,10 +256,22 @@ const Supervisor1_Input = () => {
     if (!formData.department) errors.department = 'Department is required';
     if (!formData.designation) errors.designation = 'Designation is required';
 
+    // Set field errors
+    setFieldErrors(errors);
+    
+    // Validate appraisee details
+    const isDetailsValid = validateAppraiseeDetails();
+    
+    if (Object.keys(errors).length > 0 || !isDetailsValid) {
+      showToast('error', 'Please fill all required fields');
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
 
     const appraiseeDetailsVo = appraiseeDetailsData.map(row => ({
-      ...(editId && { id: editId }),
+      ...(editId && { id: row.id }),
       area: row.area,
       keyPerformanceIndicator: row.keyPerformanceIndicator,
       goals: row.goals,
@@ -303,7 +338,7 @@ const Supervisor1_Input = () => {
     });
 
     setAppraiseeDetailsData([
-      { id: -1, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+      { id: Date.now(), area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
     ]);
 
     setAppraiseeDetailsErrors([
@@ -313,19 +348,40 @@ const Supervisor1_Input = () => {
     setEditId('');
   };
 
+  const handleAddRow = () => {
+    const newId = Date.now();
+    setAppraiseeDetailsData(prev => [
+      ...prev, 
+      { id: newId, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+    ]);
+    setAppraiseeDetailsErrors(prev => [
+      ...prev, 
+      { area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+    ]);
+  };
+
   const handleDeleteRow = (id) => {
     if (appraiseeDetailsData.length <= 1) {
-      showToast('warning', 'At least one detail is required');
+      // Replace the last row with a new empty row
+      const newId = Date.now();
+      setAppraiseeDetailsData([
+        { id: newId, area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+      ]);
+      setAppraiseeDetailsErrors([
+        { area: '', keyPerformanceIndicator: '', goals: '', reMarks: '' }
+      ]);
       return;
     }
 
     const index = appraiseeDetailsData.findIndex(d => d.id === id);
     if (index === -1) return;
 
-    const newData = appraiseeDetailsData.filter(d => d.id !== id);
-    const newErrors = appraiseeDetailsErrors.filter((_, i) => i !== index);
-
+    const newData = [...appraiseeDetailsData];
+    newData.splice(index, 1);
     setAppraiseeDetailsData(newData);
+
+    const newErrors = [...appraiseeDetailsErrors];
+    newErrors.splice(index, 1);
     setAppraiseeDetailsErrors(newErrors);
   };
 
@@ -339,7 +395,7 @@ const Supervisor1_Input = () => {
     setAppraiseeDetailsData(newData);
 
     // Clear error for this field
-    if (value) {
+    if (value && appraiseeDetailsErrors[index][field]) {
       const newErrors = [...appraiseeDetailsErrors];
       newErrors[index] = { ...newErrors[index], [field]: '' };
       setAppraiseeDetailsErrors(newErrors);
@@ -354,6 +410,9 @@ const Supervisor1_Input = () => {
       const response = await apiCalls('get', `/goalsController/getAppraiseeFillGrid?orgId=${orgId}&employeeCode=${formData.code}`);
       if (response.status) {
         setFillGridData(response.paramObjectsMap.appraiseeFillGrid || []);
+        // Reset selection when opening modal
+        setSelectedRows([]);
+        setSelectAll(false);
         setModalOpen(true);
       } else {
         showToast('warning', response.message || 'No data available');
@@ -377,7 +436,6 @@ const Supervisor1_Input = () => {
     setSelectAll(!selectAll);
   };
 
-  // FIX: Added handler for remarks input in modal
   const handleFillGridRemarkChange = (index, value) => {
     setFillGridData(prevData => {
       const newData = [...prevData];
@@ -389,29 +447,40 @@ const Supervisor1_Input = () => {
   const handleSubmitSelectedRows = () => {
     const selectedData = selectedRows.map((index) => fillGridData[index]);
 
-    const newData = selectedData
-      .filter((data) => {
-        return !appraiseeDetailsData.some(
-          (item) => item.area === data.area && item.goals === data.goals
-        );
-      })
-      .map((data) => ({
-        id: Date.now() + Math.random(),
-        area: data.area || '',
-        keyPerformanceIndicator: data.keyPerformanceIndicator || '',
-        goals: data.goals || '',
-        reMarks: data.reMarks || ''
-      }));
+    // Create a Set of existing area+goals combinations for faster lookup
+    const existingCombinations = new Set(
+      appraiseeDetailsData.map(item => `${item.area}|${item.goals}`)
+    );
 
-    if (newData.length < selectedData.length) {
-      showToast('warning', 'Some of the selected items are already added!');
-    }
+    const newData = [];
+    
+    selectedData.forEach((data) => {
+      const combinationKey = `${data.area}|${data.goals}`;
+      
+      // Only add if not already in the list
+      if (!existingCombinations.has(combinationKey)) {
+        newData.push({
+          id: Date.now() + Math.random(),
+          area: data.area || '',
+          keyPerformanceIndicator: data.keyPerformanceIndicator || '',
+          goals: data.goals || '',
+          reMarks: data.reMarks || ''
+        });
+        existingCombinations.add(combinationKey); // Prevent duplicates in this batch
+      }
+    });
 
     if (newData.length === 0) {
+      showToast('warning', 'Selected items are already added or contain no data!');
       return;
     }
 
-    setAppraiseeDetailsData((prev) => [...prev, ...newData]);
+    // Remove initial empty row if it exists and has no data
+    const filteredExistingData = appraiseeDetailsData.filter(row => 
+      !(row.area === '' && row.keyPerformanceIndicator === '' && row.goals === '' && row.reMarks === '')
+    );
+
+    setAppraiseeDetailsData([...filteredExistingData, ...newData]);
     setSelectedRows([]);
     setSelectAll(false);
     handleCloseModal();
@@ -499,7 +568,7 @@ const Supervisor1_Input = () => {
                 </div>
 
                 {/* designation */}
-                {/* <div className="col-md-3 mb-3">
+                <div className="col-md-3 mb-3">
                   <TextField
                     label="Designation"
                     variant="outlined"
@@ -512,7 +581,7 @@ const Supervisor1_Input = () => {
                     helperText={fieldErrors.designation}
                     disabled
                   />
-                </div> */}
+                </div>
 
                 {/* reportingHeadCode */}
                 <div className="col-md-3 mb-3">
@@ -547,7 +616,7 @@ const Supervisor1_Input = () => {
                 </div>
 
                 {/* reportingHeadDesignation */}
-                {/* <div className="col-md-3 mb-3">
+                <div className="col-md-3 mb-3">
                   <TextField
                     label="Reporting Head Designation"
                     variant="outlined"
@@ -560,7 +629,7 @@ const Supervisor1_Input = () => {
                     helperText={fieldErrors.reportingHeadDesignation}
                     disabled
                   />
-                </div> */}
+                </div>
               </div>
 
               <div className="row mt-2">
@@ -579,6 +648,7 @@ const Supervisor1_Input = () => {
                   {value === 0 && (
                     <>
                       <div className="mb-1">
+                        {/* <ActionButton title="Add Row" icon={AddIcon} onClick={handleAddRow} /> */}
                         <ActionButton title="Fill Grid" icon={GridOnIcon} onClick={handleFullGrid} />
                       </div>
                       <div className="row mt-2">
@@ -633,6 +703,7 @@ const Supervisor1_Input = () => {
                                         }
                                         error={!!appraiseeDetailsErrors[index]?.area}
                                         helperText={appraiseeDetailsErrors[index]?.area}
+                                        required
                                       />
                                     </td>
                                     <td>
@@ -657,6 +728,7 @@ const Supervisor1_Input = () => {
                                         }
                                         error={!!appraiseeDetailsErrors[index]?.goals}
                                         helperText={appraiseeDetailsErrors[index]?.goals}
+                                        required
                                       />
                                     </td>
                                     <td>
@@ -732,16 +804,7 @@ const Supervisor1_Input = () => {
                                   <td className="border px-2 py-2 disable">{row.area || ''}</td>
                                   <td className="border px-2 py-2">{row.keyPerformanceIndicator || ''}</td>
                                   <td className="border px-2 py-2">{row.goals || ''}</td>
-                                  <td className="border px-2 py-2">
-                                    {/* FIXED: Added proper handler for remarks input */}
-                                    <input
-                                      type="text"
-                                      value={row.reMarks || ''}
-                                      onChange={(e) =>
-                                        handleFillGridRemarkChange(index, e.target.value)
-                                      }
-                                    />
-                                  </td>
+                                  <td className="border px-2 py-2">{row.reMarks || ''}</td>
                                 </tr>
                               ))}
                             </tbody>
@@ -784,5 +847,4 @@ const Supervisor1_Input = () => {
     </>
   );
 };
-
 export default Supervisor1_Input;

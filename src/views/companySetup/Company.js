@@ -41,7 +41,7 @@ import apiCalls from 'apicall';
 import dayjs from 'dayjs';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import LocationPicker from 'views/basicMaster/LocationPicker';
+// import LocationPicker from 'views/basicMaster/LocationPicker';
 
 const Company = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
