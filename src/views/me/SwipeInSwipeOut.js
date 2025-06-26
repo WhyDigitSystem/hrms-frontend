@@ -262,7 +262,7 @@ const SwipeInSwipeOut = () => {
 
   const sendEmailNotification = async (row) => {
     try {
-      const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+      const baseURL = 'http://139.5.190.244:8042/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
       const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkInDate=${row.checkInDate}`;
       const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkInDate=${row.checkInDate}`;
 
@@ -366,7 +366,7 @@ const SwipeInSwipeOut = () => {
 
   const sendEmailNotificationForCheckIn = async (row) => {
     try {
-      const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
+      const baseURL = 'http://139.5.190.244:8042/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
       const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkOutDate=${row.checkInDate}`;
       const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkOutDate=${row.checkInDate}`;
 
