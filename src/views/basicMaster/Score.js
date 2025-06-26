@@ -21,14 +21,12 @@ export const Score = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    active: true,
     input: '',
-    score: ''
+    score: 0
   });
   const [editId, setEditId] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState({
-    active: true,
     input: '',
     score: ''
   });
@@ -43,8 +41,7 @@ export const Score = () => {
       accessorKey: 'score',
       header: 'score',
       size: 140
-    },
-    { accessorKey: 'active', header: 'Active', size: 140 }
+    }
   ];
   const [listViewData, setListViewData] = useState([]);
 
@@ -74,8 +71,7 @@ export const Score = () => {
           orgId: parseInt(particularCountry.orgId),
           finYear: particularCountry.finYear,
           input: particularCountry.input,
-          score: parseInt(particularCountry.score),
-          active: particularCountry.active === 'Active' ? true : false
+          score: parseInt(particularCountry.score)
         });
         setListView(false);
       } else {
@@ -87,17 +83,22 @@ export const Score = () => {
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: ''
+    }));
   };
 
   const handleClear = () => {
     setFormData({
-      active: true,
       input: '',
-      score: ''
+      score: 0
     });
     setFieldErrors({
-      active: true,
       input: '',
       score: ''
     });
@@ -117,7 +118,6 @@ export const Score = () => {
       setIsLoading(true);
       const saveFormData = {
         ...(editId && { id: editId }),
-        active: formData.active,
         input: formData.input,
         score: parseInt(formData.score),
         orgId: parseInt(orgId),
@@ -154,12 +154,6 @@ export const Score = () => {
     setListView(!listView);
   };
 
-  const handleCheckboxChange = (event) => {
-    setFormData({
-      ...formData,
-      active: event.target.checked
-    });
-  };
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -212,19 +206,19 @@ export const Score = () => {
                   fullWidth
                   multiline
                   name="score"
-                  value={formData.score}
+                  value={parseInt(formData.score) || 0}
                   onChange={handleInputChange}
                   error={!!fieldErrors.score}
                   helperText={fieldErrors.score}
                 />
               </div>
-              <div className="col-md-3 mb-3">
+              {/* <div className="col-md-3 mb-3">
                 <FormControlLabel
-                  control={<Checkbox checked={formData.active} onChange={handleCheckboxChange} />}
+                  control={<Checkbox checked={formData.active} onChange={handleCheckboxChange} name="active" />}
                   label="Active"
                   labelPlacement="end"
                 />
-              </div>
+              </div> */}
             </div>
           </>
         )}

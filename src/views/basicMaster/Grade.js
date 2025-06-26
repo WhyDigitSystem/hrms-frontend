@@ -14,14 +14,14 @@ export const Grade = () => {
   const [editId, setEditId] = useState('');
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [finYear] = useState(localStorage.getItem('finYear'));
 
   const [formData, setFormData] = useState({
     grade: '',
     score: '',
-    rangeFrom: '',
-    rangeTo: '',
-    indication: '',
-    // active: true
+    rangeFrom: 0,
+    rangeTo: 0,
+    indication: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -41,35 +41,43 @@ export const Grade = () => {
   const handleInputChange = (e) => {
     const { name, value, selectionStart, selectionEnd, type } = e.target;
 
-    setFormData({ ...formData, [name]: value });
-    setFieldErrors({ ...fieldErrors, [name]: '' });
+    // setFormData({ ...formData, [name]: value });
+    // setFieldErrors({ ...fieldErrors, [name]: '' });
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: ''
+    }));
 
     // Optional: Preserve cursor position after uppercase transformation
-    if (type === 'text' || type === 'textarea') {
-      setTimeout(() => {
-        const inputElement = document.getElementsByName(name)[0];
-        if (inputElement) {
-          inputElement.setSelectionRange(selectionStart, selectionEnd);
-        }
-      }, 0);
-    }
+    // if (type === 'text' || type === 'textarea') {
+    //   setTimeout(() => {
+    //     const inputElement = document.getElementsByName(name)[0];
+    //     if (inputElement) {
+    //       inputElement.setSelectionRange(selectionStart, selectionEnd);
+    //     }
+    //   }, 0);
+    // }
   };
 
   const handleClear = () => {
     setFormData({
       grade: '',
       score: '',
-      rangeFrom: '',
-      rangeTo: '',
-      indication: '',
-      // active: true
+      rangeFrom: 0,
+      rangeTo: 0,
+      indication: ''
     });
     setFieldErrors({
       grade: '',
       score: '',
-      rangeFrom: '',
-      rangeTo: '',
-      indication: '',
+      // rangeFrom: '',
+      // rangeTo: '',
+      indication: ''
     });
     setEditId('');
   };
@@ -97,9 +105,9 @@ export const Grade = () => {
         setFormData({
           grade: grade.grade,
           score: grade.score,
-          rangeFrom: grade.rangeFrom,
-          rangeTo: grade.rangeTo,
-          indication: grade.indications,
+          rangeFrom: parseInt(grade.rangeFrom),
+          rangeTo: parseInt(grade.rangeTo),
+          indication: grade.indications
           // active: grade.active === 'Active' ? true : false
         });
       }
@@ -113,8 +121,8 @@ export const Grade = () => {
     const errors = {};
     if (!formData.grade) errors.grade = 'Grade is required';
     if (!formData.score) errors.score = 'Score is required';
-    if (!formData.rangeFrom) errors.rangeFrom = 'Range From is required';
-    if (!formData.rangeTo) errors.rangeTo = 'Range To is required';
+    // if (!formData.rangeFrom) errors.rangeFrom = 'Range From is required';
+    // if (!formData.rangeTo) errors.rangeTo = 'Range To is required';
     if (!formData.indication) errors.indication = 'Indication is required';
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
@@ -127,12 +135,12 @@ export const Grade = () => {
       ...(editId && { id: editId }),
       active: formData.active,
       createdBy: loginUserName,
-      finYear: formData.finYear,
       grade: formData.grade,
       indications: formData.indication,
       orgId: parseInt(orgId),
-      rangeFrom: formData.rangeFrom,
-      rangeTo: formData.rangeTo,
+      finYear: finYear,
+      rangeFrom: parseInt(formData.rangeFrom),
+      rangeTo: parseInt(formData.rangeTo),
       score: formData.score
     };
 
@@ -173,7 +181,6 @@ export const Grade = () => {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
-
           </div>
         </div>
         {listView ? (
@@ -222,7 +229,7 @@ export const Grade = () => {
                   size="small"
                   fullWidth
                   name="rangeFrom"
-                  value={formData.rangeFrom}
+                  value={parseInt(formData.rangeFrom) || 0}
                   onChange={handleInputChange}
                   error={!!fieldErrors.rangeFrom}
                   helperText={fieldErrors.rangeFrom}
@@ -235,7 +242,7 @@ export const Grade = () => {
                   size="small"
                   fullWidth
                   name="rangeTo"
-                  value={formData.rangeTo}
+                  value={parseInt(formData.rangeTo) || 0}
                   onChange={handleInputChange}
                   error={!!fieldErrors.rangeTo}
                   helperText={fieldErrors.rangeTo}

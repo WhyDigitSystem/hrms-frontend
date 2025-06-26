@@ -1,522 +1,453 @@
-import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
-import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
-
 import SaveIcon from '@mui/icons-material/Save';
-import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControl, FormControlLabel, FormHelperText, InputLabel, MenuItem, Select, TextField } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import ActionButton from 'utils/ActionButton';
-import ToastComponent, { showToast } from 'utils/toast-component';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import { useForm } from 'react-hook-form';
+import { showToast } from 'utils/toast-component';
+import { ToastContainer } from 'react-toastify';
 import apiCalls from 'apicall';
-
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
+import Paper from '@mui/material/Paper';
+import CircularProgress from '@mui/material/CircularProgress';
+import FileOpenIcon from '@mui/icons-material/FileOpen';
+import Slide from '@mui/material/Slide';
+import * as React from 'react';
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return (
+    <Slide
+      direction="down"
+      ref={ref}
+      {...props}
+      timeout={{
+        appear: 1000,
+        enter: 1000,
+        exit: 1000
+      }}
+    />
+  );
+});
 const HR_Review = () => {
-    const [listViewData, setListViewData] = useState([]);
-    const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
-    const [createdBy] = useState(localStorage.getItem('userName'));
-    const [value, setValue] = useState(0);
-    const [editId, setEditId] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [listView, setListView] = useState(false);
-    const [isFetchingEmployee, setIsFetchingEmployee] = useState(false);
+  // const paginationModel = { page: 0, pageSize: 5 };
+  const Engagement = [{ value: 'Yes' }, { value: 'No' }];
+  const Status = [{ value: 'Promoted' }, { value: 'Not Promoted' }];
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [open, setOpen] = useState(true);
+  const [listView, setListView] = useState(true);
+  const [editId, setEditId] = useState(null);
+  const [listViewData, setListViewData] = useState([]);
+  const [allEmployees, setAllEmployees] = useState([]);
+  const orgId = localStorage.getItem('orgId');
+  const finYear = localStorage.getItem('finYear');
+  const createdBy = localStorage.getItem('userName');
 
-    const [formData, setFormData] = useState({
-        appraisalId: '',
-        code: localStorage.getItem('employeeCode') || '',
-        name: '',
-        supervisorCode: '',
-        supervisorName: '',
-        finYear: '',
-        // active: true
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    trigger,
+    formState: { errors }
+  } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      code: '',
+      name: '',
+      promotion: '',
+      increment: '',
+      score: 0,
+      engagement: '',
+      status: '',
+      hrRemarks: ''
+    }
+  });
+
+  const handleClear = () => {
+    setEditId(null);
+    setSelectedRow(null);
+    reset({
+      code: watch('code'),
+      name: watch('name'),
+      promotion: '',
+      increment: '',
+      score: 0,
+      engagement: '',
+      status: '',
+      hrRemarks: ''
     });
+  };
 
-    const [fieldErrors, setFieldErrors] = useState({
-        appraisalId: '',
-        code: '',
-        name: '',
-        supervisorCode: '',
-        supervisorName: ''
-    });
+  const handleListView = () => {
+    setListView(!listView);
+  };
 
-    const [goalsDetailsData, setGoalsDetailsData] = useState([
-        { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+  useEffect(() => {
+    getAllData();
+    getAllEmployees();
+  }, []);
 
-    const [goalsDetailsErrors, setGoalsDetailsErrors] = useState([
-        { area: '', keyPerformanceIndicator: '', goals: '' }
-    ]);
+  const getAllEmployees = async () => {
+    setIsLoading(true);
+    try {
+      const response = await apiCalls('get', `/employeemaster/getAllEmployeeByActive?orgId=${orgId}`);
+      if (response.status === true) {
+        setAllEmployees(response.paramObjectsMap.employeeVO);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setIsLoading(false);
+    }
+  };
 
-    const [countryList, setCountryList] = useState([]);
+  const getAllData = async () => {
+    try {
+      const res = await apiCalls('get', `/goalsController/getHrReviewByOrgId?orgId=${orgId}`);
+      setListViewData(res.paramObjectsMap.hrReviewVO.reverse());
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
-    const listViewColumns = [
-        { accessorKey: 'appraisalId', header: 'Appraisal ID', size: 140 },
-        { accessorKey: 'code', header: 'Code', size: 140 },
-        { accessorKey: 'name', header: 'Name', size: 140 },
-        { accessorKey: 'supervisorCode', header: 'Supv Code', size: 140 },
-        { accessorKey: 'supervisorName', header: 'Supv Name', size: 140 },
-        // { accessorKey: 'active', header: 'Active', size: 140 }
-    ];
-
-
-    useEffect(() => {
-        const fetchInitialData = async () => {
-            await getAllGoals();
-            if (formData.code) {
-                await fetchEmployeeDetails(formData.code);
-            }
-        };
-        fetchInitialData();
-    }, []);
-
-    const getAllGoals = async () => {
-        try {
-            const response = await apiCalls('get', `/goalsController/getSelfGoalsByOrgId?orgId=${orgId}`);
-            if (response.status) {
-                setListViewData(response.paramObjectsMap.selfGoalsVO);
-            } else {
-                showToast('error', response.message || 'Failed to fetch goals');
-            }
-        } catch (error) {
-            console.error('Error fetching goals:', error);
-            showToast('error', 'Failed to fetch goals');
-        }
-    };
-
-    const fetchEmployeeDetails = async (employeeCode) => {
-        if (!employeeCode || !orgId) return;
-
-        setIsFetchingEmployee(true);
-        try {
-            const response = await apiCalls('get', `goalsController/getEmployeeDetails?employeeCode=${employeeCode}&orgId=${orgId}`);
-            console.log('Employee details response:', response); // Debug log
-
-            if (response?.status) {
-                // Try different response structures
-                const employeeData = response.paramObjectsMap?.employeeVO?.[0] ||
-                    response.paramObjectsMap?.employeeDetails ||
-                    response.data;
-
-                if (employeeData) {
-                    setFormData(prev => ({
-                        ...prev,
-                        name: employeeData.empName || employeeData.name || '',
-                        supervisorCode: employeeData.reportingPersonCode || employeeData.supervisorCode || '',
-                        supervisorName: employeeData.reportingPerson || employeeData.supervisorName || ''
-                    }));
-
-                    setFieldErrors(prev => ({
-                        ...prev,
-                        name: '',
-                        supervisorCode: '',
-                        supervisorName: ''
-                    }));
-
-                    // showToast('success', `Employee details loaded`);
-                } else {
-                    // showToast('warning', 'Employee details not found in response');
-                }
-            } else {
-                showToast('error', response.message || 'Failed to fetch employee details');
-            }
-        } catch (error) {
-            console.error('Error fetching employee details:', error);
-            showToast('error', 'Failed to fetch employee details');
-        } finally {
-            setIsFetchingEmployee(false);
-        }
-    };
-
-    const handleInputChange = (e) => {
-        const { name, value, checked, type } = e.target;
-        const updatedValue = type === 'checkbox' ? checked : value;
-
-        setFormData(prev => ({
-            ...prev,
-            [name]: updatedValue
-        }));
-
-        setFieldErrors(prev => ({
-            ...prev,
-            [name]: ''
-        }));
-
-        // Fetch employee details when code changes
-        if (name === 'code' && value.length > 3) {
-            fetchEmployeeDetails(value);
-        }
-    };
-
-    useEffect(() => {
-        getAllGoals();
-        // Set default employee code on component mount
-        const defaultEmployeeCode = localStorage.getItem('employeeCode') || '';
-        if (defaultEmployeeCode) {
-            setFormData(prev => ({
-                ...prev,
-                code: defaultEmployeeCode
-            }));
-            fetchEmployeeDetails(defaultEmployeeCode);
-        }
-    }, []);
-
-    const getGoalsById = async (row) => {
-        setEditId(row.original.id);
-        try {
-            const response = await apiCalls('get', `/goalsController/getSelfGoalsById?id=${row.original.id}`);
-            if (response.status) {
-                setListView(false);
-                const goal = response.paramObjectsMap.selfGoalsVO;
-                setFormData({
-                    appraisalId: goal.appraisalId,
-                    code: goal.code,
-                    name: goal.name,
-                    supervisorCode: goal.supervisorCode,
-                    supervisorName: goal.supervisorName,
-                    // active: goal.active === true
-                });
-
-                // Preserve actual database IDs
-                setGoalsDetailsData(
-                    goal.selfGoalsDetailsVO.map(detail => ({
-                        id: detail.id,
-                        area: detail.area,
-                        keyPerformanceIndicator: detail.keyPerformanceIndicator,
-                        goals: detail.goals,
-                    }))
-                );
-            }
-        } catch (error) {
-            console.error('Error fetching goal details:', error);
-            showToast('error', 'Failed to fetch goal details');
-        }
-    };
-
-    const handleSave = async () => {
-        // Validate main form fields
-        const errors = {};
-        if (!formData.appraisalId) errors.appraisalId = 'Appraisal ID is required';
-        if (!formData.code) errors.code = 'Code is required';
-        if (!formData.name) errors.name = 'Name is required';
-
-        // Validate details
-        const detailsErrors = goalsDetailsData.map(detail => {
-            const error = {};
-            if (!detail.area) error.area = 'Area is required';
-            if (!detail.keyPerformanceIndicator) error.keyPerformanceIndicator = 'KPI is required';
-            if (!detail.goals) error.goals = 'Goals is required';
-            return error;
+  const rowEditgetbyid = async (row) => {
+    setEditId(row.original.id);
+    setListView(true);
+    handleCloseDialog();
+    try {
+      const results = await apiCalls('get', `/goalsController/getHrReviewById?id=${row.original.id}`);
+      if (results.status === true) {
+        const item = results.paramObjectsMap.hrReviewVO;
+        reset({
+          code: item.code || '',
+          name: item.name || '',
+          promotion: item.elgibilityOfPromption || '',
+          increment: item.elgibilityOfIncrement || '',
+          score: parseInt(item.score || 0),
+          engagement: item.adheranceOfEmployeeEngagement || '',
+          status: item.promotionStatus || '',
+          hrRemarks: item.remrks || ''
         });
+      } else {
+        showToast('error', results.paramObjectsMap?.errorMessage || 'Error fetching details');
+      }
+    } catch (error) {
+      showToast('error', 'Error fetching details');
+    }
+  };
 
-        if (Object.keys(errors).length > 0) {
-            setFieldErrors(errors);
-            setGoalsDetailsErrors(detailsErrors);
-            showToast('error', 'Please fill all required fields');
-            return;
-        }
-
-        setIsLoading(true);
-
-        // Prepare details payload with IDs
-        const selfGoalsDetailsVo = goalsDetailsData.map(row => ({
-            // ...(editId && { id: editId }),
-            ...(row.id && { id: row.id }),
-            // id: row.id,
-            area: row.area,
-            keyPerformanceIndicator: row.keyPerformanceIndicator,
-            goals: row.goals
-        }));
-
-        const payload = {
-            ...(editId && { id: editId }),
-            // active: formData.active,
-            appraisalId: formData.appraisalId,
-            code: formData.code,
-            name: formData.name,
-            finYear: formData.finYear,
-            supervisorCode: formData.supervisorCode,
-            supervisorName: formData.supervisorName,
-            orgId,
-            createdBy,
-            selfGoalsDetailsDTO: selfGoalsDetailsVo,
-        };
-
-        try {
-            const response = await apiCalls('put', '/goalsController/createUpdateSelfGoals', payload);
-            if (response.status) {
-                showToast('success', editId ? 'Self Goal updated successfully' : 'Self Goal created successfully');
-                handleClear();
-                getAllGoals();
-            } else {
-                showToast('error', response.message || 'Operation failed');
-            }
-        } catch (error) {
-            console.error('Error saving goal:', error);
-            showToast('error', 'Failed to save goal');
-        } finally {
-            setIsLoading(false);
-        }
+  const onSubmit = async (data, e) => {
+    e.preventDefault();
+    const sendData = {
+      ...(editId && { id: editId }),
+      code: data.code,
+      name: data.name,
+      elgibilityOfPromption: data.promotion,
+      elgibilityOfIncrement: data.increment,
+      score: parseInt(data.score),
+      adheranceOfEmployeeEngagement: data.engagement,
+      promotionStatus: data.status,
+      remrks: data.hrRemarks,
+      orgId: parseInt(orgId),
+      finYear: finYear,
+      createdBy: createdBy
     };
+    try {
+      const result = await apiCalls('put', 'goalsController/createUpdateHrReview', sendData);
+      if (result.status) {
+        showToast('success', editId ? 'Updated Successfully' : 'Created Successfully');
+        getAllData();
+        handleClear();
+      } else {
+        showToast('error', result.paramObjectsMap?.errorMessage || 'Creation failed');
+      }
+    } catch (error) {
+      showToast('error', 'API call failed');
+    }
+  };
 
-    const handleClear = () => {
-        setFormData({
-            appraisalId: '',
-            code: localStorage.getItem('employeeCode') || '',
-            name: '',
-            supervisorCode: '',
-            supervisorName: '',
-            // active: true
-        });
+  const listViewColumns = [
+    { accessorKey: 'code', header: 'Code', size: 140 },
+    { accessorKey: 'name', header: 'Name', size: 140 },
+    { accessorKey: 'score', header: 'Score', size: 140 }
+  ];
 
-        setFieldErrors({
-            appraisalId: '',
-            code: '',
-            name: '',
-            supervisorCode: '',
-            supervisorName: ''
-        });
+  const columns = [
+    { field: 'employeeCode', headerName: 'Employee Code', width: 130 },
+    { field: 'employeeName', headerName: 'Employee Name', width: 130 }
+  ];
 
-        setGoalsDetailsData([
-            { id: null, area: '', keyPerformanceIndicator: '', goals: '' }
-        ]);
+  const handleEmployeeSelect = () => {
+    if (!selectedRow) {
+      showToast('error', 'Please select an employee');
+      return;
+    }
+    setValue('code', selectedRow.employeeCode || '');
+    setValue('name', selectedRow.employeeName || '');
+    trigger(['code', 'name']);
+    handleCloseDialog();
+  };
 
-        setGoalsDetailsErrors([
-            { area: '', keyPerformanceIndicator: '', goals: '' }
-        ]);
+  const handleCloseDialog = () => {
+    setOpen(false);
+  };
 
-        setEditId('');
-
-        // Fetch employee details again if code exists
-        if (formData.code) {
-            fetchEmployeeDetails(formData.code);
-        }
-    };
-
-    const handleAddRow = () => {
-        const lastRow = goalsDetailsData[goalsDetailsData.length - 1];
-
-        if (!lastRow.area || !lastRow.keyPerformanceIndicator || !lastRow.goals) {
-            const newErrors = [...goalsDetailsErrors];
-            const lastIndex = newErrors.length - 1;
-            newErrors[lastIndex] = {
-                area: !lastRow.area ? 'Area is required' : '',
-                keyPerformanceIndicator: !lastRow.keyPerformanceIndicator ? 'KPI is required' : '',
-                goals: !lastRow.goals ? 'Goals is required' : ''
-            };
-            setGoalsDetailsErrors(newErrors);
-            showToast('warning', 'Please fill current row before adding new');
-            return;
-        }
-
-        const newId = goalsDetailsData.length > 0
-            ? Math.min(...goalsDetailsData.map(d => d.id)) - 1
-            : -1;
-
-        setGoalsDetailsData(prev => [
-            ...prev,
-            { id: newId, area: '', keyPerformanceIndicator: '', goals: '' }
-        ]);
-
-        setGoalsDetailsErrors(prev => [
-            ...prev,
-            { area: '', keyPerformanceIndicator: '', goals: '' }
-        ]);
-    };
-
-    const handleDeleteRow = (id) => {
-        if (goalsDetailsData.length <= 1) {
-            showToast('warning', 'At least one goal detail is required');
-            return;
-        }
-
-        const index = goalsDetailsData.findIndex(d => d.id === id);
-        if (index === -1) return;
-
-        const newData = goalsDetailsData.filter(d => d.id !== id);
-        const newErrors = goalsDetailsErrors.filter((_, i) => i !== index);
-
-        setGoalsDetailsData(newData);
-        setGoalsDetailsErrors(newErrors);
-    };
-
-    const handleDetailChange = (id, field, value) => {
-        const index = goalsDetailsData.findIndex(d => d.id === id);
-        if (index === -1) return;
-
-        const newData = [...goalsDetailsData];
-        newData[index] = { ...newData[index], [field]: value };
-        setGoalsDetailsData(newData);
-
-        if (value) {
-            const newErrors = [...goalsDetailsErrors];
-            newErrors[index] = { ...newErrors[index], [field]: '' };
-            setGoalsDetailsErrors(newErrors);
-        }
-    };
-
-    const handleView = () => setListView(!listView);
-    const handleTabChange = (_, newValue) => setValue(newValue);
-
-    return (
-        <>
-            <div>
-                <ToastComponent />
+  return (
+    <>
+      <ToastContainer />
+      {(!open || !listView) && (
+        <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px' }}>
+          <div className="row d-flex ml">
+            <div className="d-flex flex-wrap justify-content-start mb-4" style={{ marginBottom: '20px' }}>
+              <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleListView} />
+              <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
+              <ActionButton title="Save" icon={SaveIcon} onClick={handleSubmit(onSubmit)} />
             </div>
-            <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px' }}>
+            {listView ? (
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="row d-flex ml">
-                    <div className="d-flex flex-wrap justify-content-start mb-4" style={{ marginBottom: '20px' }}>
-                        <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
-                        <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-                        <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-                        <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} disabled={isLoading} />
+                  {/* Code */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      label={
+                        <span>
+                          Code<span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      name="code"
+                      value={watch('code') || ''}
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                      {...register('code', { required: 'Code is required' })}
+                      error={!!errors.code}
+                      helperText={errors.code?.message}
+                    />
+                  </div>
+
+                  {/* Name */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      label={
+                        <span>
+                          Name<span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      name="name"
+                      value={watch('name') || ''}
+                      InputProps={{ readOnly: true }}
+                      fullWidth
+                      {...register('name', { required: 'Name is required' })}
+                      error={!!errors.name}
+                      helperText={errors.name?.message}
+                    />
+                  </div>
+                  {!editId && (
+                    <div className="col-md-3 mb-3">
+                      <ActionButton title="Open Employee List" icon={FileOpenIcon} onClick={() => setOpen(true)} />
                     </div>
-
-                    {!listView ? (
-                        <>
-                            <div className="row d-flex ml">
-
-                                {/* Code */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Code"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="code"
-                                        value={formData.code}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.code}
-                                        helperText={fieldErrors.code}
-                                        disabled
-
-                                    />
-                                </div>
-
-                                {/* Name */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Name"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.name}
-                                        helperText={fieldErrors.name}
-                                        disabled
-                                    />
-                                </div>
-                            </div>
-                            {/* Supervisor 1 Feedback */}
-                            <div className="row d-flex ml">
-                                <div className='mt-0 pb-3 fw-bold'>Supervisor 1 Feedback</div>
-                                {/* Eligibility for Promption */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Eligibility for Promption"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="appraisalId"
-                                        value={formData.appraisalId}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.appraisalId}
-                                        helperText={fieldErrors.appraisalId}
-                                    />
-                                </div>
-
-                                {/* Eligibility for Increment */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Eligibility for Increment"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="appraisalId"
-                                        value={formData.appraisalId}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.appraisalId}
-                                        helperText={fieldErrors.appraisalId}
-                                    />
-                                </div>
-                                {/* Score */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="Score"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="appraisalId"
-                                        value={formData.appraisalId}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.appraisalId}
-                                        helperText={fieldErrors.appraisalId}
-                                    />
-                                </div>
-
-                                {/* Adherance to Employee Engagement Plan */}
-                                <div className="col-md-3 mb-3">
-                                    <FormControl variant="outlined" size="small" fullWidth error={!!fieldErrors.country}>
-                                        <InputLabel id="country-label">Adherance to Employee Engagement Plan</InputLabel>
-                                        <Select labelId="country-label" label="Adherance to Employee Engagement Plan" value={formData.country} onChange={handleInputChange} name="country">
-                                            {countryList?.map((row) => (
-                                                <MenuItem key={row.id} value={row.countryName}>
-                                                    {row.countryName}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                        {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
-                                    </FormControl>
-                                </div>
-
-                                {/* Promation Status */}
-                                <div className="col-md-3 mb-3">
-                                    <FormControl variant="outlined" size="small" fullWidth error={!!fieldErrors.country}>
-                                        <InputLabel id="country-label">Promation Status</InputLabel>
-                                        <Select labelId="country-label" label="Promation Status" value={formData.country} onChange={handleInputChange} name="country">
-                                            {countryList?.map((row) => (
-                                                <MenuItem key={row.id} value={row.countryName}>
-                                                    {row.countryName}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                        {fieldErrors.country && <FormHelperText>{fieldErrors.country}</FormHelperText>}
-                                    </FormControl>
-                                </div>
-
-
-                                {/* HR Remarks */}
-                                <div className="col-md-3 mb-3">
-                                    <TextField
-                                        label="HR Remarks"
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        name="hrRemarks"
-                                        value={formData.hrRemarks}
-                                        onChange={handleInputChange}
-                                        error={!!fieldErrors.hrRemarks}
-                                        helperText={fieldErrors.hrRemarks}
-                                        multiline
-                                        rows={3}
-                                    />
-                                </div>
-                            </div>
-                        </>
-                    ) : (
-                        <CommonListViewTable
-                            data={listViewData}
-                            columns={listViewColumns}
-                            enableEditing={true}
-                            toEdit={getGoalsById}
-                        />
-                    )}
+                  )}
                 </div>
-            </div>
-        </>
-    );
-};
 
+                <div className="row d-flex ml mt-3">
+                  <div className="mt-0 pb-3 fw-bold">Supervisor 1 Feedback</div>
+
+                  {/* Promotion */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      label={
+                        <span>
+                          Eligibility for Promotion <span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      name="promotion"
+                      value={watch('promotion') || ''}
+                      fullWidth
+                      {...register('promotion', { required: 'Eligibility for Promotion is required' })}
+                      error={!!errors.promotion}
+                      helperText={errors.promotion?.message}
+                    />
+                  </div>
+                  {/* Increment */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      // label="Eligibility for Increment"
+                      label={
+                        <span>
+                          Eligibility for Increment <span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      name="increment"
+                      value={watch('increment') || ''}
+                      fullWidth
+                      {...register('increment', { required: 'Eligibility for Increment is required' })}
+                      error={!!errors.increment}
+                      helperText={errors.increment?.message}
+                    />
+                  </div>
+                  {/* Score */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      // label="Score"
+                      label={
+                        <span>
+                          Score <span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      variant="outlined"
+                      size="small"
+                      name="score"
+                      value={watch('score') ?? 0}
+                      fullWidth
+                      {...register('score', {
+                        required: 'Score is required',
+                        pattern: {
+                          value: /^[0-9]*$/,
+                          message: 'Only allowed numbers'
+                        }
+                      })}
+                      error={!!errors.score}
+                      helperText={errors.score?.message}
+                    />
+                  </div>
+                  {/* Engagement */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      id="outlined-basic"
+                      // label="Adherance to Employee Engagement Plan"
+                      label={
+                        <span>
+                          Adherance to Employee Engagement Plan <span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      select
+                      size="small"
+                      fullWidth
+                      variant="outlined"
+                      name="engagement"
+                      value={watch('engagement') || ''}
+                      {...register('engagement', { required: 'Adherance to Employee Engagement Plan is required' })}
+                      onChange={(e) => {
+                        setValue('engagement', e.target.value);
+                        trigger('engagement');
+                      }}
+                      error={!!errors.engagement}
+                      helperText={errors.engagement?.message}
+                    >
+                      {Engagement.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.value}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </div>
+
+                  {/* Promotion Status */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      id="outlined-basic"
+                      // label="Promotion Status"
+                      label={
+                        <span>
+                          Promotion Status <span style={{ color: 'red' }}> *</span>
+                        </span>
+                      }
+                      select
+                      size="small"
+                      fullWidth
+                      variant="outlined"
+                      name="status"
+                      value={watch('status') || ''}
+                      {...register('status', { required: 'Promotion Status is required' })}
+                      onChange={(e) => {
+                        setValue('status', e.target.value);
+                        trigger('status');
+                      }}
+                      error={!!errors.status}
+                      helperText={errors.status?.message}
+                    >
+                      {Status.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.value}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </div>
+                  {/* HR Remarks */}
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      label="HR Remarks"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      multiline
+                      rows={3}
+                      name="hrRemarks"
+                      value={watch('hrRemarks') || ''}
+                      {...register('hrRemarks')}
+                    />
+                  </div>
+
+                  {/* isLoading Part */}
+                  {isLoading && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginTop: '20px',
+                        width: '100%'
+                      }}
+                    >
+                      <CircularProgress size={40} />
+                    </div>
+                  )}
+                </div>
+              </form>
+            ) : (
+              <CommonListViewTable data={listViewData} columns={listViewColumns} enableEditing={true} toEdit={rowEditgetbyid} />
+            )}
+          </div>
+        </div>
+      )}
+      {open && (
+        <Dialog open={open} onClose={handleCloseDialog} TransitionComponent={Transition} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ backgroundColor: '#f0f0f0', fontSize: '15px' }}>Select Employee</DialogTitle>
+          <DialogContent>
+            <Paper sx={{ height: 400, width: '100%' }}>
+              <DataGrid
+                rows={allEmployees}
+                columns={columns}
+                // initialState={{ pagination: { paginationModel } }}
+                // pageSizeOptions={[5, 10]}
+                hideFooter={true}
+                onRowClick={(params) => setSelectedRow(params.row)}
+                sx={{ border: 0 }}
+              />
+            </Paper>
+            <DialogActions>
+              <Button variant="contained" color="error" size="small" onClick={handleCloseDialog} autoFocus>
+                Close
+              </Button>
+
+              <Button variant="contained" size="small" onClick={handleEmployeeSelect} autoFocus>
+                Select
+              </Button>
+            </DialogActions>
+          </DialogContent>
+        </Dialog>
+      )}
+    </>
+  );
+};
 export default HR_Review;
