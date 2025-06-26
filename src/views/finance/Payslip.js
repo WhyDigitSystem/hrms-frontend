@@ -231,6 +231,8 @@ const Payslip = () => {
       setShowPayslip(false);
       return;
     }
+
+    fetchPayslipData(passedEmployeeCode); // <-- trigger data fetch manually
     setShowPayslip(true);
   };
 
