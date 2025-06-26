@@ -57,6 +57,7 @@ const SwipeInSwipeOut = () => {
   const [reportingPersonCode, setReportingPersonCode] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [employeeEmail, setEmployeeEmail] = useState('');
   const monthOptions = [
     'January',
     'February',
@@ -125,6 +126,7 @@ const SwipeInSwipeOut = () => {
         setReportingPerson(employee?.reportnigPerson || '');
         setReportingPersonCode(employee?.reportningPersonCode || '');
         setReportingPersonMail(employee?.reportnigPersonEmail || '');
+        setEmployeeEmail(employee?.email || '');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -265,6 +267,7 @@ const SwipeInSwipeOut = () => {
       const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkInDate=${row.checkInDate}`;
 
       const emailParams = {
+        date: row.checkInDate,
         checkInDate: row.checkInDate,
         name: row.notify, // ensure 'notify' is part of `selectedRow`
         from_name: empName,
@@ -307,11 +310,13 @@ const SwipeInSwipeOut = () => {
     }
 
     const payload = {
+      screenName: 'CHECKINOUTADJUSTMENT',
       branch: branch,
       date: formattedDate,
       empCode: empCode,
       empName: empName,
       entryIn: checkInTime,
+      email: employeeEmail,
       entryOut: checkOutTime,
       orgId: orgId,
       reportingPersonMail: reportingPersonMail
@@ -323,12 +328,16 @@ const SwipeInSwipeOut = () => {
       const response = await apiCalls('put', '/basicmaster/createCheckInOutAdjustment', payload);
 
       if (response.status === true) {
-        const chIOid = response.paramObjectsMap.checkInVO?.id;
-        if (chIOid) {
-          payload.id = chIOid;
-        }
-        showToast('success', 'Check-In & Check-Out time submitted successfully');
-        await sendEmailNotificationForCheckIn(payload);
+        const checkInOutVO = Array.isArray(response.paramObjectsMap.checkInOutAdjustmentVO)
+          ? response.paramObjectsMap.checkInOutAdjustmentVO[0]
+          : response.paramObjectsMap.checkInOutAdjustmentVO || {};
+
+        showToast('success', 'Check In & out time submitted successfully');
+
+        await sendEmailNotificationForCheckIn({
+          ...payload,
+          ...checkInOutVO // ✅ now contains checkInDate, id etc.
+        });
 
         const updatedData = listViewData.map((row) => (row.date === selectedRow.date ? { ...row, checkInTime, checkOutTime } : row));
 
@@ -358,13 +367,15 @@ const SwipeInSwipeOut = () => {
   const sendEmailNotificationForCheckIn = async (row) => {
     try {
       const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // 🔁 Replace with real backend URL
-      const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}`;
-      const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}`;
+      const approveLink = `${baseURL}?id=${row.id}&action=APPROVED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkOutDate=${row.checkInDate}`;
+      const rejectLink = `${baseURL}?id=${row.id}&action=REJECTED&employeeCode=${row.empCode}&actionBy=${empName}&orgId=${orgId}&notifyCode=${reportingPersonCode}&notify=${reportingPerson}&screenName=${row.screenName}&checkOutDate=${row.checkInDate}`;
 
       const emailParams = {
         name: row.empName,
+        date: row.checkInDate,
         from_name: empName,
-        entryTime: `${row.entryIn} - ${row.entryOut}`,
+        entryTime: row.entryIn,
+        exitTime: row.entryOut,
         email: row.reportingPersonMail,
         checkInOut_id: row.id,
         approve_link: approveLink,
@@ -382,7 +393,7 @@ const SwipeInSwipeOut = () => {
         return;
       }
 
-      await emailjs.send('service_d3c7xso', 'template_0pef9wb', emailParams, 'uMcVJdror6W86lK6z');
+      await emailjs.send('service_q42xewl', 'template_pzyd9ue', emailParams, 'yPqDOZm63k5U6JbRJ');
       console.log('Email Sent Successfully for', emailParams.email);
     } catch (error) {
       console.error('Email Sending Failed:', error);

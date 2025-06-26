@@ -47,6 +47,7 @@ const CheckinDetails = ({ isLoading }) => {
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
   const [locationAddress, setLocationAddress] = useState('');
+  const [employeeEmail, setEmployeeEmail] = useState('');
 
   useEffect(() => {
     const storedImage = localStorage.getItem('profileImage');
@@ -79,6 +80,7 @@ const CheckinDetails = ({ isLoading }) => {
     getCheckInOutStatus();
     getReportingPerson();
     getCompanyDetails();
+    getReportingPerson();
   }, []);
 
   const getReportingPerson = async () => {
@@ -91,6 +93,7 @@ const CheckinDetails = ({ isLoading }) => {
         setReportingPerson(employee?.reportnigPerson || '');
         setReportingPersonCode(employee?.reportningPersonCode || '');
         setReportingPersonMail(employee?.reportnigPersonEmail || '');
+        setEmployeeEmail(employee?.email || '');
       }
     } catch (error) {
       console.error('Error:', error);
@@ -126,6 +129,7 @@ const CheckinDetails = ({ isLoading }) => {
       branch,
       empcode,
       empName,
+      email: employeeEmail,
       notify: reportingPerson,
       notifyCode: reportingPersonCode,
       notifyEmail: reportingPersonMail,
@@ -162,6 +166,7 @@ const CheckinDetails = ({ isLoading }) => {
       branch,
       empcode,
       empName,
+      email: employeeEmail,
       notify: reportingPerson,
       notifyCode: reportingPersonCode,
       notifyEmail: reportingPersonMail,

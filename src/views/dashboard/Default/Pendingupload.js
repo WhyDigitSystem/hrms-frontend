@@ -152,6 +152,7 @@ const PendingApproval = ({ isLoading }) => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   // const orgId = localStorage.getItem("orgId");
   const employeeCode = localStorage.getItem('employeeCode');
+  const isProcessing = processingId !== null;
 
   useEffect(() => {
     getAllRequests();
@@ -170,7 +171,13 @@ const PendingApproval = ({ isLoading }) => {
     try {
       setLoading(true);
 
-      const [leaveResponse, permissionResponse, compoOffResponse, checkOutResponse] = await Promise.all([
+      const [
+        leaveResponse,
+        permissionResponse,
+        compoOffResponse,
+        checkOutResponse,
+        checkInOutResult
+      ] = await Promise.all([
         apiCalls(
           'get',
           `leaveprocess/getLeaveRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`
@@ -183,54 +190,82 @@ const PendingApproval = ({ isLoading }) => {
           'get',
           `leaveprocess/getCompoffRequestForDashBoard?orgId=${orgId}&reportingPersonCode=${employeeCode}&branchCode=${branchCode}`
         ),
-        apiCalls('get', `basicmaster/getRequestCheckOutByOrgId?branch=${branch}&orgId=${orgId}&reportingPersoncode=${employeeCode}`)
+        apiCalls(
+          'get',
+          `basicmaster/getRequestCheckOutByOrgId?branch=${branch}&orgId=${orgId}&reportingPersoncode=${employeeCode}`
+        ),
+        apiCalls(
+          'get',
+          `basicmaster/getRequestCheckInOutByOrgId?branch=${branch}&orgId=${orgId}&reportingPersoncode=${employeeCode}`
+        )
       ]);
 
-      // Extract leave requests
-      let leaveRequests = leaveResponse.paramObjectsMap?.leaveRequestVO || [];
-      if (!Array.isArray(leaveRequests)) {
-        leaveRequests = [leaveRequests];
-      }
+      // ===== Normalize Leave/Permission/CompoOff/Checkout Requests =====
+      const normalize = (data) =>
+        Array.isArray(data) ? data : [data].filter(Boolean);
 
-      // Extract permission requests
-      let permissionRequests = permissionResponse.paramObjectsMap?.permissionRequestVO || [];
-      if (!Array.isArray(permissionRequests)) {
-        permissionRequests = [permissionRequests];
-      }
+      const leaveRequests = normalize(leaveResponse?.paramObjectsMap?.leaveRequestVO);
+      const permissionRequests = normalize(permissionResponse?.paramObjectsMap?.permissionRequestVO);
+      const compoOffRequests = normalize(compoOffResponse?.paramObjectsMap?.compensatoryOffVO);
 
-      // Extract comp-off requests
-      let compoOffRequests = compoOffResponse.paramObjectsMap?.compensatoryOffVO || [];
-      if (!Array.isArray(compoOffRequests)) {
-        compoOffRequests = [compoOffRequests];
-      }
-
-      // Extract checkout requests
-      let checkOutRequests = checkOutResponse.paramObjectsMap?.checkInVO || [];
-      if (!Array.isArray(checkOutRequests)) {
-        checkOutRequests = [checkOutRequests];
-      }
-
-      // ✅ Ensure each checkout request contains employeeEmail
-      checkOutRequests = checkOutRequests.map((item) => ({
+      let checkOutRequests = normalize(checkOutResponse?.paramObjectsMap?.checkInVO).map((item) => ({
         ...item,
-        employeeEmail: item.email || item.employeeEmail || '' // fallback if needed
+        employeeEmail: item.email || item.employeeEmail || ''
       }));
 
-      // Filter only pending approvals
-      const pendingLeaveRequests = leaveRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
-      const pendingPermissionRequests = permissionRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
-      const pendingCompoOffRequests = compoOffRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
-      const pendingCheckoutRequests = checkOutRequests.filter((req) => !req.approveStatus || req.approveStatus === 'PENDING');
+      // ===== Process CheckInOut Adjustment =====
+      const rawCheckInOut = normalize(checkInOutResult?.paramObjectsMap?.checkInOutAdjustmentVO);
 
-      // Combine all pending requests
+      const grouped = {};
+
+      rawCheckInOut.forEach((item) => {
+        const key = `${item.employeeCode}_${item.checkInDate}`;
+
+        if (!grouped[key]) {
+          grouped[key] = {
+            ...item,
+            id: key,
+            entryTime: '',
+            exitTime: '',
+            employeeEmail: item.email || item.employeeEmail || '',
+            records: []
+          };
+        }
+
+        grouped[key].records.push(item);
+      });
+
+      const checkInOutRequests = Object.values(grouped).map((group) => {
+        // Sort records by time
+        const sortedRecords = group.records.sort((a, b) =>
+          a.entryTime.localeCompare(b.entryTime)
+        );
+
+        // Assign first time as entry, last time as exit
+        const entry = sortedRecords[0]?.entryTime || '';
+        const exit = sortedRecords[sortedRecords.length - 1]?.entryTime || '';
+
+        return {
+          ...group,
+          entryTime: entry,
+          exitTime: exit,
+          approveStatus: group.records[0]?.approveStatus || 'PENDING',
+          screenName: group.records[0]?.screenName || 'CHECKINOUTADJUSTMENT'
+        };
+      });
+
+      // ===== Filter only PENDING requests =====
+      const filterPending = (arr) => arr.filter((r) => !r.approveStatus || r.approveStatus === 'PENDING');
+
       const combinedRequests = [
-        ...pendingLeaveRequests,
-        ...pendingPermissionRequests,
-        ...pendingCompoOffRequests,
-        ...pendingCheckoutRequests
+        ...filterPending(leaveRequests),
+        ...filterPending(permissionRequests),
+        ...filterPending(compoOffRequests),
+        ...filterPending(checkOutRequests),
+        ...filterPending(checkInOutRequests)
       ];
 
-      // Set data to state
+      // ===== Set State =====
       setLeaveRequests(combinedRequests);
       setScreenNames(combinedRequests.map((item) => item.screenName));
     } catch (error) {
@@ -258,7 +293,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
+        `/leaveprocess/createApprovalLeave?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=${request.screenName}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
@@ -301,16 +336,16 @@ const PendingApproval = ({ isLoading }) => {
   };
 
   const handleActionPermission = async (request, action) => {
-    setProcessingId(request.id);
+    setProcessingId(request.permissionRequestId);
 
     try {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
+        `/employeemaster/createApprovalPermissionRequest?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.permissionRequestId}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=${request.screenName}`
       );
 
-      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.permissionRequestId));
 
       const isApproved = action === 'APPROVED';
 
@@ -365,7 +400,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
+        `/leaveprocess/createApprovalCompOff?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&id=${request.id}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=${request.screenName}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
@@ -410,7 +445,7 @@ const PendingApproval = ({ isLoading }) => {
       // 1. Make API call to approve/reject
       await apiCalls(
         'put',
-        `/basicmaster/createApprovalCheckOut?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}&notifyCode=${request.notiyCode}&notify=${request.notify}`
+        `/basicmaster/createApprovalCheckOut?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=${request.screenName}`
       );
 
       setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
@@ -446,6 +481,102 @@ const PendingApproval = ({ isLoading }) => {
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleCheckInOutApprove = async (request, action) => {
+    setProcessingId(request.id);
+
+    try {
+      // 1. Make approval/rejection API call
+      const response = await apiCalls(
+        'put',
+        `/basicmaster/createApprovalCheckInOutAdjustment?action=${action}&actionBy=${loginUserName}&employeeCode=${request.employeeCode}&checkOutDate=${request.checkInDate}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=${request.screenName}`
+      );
+
+      const isSuccess = response?.data?.status === true;
+
+      if (!isSuccess) {
+        toast.error(response?.data?.paramObjectsMap?.errorMessage || 'Check In/Out request could not be processed.', {
+          autoClose: 3000
+        });
+        return;
+      }
+
+      // 2. Remove the request from UI
+      setLeaveRequests((prev) => prev.filter((r) => r.id !== request.id));
+
+      // 3. Extract IN and OUT times from backend response
+      const backendDataList = response?.data?.paramObjectsMap?.checkInOutAdjustmentVO || [];
+
+      // Case-insensitive match for status
+      const inEntry = backendDataList.find(item => item.status?.toUpperCase() === 'IN');
+      const outEntry = backendDataList.find(item => item.status?.toUpperCase() === 'OUT');
+
+      const isApproved = action === 'APPROVED';
+
+      // 4. Compose email parameters
+      const templateParams = {
+        name: request.employeeName || inEntry?.empName || outEntry?.empName || 'Employee',
+        from_name: employeeName,
+        checkInDate: dayjs(request.checkInDate || inEntry?.checkInDate || outEntry?.checkInDate).format('DD-MM-YYYY'),
+        entryTime: inEntry?.entryTime || '',
+        exitTime: outEntry?.entryTime || '',
+        status: action,
+        status_message: isApproved ? 'Approved' : 'Rejected',
+        status_class: isApproved ? 'status-approved' : 'status-rejected',
+        email: request.employeeEmail || inEntry?.email || outEntry?.email || ''
+      };
+
+      if (!templateParams.email) {
+        toast.warning('Recipient email not found. Email not sent.', { autoClose: 3000 });
+        return;
+      }
+
+      // 5. Send email
+      await emailjs.send('service_q42xewl', 'template_i87in0m', templateParams, 'yPqDOZm63k5U6JbRJ');
+
+      toast.success(`Request ${action.toLowerCase()} successfully`, {
+        autoClose: 3000
+      });
+    } catch (error) {
+      console.error(`Error ${action.toLowerCase()}ing Check In/Out request:`, error);
+
+      // Revert UI if error occurs
+      setLeaveRequests((prev) => [...prev, request].sort((a, b) => a.id - b.id));
+
+      toast.error(`Failed to ${action.toLowerCase()} request`, {
+        autoClose: 3000
+      });
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleApproveAll = async () => {
+    if (leaveRequests.length === 0) return;
+
+    setProcessingId('ALL'); // To optionally show UI loading spinner
+
+    for (const request of leaveRequests) {
+      try {
+        if (request.screenName === 'LEAVE REQUEST') {
+          await handleActionLeave(request, 'APPROVED');
+        } else if (request.screenName === 'PERMISSION REQUEST') {
+          await handleActionPermission(request, 'APPROVED');
+        } else if (request.screenName === 'COMPENSATORY OFF') {
+          await handleActionCompoOff(request, 'APPROVED');
+        } else if (request.screenName === 'CHECKINOUT') {
+          await handleActionCheckout(request, 'APPROVED');
+        } else if (request.screenName === 'CHECKINOUTADJUSTMENT') {
+          await handleCheckInOutApprove(request, 'APPROVED');
+        }
+      } catch (error) {
+        console.error(`Error approving request ID ${request.id}:`, error);
+      }
+    }
+
+    toast.success('All pending requests approved', { autoClose: 3000 });
+    setProcessingId(null);
   };
 
   const ActionButtons = ({ request }) => {
@@ -485,6 +616,9 @@ const PendingApproval = ({ isLoading }) => {
                 if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'APPROVED'); // You can customize this if you need different logic
                 }
+                if (request.screenName === 'CHECKINOUTADJUSTMENT') {
+                  handleCheckInOutApprove(request, 'APPROVED'); // You can customize this if you need different logic
+                }
               }}
               // onClick={() => handleAction(request, "APPROVED")}
               disabled={isProcessing}
@@ -511,6 +645,9 @@ const PendingApproval = ({ isLoading }) => {
                 if (request.screenName === 'CHECKINOUT') {
                   handleActionCheckout(request, 'REJECTED'); // You can customize this if you need different logic
                 }
+                if (request.screenName === 'CHECKINOUTADJUSTMENT') {
+                  handleCheckInOutApprove(request, 'REJECTED'); // You can customize this if you need different logic
+                }
               }}
               // onClick={() => handleAction(request, "REJECTED")}
               disabled={isProcessing}
@@ -532,11 +669,31 @@ const PendingApproval = ({ isLoading }) => {
           <Typography variant="h5" fontWeight="700" color="primary">
             Pending Approvals
           </Typography>
-          {leaveRequests.length > 3 && (
-            <ViewAllButton onClick={handleOpenModal} endIcon={<ArrowForward sx={{ fontSize: '18px' }} />}>
-              View All ({leaveRequests.length})
-            </ViewAllButton>
-          )}
+
+          <Box display="flex" alignItems="center" gap={1}>
+            {leaveRequests.length > 0 && (
+              <Button
+                variant="contained"
+                color="success"
+                size="small"
+                onClick={handleApproveAll}
+                sx={{ textTransform: 'none', color: 'white', fontWeight: 'bold' }}
+                disabled={isProcessing === 'ALL'}
+              >
+                {isProcessing === 'ALL' ? (
+                  <CircularProgress size={18} color="inherit" />
+                ) : (
+                  'Approve All'
+                )}
+              </Button>
+            )}
+
+            {leaveRequests.length > 3 && (
+              <ViewAllButton onClick={handleOpenModal} endIcon={<ArrowForward sx={{ fontSize: '18px' }} />}>
+                View All ({leaveRequests.length})
+              </ViewAllButton>
+            )}
+          </Box>
         </Box>
 
         {loading ? (
@@ -789,6 +946,35 @@ const PendingApproval = ({ isLoading }) => {
                                 </Typography>
                                 <Typography variant="body1" fontWeight="500">
                                   {request.entryTime}
+                                </Typography>
+                              </Grid>
+                            </>
+                          )}
+
+                          {screen === 'CHECKINOUTADJUSTMENT' && (
+                            <>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  CheckINOut Date
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.checkInDate}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  CheckIn Time
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.entryTime || '-'}
+                                </Typography>
+                              </Grid>
+                              <Grid item xs={6} sm={4}>
+                                <Typography variant="body2" color="text.secondary">
+                                  CheckOut Time
+                                </Typography>
+                                <Typography variant="body1" fontWeight="500">
+                                  {request.exitTime || '-'}
                                 </Typography>
                               </Grid>
                             </>
