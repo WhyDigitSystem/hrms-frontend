@@ -45,9 +45,6 @@ const SwipeInSwipeOut = () => {
   const [listViewData, setListViewData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(false);
-  // const [modalOpen, setModalOpen] = useState(false);
-  // const [selectedRow, setSelectedRow] = useState(null);
-  // const [checkOutTime, setCheckOutTime] = useState('');
   const [selectedRow, setSelectedRow] = useState(null);
   const [checkInTime, setCheckInTime] = useState('');
   const [checkOutTime, setCheckOutTime] = useState('');
@@ -162,11 +159,19 @@ const SwipeInSwipeOut = () => {
     setPage(0);
   };
 
+  // const handleCheckInClick = (row) => {
+  //   const now = new Date().toTimeString().slice(0, 5);
+  //   setSelectedRow(row);
+  //   setCheckInTime(row.checkInTime !== '00:00' ? row.checkInTime : now);
+  //   setCheckOutTime(row.checkOutTime || '00:00');
+  //   setCheckInModalOpen(true);
+  // };
+
   // const handleCheckOutClick = (row) => {
   //   const now = new Date().toTimeString().slice(0, 5);
   //   setSelectedRow(row);
-  //   setCheckOutTime(now);
-  //   setModalOpen(true);
+  //   setCheckOutTime(row.checkOutTime !== '00:00' ? row.checkOutTime : now);
+  //   setCheckOutModalOpen(true);
   // };
 
   const handleCheckInClick = (row) => {
@@ -205,7 +210,7 @@ const SwipeInSwipeOut = () => {
       notify: reportingPerson,
       notifyCode: reportingPersonCode,
       notifyEmail: reportingPersonMail,
-      orgId: orgId,
+      orgId: orgId
       // reportingPersonMail: reportingPersonMail
     };
 
@@ -226,7 +231,7 @@ const SwipeInSwipeOut = () => {
 
         await sendEmailNotification({
           ...payload,
-          ...checkInVO, // ✅ Merge server data to include checkInDate and others
+          ...checkInVO // ✅ Merge server data to include checkInDate and others
           // email: reportingPersonMail // Ensure email is set
         });
         const updatedData = listViewData.map((row) => (row.date === selectedRow.date ? { ...row, checkOutTime } : row));
@@ -385,11 +390,6 @@ const SwipeInSwipeOut = () => {
     }
   };
 
-  // const handleMonthChange = (e) => {
-  //   setSelectedMonth(e.target.value);
-  //   // Optionally trigger API call or filter
-  // };
-
   const handleMonthChange = (e) => {
     const selected = e.target.value;
     setSelectedMonth(selected);
@@ -415,19 +415,132 @@ const SwipeInSwipeOut = () => {
         {/* Right: Status Legends */}
         <Box display="flex" alignItems="center" gap={2}>
           <Box display="flex" alignItems="center" gap={1}>
-            <Box width={16} height={16} bgcolor="green" borderRadius="50%" />
+            <Box width={16} height={16} bgcolor="#4F7942" borderRadius="50%" />
             <span>Approved</span>
           </Box>
           <Box display="flex" alignItems="center" gap={1}>
-            <Box width={16} height={16} bgcolor="#FFA500" borderRadius="50%" />
+            <Box width={16} height={16} bgcolor="#FFAC1C" borderRadius="50%" />
             <span>Pending</span>
           </Box>
           <Box display="flex" alignItems="center" gap={1}>
-            <Box width={16} height={16} bgcolor="black" borderRadius="50%" />
+            <Box width={16} height={16} bgcolor="#EE4B2B" borderRadius="50%" />
             <span>Not Submitted</span>
           </Box>
         </Box>
       </Box>
+
+      {/* <TableContainer component={Paper}>
+        <Table>
+          <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableRow>
+              <TableCell>
+                <strong>Date</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Day</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Check-In</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Check-Out</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Gross Hours</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Effective Hours</strong>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6}>
+                  <Box display="flex" justifyContent="center" alignItems="center" minHeight="150px" width="100%">
+                    <CircularProgress />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((row) => (
+                <TableRow key={row.id} hover>
+                  <TableCell>{row.date}</TableCell>
+                  <TableCell>{row.day}</TableCell>
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkInTime === '00:00') {
+                        handleCheckInClick(row);
+                      }
+                    }}
+                    style={{
+                      color:
+                        row.checkInTime === '00:00'
+                          ? 'black'
+                          : row.approvalstatus === 'APPROVED'
+                            ? '#4F7942'
+                            : row.approvalstatus === 'PENDING'
+                              ? '#FFAC1C'
+                              : 'black',
+                      cursor: row.checkInTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkInTime === '00:00' ? 'underline' : 'none',
+                      fontWeight:
+                        row.checkInTime === '00:00' || row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING'
+                          ? 'bold'
+                          : 'normal'
+                    }}
+                  >
+                    {row.checkInTime}
+                  </TableCell>
+
+                  <TableCell
+                    onClick={() => {
+                      if (row.checkOutTime === '00:00') {
+                        handleCheckOutClick(row);
+                      }
+                    }}
+                    style={{
+                      color:
+                        row.checkOutTime === '00:00'
+                          ? 'black'
+                          : row.approvalstatus === 'APPROVED'
+                            ? '#4F7942'
+                            : row.approvalstatus === 'PENDING'
+                              ? '#FFAC1C'
+                              : 'black',
+                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
+                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
+                      fontWeight:
+                        row.checkOutTime === '00:00' || row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING'
+                          ? 'bold'
+                          : 'normal'
+                    }}
+                  >
+                    {row.checkOutTime}
+                  </TableCell>
+
+                  <TableCell>{row.totalWorkingHours}</TableCell>
+                  <TableCell>{row.effectiveFrom}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredData.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(e, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+        />
+      </TableContainer> */}
 
       <TableContainer component={Paper}>
         <Table>
@@ -468,53 +581,8 @@ const SwipeInSwipeOut = () => {
                 <TableRow key={row.id} hover>
                   <TableCell>{row.date}</TableCell>
                   <TableCell>{row.day}</TableCell>
-                  {/* <TableCell>{row.checkInTime}</TableCell>
-                  <TableCell
-                    onClick={() => {
-                      if (row.checkOutTime === '00:00') {
-                        handleCheckOutClick(row);
-                      }
-                    }}
-                    style={{
-                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
-                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
-                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
-                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
-                    }}
-                  >
-                    {row.checkOutTime}
-                  </TableCell> */}
-                  {/* <TableCell
-                    onClick={() => {
-                      if (row.checkInTime === '00:00') {
-                        handleCheckInClick(row);
-                      }
-                    }}
-                    style={{
-                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
-                      cursor: row.checkInTime === '00:00' ? 'pointer' : 'default',
-                      textDecoration: row.checkInTime === '00:00' ? 'underline' : 'none',
-                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
-                    }}
-                  >
-                    {row.checkInTime}
-                  </TableCell>
 
-                  <TableCell
-                    onClick={() => {
-                      if (row.checkOutTime === '00:00') {
-                        handleCheckOutClick(row);
-                      }
-                    }}
-                    style={{
-                      color: row.approvalstatus === 'APPROVED' ? 'green' : row.approvalstatus === 'PENDING' ? '#FFA500' : 'black',
-                      cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
-                      textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
-                      fontWeight: row.approvalstatus === 'APPROVED' || row.approvalstatus === 'PENDING' ? 'bold' : 'normal'
-                    }}
-                  >
-                    {row.checkOutTime}
-                  </TableCell> */}
+                  {/* ✅ Check-In Cell */}
                   <TableCell
                     onClick={() => {
                       if (row.checkInTime === '00:00') {
@@ -524,11 +592,11 @@ const SwipeInSwipeOut = () => {
                     style={{
                       color:
                         row.checkInTime === '00:00'
-                          ? 'black'
+                          ? '#EE4B2B'
                           : row.approvalstatus === 'APPROVED'
-                            ? 'green'
+                            ? '#4F7942'
                             : row.approvalstatus === 'PENDING'
-                              ? '#FFA500'
+                              ? '#FFAC1C'
                               : 'black',
                       cursor: row.checkInTime === '00:00' ? 'pointer' : 'default',
                       textDecoration: row.checkInTime === '00:00' ? 'underline' : 'none',
@@ -538,9 +606,10 @@ const SwipeInSwipeOut = () => {
                           : 'normal'
                     }}
                   >
-                    {row.checkInTime}
+                    {row.checkInTime === '00:00' ? 'Missing' : row.checkInTime}
                   </TableCell>
 
+                  {/* ✅ Check-Out Cell */}
                   <TableCell
                     onClick={() => {
                       if (row.checkOutTime === '00:00') {
@@ -550,11 +619,11 @@ const SwipeInSwipeOut = () => {
                     style={{
                       color:
                         row.checkOutTime === '00:00'
-                          ? 'black'
+                          ? '#EE4B2B'
                           : row.approvalstatus === 'APPROVED'
-                            ? 'green'
+                            ? '#4F7942'
                             : row.approvalstatus === 'PENDING'
-                              ? '#FFA500'
+                              ? '#FFAC1C'
                               : 'black',
                       cursor: row.checkOutTime === '00:00' ? 'pointer' : 'default',
                       textDecoration: row.checkOutTime === '00:00' ? 'underline' : 'none',
@@ -564,7 +633,7 @@ const SwipeInSwipeOut = () => {
                           : 'normal'
                     }}
                   >
-                    {row.checkOutTime}
+                    {row.checkOutTime === '00:00' ? 'Missing' : row.checkOutTime}
                   </TableCell>
 
                   <TableCell>{row.totalWorkingHours}</TableCell>
@@ -588,37 +657,6 @@ const SwipeInSwipeOut = () => {
           }}
         />
       </TableContainer>
-
-      {/* <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            bgcolor: 'white',
-            p: 4,
-            borderRadius: 2,
-            boxShadow: 24,
-            width: 300
-          }}
-        >
-          <Typography variant="h6" gutterBottom>
-            Set Check-Out Time
-          </Typography>
-          <TextField
-            type="time"
-            fullWidth
-            value={checkOutTime}
-            onChange={(e) => setCheckOutTime(e.target.value)}
-            sx={{ mt: 2 }}
-            inputProps={{ step: 60 }}
-          />
-          <Button variant="contained" color="primary" fullWidth sx={{ mt: 3 }} onClick={handleSave}>
-            Save
-          </Button>
-        </Box>
-      </Modal> */}
 
       <Modal open={checkInModalOpen} onClose={() => setCheckInModalOpen(false)}>
         <Box sx={{ ...modalStyle }}>
