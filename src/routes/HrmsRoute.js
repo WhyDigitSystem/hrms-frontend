@@ -60,6 +60,10 @@ const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')))
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
 const TimeSheet = Loadable(lazy(() => import('views/me/TimeSheet')));
 const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
+const WorkFromHome = Loadable(lazy(() => import('views/me/WorkFromHome')));
+const TravelRequest = Loadable(lazy(() => import('views/me/TravelRequest')));
+
+
 
 //team
 const LeaveApproval = Loadable(lazy(() => import('views/team/LeaveApproval')));
@@ -71,6 +75,8 @@ const EmployeeAttanceReport = Loadable(lazy(() => import('views/team/EmployeeAtt
 // manageTax
 const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')));
 const DeclarationDate = Loadable(lazy(() => import('views/ManageTax/DeclarationDate')));
+const DeclarationInput = Loadable(lazy(() => import('views/ManageTax/DeclarationInput')));
+
 
 
 // PreGoals
@@ -250,6 +256,14 @@ const HrmsRoute = {
       element: <CompoOff />
     },
     {
+      path: '/me/WorkFromHome',
+      element: <WorkFromHome />
+    },
+     {
+      path: '/me/TravelRequest',
+      element: <TravelRequest />
+    },
+    {
       path: '/finance/Payslip',
       element: <Payslip />
     },
@@ -279,9 +293,13 @@ const HrmsRoute = {
       path: '/ManageTax/manageTax',
       element: <ManageTax />
     },
-     {
+    {
       path: '/ManageTax/DeclarationDate',
       element: <DeclarationDate />
+    },
+    {
+      path: '/ManageTax/DeclarationInput',
+      element: <DeclarationInput />
     },
     // PreGoals
     {

@@ -380,9 +380,7 @@ const RolesNew = () => {
                 getOptionLabel={(option) => option.responsibility || ""}
                 value={responsibilityList.filter((res) => selectedRes.includes(res.responsibility))}
                 onChange={(event, newValue) => {
-                  // Extract the responsibility values from the selected options
                   const selectedResponsibilities = newValue.map((item) => item.responsibility);
-                  // Call handleMultiSelectChange with the array of responsibility values
                   handleMultiSelectChange({ target: { value: selectedResponsibilities } });
                 }}
                 renderTags={(selected, getTagProps) =>
@@ -397,13 +395,22 @@ const RolesNew = () => {
                     name="selectedRes"
                     error={Boolean(fieldErrors.selectedRes)}
                     helperText={fieldErrors.selectedRes || ""}
-                    InputProps={{
-                      ...params.InputProps,
-                      style: { height: 40 },
-                    }}
+                  // InputProps={{
+                  //   ...params.InputProps,
+                  //   style: { height: 40 },
+                  // }}
                   />
                 )}
-                sx={{ width: "100%" }}
+                sx={{
+                  width: "100%",
+                  "& .MuiAutocomplete-tag": {
+                    maxWidth: "100%",
+                  },
+                  "& .MuiInputBase-root": {
+                    flexWrap: "wrap",
+                  },
+                }}
+
                 size="small"
               />
             </div>

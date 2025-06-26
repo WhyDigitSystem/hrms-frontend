@@ -60,6 +60,13 @@ const manageTax = {
           url: '/ManageTax/DeclarationDate',
           icon: icons.IconWorld
         },
+        {
+          id: 'DeclarationInput',
+          title: 'Declaration Input',
+          type: 'item',
+          url: '/ManageTax/DeclarationInput',
+          icon: icons.IconWorld
+        },
       ]
     }
   ]

@@ -297,13 +297,21 @@ const Responsibilities = () => {
                         name="screens"
                         error={Boolean(fieldErrors.selectedScreens)}
                         helperText={fieldErrors.selectedScreens || ""}
-                        InputProps={{
-                          ...params.InputProps,
-                          style: { height: 40 },
-                        }}
+                      // InputProps={{
+                      //   ...params.InputProps,
+                      //   style: { height: 40 },
+                      // }}
                       />
                     )}
-                    sx={{ width: "100%" }}
+                    sx={{
+                      width: "100%",
+                      "& .MuiAutocomplete-tag": {
+                        maxWidth: "100%",
+                      },
+                      "& .MuiInputBase-root": {
+                        flexWrap: "wrap",
+                      },
+                    }}
                     size="small"
                   />
                 </div>
