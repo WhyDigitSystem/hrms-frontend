@@ -285,9 +285,9 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
         <Box sx={announcementStyle}>
           {circularData.length > 0 ? (
             <Box>
-              <Box sx={{ 
-                display: 'flex', 
-                flexDirection: isMobile ? 'column' : 'row', 
+              <Box sx={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
                 alignItems: isMobile ? 'flex-start' : 'center'
               }}>
                 <div>
@@ -309,10 +309,22 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                   )}
                 </div>
                 <div className={isMobile ? 'mt-2' : 'ps-3'}>
-                  <Typography variant="h6" gutterBottom>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{ fontWeight: 'bold' }} // 👈 makes heading bold
+                  >
                     {circularData[0].circularTopic}
                   </Typography>
-                  <Typography variant="body1" sx={{ lineHeight: 1.6, fontSize: isMobile ? '0.875rem' : '1rem' }}>
+
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      lineHeight: 1.6,
+                      fontSize: isMobile ? '0.875rem' : '1rem',
+                      color: '#000' // 👈 sets content color to black
+                    }}
+                  >
                     {circularData[0].circularcontent}
                   </Typography>
                 </div>
@@ -419,8 +431,8 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                 variant="outlined"
                 component="label"
                 startIcon={<CloudUploadIcon />}
-                sx={{ 
-                  color: 'rgb(103 58 183)', 
+                sx={{
+                  color: 'rgb(103 58 183)',
                   borderRadius: '12px',
                   fontSize: isMobile ? '0.75rem' : '0.875rem'
                 }}
@@ -430,8 +442,8 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
               </Button>
 
               {logo && (
-                <IconButton 
-                  sx={{ color: 'rgb(103 58 183)', fontSize: isMobile ? '0.75rem' : '0.875rem' }} 
+                <IconButton
+                  sx={{ color: 'rgb(103 58 183)', fontSize: isMobile ? '0.75rem' : '0.875rem' }}
                   onClick={handleOpen}
                 >
                   <ControlCameraIcon />
@@ -448,12 +460,12 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                     <Avatar
                       src={typeof logo === 'object' ? URL.createObjectURL(logo) : `data:image/jpeg;base64,${logo}`}
                       alt="Image"
-                      sx={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '60vh', 
-                        width: 'auto', 
-                        height: 'auto', 
-                        borderRadius: 2 
+                      sx={{
+                        maxWidth: '100%',
+                        maxHeight: '60vh',
+                        width: 'auto',
+                        height: 'auto',
+                        borderRadius: 2
                       }}
                     />
                     <Box display="flex" gap={2} mt={2}>
@@ -494,17 +506,17 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button 
-              onClick={handleCloseCreateModal} 
+            <Button
+              onClick={handleCloseCreateModal}
               color="secondary"
               size={isMobile ? 'small' : 'medium'}
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleSave} 
-              variant="contained" 
-              color="primary" 
+            <Button
+              onClick={handleSave}
+              variant="contained"
+              color="primary"
               disabled={isLoading}
               size={isMobile ? 'small' : 'medium'}
             >
@@ -562,8 +574,8 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                       }
                       sx={{ flex: 1 }}
                     />
-                    <IconButton 
-                      edge="end" 
+                    <IconButton
+                      edge="end"
                       onClick={() => getCircularById(circular)}
                       sx={{ mt: -1 }}
                     >
@@ -591,7 +603,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
           </List>
         </Box>
       </Modal>
-      
+
       {/* Image Preview Modal */}
       <Modal
         open={logoPreviewOpen}
