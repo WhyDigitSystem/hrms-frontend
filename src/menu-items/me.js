@@ -1,5 +1,5 @@
 // assets
-import { IconUsers } from '@tabler/icons-react';
+import { IconUsers, IconUserPause, IconDeviceLaptop, IconFingerprint } from '@tabler/icons-react';
 import { FaPersonWalkingLuggage, FaUserClock } from 'react-icons/fa6';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
@@ -9,9 +9,12 @@ const icons = {
   IconUsers,
   FaPersonWalkingLuggage,
   FaUserClock,
+  IconUserPause,
+  IconDeviceLaptop,
   BeachAccessIcon,
   AccessTimeIcon,
   FlightTakeoffIcon,
+  IconFingerprint
 };
 
 const userType = localStorage.getItem('userType');
@@ -65,11 +68,11 @@ const me = {
       icon: icons.IconUsers,
       children: [
         {
-          id: 'permissionRequest',
-          title: 'Permission Request',
+          id: 'holidayReport',
+          title: 'Holiday Report',
           type: 'item',
-          url: '/me/permissionRequest',
-          icon: icons.FaUserClock
+          url: '/me/HolidayReport',
+          icon: icons.BeachAccessIcon
         },
         {
           id: 'leaveRequest',
@@ -79,18 +82,32 @@ const me = {
           icon: icons.FaPersonWalkingLuggage
         },
         {
-          id: 'holidayReport',
-          title: 'Holiday Report',
+          id: 'permissionRequest',
+          title: 'Permission Request',
           type: 'item',
-          url: '/me/HolidayReport',
-          icon: icons.BeachAccessIcon
+          url: '/me/permissionRequest',
+          icon: icons.FaUserClock
         },
         {
-          id: 'swipeInSwipeOut',
-          title: 'Check In & Out',
-          type: 'item',
-          url: '/me/SwipeInSwipeOut',
-          icon: icons.AccessTimeIcon
+          id: "TravelRequest",
+          title: "Travel Request",
+          type: "item",
+          url: "/me/TravelRequest",
+          icon: icons.FlightTakeoffIcon
+        },
+        {
+          id: "compoOff",
+          title: "Compensatory Off",
+          type: "item",
+          url: "/me/CompoOff",
+          icon: icons.IconUserPause  // Sun icon for holidays
+        },
+        {
+          id: "WorkFromHome",
+          title: "Work From Home",
+          type: "item",
+          url: "/me/WorkFromHome",
+          icon: icons.IconDeviceLaptop  // Sun icon for holidays
         },
         {
           id: 'timeSheet',
@@ -100,26 +117,13 @@ const me = {
           icon: icons.AccessTimeIcon
         },
         {
-          id: "compoOff",
-          title: "Compensatory Off",
-          type: "item",
-          url: "/me/CompoOff",
-          icon: icons.AccessTimeIcon  // Sun icon for holidays
-        },
-        {
-          id: "WorkFromHome",
-          title: "Work From Home",
-          type: "item",
-          url: "/me/WorkFromHome",
-          icon: icons.AccessTimeIcon  // Sun icon for holidays
-        },
-        {
-          id: "TravelRequest",
-          title: "Travel Request",
-          type: "item",
-          url: "/me/TravelRequest",
-          icon: icons.FlightTakeoffIcon
+          id: 'swipeInSwipeOut',
+          title: 'Check In & Out',
+          type: 'item',
+          url: '/me/SwipeInSwipeOut',
+          icon: icons.IconFingerprint
         }
+
       ].filter((item) => allowedScreenIds.includes(item.id))
     }
   ]

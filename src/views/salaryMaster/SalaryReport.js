@@ -301,16 +301,16 @@ const SalaryReport = () => {
                               <strong>S.No</strong>
                             </TableCell>
                             <TableCell>
-                              <strong>Employee Name</strong>
+                              <strong>Employee</strong>
                             </TableCell>
                             <TableCell>
-                              <strong>Employee Code</strong>
+                              <strong>Code</strong>
                             </TableCell>
                             <TableCell>
                               <strong>Total Leave</strong>
                             </TableCell>
                             <TableCell>
-                              <strong>LOP (Loss of Pay)</strong>
+                              <strong>LOP</strong>
                             </TableCell>
                             <TableCell>
                               <strong>Total Employee Working Days</strong>

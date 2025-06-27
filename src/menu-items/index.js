@@ -40,27 +40,27 @@ const getMenuItems = () => {
   switch (localStorageValue) {
     case 'ADMIN':
       return {
-        items: [dashboard, calendar, adminCompanySetup, admin, basicMaster, employeeMaster, me, finance, team, manageTax, Appraisal]
+        items: [dashboard, calendar, employeeMaster, me, finance, team, manageTax, Appraisal, basicMaster, adminCompanySetup, admin]
       };
     case 'USER':
       return {
-        items: [dashboard, calendar, me, finance]
+        items: [dashboard, calendar, me, finance, manageTax]
       };
     case 'DEPARTMENT HEAD':
       return {
-        items: [dashboard, calendar, me, finance, team]
+        items: [dashboard, calendar, me, finance, team, manageTax]
       };
     case 'ASSISTANT ACCOUNTS':
       return {
-        items: [dashboard, calendar, me, finance]
+        items: [dashboard, calendar, me, finance, manageTax]
       };
     case 'TEAM LEAD':
       return {
-        items: [dashboard, calendar, me, finance, team]
+        items: [dashboard, calendar, me, finance, team, manageTax]
       };
     case 'MANAGER':
       return {
-        items: [dashboard, calendar, me, finance, team]
+        items: [dashboard, calendar, me, finance, team, manageTax]
       };
     default:
       return defaultMenuItems;

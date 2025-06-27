@@ -14,7 +14,9 @@ import ActionButton from 'utils/ActionButton';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { Autocomplete } from '@mui/material';
+import emailjs from '@emailjs/browser';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography } from '@mui/material';
+import { message } from 'antd';
 
 const WorkFromHome = () => {
     const [isLoading, setIsLoading] = useState(false);
@@ -169,6 +171,22 @@ const WorkFromHome = () => {
         if (!formData.reportingManager) errors.reportingManager = 'Reporting Manager is required';
         if (!formData.departmentHead) errors.departmentHead = 'Department Head is required';
 
+        // Get reporting person and HOD data from list
+        const reportingManagerObj = allReportingPersonList.find(
+            (person) => person.label === formData.reportingManager
+        );
+        const departmentHeadObj = allReportingPersonList.find(
+            (person) => person.label === formData.departmentHead
+        );
+
+        const reportingManagerEmail = reportingManagerObj?.email || '';
+        const reportingManagerCode = reportingManagerObj?.code || '';
+        const departmentHeadEmail = departmentHeadObj?.email || '';
+        const departmentHeadCode = departmentHeadObj?.code || '';
+
+        if (!reportingManagerEmail) errors.reportingManagerEmail = 'Reporting Manager email not found';
+        if (!departmentHeadEmail) errors.departmentHeadEmail = 'Department Head email not found';
+
         if (Object.keys(errors).length === 0) {
             setIsLoading(true);
 
@@ -178,11 +196,15 @@ const WorkFromHome = () => {
                 branchCode,
                 createdBy: loginUserName,
                 departmentHead: formData.departmentHead,
+                departmentHeadCode,
+                departmentHeadEmail,
                 employeeCode,
                 employeeName,
                 orgId: Number(orgId),
                 reason: formData.reason,
                 reportingManager: formData.reportingManager,
+                reportingManagerCode,
+                reportingManagerEmail,
                 wfhDate: dayjs(formData.wfhDate).format('YYYY-MM-DD'),
                 workAccomplished: formData.workAccomplished,
                 finYear: dayjs().format('YYYY')
@@ -190,8 +212,10 @@ const WorkFromHome = () => {
 
             try {
                 const response = await apiCalls('put', '/leaveprocess/createUpdateWorkFromHome', saveData);
+
                 if (response.status === true) {
                     showToast('success', editId ? 'Work From Home Updated Successfully' : 'Work From Home Request created successfully');
+                    await sendEmailNotification(saveData);
                     handleClear();
                     getAllWorkFromHomeRequests();
                 } else {
@@ -205,6 +229,42 @@ const WorkFromHome = () => {
             }
         } else {
             setFieldErrors(errors);
+        }
+    };
+
+    const sendEmailNotification = async (requestData) => {
+        try {
+            const baseURL = 'http://localhost:3000/pages/confirmationPage/confirmationPage'; // ✅ Replace with live URL if needed
+
+            const approveLink = `${baseURL}?id=${requestData.id}&action=APPROVED&employeeCode=${requestData.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=WORKFROMHOME`;
+            const rejectLink = `${baseURL}?id=${requestData.id}&action=REJECTED&employeeCode=${requestData.employeeCode}&actionBy=${employeeName}&orgId=${orgId}&notifyCode=${employeeCode}&notify=${employeeName}&screenName=WORKFROMHOME`;
+
+            const emailParams = {
+                name: requestData.reportingManager,
+                from_name: employeeName,
+                email: requestData.reportingManagerEmail,
+                date: dayjs(requestData.wfhDate).format('DD-MM-YYYY'),
+                message: requestData.reason,
+                work_Accomplished: requestData.workAccomplished,
+                approve_link: approveLink,
+                reject_link: rejectLink,
+                screenName: 'WORKFROMHOME'
+            };
+
+            console.log('Work From Home Email Params:', emailParams);
+
+            if (!emailParams.email) {
+                console.error('Error: Recipient email is missing!');
+                showToast('error', 'Recipient email is missing!');
+                return;
+            }
+
+            await emailjs.send('service_ywei7br', 'template_rl5cfjh', emailParams, '-y3NVuC6et9lUpj0-');
+
+            console.log('Work From Home Email Sent Successfully to', emailParams.email);
+        } catch (error) {
+            console.error('Email Sending Failed:', error);
+            showToast('error', 'Failed to send Work From Home email notification.');
         }
     };
 

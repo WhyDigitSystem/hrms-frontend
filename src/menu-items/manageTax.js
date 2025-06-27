@@ -1,38 +1,16 @@
 // assets
-import { IconCashBanknote, IconDatabaseStar, IconBuildingFactory2, IconIdBadge2, IconMapQuestion, IconUsersGroup, IconWorld, IconMap, IconBuildingSkyscraper } from '@tabler/icons-react';
+import { IconDatabaseStar, IconFileDollar, IconCalendarTime, IconFileText } from '@tabler/icons-react';
 
 // constant
 const icons = {
-  IconWorld
-};
-
-const icons1 = {
-  IconMap
+  IconFileDollar,
+  IconCalendarTime,
+  IconFileText
 };
 
 const icons0 = {
   IconDatabaseStar
 };
-const icons2 = {
-  IconBuildingSkyscraper
-};
-const icons3 = {
-  IconCashBanknote
-};
-const icons4 = {
-  IconBuildingFactory2
-};
-const icons6 = {
-  IconIdBadge2
-};
-const icons7 = {
-  IconMapQuestion
-};
-const icons8 = {
-  IconUsersGroup
-};
-
-
 
 const manageTax = {
   id: 'manageTax',
@@ -51,21 +29,21 @@ const manageTax = {
           title: 'Manage Tax',
           type: 'item',
           url: '/ManageTax/manageTax',
-          icon: icons.IconWorld
+          icon: icons.IconFileDollar
         },
         {
           id: 'DeclarationDate',
           title: 'Declaration Date',
           type: 'item',
           url: '/ManageTax/DeclarationDate',
-          icon: icons.IconWorld
+          icon: icons.IconCalendarTime
         },
         {
           id: 'DeclarationInput',
           title: 'Declaration Input',
           type: 'item',
           url: '/ManageTax/DeclarationInput',
-          icon: icons.IconWorld
+          icon: icons.IconFileText
         },
       ]
     }

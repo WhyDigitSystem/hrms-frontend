@@ -77,6 +77,7 @@ const AttendenceProcess = () => {
     { accessorKey: 'employeeCode', header: 'Employe Code', size: 140 },
     { accessorKey: 'totalCompanyWorkingDays', header: 'Total Company Working Days', size: 140 },
     { accessorKey: 'totalLeave', header: 'Total Leave', size: 140 },
+    { accessorKey: 'lopLeave', header: 'LOP', size: 140 },
     { accessorKey: 'empTotalWorkingDays', header: 'Emp Total Working Days', size: 140 },
     { accessorKey: 'empSalaryDays', header: 'Emp Salary Days', size: 140 },
     { accessorKey: 'month', header: 'Month', size: 140 },
@@ -350,6 +351,7 @@ const AttendenceProcess = () => {
           showToast('success', 'Attendance Process created successfully');
 
           handleClear(); // Clear form after success
+          getLeaveProcessByOrgId();
           getAllLeaveProcess();
         } else {
           showToast('error', response.paramObjectsMap?.errorMessage || 'Attendance Process creation failed');
