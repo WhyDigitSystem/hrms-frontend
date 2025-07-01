@@ -12,6 +12,7 @@ import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import apiCalls from 'apicall';
 
+
 const DeclarationInput = () => {
     const [listViewData, setListViewData] = useState([]);
     const [orgId] = useState(parseInt(localStorage.getItem('orgId')));
@@ -20,7 +21,8 @@ const DeclarationInput = () => {
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [listView, setListView] = useState(false);
-    const finYear = localStorage.getItem('finYear');
+    const finYear = localStorage.getItem('finYear') || '2024-2025'; // Example default
+
 
     const [formData, setFormData] = useState({
         branch: localStorage.getItem('branch') || '',
@@ -49,17 +51,18 @@ const DeclarationInput = () => {
 
     const getAllGoals = async () => {
         try {
-            const response = await apiCalls('get', `/goalsController/getSelfGoalsByOrgId?orgId=${orgId}`);
+            const response = await apiCalls('get', `/managetax/getAllDeclarationByOrgId?orgId=${orgId}&finYear=${finYear}`);
             if (response.status) {
-                setListViewData(response.paramObjectsMap.selfGoalsVO);
+                setListViewData(response.paramObjectsMap.declarationVO);
             } else {
-                showToast('error', response.message || 'Failed to fetch goals');
+                showToast('error', response.message || 'Failed to fetch declarations');
             }
         } catch (error) {
-            console.error('Error fetching goals:', error);
-            showToast('error', 'Failed to fetch goals');
+            console.error('Error fetching declarations:', error);
+            showToast('error', 'Failed to fetch declarations');
         }
     };
+
 
     const handleInputChange = (e) => {
         const { name, value, checked, type } = e.target;
@@ -80,28 +83,28 @@ const DeclarationInput = () => {
         getAllGoals();
     }, []);
 
-    const getGoalsById = async (row) => {
-        setEditId(row.original.id);
-        try {
-            const response = await apiCalls('get', `/goalsController/getSelfGoalsById?id=${row.original.id}`);
-            if (response.status) {
-                setListView(false);
-                const goal = response.paramObjectsMap.selfGoalsVO;
-                setFormData({
-                    branch: goal.branch,
-                    branchCode: goal.branchCode,
-                    employeeCode: goal.employeeCode,
-                    employeeName: goal.employeeName,
-                    department: goal.department,
-                    orgId: parseInt(orgId),
-                    finYear: finYear
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching goal details:', error);
-            showToast('error', 'Failed to fetch goal details');
-        }
-    };
+    // const getGoalsById = async (row) => {
+    //     setEditId(row.original.id);
+    //     try {
+    //         const response = await apiCalls('get', `/managetax/getDeclarationById?id=${row.original.id}`);
+    //         if (response.status) {
+    //             setListView(false);
+    //             const goal = response.paramObjectsMap.selfGoalsVO;
+    //             setFormData({
+    //                 branch: goal.branch,
+    //                 branchCode: goal.branchCode,
+    //                 employeeCode: goal.employeeCode,
+    //                 employeeName: goal.employeeName,
+    //                 department: goal.department,
+    //                 orgId: parseInt(orgId),
+    //                 finYear: finYear
+    //             });
+    //         }
+    //     } catch (error) {
+    //         console.error('Error fetching goal details:', error);
+    //         showToast('error', 'Failed to fetch goal details');
+    //     }
+    // };
 
     const handleSave = async () => {
         const errors = {};
@@ -258,7 +261,7 @@ const DeclarationInput = () => {
                             </div>
                         </>
                     ) : (
-                        <CommonListViewTable data={listViewData} columns={listViewColumns} enableEditing={true} toEdit={getGoalsById} />
+                        <CommonListViewTable data={listViewData} columns={listViewColumns} enableEditing={false} />
                     )}
                 </div>
             </div>

@@ -1,9 +1,10 @@
 // src/components/LacDeclaration.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Grid, Button, useTheme,
   TextField, TableContainer, Paper, Table, TableHead, TableRow,
-  TableCell, TableBody, IconButton, Chip, Select, MenuItem
+  TableCell, TableBody, IconButton, Chip,
+  Dialog, DialogActions, DialogContent, Avatar
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -12,7 +13,9 @@ import {
   FormatListBulletedTwoTone as FormatListBulletedTwoToneIcon,
   Save as SaveIcon,
   CheckCircleOutline,
-  CancelOutlined
+  CancelOutlined,
+  CloudUpload as CloudUploadIcon,
+  ControlCamera as ControlCameraIcon
 } from '@mui/icons-material';
 
 import apiCalls from 'apicall';
@@ -23,6 +26,9 @@ function LacDeclaration() {
   const theme = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
+  const [declarationId, setDeclarationId] = useState(null);
+  const finYear = localStorage.getItem('finYear');
+  const orgId = localStorage.getItem('orgId');
   const [deductions, setDeductions] = useState([
     {
       id: Date.now(),
@@ -30,11 +36,21 @@ function LacDeclaration() {
       deductions: '',
       maxLimit: '',
       declaration: '',
-      proof: '',
+      proofFile: null,
+      proofFileName: '',
       status: 'Auto Accepted'
     }
   ]);
 
+  const [proofDialog, setProofDialog] = useState({
+    open: false,
+    proofUrl: null,
+    fileType: ''
+  });
+
+  useEffect(() => {
+    getAllGoals();
+  }, []);
 
   const handleStatusChange = (id, status) => {
     setDeductions(
@@ -51,7 +67,8 @@ function LacDeclaration() {
       deductions: '',
       maxLimit: '',
       declaration: '',
-      proof: '',
+      proofFile: null,
+      proofFileName: '',
       status: 'Auto Accepted'
     };
     setDeductions([...deductions, newRow]);
@@ -79,45 +96,163 @@ function LacDeclaration() {
         deductions: '',
         maxLimit: '',
         declaration: '',
-        proof: '',
+        proofFile: null,
+        proofFileName: '',
         status: 'Auto Accepted'
       }
     ]);
   };
 
-  const handleView = () => setListView(!listView);
+  const handleProofChange = (id, file) => {
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'application/pdf')) {
+      setDeductions(prev =>
+        prev.map(item =>
+          item.id === id
+            ? { ...item, proofFile: file, proofFileName: file.name }
+            : item
+        )
+      );
+    } else {
+      showToast('error', 'Please upload a valid file (PNG, JPEG, or PDF)');
+    }
+  };
+
+  const handleViewProof = (proofFile) => {
+    if (!proofFile) return;
+
+    const url = URL.createObjectURL(proofFile);
+    setProofDialog({
+      open: true,
+      proofUrl: url,
+      fileType: proofFile.type
+    });
+  };
+
+  const handleCloseProofDialog = () => {
+    setProofDialog({ open: false, proofUrl: null, fileType: '' });
+    if (proofDialog.proofUrl) {
+      URL.revokeObjectURL(proofDialog.proofUrl);
+    }
+  };
+
+  const getAllGoals = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/managetax/getAllDeclarationByOrgId?orgId=${orgId}&finYear=2025`
+      );
+
+      if (response.status) {
+        const declarationList = response.paramObjectsMap.declarationVO;
+
+        if (declarationList.length > 0) {
+          setDeclarationId(declarationList[0].id);
+        } else {
+          console.warn('Declaration list is empty');
+        }
+      } else {
+        showToast('error', response.message || 'Failed to fetch declarations');
+      }
+    } catch (error) {
+      console.error('Error fetching declarations:', error);
+      showToast('error', 'Failed to fetch declarations');
+    }
+  };
 
   const handleSaveDeductions = async () => {
     setIsLoading(true);
 
-    const hasEmptyDeclaration = deductions.some(d =>
-      d.declaration === '' || d.declaration === null || d.declaration === undefined
-    );
-
-    if (hasEmptyDeclaration) {
-      showToast('error', 'Please fill in all declaration amounts');
+    if (!declarationId) {
+      showToast('error', 'Declaration ID missing');
       setIsLoading(false);
       return;
     }
 
-    const payload = deductions.map(deduction => ({
-      section: deduction.section,
-      deductions: deduction.deductions,
-      maxLimit: parseFloat(deduction.maxLimit) || 0,
-      declaration: deduction.declaration.toString(),
-      proof: deduction.proof,
-      status: deduction.status,
+    // Validate declarations
+    const invalidDeclarations = deductions.filter(d =>
+      d.declaration === '' || isNaN(parseFloat(d.declaration)) || parseFloat(d.declaration) < 0
+    );
+
+    if (invalidDeclarations.length > 0) {
+      showToast('error', 'Please enter valid declaration amounts (non-negative numbers)');
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate max limits
+    const exceededLimits = deductions.filter(d => {
+      const maxLimit = parseFloat(d.maxLimit) || 0;
+      const declaration = parseFloat(d.declaration) || 0;
+      return maxLimit > 0 && declaration > maxLimit;
+    });
+
+    if (exceededLimits.length > 0) {
+      showToast('error', 'Declaration amounts cannot exceed max limits');
+      setIsLoading(false);
+      return;
+    }
+
+    // Prepare payload with localId
+    const payload = deductions.map(d => ({
+      localId: d.id,
+      section: d.section,
+      declarationId,
+      deductions: d.deductions,
+      maxLimit: parseFloat(d.maxLimit) || 0,
+      declaration: d.declaration.toString(),
+      status: d.status,
     }));
 
     try {
+      // Save deductions
       const response = await apiCalls(
-        'put', '/managetax/saveOneCroreFiveLacDeductionsList', payload
+        'put',
+        '/managetax/saveOneCroreFiveLacDeductionsList',
+        payload
       );
 
-      if (response.status) {
-        showToast('success', 'Deductions saved successfully');
+      if (response.status === true) {
+        const savedList = response.paramObjectsMap?.savedList || [];
+        const failedUploads = [];
+
+        // Upload proofs for each saved deduction
+        for (const savedItem of savedList) {
+          const localDeduction = deductions.find(d => d.id === savedItem.localId);
+
+          if (localDeduction && localDeduction.proofFile) {
+            try {
+              const formData = new FormData();
+              formData.append('file', localDeduction.proofFile);
+
+              await apiCalls(
+                'post',
+                `/managetax/uploadOneCroreFiveLacDeductionsInBloob?deductionId=${savedItem.id}`,
+                formData,
+                {},
+                { 'Content-Type': 'multipart/form-data' }
+              );
+            } catch (uploadError) {
+              console.error(`Upload failed for deduction ${savedItem.id}:`, uploadError);
+              failedUploads.push({
+                id: savedItem.id,
+                section: localDeduction.section
+              });
+            }
+          }
+        }
+
+        // Handle upload results
+        if (failedUploads.length > 0) {
+          const failedSections = failedUploads.map(u => u.section || `ID: ${u.id}`).join(', ');
+          showToast('warning', `Proofs failed to upload for: ${failedSections}. Please try again.`);
+        } else {
+          showToast('success', 'All deductions and proofs saved successfully');
+        }
+
+        // Refresh deductions list
+        getAllGoals();
       } else {
-        showToast('error', response.message || 'Failed to save deductions');
+        showToast('error', response.paramObjectsMap?.errorMessage || 'Saving failed');
       }
     } catch (error) {
       console.error('Error saving deductions:', error);
@@ -127,17 +262,18 @@ function LacDeclaration() {
     }
   };
 
+  // Calculate summary amounts
   const declaredAmount = deductions.reduce((sum, item) =>
     sum + parseFloat(item.declaration || 0), 0);
 
   const autoApprovedAmount = deductions.reduce((sum, item) =>
-    item.status === 'Auto Accepted' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+    (item.status === 'Auto Accepted' ? sum + (parseFloat(item.declaration) || 0) : sum), 0);
 
   const acceptedAmount = deductions.reduce((sum, item) =>
-    item.status === 'Accepted' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+    (item.status === 'Accepted' ? sum + (parseFloat(item.declaration) || 0) : sum), 0);
 
   const rejectedAmount = deductions.reduce((sum, item) =>
-    item.status === 'Rejected' ? sum + parseFloat(item.declaration || 0) : sum, 0);
+    (item.status === 'Rejected' ? sum + (parseFloat(item.declaration) || 0) : sum), 0);
 
   return (
     <>
@@ -146,187 +282,235 @@ function LacDeclaration() {
         <div className="row d-flex ml">
           <div className="d-flex flex-wrap justify-content-start mb-4">
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-            <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
+            <ActionButton
+              title={listView ? "Form View" : "List View"}
+              icon={FormatListBulletedTwoToneIcon}
+              onClick={() => setListView(!listView)}
+            />
             <ActionButton
               title="Save"
               icon={SaveIcon}
               onClick={handleSaveDeductions}
+              disabled={isLoading || !declarationId}
+              isLoading={isLoading}
             />
           </div>
 
           {!listView ? (
-            <div className="row d-flex ml">
-              <Card elevation={4} sx={{ borderRadius: 2, marginBottom: 3 }}>
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    1.5 Lac Deductions
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Deductions under section 80C up to ₹1.5 lakhs
-                  </Typography>
+            <Card elevation={4} sx={{ borderRadius: 2, marginBottom: 3 }}>
+              <CardContent>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  1.5 Lac Deductions
+                </Typography>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Deductions under section 80C up to ₹1.5 lakhs
+                </Typography>
 
-                  <Grid container spacing={3} my={3}>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="body2" color="textSecondary">Amount Declared</Typography>
-                      <Typography variant="subtitle1">₹ {declaredAmount.toLocaleString()}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="body2" color="textSecondary">Auto Approved Amount</Typography>
-                      <Typography variant="subtitle1">₹ {autoApprovedAmount.toLocaleString()}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="body2" color="textSecondary">Amount Accepted</Typography>
-                      <Typography variant="subtitle1">₹ {acceptedAmount.toLocaleString()}</Typography>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="body2" color="textSecondary">Amount Rejected</Typography>
-                      <Typography variant="subtitle1">₹ {rejectedAmount.toLocaleString()}</Typography>
-                    </Grid>
+                <Grid container spacing={3} my={3}>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="textSecondary">Amount Declared</Typography>
+                    <Typography variant="subtitle1">₹ {declaredAmount.toLocaleString('en-IN')}</Typography>
                   </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="textSecondary">Auto Approved Amount</Typography>
+                    <Typography variant="subtitle1">₹ {autoApprovedAmount.toLocaleString('en-IN')}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="textSecondary">Amount Accepted</Typography>
+                    <Typography variant="subtitle1">₹ {acceptedAmount.toLocaleString('en-IN')}</Typography>
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={3}>
+                    <Typography variant="body2" color="textSecondary">Amount Rejected</Typography>
+                    <Typography variant="subtitle1">₹ {rejectedAmount.toLocaleString('en-IN')}</Typography>
+                  </Grid>
+                </Grid>
 
-                  <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
-                    <Select size="small" defaultValue="All" sx={{ width: '150px' }}>
-                      <MenuItem value="All">All Status</MenuItem>
-                      <MenuItem value="Auto Accepted">Auto Accepted</MenuItem>
-                      <MenuItem value="Accepted">Accepted</MenuItem>
-                      <MenuItem value="Rejected">Rejected</MenuItem>
-                    </Select>
-                    <Box sx={{ flexGrow: 1, ml: 2 }}>
-                      <TextField
-                        size="small"
-                        variant="outlined"
-                        placeholder="Search deductions..."
-                        fullWidth
-                      />
-                    </Box>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<AddIcon />}
-                      onClick={handleAddRow}
-                      sx={{ ml: 2 }}
-                    >
-                      Add Deduction
-                    </Button>
-                  </Box>
+                <Box display="flex" justifyContent="space-between" alignItems="center" my={2}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    onClick={handleAddRow}
+                  >
+                    Add Deduction
+                  </Button>
+                </Box>
 
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
-                          <TableCell>Section</TableCell>
-                          <TableCell>Deductions</TableCell>
-                          <TableCell>Max Limit (₹)</TableCell>
-                          <TableCell>Declaration (₹)</TableCell>
-                          <TableCell>Proof</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Actions</TableCell>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
+                        <TableCell>Section</TableCell>
+                        <TableCell>Deductions</TableCell>
+                        <TableCell>Max Limit (₹)</TableCell>
+                        <TableCell>Declaration (₹)</TableCell>
+                        <TableCell>Proof</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {deductions.map((row) => (
+                        <TableRow hover key={row.id}>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              value={row.section}
+                              fullWidth
+                              onChange={(e) => handleDeductionChange(row.id, 'section', e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              value={row.deductions}
+                              fullWidth
+                              onChange={(e) => handleDeductionChange(row.id, 'deductions', e.target.value)}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              value={row.maxLimit}
+                              fullWidth
+                              onChange={(e) => handleDeductionChange(row.id, 'maxLimit', e.target.value)}
+                              inputProps={{ min: 0 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              variant="outlined"
+                              type="number"
+                              value={row.declaration}
+                              fullWidth
+                              onChange={(e) => handleDeductionChange(row.id, 'declaration', e.target.value)}
+                              error={!row.declaration || isNaN(parseFloat(row.declaration)) || parseFloat(row.declaration) < 0}
+                              helperText={
+                                !row.declaration ? "Required" :
+                                  parseFloat(row.declaration) < 0 ? "Must be positive" : ""
+                              }
+                              inputProps={{ min: 0 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <Button
+                                variant="outlined"
+                                component="label"
+                                size="small"
+                                startIcon={<CloudUploadIcon />}
+                                sx={{ color: 'rgb(103 58 183)' }}
+                              >
+                                {row.proofFileName || 'Upload Proof'}
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/png, image/jpeg, application/pdf"
+                                  onChange={(e) => handleProofChange(row.id, e.target.files[0])}
+                                />
+                              </Button>
+                              {row.proofFile && (
+                                <IconButton
+                                  onClick={() => handleViewProof(row.proofFile)}
+                                  sx={{ color: 'rgb(103 58 183)' }}
+                                  size="small"
+                                >
+                                  <ControlCameraIcon />
+                                </IconButton>
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={row.status}
+                              size="small"
+                              variant="outlined"
+                              color={
+                                row.status === 'Auto Accepted' ? 'success' :
+                                  row.status === 'Accepted' ? 'primary' : 'error'
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" gap={1}>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                title="Accept"
+                                onClick={() => handleStatusChange(row.id, 'Accepted')}
+                                disabled={row.status === 'Accepted'}
+                              >
+                                <CheckCircleOutline />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                title="Reject"
+                                onClick={() => handleStatusChange(row.id, 'Rejected')}
+                                disabled={row.status === 'Rejected'}
+                              >
+                                <CancelOutlined />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="secondary"
+                                title="Delete"
+                                onClick={() => handleDeleteRow(row.id)}
+                                disabled={deductions.length <= 1}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Box>
+                          </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {deductions.map((row) => (
-                          <TableRow hover key={row.id}>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                variant="outlined"
-                                value={row.section}
-                                fullWidth
-                                onChange={(e) => handleDeductionChange(row.id, 'section', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                variant="outlined"
-                                value={row.deductions}
-                                fullWidth
-                                onChange={(e) => handleDeductionChange(row.id, 'deductions', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                variant="outlined"
-                                type="number"
-                                value={row.maxLimit}
-                                fullWidth
-                                onChange={(e) => handleDeductionChange(row.id, 'maxLimit', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                variant="outlined"
-                                type="number"
-                                value={row.declaration}
-                                fullWidth
-                                onChange={(e) => handleDeductionChange(row.id, 'declaration', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                size="small"
-                                variant="outlined"
-                                value={row.proof}
-                                fullWidth
-                                onChange={(e) => handleDeductionChange(row.id, 'proof', e.target.value)}
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={row.status}
-                                size="small"
-                                variant="outlined"
-                                color={
-                                  row.status === 'Auto Accepted' ? 'success' :
-                                    row.status === 'Accepted' ? 'primary' : 'error'
-                                }
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Box display="flex" gap={1}>
-                                <IconButton
-                                  size="small"
-                                  color="success"
-                                  title="Accept"
-                                  onClick={() => handleStatusChange(row.id, 'Accepted')}
-                                  disabled={row.status === 'Accepted'}
-                                >
-                                  <CheckCircleOutline />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  title="Reject"
-                                  onClick={() => handleStatusChange(row.id, 'Rejected')}
-                                  disabled={row.status === 'Rejected'}
-                                >
-                                  <CancelOutlined />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="secondary"
-                                  title="Delete"
-                                  onClick={() => handleDeleteRow(row.id)}
-                                  disabled={deductions.length <= 1}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-                  <Typography variant="body2" color="textSecondary" mt={2}>
-                    Note: Deductions under section 80C are eligible for tax savings up to ₹1.5 lakhs per financial year.
-                  </Typography>
-                </CardContent>
-              </Card>
-            </div>
+                <Dialog
+                  open={proofDialog.open}
+                  onClose={handleCloseProofDialog}
+                  fullWidth
+                  maxWidth={proofDialog.fileType === 'application/pdf' ? 'lg' : 'sm'}
+                >
+                  <DialogContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Proof Document
+                    </Typography>
+                    {proofDialog.proofUrl ? (
+                      proofDialog.fileType === 'application/pdf' ? (
+                        <iframe
+                          src={proofDialog.proofUrl}
+                          width="100%"
+                          height="600px"
+                          title="proof-document"
+                          style={{ border: 'none' }}
+                        />
+                      ) : (
+                        <Box display="flex" justifyContent="center">
+                          <img
+                            src={proofDialog.proofUrl}
+                            alt="Proof document"
+                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
+                          />
+                        </Box>
+                      )
+                    ) : (
+                      <Typography>No proof available</Typography>
+                    )}
+                    <DialogActions>
+                      <Button onClick={handleCloseProofDialog}>Close</Button>
+                    </DialogActions>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
           ) : (
             <Card elevation={4} sx={{ borderRadius: 2 }}>
               <CardContent>
@@ -350,9 +534,11 @@ function LacDeclaration() {
                         <TableRow hover key={row.id}>
                           <TableCell>{row.section}</TableCell>
                           <TableCell>{row.deductions}</TableCell>
-                          <TableCell>₹ {parseFloat(row.maxLimit).toLocaleString()}</TableCell>
-                          <TableCell>₹ {parseFloat(row.declaration || 0).toLocaleString()}</TableCell>
-                          <TableCell>{row.proof || '-'}</TableCell>
+                          <TableCell>₹ {(parseFloat(row.maxLimit) || 0).toLocaleString('en-IN')}</TableCell>
+                          <TableCell>₹ {(parseFloat(row.declaration) || 0).toLocaleString('en-IN')}</TableCell>
+                          <TableCell>
+                            {row.proofFileName || '-'}
+                          </TableCell>
                           <TableCell>
                             <Chip
                               label={row.status}
