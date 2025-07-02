@@ -1,10 +1,9 @@
-// src/components/LacDeclaration.js
 import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Grid, Button, useTheme,
   TextField, TableContainer, Paper, Table, TableHead, TableRow,
   TableCell, TableBody, IconButton, Chip,
-  Dialog, DialogActions, DialogContent, Avatar
+  Dialog, DialogActions, DialogContent
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -36,8 +35,9 @@ function LacDeclaration() {
       deductions: '',
       maxLimit: '',
       declaration: '',
-      proofFile: null,
+      proofBase64: null,
       proofFileName: '',
+      proofFileType: '',
       status: 'Auto Accepted'
     }
   ]);
@@ -49,7 +49,7 @@ function LacDeclaration() {
   });
 
   useEffect(() => {
-    getAllGoals();
+    getAllDeclarations();
   }, []);
 
   const handleStatusChange = (id, status) => {
@@ -67,8 +67,9 @@ function LacDeclaration() {
       deductions: '',
       maxLimit: '',
       declaration: '',
-      proofFile: null,
+      proofBase64: null,
       proofFileName: '',
+      proofFileType: '',
       status: 'Auto Accepted'
     };
     setDeductions([...deductions, newRow]);
@@ -96,46 +97,56 @@ function LacDeclaration() {
         deductions: '',
         maxLimit: '',
         declaration: '',
-        proofFile: null,
+        proofBase64: null,
         proofFileName: '',
+        proofFileType: '',
         status: 'Auto Accepted'
       }
     ]);
   };
 
   const handleProofChange = (id, file) => {
-    if (file && (file.type === 'image/png' || file.type === 'image/jpeg' || file.type === 'application/pdf')) {
+    if (!file) return;
+
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      showToast('error', 'Please upload a valid file (PNG, JPG, or PDF)');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64Data = e.target.result.split(',')[1];
       setDeductions(prev =>
         prev.map(item =>
-          item.id === id
-            ? { ...item, proofFile: file, proofFileName: file.name }
-            : item
+          item.id === id ? {
+            ...item,
+            proofBase64: base64Data,
+            proofFileName: file.name,
+            proofFileType: file.type
+          } : item
         )
       );
-    } else {
-      showToast('error', 'Please upload a valid file (PNG, JPEG, or PDF)');
-    }
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleViewProof = (proofFile) => {
-    if (!proofFile) return;
+  const handleViewProof = (proofBase64, fileType) => {
+    if (!proofBase64) return;
 
-    const url = URL.createObjectURL(proofFile);
+    const dataUrl = `data:${fileType};base64,${proofBase64}`;
     setProofDialog({
       open: true,
-      proofUrl: url,
-      fileType: proofFile.type
+      proofUrl: dataUrl,
+      fileType: fileType
     });
   };
 
   const handleCloseProofDialog = () => {
     setProofDialog({ open: false, proofUrl: null, fileType: '' });
-    if (proofDialog.proofUrl) {
-      URL.revokeObjectURL(proofDialog.proofUrl);
-    }
   };
 
-  const getAllGoals = async () => {
+  const getAllDeclarations = async () => {
     try {
       const response = await apiCalls(
         'get',
@@ -144,11 +155,10 @@ function LacDeclaration() {
 
       if (response.status) {
         const declarationList = response.paramObjectsMap.declarationVO;
-
         if (declarationList.length > 0) {
           setDeclarationId(declarationList[0].id);
-        } else {
-          console.warn('Declaration list is empty');
+          fetchDeductions(declarationList[0].id);
+          console.log("ID", declarationList[0].id)
         }
       } else {
         showToast('error', response.message || 'Failed to fetch declarations');
@@ -156,6 +166,74 @@ function LacDeclaration() {
     } catch (error) {
       console.error('Error fetching declarations:', error);
       showToast('error', 'Failed to fetch declarations');
+    }
+  };
+
+  const fetchDeductions = async (decId) => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/managetax/getOneCroreFiveLacDeductionsList?declarationId=${decId}`
+      );
+      
+      if (response.status) {
+        const deductionsList = response.paramObjectsMap?.oneCroreFiveLacDeductionsVO || [];
+        setDeductions(
+          deductionsList.map(item => ({
+            id: item.id,
+            section: item.section || '',
+            deductions: item.deductions || '',
+            maxLimit: item.maxLimit?.toString() || '',
+            declaration: item.declaration?.toString() || '',
+            status: item.status || 'Auto Accepted',
+            proofBase64: item.proofBase64 || null,
+            proofFileName: item.proofFileName || '',
+            proofFileType: item.proofFileType || ''
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching deductions:', error);
+      showToast('error', 'Failed to fetch deductions');
+    }
+  };
+
+  const uploadProofForDeduction = async (deductionId, proofBase64, fileType, fileName) => {
+    try {
+      // Convert base64 to Blob
+      const byteCharacters = atob(proofBase64);
+      const byteArrays = [];
+      
+      for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+        const slice = byteCharacters.slice(offset, offset + 512);
+        const byteNumbers = new Array(slice.length);
+        
+        for (let i = 0; i < slice.length; i++) {
+          byteNumbers[i] = slice.charCodeAt(i);
+        }
+        
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+      }
+      
+      const blob = new Blob(byteArrays, { type: fileType });
+      const file = new File([blob], fileName, { type: fileType });
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadResponse = await apiCalls(
+        'post',
+        `/managetax/uploadOneCroreFiveLacDeductionsInBloob?id=${deductionId}`,
+        formData,
+        {},
+        { 'Content-Type': 'multipart/form-data' }
+      );
+
+      return uploadResponse.status;
+    } catch (error) {
+      console.error('Error uploading proof:', error);
+      return false;
     }
   };
 
@@ -168,7 +246,7 @@ function LacDeclaration() {
       return;
     }
 
-    // Validate declarations
+    // Validate declaration amounts
     const invalidDeclarations = deductions.filter(d =>
       d.declaration === '' || isNaN(parseFloat(d.declaration)) || parseFloat(d.declaration) < 0
     );
@@ -179,7 +257,7 @@ function LacDeclaration() {
       return;
     }
 
-    // Validate max limits
+    // Check max limits
     const exceededLimits = deductions.filter(d => {
       const maxLimit = parseFloat(d.maxLimit) || 0;
       const declaration = parseFloat(d.declaration) || 0;
@@ -192,7 +270,7 @@ function LacDeclaration() {
       return;
     }
 
-    // Prepare payload with localId
+    // Prepare payload without proofs
     const payload = deductions.map(d => ({
       localId: d.id,
       section: d.section,
@@ -201,58 +279,60 @@ function LacDeclaration() {
       maxLimit: parseFloat(d.maxLimit) || 0,
       declaration: d.declaration.toString(),
       status: d.status,
+      // Exclude proofBase64 from payload
     }));
 
     try {
-      // Save deductions
-      const response = await apiCalls(
+      // Save deductions first
+      const saveResponse = await apiCalls(
         'put',
         '/managetax/saveOneCroreFiveLacDeductionsList',
         payload
       );
 
-      if (response.status === true) {
-        const savedList = response.paramObjectsMap?.savedList || [];
-        const failedUploads = [];
-
-        // Upload proofs for each saved deduction
-        for (const savedItem of savedList) {
-          const localDeduction = deductions.find(d => d.id === savedItem.localId);
-
-          if (localDeduction && localDeduction.proofFile) {
-            try {
-              const formData = new FormData();
-              formData.append('file', localDeduction.proofFile);
-
-              await apiCalls(
-                'post',
-                `/managetax/uploadOneCroreFiveLacDeductionsInBloob?deductionId=${savedItem.id}`,
-                formData,
-                {},
-                { 'Content-Type': 'multipart/form-data' }
-              );
-            } catch (uploadError) {
-              console.error(`Upload failed for deduction ${savedItem.id}:`, uploadError);
-              failedUploads.push({
-                id: savedItem.id,
-                section: localDeduction.section
-              });
-            }
+      if (saveResponse.status === true) {
+        const updatedList = saveResponse.paramObjectsMap?.oneCroreFiveLacDeductionsVO || [];
+        
+        // Upload proofs for deductions that have them
+        const uploadPromises = updatedList.map(async (item) => {
+          const deduction = deductions.find(d => d.id === item.localId);
+          if (deduction?.proofBase64) {
+            return uploadProofForDeduction(
+              item.id,
+              deduction.proofBase64,
+              deduction.proofFileType,
+              deduction.proofFileName
+            );
           }
+          return true;
+        });
+
+        // Wait for all uploads to complete
+        const uploadResults = await Promise.all(uploadPromises);
+        const allUploadsSuccessful = uploadResults.every(result => result);
+
+        if (!allUploadsSuccessful) {
+          showToast('warning', 'Deductions saved but some proof uploads failed');
         }
 
-        // Handle upload results
-        if (failedUploads.length > 0) {
-          const failedSections = failedUploads.map(u => u.section || `ID: ${u.id}`).join(', ');
-          showToast('warning', `Proofs failed to upload for: ${failedSections}. Please try again.`);
-        } else {
-          showToast('success', 'All deductions and proofs saved successfully');
-        }
-
-        // Refresh deductions list
-        getAllGoals();
+        // Update state with saved deductions
+        setDeductions(
+          updatedList.map(item => ({
+            id: item.id,
+            section: item.section || '',
+            deductions: item.deductions || '',
+            maxLimit: item.maxLimit?.toString() || '',
+            declaration: item.declaration?.toString() || '',
+            status: item.status || 'Auto Accepted',
+            proofBase64: item.proofBase64 || null,
+            proofFileName: item.proofFileName || '',
+            proofFileType: item.proofFileType || ''
+          }))
+        );
+        
+        showToast('success', 'Deductions saved successfully');
       } else {
-        showToast('error', response.paramObjectsMap?.errorMessage || 'Saving failed');
+        showToast('error', saveResponse.paramObjectsMap?.errorMessage || 'Saving failed');
       }
     } catch (error) {
       console.error('Error saving deductions:', error);
@@ -410,13 +490,13 @@ function LacDeclaration() {
                                 <input
                                   type="file"
                                   hidden
-                                  accept="image/png, image/jpeg, application/pdf"
+                                  accept="image/png, image/jpeg, image/jpg, application/pdf"
                                   onChange={(e) => handleProofChange(row.id, e.target.files[0])}
                                 />
                               </Button>
-                              {row.proofFile && (
+                              {row.proofBase64 && (
                                 <IconButton
-                                  onClick={() => handleViewProof(row.proofFile)}
+                                  onClick={() => handleViewProof(row.proofBase64, row.proofFileType)}
                                   sx={{ color: 'rgb(103 58 183)' }}
                                   size="small"
                                 >
@@ -477,14 +557,14 @@ function LacDeclaration() {
                   open={proofDialog.open}
                   onClose={handleCloseProofDialog}
                   fullWidth
-                  maxWidth={proofDialog.fileType === 'application/pdf' ? 'lg' : 'sm'}
+                  maxWidth={proofDialog.fileType.includes('pdf') ? 'lg' : 'sm'}
                 >
                   <DialogContent>
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       Proof Document
                     </Typography>
                     {proofDialog.proofUrl ? (
-                      proofDialog.fileType === 'application/pdf' ? (
+                      proofDialog.fileType.includes('pdf') ? (
                         <iframe
                           src={proofDialog.proofUrl}
                           width="100%"
@@ -493,11 +573,11 @@ function LacDeclaration() {
                           style={{ border: 'none' }}
                         />
                       ) : (
-                        <Box display="flex" justifyContent="center">
+                        <Box display="flex" justifyContent="center" sx={{ maxHeight: '80vh' }}>
                           <img
                             src={proofDialog.proofUrl}
                             alt="Proof document"
-                            style={{ maxWidth: '100%', maxHeight: '80vh' }}
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                           />
                         </Box>
                       )
@@ -537,7 +617,7 @@ function LacDeclaration() {
                           <TableCell>₹ {(parseFloat(row.maxLimit) || 0).toLocaleString('en-IN')}</TableCell>
                           <TableCell>₹ {(parseFloat(row.declaration) || 0).toLocaleString('en-IN')}</TableCell>
                           <TableCell>
-                            {row.proofFileName || '-'}
+                            {row.proofFileName || 'No Proof'}
                           </TableCell>
                           <TableCell>
                             <Chip

@@ -34,6 +34,8 @@ const KRAKPI = () => {
     const [listViewData, setListViewData] = useState([]);
     const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
     const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+    const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
+    const [branch, setBranch] = useState(localStorage.getItem('branch'));
     const [value, setValue] = useState(0);
     const [editId, setEditId] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -131,19 +133,19 @@ const KRAKPI = () => {
                         kpiKraDescription: detail.kpiDescription
                     }))
                 );
-                
+
                 // Initialize errors arrays
                 setGoalsDetailsErrors(
                     goal.kpiVO.map(() => ({ kpiId: '', kpiDescription: '' }))
                 );
-                
+
                 setDetailsTableErrors(
-                    goal.kpiKraDetailsVO.map(() => ({ 
-                        kraId: '', 
-                        kraDescription: '', 
-                        ro: '', 
-                        kpiId: '', 
-                        kpiKraDescription: '' 
+                    goal.kpiKraDetailsVO.map(() => ({
+                        kraId: '',
+                        kraDescription: '',
+                        ro: '',
+                        kpiId: '',
+                        kpiKraDescription: ''
                     }))
                 );
             }
@@ -177,7 +179,7 @@ const KRAKPI = () => {
         });
 
         const hasKpiErrors = detailsErrors.some(err => err.kpiId || err.kpiDescription);
-        const hasDetailErrors = detailsTableErrs.some(err => 
+        const hasDetailErrors = detailsTableErrs.some(err =>
             err.kraId || err.kraDescription || err.kpiId || err.kpiKraDescription
         );
 
@@ -213,7 +215,10 @@ const KRAKPI = () => {
             createdBy: loginUserName,
             kpiDTO: kpiVo,
             kpiKraDetailsDTO: kpiKraDetailsVo,
-            orgId: orgId,
+            orgId: orgId,   
+            finYear: '2025',
+            branchCode:branchCode,
+            branch:branch,
         };
 
         try {
@@ -249,7 +254,7 @@ const KRAKPI = () => {
         setGoalsDetailsErrors([
             { kpiId: '', kpiDescription: '' }
         ]);
-        
+
         setDetailsTableData([
             { id: null, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
         ]);
@@ -317,11 +322,11 @@ const KRAKPI = () => {
         if (detailsTableData.length === 0) {
             // Generate temporary ID for first row
             const newId = -1;
-            
+
             setDetailsTableData([
                 { id: newId, kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
             ]);
-            
+
             setDetailsTableErrors([
                 { kraId: '', kraDescription: '', ro: '', kpiId: '', kpiKraDescription: '' }
             ]);

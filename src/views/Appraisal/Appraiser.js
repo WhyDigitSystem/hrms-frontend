@@ -28,7 +28,7 @@ function Appraiser() {
   const orgId = localStorage.getItem('orgId');
   const branch = localStorage.getItem('branch');
   const createdBy = localStorage.getItem('userName');
-  const finYear = localStorage.getItem('finYear');
+  // const finYear = localStorage.getItem('finYear');
   const [editId, setEditId] = useState(null);
   const [empDetails, setEmpDetails] = useState([]);
   const [supervisorsCode, setSupervisorCode] = useState([]);
@@ -324,7 +324,7 @@ function Appraiser() {
       createdBy: createdBy,
       modifiedBy: createdBy,
       orgId: parseInt(orgId),
-      finYear: finYear,
+      finYear: '2025',
       branch: branch,
       appraisalId: formData.appraisalID,
       supCode: formData.supervisorCode,
@@ -363,7 +363,7 @@ function Appraiser() {
           createdBy: createdBy,
           modifiedBy: createdBy,
           orgId: parseInt(orgId),
-          finYear: finYear,
+          finYear: '2025',
           appraisalID: item.appraisalId,
           supervisorCode: item.supCode,
           supervisorName: item.supName,

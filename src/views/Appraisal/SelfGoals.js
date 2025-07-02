@@ -20,7 +20,7 @@ const SelfGoals = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [isFetchingEmployee, setIsFetchingEmployee] = useState(false);
-  const finYear = localStorage.getItem('finYear');
+  // const finYear = '2025';
 
   const [formData, setFormData] = useState({
     appraisalId: '',
@@ -165,7 +165,7 @@ const SelfGoals = () => {
           supervisorCode: goal.supervisorCode,
           supervisorName: goal.supervisorName,
           orgId: parseInt(orgId),
-          finYear: finYear
+          finYear: '2025',
           // active: goal.active === true
         });
 
@@ -288,7 +288,7 @@ const SelfGoals = () => {
       supervisorCode: formData.supervisorCode,
       supervisorName: formData.supervisorName,
       orgId: parseInt(orgId),
-      finYear: finYear,
+      finYear: '2025',
       createdBy,
       selfGoalsDetailsDTO: selfGoalsDetailsVo
     };

@@ -386,7 +386,7 @@ const CheckinDetails = ({ isLoading }) => {
                           }}
                         />
                       }
-                      label="Work From Home"
+                      label="WFH"
                       sx={{
                         ml: 2,
                         color: 'white',
