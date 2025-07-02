@@ -27,7 +27,9 @@ const Roles = Loadable(lazy(() => import('views/basicMaster/roles')));
 const ScreenNames = Loadable(lazy(() => import('views/basicMaster/ScreenNames')));
 const LeaveAssigned = Loadable(lazy(() => import('views/basicMaster/leaveAssigned')));
 const ProjectMaster = Loadable(lazy(() => import('views/basicMaster/ProjectMaster')));
-
+const ShiftMaster = Loadable(lazy(() => import('views/basicMaster/shiftMaster')));
+const OverTimeMaster = Loadable(lazy(() => import('views/basicMaster/OverTimeMaster.js')));
+const OverTime = Loadable(lazy(() => import('views/basicMaster/OverTimeScreen.js')));
 const AppraisalPeroid = Loadable(lazy(() => import('views/basicMaster/AppraisalPeroid')));
 const KRAKPI = Loadable(lazy(() => import('views/basicMaster/KRAKPI')));
 const Weightage = Loadable(lazy(() => import('views/basicMaster/Weightage')));
@@ -155,6 +157,18 @@ const HrmsRoute = {
     {
       path: '/basicMaster/ProjectMaster',
       element: <ProjectMaster />
+    },
+    {
+      path: '/basicMaster/ShiftMaster',
+      element: <ShiftMaster />
+    },
+    {
+      path: '/basicMaster/OverTimeMaster',
+      element: <OverTimeMaster />
+    },
+    {
+      path: '/basicMaster/OverTimeScreen',
+      element: <OverTime />
     },
     {
       path: '/basicMaster/roles',

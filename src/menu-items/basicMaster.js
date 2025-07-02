@@ -62,15 +62,15 @@ const allScreens = [
   { id: 'department', title: 'Department', type: 'item', url: '/basicMaster/Department', icon: icons4.IconBuildingFactory2 },
   { id: 'designation', title: 'Designation', type: 'item', url: '/basicMaster/Designation', icon: icons6.IconIdBadge2 },
   { id: 'projectMaster', title: 'Project Master', type: 'item', url: '/basicMaster/ProjectMaster', icon: icons6.IconIdBadge2 },
+  { id: 'shiftMaster', title: 'Project Master', type: 'item', url: '/basicMaster/ShiftMaster', icon: icons6.IconIdBadge2 },
+  { id: 'overTimeMaster', title: 'OverTime Master', type: 'item', url: '/basicMaster/OverTimeMaster', icon: icons6.IconIdBadge2 },
+  { id: 'overTime', title: 'OverTime', type: 'item', url: '/basicMaster/OverTimeScreen', icon: icons6.IconIdBadge2 },
   { id: 'AppraisalPeroid', title: 'Appraisal Peroid', type: 'item', url: '/basicMaster/AppraisalPeroid', icon: icons6.IconIdBadge2 },
   { id: 'KRAKPI', title: 'KRA KPI', type: 'item', url: '/basicMaster/KRAKPI', icon: icons6.IconIdBadge2 },
   { id: 'Weightage', title: 'Weightage', type: 'item', url: '/basicMaster/Weightage', icon: icons6.IconIdBadge2 },
   { id: 'Grade', title: 'Grade', type: 'item', url: '/basicMaster/Grade', icon: icons6.IconIdBadge2 },
   { id: 'Goals', title: 'Goals', type: 'item', url: '/basicMaster/Goals', icon: icons6.IconIdBadge2 },
   { id: 'Score', title: 'Score', type: 'item', url: '/basicMaster/Score', icon: icons6.IconIdBadge2 },
-
-
-
 ];
 
 const allowedScreenIds = userType === "ADMIN"
@@ -143,6 +143,27 @@ const basicMaster = {
           title: 'Project Master',
           type: 'item',
           url: '/basicMaster/ProjectMaster',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'shiftMaster',
+          title: 'Shift Master',
+          type: 'item',
+          url: '/basicMaster/ShiftMaster',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'overTimeMaster',
+          title: 'OverTime Master',
+          type: 'item',
+          url: '/basicMaster/OverTimeMaster',
+          icon: icons6.IconIdBadge2
+        },
+        {
+          id: 'overTime',
+          title: 'OverTime',
+          type: 'item',
+          url: '/basicMaster/OverTimeScreen',
           icon: icons6.IconIdBadge2
         },
         {
