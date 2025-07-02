@@ -59,10 +59,15 @@ const LeaveRequest = Loadable(lazy(() => import('views/me/LeaveRequest')));
 const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')));
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
 const TimeSheet = Loadable(lazy(() => import('views/me/TimeSheet')));
-const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
 const WorkFromHome = Loadable(lazy(() => import('views/me/WorkFromHome')));
 const TravelRequest = Loadable(lazy(() => import('views/me/TravelRequest')));
 
+// finance
+const Payslip = Loadable(lazy(() => import('views/finance/Payslip')));
+const ESIReport = Loadable(lazy(() => import('views/finance/ESIReport')));
+const ESI = Loadable(lazy(() => import('views/finance/ESI')));
+const PFCalculationReport = Loadable(lazy(() => import('views/finance/PFCalculationReport')));
+const PFCalculation = Loadable(lazy(() => import('views/finance/PFCalculation')));
 
 
 //team
@@ -259,13 +264,29 @@ const HrmsRoute = {
       path: '/me/WorkFromHome',
       element: <WorkFromHome />
     },
-     {
+    {
       path: '/me/TravelRequest',
       element: <TravelRequest />
     },
     {
       path: '/finance/Payslip',
       element: <Payslip />
+    },
+    {
+      path: '/finance/ESI',
+      element: <ESI />
+    },
+    {
+      path: '/finance/ESIReport',
+      element: <ESIReport />
+    },
+    {
+      path: '/finance/PFCalculation',
+      element: <PFCalculation />
+    },
+    {
+      path: '/finance/PFCalculationReport',
+      element: <PFCalculationReport />
     },
     // Team path
     {

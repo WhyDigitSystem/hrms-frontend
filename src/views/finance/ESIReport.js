@@ -1,51 +1,38 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-import { Box, Button, Card, Typography, Paper } from '@mui/material';
+import { Box, Button, Card, Typography, Paper, IconButton, Tooltip } from '@mui/material';
 import { ToastContainer, toast } from 'react-toastify';
 import apiCalls from 'apicall';
 import ActionButton from 'utils/ActionButton';
 import DownloadIcon from '@mui/icons-material/Download';
-import 'react-toastify/dist/ReactToastify.css'; 
+import PrintIcon from '@mui/icons-material/Print';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import GridOnIcon from '@mui/icons-material/GridOn';
 import * as XLSX from 'xlsx';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 import autoTable from "jspdf-autotable";
+import 'react-toastify/dist/ReactToastify.css';
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 
-const HolidayReport = () => {
+const ESIReport = () => {
   const [listViewData, setListViewData] = useState([]);
   const [branchName, setBranchName] = useState(localStorage.getItem('branchName'));
   const orgId = localStorage.getItem('orgId');
 
-  useEffect(() => {
-    getAllHolidayByOrgId();
-  }, []);
-
-  // In your getAllHolidayByOrgId function
   const getAllHolidayByOrgId = useCallback(async () => {
     try {
       const result = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}`);
-
       const holidays = result?.paramObjectsMap?.holidayVO || [];
-
-      const reversedHolidays = [...holidays] // Optional: if you want latest first
+      const reversedHolidays = [...holidays];
       setListViewData(reversedHolidays);
-
       if (reversedHolidays.length > 0 && reversedHolidays[0].branchName) {
         setBranchName(reversedHolidays[0].branchName);
       }
-
     } catch (err) {
       console.error('Error fetching data:', err);
-
       toast.error(`Failed to fetch holiday data: ${err?.message || 'Unknown error'}`);
-
-      // Optional fallback
       setListViewData([]);
     }
   }, [orgId]);
-
-
 
   useEffect(() => {
     getAllHolidayByOrgId();
@@ -62,17 +49,14 @@ const HolidayReport = () => {
       toast.error("No holidays available to download.");
       return;
     }
-
     try {
       const doc = new jsPDF();
-
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
       doc.setTextColor(40, 53, 147);
       doc.text("Holiday List", 105, 15, { align: "center" });
 
-      const branch = listViewData.length > 0 ? listViewData[0].branchName : branchName;
-      doc.setFont("helvetica", "bold");
+      const branch = listViewData[0]?.branchName || branchName;
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       doc.text(`Branch: ${branch}`, 105, 22, { align: "center" });
@@ -108,10 +92,72 @@ const HolidayReport = () => {
     }
   };
 
+  const handleDownloadExcel = () => {
+    if (!listViewData || listViewData.length === 0) {
+      toast.error("No holidays available to export.");
+      return;
+    }
+
+    const dataToExport = listViewData.map((item, index) => ({
+      "S.No": index + 1,
+      "Date": formatDate(item.holidayDate),
+      "Day": item.day || "N/A",
+      "Holiday Name": item.festival || "N/A",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Holidays");
+    XLSX.writeFile(workbook, "holidays_report.xlsx");
+    toast.success("Excel downloaded successfully!");
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printableContent = listViewData.map((item, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${formatDate(item.holidayDate)}</td>
+        <td>${item.day || 'N/A'}</td>
+        <td>${item.festival || 'N/A'}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Holiday Report</title>
+          <style>
+            table { width: 100%; border-collapse: collapse; font-family: Arial; }
+            th, td { border: 1px solid #999; padding: 8px; text-align: center; }
+            th { background-color: #3f51b5; color: white; }
+          </style>
+        </head>
+        <body>
+          <h2 style="text-align:center;">Holiday List - ${branchName}</h2>
+          <table>
+            <thead>
+              <tr><th>S.No</th><th>Date</th><th>Day</th><th>Holiday</th></tr>
+            </thead>
+            <tbody>${printableContent}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const listViewColumns = [
-    { accessorKey: 'holidayDate', header: 'Date', size: 140 },
-    { accessorKey: 'day', header: 'Day', size: 140 },
-    { accessorKey: 'festival', header: 'Holidays', size: 140 },
+    { accessorKey: 'ipNumber', header: 'IP Number', size: 140 },
+    { accessorKey: 'ipName', header: 'IP Name', size: 140 },
+    { accessorKey: 'daysWorked', header: 'No Of Days Work', size: 140 },
+    { accessorKey: 'monthlyWages', header: 'Total Monthly Wages', size: 140 },
+    { accessorKey: 'reasonCode', header: 'Reason Code', size: 140 },
+    { accessorKey: 'lastWorkingDate', header: 'Last Working Date', size: 140 },
   ];
 
   return (
@@ -120,21 +166,22 @@ const HolidayReport = () => {
         <ToastContainer position="top-right" autoClose={5000} />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#3f51b5' }}>
-            Holiday Report - {branchName ? branchName : "No branch available"} - Branch
+            ESI Report
           </Typography>
-          {/* 
-          <Button
-            variant="contained"
-            startIcon={<CloudDownloadIcon />}
-            sx={{ background: '#4caf50', color: '#fff' }}
-            onClick={handleDownloadPDF}
-          >
-            Download PDF
-          </Button> */}
-          <ActionButton title="Download" icon={DownloadIcon} onClick={handleDownloadPDF} margin="0 10px 0 10px" />
+          <Box>
+            <Tooltip title="Print">
+              <IconButton color="primary" onClick={handlePrint}><PrintIcon /></IconButton>
+            </Tooltip>
+            <Tooltip title="Download PDF">
+              <IconButton color="error" onClick={handleDownloadPDF}><PictureAsPdfIcon /></IconButton>
+            </Tooltip>
+            <Tooltip title="Download Excel">
+              <IconButton color="success" onClick={handleDownloadExcel}><GridOnIcon /></IconButton>
+            </Tooltip>
+          </Box>
         </Box>
         <Box sx={{ mt: 0 }}>
-          {listViewData.length > 1 && (
+          {listViewData.length > 0 && (
             <Paper sx={{ boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)', borderRadius: 2, overflow: 'hidden' }}>
               <CommonListViewTable
                 data={listViewData}
@@ -151,4 +198,4 @@ const HolidayReport = () => {
   );
 };
 
-export default HolidayReport;
+export default ESIReport;
