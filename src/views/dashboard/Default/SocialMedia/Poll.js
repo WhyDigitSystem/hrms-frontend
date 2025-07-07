@@ -17,7 +17,8 @@ import {
   RadioGroup,
   Radio,
   Chip,
-  FormControlLabel
+  FormControlLabel,
+  Avatar
 } from '@mui/material';
 import {
   Poll as PollIcon,
@@ -27,7 +28,9 @@ import {
   Add as AddIcon,
   People as PeopleIcon,
   AccessTime as AccessTimeIcon,
-  Delete as DeleteIcon
+  Delete as DeleteIcon,
+  Business as BusinessIcon,
+  Work as WorkIcon
 } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import { ToastContainer, toast } from 'react-toastify';
@@ -46,6 +49,9 @@ function Poll({ tabValue, setPollData, pollData }) {
   const [pollDetails, setPollDetails] = useState(["", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const [voteModalOpen, setVoteModalOpen] = useState(false);
+  const [selectedVoters, setSelectedVoters] = useState([]);
+  const [selectedOptionText, setSelectedOptionText] = useState('');
   const [newPoll, setNewPoll] = useState({
     question: '',
     expiresDate: '',
@@ -53,6 +59,17 @@ function Poll({ tabValue, setPollData, pollData }) {
     multiSelect: false
   });
   const [viewAllModalOpen, setViewAllModalOpen] = useState(false);
+
+  const [votedPolls, setVotedPolls] = useState(() => {
+    try {
+      const saved = localStorage.getItem('votedPolls');
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? new Set(parsed) : new Set();
+    } catch (e) {
+      console.error('Failed to parse votedPolls from localStorage:', e);
+      return new Set();
+    }
+  });
 
   const orgId = localStorage.getItem('orgId');
   const branchCode = localStorage.getItem('branchCode');
@@ -64,6 +81,40 @@ function Poll({ tabValue, setPollData, pollData }) {
   useEffect(() => {
     getAllPolls();
   }, []);
+
+  const handleViewVotes = async (pollId, optionId, optionText) => {
+    try {
+      setIsLoading(true);
+      setSelectedOptionText(optionText);
+
+      const response = await apiCalls(
+        'get',
+        `/basicmaster/getPollResultEmpName?options=${optionText}&orgId=${orgId}&pollId=${pollId}`
+      );
+
+      if (response?.paramObjectsMap?.pollVoteVO) {
+        const voters = response.paramObjectsMap.pollVoteVO.map(voter => ({
+          name: voter.empName,
+          branch: voter.branchCode,
+          department: voter.department,
+          question: voter.question
+        }));
+        setSelectedVoters(voters);
+      } else {
+        setSelectedVoters([]);
+      }
+      setVoteModalOpen(true);
+    } catch (error) {
+      console.error('Error fetching voted employees:', error);
+      toast.error('Failed to fetch voters');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('votedPolls', JSON.stringify(Array.from(votedPolls)));
+  }, [votedPolls]);
 
   const getAllPolls = async () => {
     try {
@@ -78,14 +129,54 @@ function Poll({ tabValue, setPollData, pollData }) {
       const result = await apiCalls('get', endpoint);
 
       if (result && result.paramObjectsMap.pollsVO) {
-        const transformed = result.paramObjectsMap.pollsVO.map(poll => ({
-          ...poll,
-          options: poll.pollDetailsVO.map(option => ({
-            id: option.id.toString(),
-            text: option.options,
-            votes: option.votes || 0
-          }))
-        }));
+        const transformed = await Promise.all(
+          result.paramObjectsMap.pollsVO.map(async (poll) => {
+            try {
+              const voteResponse = await apiCalls(
+                'get',
+                `/basicmaster/getPollResultForHR?orgId=${orgId}&pollId=${poll.id}`
+              );
+
+              const voteMap = {};
+              if (voteResponse?.paramObjectsMap?.pollVoteVO) {
+                voteResponse.paramObjectsMap.pollVoteVO.forEach((item) => {
+                  voteMap[item.options] = parseInt(item.Count, 10);
+                });
+              }
+
+              const options = poll.pollDetailsVO.map((option) => {
+                const optionId = option.id.toString();
+                return {
+                  id: optionId,
+                  text: option.options,
+                  votes: voteMap[optionId] || 0
+                };
+              });
+
+              const totalVotes = Object.values(voteMap).reduce(
+                (sum, count) => sum + count, 0
+              );
+
+              return {
+                ...poll,
+                options,
+                totalVotes
+              };
+            } catch (error) {
+              console.error(`Error fetching votes for poll ${poll.id}:`, error);
+              return {
+                ...poll,
+                options: poll.pollDetailsVO.map(option => ({
+                  id: option.id.toString(),
+                  text: option.options,
+                  votes: 0
+                })),
+                totalVotes: 0
+              };
+            }
+          })
+        );
+
         setPolls(transformed);
         setPollData(transformed);
       }
@@ -98,35 +189,20 @@ function Poll({ tabValue, setPollData, pollData }) {
   };
 
   const handleVote = async (pollId) => {
-    console.log("Submitting vote for:", pollId);
     const selectedOptionId = selectedOptions[pollId];
     if (!selectedOptionId) {
       toast.warning('Please select an option before voting');
       return;
     }
 
-    // Find the relevant poll and selected option
-    const poll = polls.find(p => p.id === pollId);
-    if (!poll) {
-      toast.error('Poll not found');
-      return;
-    }
-    const selectedOption = poll.options.find(opt => opt.id === selectedOptionId);
-    if (!selectedOption) {
-      toast.error('Invalid option selected');
-      return;
-    }
-
-    // Prepare payload according to API requirements
     const saveData = [{
       branchCode: branchCode,
       branchName: branchName,
       department: department,
-      options: selectedOption.id,
-      // Send option text instead of ID
-      orgId: parseInt(orgId, 10),  // Ensure number type
+      options: selectedOptionId,
+      orgId: parseInt(orgId, 10),
       pollId: pollId,
-      question: poll.question,      // Get question from poll object
+      question: polls.find(p => p.id === pollId)?.question || '',
       userName: loginUserName,
     }];
 
@@ -134,22 +210,14 @@ function Poll({ tabValue, setPollData, pollData }) {
       setIsLoading(true);
       const response = await apiCalls('put', '/basicmaster/createUpdatepollVote', saveData);
 
-
       if (response?.status) {
-        // Update local state with new votes
-        const updatedPolls = polls.map(item => {
-          if (item.id === pollId) {
-            const updatedOptions = item.options.map(opt =>
-              opt.id === selectedOptionId ? { ...opt, votes: opt.votes + 1 } : opt
-            );
-            const totalVotes = updatedOptions.reduce((sum, opt) => sum + opt.votes, 0);
-            return { ...item, options: updatedOptions, totalVotes, hasVoted: true };
-          }
-          return item;
+        setVotedPolls(prev => {
+          const updated = new Set(prev);
+          updated.add(pollId);
+          return new Set(updated);
         });
 
-        setPolls(updatedPolls);
-        setListViewData(updatedPolls);
+        getAllPolls();
         toast.success('Vote submitted successfully!');
       } else {
         toast.error(response?.message || 'Failed to submit vote');
@@ -164,9 +232,8 @@ function Poll({ tabValue, setPollData, pollData }) {
   };
 
   const handleSave = async () => {
-    // Filter out empty options
     const validOptions = pollDetails.filter(opt => opt.trim() !== '');
-    
+
     if (!newPoll.question.trim() || validOptions.length < 2) {
       showToast('error', 'Please fill in all required fields and provide at least two options.');
       return;
@@ -241,6 +308,7 @@ function Poll({ tabValue, setPollData, pollData }) {
       </Box>
     );
   }
+
   return (
     <Box sx={{ p: 3 }}>
       <ToastContainer position="top-right" autoClose={5000} />
@@ -253,7 +321,7 @@ function Poll({ tabValue, setPollData, pollData }) {
                 <Card variant="outlined" sx={{
                   height: '100%',
                   width: '100%',
-                  borderColor: poll.hasVoted ? theme.palette.success.light : theme.palette.primary.light,
+                  borderColor: votedPolls.has(poll.id) ? theme.palette.success.light : theme.palette.primary.light,
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   '&:hover': {
                     transform: 'translateY(-2px)',
@@ -262,7 +330,11 @@ function Poll({ tabValue, setPollData, pollData }) {
                 }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Chip label={poll.hasVoted ? 'Voted' : 'Active'} size="small" color={poll.hasVoted ? 'success' : 'primary'} />
+                      <Chip
+                        label={votedPolls.has(poll.id) ? 'Voted' : 'Active'}
+                        size="small"
+                        color={votedPolls.has(poll.id) ? 'success' : 'primary'}
+                      />
                       <Typography variant="caption" color="text.secondary">{formatDate(poll.createdDate)}</Typography>
                     </Box>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>{poll.question}</Typography>
@@ -278,7 +350,7 @@ function Poll({ tabValue, setPollData, pollData }) {
                       </Box>
                     </Box>
 
-                    {poll.hasVoted ? (
+                    {votedPolls.has(poll.id) ? (
                       poll.options.map(option => (
                         <Box key={option.id} sx={{ mb: 2 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -286,7 +358,13 @@ function Poll({ tabValue, setPollData, pollData }) {
                             <Typography variant="body2">{Math.round((option.votes / (poll.totalVotes || 1)) * 100)}%</Typography>
                           </Box>
                           <LinearProgress variant="determinate" value={(option.votes / (poll.totalVotes || 1)) * 100} sx={{ height: 8, borderRadius: 4, mt: 0.5 }} />
-                          <Typography variant="caption">{option.votes} votes</Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{ textDecoration: 'underline', cursor: 'pointer', color: 'primary.main' }}
+                            onClick={() => handleViewVotes(poll.id, option.id, option.text)}
+                          >
+                            {option.votes} vote{option.votes !== 1 ? 's' : ''}
+                          </Typography>
                         </Box>
                       ))
                     ) : (
@@ -302,13 +380,20 @@ function Poll({ tabValue, setPollData, pollData }) {
                                   value={option.id}
                                   control={<Radio />}
                                   label={option.text}
+                                  sx={{
+                                    backgroundColor: selectedOptions[poll.id] === option.id ? '#e3f2fd' : 'transparent',
+                                    borderRadius: 2,
+                                    px: 2,
+                                    py: 1,
+                                    mb: 1,
+                                    transition: 'background-color 0.3s'
+                                  }}
                                 />
                               </Grid>
                             ))}
                           </Grid>
                         </RadioGroup>
                         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-
                           <Button
                             variant="contained"
                             startIcon={<HowToVoteIcon sx={{ fontSize: 20 }} />}
@@ -318,20 +403,24 @@ function Poll({ tabValue, setPollData, pollData }) {
                               width: { xs: '90%', sm: '30%' },
                               fontWeight: 'bold',
                               borderRadius: 2,
-                              background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
+                              background: selectedOptions[poll.id]
+                                ? 'linear-gradient(45deg, #4caf50, #66bb6a)'
+                                : 'linear-gradient(45deg, #3f51b5, #2196f3)',
                               color: 'white',
-                              boxShadow: '0 3px 5px 2px rgba(63, 81, 181, .3)',
+                              boxShadow: selectedOptions[poll.id]
+                                ? '0 3px 5px 2px rgba(76, 175, 80, .3)'
+                                : '0 3px 5px 2px rgba(63, 81, 181, .3)',
                               transition: 'all 0.3s ease-in-out',
                               '&:hover': {
-                                background: 'linear-gradient(45deg, #2196f3, #3f51b5)',
-                                boxShadow: '0 6px 10px 4px rgba(33, 150, 243, .3)',
+                                background: selectedOptions[poll.id]
+                                  ? 'linear-gradient(45deg, #43a047, #2e7d32)'
+                                  : 'linear-gradient(45deg, #2196f3, #3f51b5)',
                                 transform: 'scale(1.03)'
                               }
                             }}
                           >
                             Submit Vote
                           </Button>
-
                         </Box>
                       </FormControl>
                     )}
@@ -361,20 +450,34 @@ function Poll({ tabValue, setPollData, pollData }) {
             setOpenCreateModal(true);
           }}
           disabled={userType === 'USER' && tabValue === 0 || userType === 'TEAM LEAD' && tabValue === 0}
-          sx={{
-            p: 1.5, // increase padding
-            background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
-            color: 'white',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #2196f3, #3f51b5)'
-            }
-          }}
+        // sx={{
+        //   p: 1.5,
+        //   background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
+        //   color: 'white',
+        //   '&:hover': {
+        //     background: 'linear-gradient(45deg, #2196f3, #3f51b5)'
+        //   }
+        // }}
         >
           <AddIcon />
         </IconButton>
 
-
-        <Button
+        {/* New View More Icon Button */}
+        {/* New View More Icon Button */}
+        <IconButton
+          color="primary"
+          onClick={() => setViewAllModalOpen(true)}
+          sx={{
+            backgroundColor: theme.palette.primary.main,
+            color: 'white',
+            '&:hover': {
+              backgroundColor: theme.palette.primary.dark,
+            }
+          }}
+        >
+          <MoreHorizIcon />
+        </IconButton>
+        {/* <Button
           variant="contained"
           color="primary"
           endIcon={<MoreHorizIcon />}
@@ -387,8 +490,74 @@ function Poll({ tabValue, setPollData, pollData }) {
           }}
         >
           View More
-        </Button>
+        </Button> */}
       </div>
+
+      {/* Voter Details Modal */}
+      <Modal open={voteModalOpen} onClose={() => setVoteModalOpen(false)}>
+        <Box sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          bgcolor: 'background.paper',
+          boxShadow: 24,
+          p: 3,
+          borderRadius: 2,
+          width: { xs: '95vw', sm: '500px' },
+          maxHeight: '80vh',
+          overflowY: 'auto'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6">Voters for: {selectedOptionText}</Typography>
+            <IconButton onClick={() => setVoteModalOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {selectedVoters.length > 0 ? (
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                Total: {selectedVoters.length} vote{selectedVoters.length !== 1 ? 's' : ''}
+              </Typography>
+
+              {selectedVoters.map((voter, index) => (
+                <Box key={index} sx={{
+                  mb: 2,
+                  p: 2,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 2
+                }}>
+                  <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+                    {voter.name.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body1" fontWeight="bold">{voter.name}</Typography>
+                    <Box sx={{ display: 'flex', gap: 2, mt: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <BusinessIcon fontSize="small" sx={{ mr: 0.5 }} />
+                        <Typography variant="caption">{voter.branch}</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <WorkIcon fontSize="small" sx={{ mr: 0.5 }} />
+                        <Typography variant="caption">{voter.department}</Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No voters found for this option.
+            </Typography>
+          )}
+        </Box>
+      </Modal>
 
       {/* Edit Poll Modal */}
       <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)}>
@@ -446,7 +615,7 @@ function Poll({ tabValue, setPollData, pollData }) {
                   required
                 />
                 {index >= 2 && (
-                  <IconButton 
+                  <IconButton
                     onClick={() => removeOption(index)}
                     sx={{ ml: 1, color: 'error.main' }}
                   >
@@ -487,47 +656,145 @@ function Poll({ tabValue, setPollData, pollData }) {
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          width: '90vw',
-          maxHeight: '90vh',
+          width: { xs: '90vw', sm: '600px' }, // Adjusted width
+          maxHeight: '80vh',
           overflowY: 'auto'
         }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">All Polls</Typography>
-            <IconButton onClick={() => setViewAllModalOpen(false)}>
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            pb: 1
+          }}>
+            <Typography variant="h6" fontWeight="bold">All Polls</Typography>
+            <IconButton
+              onClick={() => setViewAllModalOpen(false)}
+              sx={{
+                '&:hover': {
+                  backgroundColor: theme.palette.grey[200]
+                }
+              }}
+            >
               <CloseIcon />
             </IconButton>
           </Box>
-          <Grid container spacing={2}>
-            {polls.length > 0 ? polls.map(poll => (
-              <Grid item xs={12} md={6} key={poll.id}>
-                <Card variant="outlined" sx={{
-                  borderColor: poll.hasVoted ? theme.palette.success.light : theme.palette.primary.light,
-                  '&:hover': {
-                    boxShadow: 3
-                  }
-                }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                      <Chip label={poll.hasVoted ? 'Voted' : 'Active'} size="small" color={poll.hasVoted ? 'success' : 'primary'} />
-                      <Typography variant="caption" color="text.secondary">{formatDate(poll.createdDate)}</Typography>
-                    </Box>
-                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom>{poll.question}</Typography>
-                    <Divider sx={{ mb: 1 }} />
-                    {poll.options.map(option => (
-                      <Box key={option.id} sx={{ mb: 1 }}>
-                        <Typography variant="body2">{option.text} - {option.votes} vote(s)</Typography>
+
+          {polls.length > 0 ? (
+            <Grid container spacing={2}>
+              {polls.map(poll => (
+                <Grid item xs={12} key={poll.id}>
+                  <Card variant="outlined" sx={{
+                    borderColor: votedPolls.has(poll.id) ?
+                      theme.palette.success.light :
+                      theme.palette.primary.light,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 3
+                    }
+                  }}>
+                    <CardContent>
+                      <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 1
+                      }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label={votedPolls.has(poll.id) ? 'Voted' : 'Active'}
+                            size="small"
+                            color={votedPolls.has(poll.id) ? 'success' : 'primary'}
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            {formatDate(poll.createdDate)}
+                          </Typography>
+                        </Box>
+                        <Typography variant="caption">
+                          {poll.totalVotes || 0} votes
+                        </Typography>
                       </Box>
-                    ))}
-                  </CardContent>
-                </Card>
-              </Grid>
-            )) : (
-              <Typography>No polls available.</Typography>
-            )}
-          </Grid>
+
+                      <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                        {poll.question}
+                      </Typography>
+
+                      <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mb: 1
+                      }}>
+                        <AccessTimeIcon fontSize="small" color="action" />
+                        <Typography variant="caption">
+                          {poll.expiresDate ? `Ends ${formatDate(poll.expiresDate)}` : 'No deadline'}
+                        </Typography>
+                      </Box>
+
+                      <Divider sx={{ my: 1 }} />
+
+                      {poll.options.map(option => (
+                        <Box key={option.id} sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 1,
+                          p: 1,
+                          backgroundColor: theme.palette.grey[50],
+                          borderRadius: 1
+                        }}>
+                          <Typography variant="body2">{option.text}</Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body2" fontWeight="500">
+                              {option.votes}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleViewVotes(poll.id, option.id, option.text)}
+                              sx={{
+                                color: theme.palette.primary.main,
+                                '&:hover': {
+                                  backgroundColor: theme.palette.primary.light,
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              <VisibilityIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                      ))}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Box sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              p: 3,
+              textAlign: 'center'
+            }}>
+              <PollIcon sx={{
+                fontSize: 60,
+                color: theme.palette.text.disabled,
+                mb: 1
+              }} />
+              <Typography variant="h6" color="text.secondary">
+                No polls available
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Create a new poll to get started
+              </Typography>
+            </Box>
+          )}
         </Box>
       </Modal>
-
     </Box>
   );
 }
