@@ -16,25 +16,26 @@ import {
   ListItemText,
   Divider,
   useMediaQuery,
-  keyframes,
   Tooltip,
   Dialog,
-  DialogContent
+  DialogContent,
+  Collapse
 } from '@mui/material';
+import apiCalls from 'apicall';
 import { toast } from 'react-toastify';
 import ControlCameraIcon from '@mui/icons-material/ControlCamera';
-import ToastComponent, { showToast } from 'utils/toast-component';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import ThumbUpAltIcon from '@mui/icons-material/ThumbUpAlt';
 import { useTheme } from '@mui/material/styles';
-import apiCalls from 'apicall';
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CloseIcon from '@mui/icons-material/Close';
 
 const Post = ({ tabValue, circularData, setCircularData }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [listViewData, setListViewData] = useState([]);
   const [praiseCounts, setPraiseCounts] = useState({});
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openViewMoreModal, setOpenViewMoreModal] = useState(false);
@@ -44,9 +45,8 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
   const [userType] = useState(localStorage.getItem('userType'));
   const [isLoading, setIsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
-  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [logoPreviewOpen, setLogoPreviewOpen] = useState(false);
+  const [loginUserName] = useState(localStorage.getItem('userName'));
+  const [orgId] = useState(localStorage.getItem('orgId'));
   const [formData, setFormData] = useState({
     active: true,
     circularTopic: '',
@@ -57,13 +57,24 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
   const [logo, setLogo] = useState(null);
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState('');
-  const [viewAllCirculars, setViewAllCirculars] = useState([]);
+  const [expandedItems, setExpandedItems] = useState({});
+  const [previewImage, setPreviewImage] = useState(null);
+  
+  // Track which circulars the user has liked
+  const [likedCirculars, setLikedCirculars] = useState(() => {
+    const savedLikes = localStorage.getItem('likedCirculars');
+    return savedLikes ? JSON.parse(savedLikes) : {};
+  });
 
-  const glow = keyframes`
-    0% { box-shadow: 0 0 5px ${theme.palette.primary.main}; }
-    50% { box-shadow: 0 0 20px ${theme.palette.primary.main}, 0 0 30px ${theme.palette.secondary.main}; }
-    100% { box-shadow: 0 0 5px ${theme.palette.primary.main}; }
-  `;
+  // Check if user has liked a circular
+  const hasUserLiked = (circularId) => {
+    return likedCirculars[circularId] === true;
+  };
+
+  // Save liked circulars to localStorage
+  useEffect(() => {
+    localStorage.setItem('likedCirculars', JSON.stringify(likedCirculars));
+  }, [likedCirculars]);
 
   const GetCircularByOrgId = async () => {
     try {
@@ -90,7 +101,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
 
   useEffect(() => {
     GetCircularByOrgId();
-  }, []);
+  }, [tabValue]);
 
   const getCircularById = (circular) => {
     setLogo(circular.postImage);
@@ -125,6 +136,12 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
   };
 
   const handlePraise = async (circularId) => {
+    // Check if user has already liked this circular
+    if (hasUserLiked(circularId)) {
+      toast.info('You have already praised this circular');
+      return;
+    }
+
     try {
       const payload = {
         circularId,
@@ -138,8 +155,13 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
       const result = await apiCalls('put', '/basicmaster/createUpdatePraise', payload);
       if (result?.status === true) {
         toast.success('Praised successfully');
+        
+        // Update praise count
         const updatedCount = await getPraiseCount(circularId);
         setPraiseCounts(prev => ({ ...prev, [circularId]: updatedCount }));
+        
+        // Mark circular as liked by user
+        setLikedCirculars(prev => ({ ...prev, [circularId]: true }));
       } else {
         toast.error('Failed to register praise');
       }
@@ -160,7 +182,6 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
     }
 
     setIsLoading(true);
-    let imageUrl = formData.imageUrl;
     const type = tabValue === 0 ? 'Organization' : 'IT';
 
     const saveFormData = {
@@ -240,44 +261,46 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
       setLogo(file);
     } else {
-      showToast('error', 'Please upload a valid image (PNG or JPEG).');
+      toast.error('Please upload a valid image (PNG or JPEG).');
     }
   };
+  
   const handleFileUpload = async (generatedId) => {
     if (!generatedId) {
-      showToast('error', 'Generated ID is required');
+      toast.error('Generated ID is required');
       return;
     }
     const formData = new FormData();
     formData.append('file', logo);
     try {
-      const response = await apiCalls(
+      await apiCalls(
         'post',
         `/basicmaster/uploadPostImageInBloob?id=${generatedId}`,
         formData,
         {},
         { 'Content-Type': 'multipart/form-data' }
       );
-
-      if (response.status === true) {
-        // Success handling
-      }
     } catch (error) {
-      showToast('error', 'Failed to upload Img');
+      toast.error('Failed to upload image');
     }
   };
-  useEffect(() => {
-    return () => {
-      if (logo && typeof logo === 'object') {
-        URL.revokeObjectURL(logo);
-      }
-    };
-  }, [logo]);
+
+  const toggleExpand = (id) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleThumbnailClick = (image) => {
+    setPreviewImage(image);
+  };
 
   return (
     <Box sx={cardStyle}>
@@ -303,8 +326,9 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                         mt: 2,
                         borderRadius: '50%',
                         border: '2px solid #ccc',
+                        cursor: 'pointer'
                       }}
-                      onClick={() => setLogoPreviewOpen(true)}
+                      onClick={() => handleThumbnailClick(circularData[0].postImage)}
                     />
                   )}
                 </div>
@@ -312,7 +336,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                   <Typography
                     variant="h6"
                     gutterBottom
-                    sx={{ fontWeight: 'bold' }} // 👈 makes heading bold
+                    sx={{ fontWeight: 'bold' }}
                   >
                     {circularData[0].circularTopic}
                   </Typography>
@@ -322,7 +346,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
                     sx={{
                       lineHeight: 1.6,
                       fontSize: isMobile ? '0.875rem' : '1rem',
-                      color: '#000' // 👈 sets content color to black
+                      color: '#000'
                     }}
                   >
                     {circularData[0].circularcontent}
@@ -331,8 +355,17 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Tooltip title="Praise this circular">
-                  <IconButton onClick={() => handlePraise(circularData[0].id)} color="secondary">
+                <Tooltip 
+                  title={hasUserLiked(circularData[0].id) 
+                    ? "You've already praised this" 
+                    : "Praise this circular"
+                  }
+                >
+                  <IconButton 
+                    onClick={() => handlePraise(circularData[0].id)} 
+                    color={hasUserLiked(circularData[0].id) ? "primary" : "secondary"}
+                    disabled={hasUserLiked(circularData[0].id)}
+                  >
                     <ThumbUpAltIcon />
                   </IconButton>
                 </Tooltip>
@@ -355,18 +388,15 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
           <IconButton
             color="primary"
             onClick={() => setOpenCreateModal(true)}
-            disabled={userType === 'USER' && tabValue === 0 || userType === 'TEAM LEAD' && tabValue === 0}
-            sx={{ fontSize: isMobile ? '0.75rem' : '1rem' }}
+            disabled={(userType === 'USER' && tabValue === 0) || (userType === 'TEAM LEAD' && tabValue === 0)}
           >
             <AddIcon />
           </IconButton>
           <IconButton
             color="inherit"
             onClick={() => {
-              setViewAllCirculars(circularData);
               setOpenViewMoreModal(true);
             }}
-            sx={{ fontSize: isMobile ? '0.75rem' : '1rem' }}
           >
             <VisibilityIcon />
           </IconButton>
@@ -526,116 +556,202 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
         </Box>
       </Modal>
 
-      {/* View All Circulars Modal */}
+      {/* Compact View All Circulars Modal */}
       <Modal open={openViewMoreModal} onClose={() => setOpenViewMoreModal(false)}>
         <Box sx={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          bgcolor: theme.palette.background.paper,
+          bgcolor: 'background.paper',
           borderRadius: 2,
-          p: isMobile ? 2 : 4,
+          boxShadow: 24,
           width: isMobile ? '95vw' : '80%',
+          maxWidth: '600px',
           maxHeight: '90vh',
-          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
           outline: 'none'
         }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', mb: 2, fontSize: isMobile ? '1.25rem' : '1.5rem' }}>
-            All Circulars ({viewAllCirculars.length})
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.7, mb: 2, fontSize: isMobile ? '0.75rem' : '0.875rem' }}>
-            Total Posts: {viewAllCirculars.length}
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <List sx={{ maxHeight: '70vh', overflow: 'auto' }}>
-            {viewAllCirculars.map((circular, idx) => (
-              <React.Fragment key={circular.id || idx}>
-                <ListItem sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <Box sx={{ display: 'flex', width: '100%', alignItems: 'flex-start' }}>
-                    <ListItemAvatar>
-                      <Avatar><CampaignIcon /></Avatar>
+          <Box sx={{ 
+            p: 2, 
+            borderBottom: '1px solid #eee',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              All Circulars
+              <Typography component="span" variant="body2" sx={{ ml: 1, color: 'text.secondary' }}>
+                ({circularData.length})
+              </Typography>
+            </Typography>
+            <IconButton onClick={() => setOpenViewMoreModal(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+          
+          <Box sx={{ overflowY: 'auto', flex: 1 }}>
+            <List dense sx={{ p: 0 }}>
+              {circularData.map((circular) => (
+                <React.Fragment key={circular.id}>
+                  <ListItem 
+                    sx={{ 
+                      alignItems: 'flex-start',
+                      '&:hover': { backgroundColor: '#f9f9f9' },
+                      py: 1.5,
+                      px: 2
+                    }}
+                  >
+                    <ListItemAvatar sx={{ minWidth: 40, mt: 0.5 }}>
+                      <Avatar sx={{ 
+                        bgcolor: 'primary.main', 
+                        width: 30, 
+                        height: 30,
+                        fontSize: '0.8rem'
+                      }}>
+                        <CampaignIcon fontSize="small" />
+                      </Avatar>
                     </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: isMobile ? '1rem' : '1.25rem' }}>
+                    
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
                           {circular.circularTopic}
                         </Typography>
-                      }
-                      secondary={
-                        <>
-                          <Typography variant="body2" sx={{ whiteSpace: 'pre-line', fontSize: isMobile ? '0.875rem' : '1rem' }}>
-                            {circular.circularcontent}
-                          </Typography>
-                          <Typography variant="caption" sx={{ display: 'block', mt: 1, opacity: 0.6 }}>
-                            Expires: {new Date(circular.expiresDate).toLocaleDateString()}
-                          </Typography>
-                        </>
-                      }
-                      sx={{ flex: 1 }}
-                    />
-                    <IconButton
-                      edge="end"
-                      onClick={() => getCircularById(circular)}
-                      sx={{ mt: -1 }}
-                    >
-                      <EditIcon fontSize={isMobile ? 'small' : 'medium'} />
-                    </IconButton>
-                  </Box>
-                  {circular.postImage && (
-                    <Box
-                      component="img"
-                      src={`data:image/png;base64,${circular.postImage}`}
-                      alt="Circular Attachment"
-                      sx={{
-                        width: '100%',
-                        maxHeight: 300,
-                        objectFit: 'contain',
-                        mt: 2,
-                        borderRadius: 2,
-                      }}
-                    />
-                  )}
-                </ListItem>
-                <Divider variant="inset" component="li" sx={{ ml: isMobile ? 0 : 8 }} />
-              </React.Fragment>
-            ))}
-          </List>
+                        
+                        <Box sx={{ display: 'flex' }}>
+                          {circular.postImage && (
+                            <Tooltip title="View image">
+                              <IconButton 
+                                size="small"
+                                onClick={() => handleThumbnailClick(circular.postImage)}
+                                sx={{ mr: 0.5 }}
+                              >
+                                <Avatar 
+                                  src={`data:image/png;base64,${circular.postImage}`}
+                                  sx={{ width: 24, height: 24 }}
+                                />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          
+                          {userType !== 'USER' && (
+                            <Tooltip title="Edit">
+                              <IconButton 
+                                size="small" 
+                                onClick={() => getCircularById(circular)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Box>
+                      </Box>
+                      
+                      <Collapse in={expandedItems[circular.id]} collapsedSize={20}>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            whiteSpace: 'pre-line',
+                            fontSize: '0.8rem',
+                            mt: 0.5
+                          }}
+                        >
+                          {circular.circularcontent}
+                        </Typography>
+                      </Collapse>
+                      
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.disabled',
+                          }}
+                        >
+                          Expires: {new Date(circular.expiresDate).toLocaleDateString()}
+                        </Typography>
+                        
+                        <IconButton 
+                          size="small" 
+                          onClick={() => toggleExpand(circular.id)}
+                          sx={{ ml: 1 }}
+                        >
+                          {expandedItems[circular.id] ? 
+                            <ExpandLessIcon fontSize="small" /> : 
+                            <ExpandMoreIcon fontSize="small" />
+                          }
+                        </IconButton>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                        <Tooltip 
+                          title={hasUserLiked(circular.id) 
+                            ? "You've already praised this" 
+                            : "Praise this circular"
+                          }
+                        >
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handlePraise(circular.id)}
+                            color={hasUserLiked(circular.id) ? "primary" : "secondary"}
+                            disabled={hasUserLiked(circular.id)}
+                          >
+                            <ThumbUpAltIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Typography variant="caption">
+                          {praiseCounts[circular.id] || "0"}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </ListItem>
+                  <Divider sx={{ mx: 2 }} />
+                </React.Fragment>
+              ))}
+            </List>
+          </Box>
         </Box>
       </Modal>
 
       {/* Image Preview Modal */}
       <Modal
-        open={logoPreviewOpen}
-        onClose={() => setLogoPreviewOpen(false)}
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backdropFilter: 'blur(4px)'
-        }}
+        open={!!previewImage}
+        onClose={() => setPreviewImage(null)}
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Box
-          sx={{
-            width: isMobile ? 150 : 200,
-            height: isMobile ? 150 : 200,
-            borderRadius: '50%',
-            overflow: 'hidden',
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            p: 1
-          }}
-        >
-          {circularData?.[0]?.postImage && (
-            <img
-              src={`data:image/png;base64,${circularData[0].postImage}`}
-              alt="Circular Attachment"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          )}
+        <Box sx={{ 
+          position: 'relative',
+          bgcolor: 'background.paper', 
+          borderRadius: 1,
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          overflow: 'auto',
+          outline: 'none'
+        }}>
+          <IconButton
+            sx={{ 
+              position: 'absolute', 
+              top: 8, 
+              right: 8, 
+              zIndex: 1,
+              bgcolor: 'rgba(255,255,255,0.7)',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' }
+            }}
+            onClick={() => setPreviewImage(null)}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img 
+            src={`data:image/png;base64,${previewImage}`} 
+            alt="Full preview" 
+            style={{ 
+              maxWidth: '100%', 
+              height: 'auto',
+              display: 'block'
+            }} 
+          />
         </Box>
       </Modal>
     </Box>

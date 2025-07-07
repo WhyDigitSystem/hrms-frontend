@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import EditIcon from '@mui/icons-material/Edit'; // Added EditIcon import
 import {
   Box,
   Typography,
@@ -160,7 +161,8 @@ function Poll({ tabValue, setPollData, pollData }) {
               return {
                 ...poll,
                 options,
-                totalVotes
+                totalVotes,
+                createdBy: poll.createdBy // Ensure createdBy is available
               };
             } catch (error) {
               console.error(`Error fetching votes for poll ${poll.id}:`, error);
@@ -171,7 +173,8 @@ function Poll({ tabValue, setPollData, pollData }) {
                   text: option.options,
                   votes: 0
                 })),
-                totalVotes: 0
+                totalVotes: 0,
+                createdBy: poll.createdBy
               };
             }
           })
@@ -183,6 +186,36 @@ function Poll({ tabValue, setPollData, pollData }) {
     } catch (error) {
       console.error('Error fetching polls:', error);
       setFetchError(error.message || 'Failed to fetch');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // NEW: Function to handle editing a poll
+  const handleEditPoll = async (pollId) => {
+    try {
+      setIsLoading(true);
+      const response = await apiCalls('get', `/basicmaster/getPollById?id=${pollId}`);
+      
+      if (response?.paramObjectsMap?.pollsVO) {
+        const poll = response.paramObjectsMap.pollsVO;
+        setNewPoll({
+          question: poll.question,
+          expiresDate: poll.expiresDate,
+          maxSelection: parseInt(poll.maxSelection, 10),
+          multiSelect: poll.multiSelect === "true"
+        });
+        
+        // Set poll details from the response
+        const options = poll.pollDetailsVO.map(detail => detail.options);
+        setPollDetails(options);
+        
+        setEditId(pollId);
+        setOpenCreateModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching poll details:', error);
+      toast.error('Failed to load poll for editing');
     } finally {
       setIsLoading(false);
     }
@@ -299,6 +332,18 @@ function Poll({ tabValue, setPollData, pollData }) {
     if (!dateString) return 'No deadline';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const handleCloseCreateModal = () => {
+    setOpenCreateModal(false);
+    setNewPoll({
+      question: '',
+      expiresDate: '',
+      maxSelection: 1,
+      multiSelect: false
+    });
+    setPollDetails(["", ""]);
+    setEditId('');
   };
 
   if (isLoading && polls.length === 0 && !fetchError) {
@@ -450,20 +495,10 @@ function Poll({ tabValue, setPollData, pollData }) {
             setOpenCreateModal(true);
           }}
           disabled={userType === 'USER' && tabValue === 0 || userType === 'TEAM LEAD' && tabValue === 0}
-        // sx={{
-        //   p: 1.5,
-        //   background: 'linear-gradient(45deg, #3f51b5, #2196f3)',
-        //   color: 'white',
-        //   '&:hover': {
-        //     background: 'linear-gradient(45deg, #2196f3, #3f51b5)'
-        //   }
-        // }}
         >
           <AddIcon />
         </IconButton>
 
-        {/* New View More Icon Button */}
-        {/* New View More Icon Button */}
         <IconButton
           color="primary"
           onClick={() => setViewAllModalOpen(true)}
@@ -477,20 +512,6 @@ function Poll({ tabValue, setPollData, pollData }) {
         >
           <MoreHorizIcon />
         </IconButton>
-        {/* <Button
-          variant="contained"
-          color="primary"
-          endIcon={<MoreHorizIcon />}
-          onClick={() => setViewAllModalOpen(true)}
-          sx={{
-            background: "linear-gradient(45deg, #3f51b5, #2196f3)",
-            "&:hover": {
-              background: "linear-gradient(45deg, #2196f3, #3f51b5)",
-            },
-          }}
-        >
-          View More
-        </Button> */}
       </div>
 
       {/* Voter Details Modal */}
@@ -560,7 +581,7 @@ function Poll({ tabValue, setPollData, pollData }) {
       </Modal>
 
       {/* Edit Poll Modal */}
-      <Modal open={openCreateModal} onClose={() => setOpenCreateModal(false)}>
+      <Modal open={openCreateModal} onClose={handleCloseCreateModal}>
         <Box sx={{
           position: 'absolute',
           top: '50%',
@@ -656,7 +677,7 @@ function Poll({ tabValue, setPollData, pollData }) {
           boxShadow: 24,
           p: 3,
           borderRadius: 2,
-          width: { xs: '90vw', sm: '600px' }, // Adjusted width
+          width: { xs: '90vw', sm: '600px' },
           maxHeight: '80vh',
           overflowY: 'auto'
         }}>
@@ -713,9 +734,41 @@ function Poll({ tabValue, setPollData, pollData }) {
                             {formatDate(poll.createdDate)}
                           </Typography>
                         </Box>
-                        <Typography variant="caption">
-                          {poll.totalVotes || 0} votes
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="caption">
+                            {poll.totalVotes || 0} votes
+                          </Typography>
+                          
+                          {/* Edit icon - only show for polls created by current user */}
+                          {poll.createdBy === loginUserName && (
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditPoll(poll.id)}
+                              sx={{
+                                color: theme.palette.secondary.main,
+                                '&:hover': {
+                                  backgroundColor: theme.palette.secondary.light,
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                          
+                          <IconButton
+                            size="small"
+                            sx={{
+                              color: theme.palette.primary.main,
+                              '&:hover': {
+                                backgroundColor: theme.palette.primary.light,
+                                color: 'white'
+                              }
+                            }}
+                          >
+                            <MoreHorizIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
 
                       <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
