@@ -18,7 +18,7 @@ const Calendar = () => {
   const [birthdayEvents, setBirthdayEvents] = useState([]);
   const [loadingEvent, setLoadingEvent] = useState(false);
   const [selectedDayEvents, setSelectedDayEvents] = useState([]);
-  
+
   // Local storage values
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [calendarEvents, setCalendarEvents] = useState([]);
@@ -33,8 +33,18 @@ const Calendar = () => {
   const weekdays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const fullWeekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
   ];
 
   const eventTypeColors = {
@@ -70,12 +80,12 @@ const Calendar = () => {
       if (dateA.getTime() !== dateB.getTime()) {
         return dateA.getTime() - dateB.getTime();
       }
-      
+
       // Then sort by time
       if (!a.startTime && !b.startTime) return 0;
       if (!a.startTime) return -1;
       if (!b.startTime) return 1;
-      
+
       return a.startTime.localeCompare(b.startTime);
     });
   };
@@ -83,12 +93,12 @@ const Calendar = () => {
   // Get the latest event for a day
   const getLatestEvent = (events) => {
     if (!events || events.length === 0) return null;
-    
+
     // Find the event with the latest start time
     return events.reduce((latest, event) => {
       if (!event.startTime) return latest || event;
       if (!latest) return event;
-      
+
       return event.startTime > latest.startTime ? event : latest;
     }, null);
   };
@@ -105,7 +115,7 @@ const Calendar = () => {
       const days = [];
       const firstDayIndex = startOfMonth.getDay();
       const totalDays = endOfMonth.getDate();
-      
+
       // Combine all events
       const combinedEvents = [...calendarEvents, ...holidays, ...birthdayEvents];
 
@@ -118,23 +128,19 @@ const Calendar = () => {
           } else if (dayCount > totalDays) {
             break;
           } else {
-            const currentDay = new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth(),
-              dayCount
-            );
+            const currentDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), dayCount);
 
             const dayName = currentDay.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
             const weekNumber = getWeekNumber(currentDay);
 
-            const isWeekOff = weekOffs.some(off => {
+            const isWeekOff = weekOffs.some((off) => {
               if (off.weekOffDays.toUpperCase() !== dayName) return false;
               if (off.weekNumbers.includes(-1)) return true;
               return off.weekNumbers.includes(weekNumber);
             });
 
             // Get events for this day
-            const dayEvents = combinedEvents.filter(event => {
+            const dayEvents = combinedEvents.filter((event) => {
               try {
                 const [year, month, day] = event.date.split('-').map(Number);
                 const eventDate = new Date(year, month - 1, day);
@@ -177,7 +183,7 @@ const Calendar = () => {
     };
 
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    
+
     updateCalendar();
     updateTime();
     const timeInterval = setInterval(updateTime, 1000);
@@ -192,13 +198,11 @@ const Calendar = () => {
   // Fetch data functions
   const getAllCalendarByOrgId = async () => {
     try {
-      const result = await apiCalls('get',
-        `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`
-      );
+      const result = await apiCalls('get', `/basicmaster/getAllCalendarByOrgId?branchCode=${branchCode}&orgId=${orgId}&empCode=${empCode}`);
       if (result?.paramObjectsMap?.calendarVO) {
-        const transformed = result.paramObjectsMap.calendarVO.map(event => ({
+        const transformed = result.paramObjectsMap.calendarVO.map((event) => ({
           ...event,
-          eventTitle: event.eventTitle === "Untitled Event" ? "" : event.eventTitle?.trim() || "",
+          eventTitle: event.eventTitle === 'Untitled Event' ? '' : event.eventTitle?.trim() || '',
           eventType: event.eventType || 'other',
           empName: event.empName || empName,
           branchName: event.branchName || branchName,
@@ -206,9 +210,7 @@ const Calendar = () => {
           startTime: event.fromTime || '',
           endTime: event.toTime || '',
           // Add a timestamp for sorting
-          timestamp: event.fromTime ? 
-            dayjs(`${event.date} ${event.fromTime}`, 'YYYY-MM-DD HH:mm').valueOf() : 
-            dayjs(event.date).valueOf()
+          timestamp: event.fromTime ? dayjs(`${event.date} ${event.fromTime}`, 'YYYY-MM-DD HH:mm').valueOf() : dayjs(event.date).valueOf()
         }));
         setCalendarEvents(transformed);
       }
@@ -219,11 +221,9 @@ const Calendar = () => {
 
   const getAllHolidaysByOrgId = async () => {
     try {
-      const result = await apiCalls('get',
-        `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}&branchCode=${branchCode}`
-      );
+      const result = await apiCalls('get', `/basicmaster/getAllHolidayByOrgId?orgId=${orgId}&branchCode=${branchCode}`);
       if (result?.paramObjectsMap?.holidayVO) {
-        const transformed = result.paramObjectsMap.holidayVO.map(holiday => ({
+        const transformed = result.paramObjectsMap.holidayVO.map((holiday) => ({
           eventTitle: `${holiday.festival} 🎉`,
           eventType: 'holiday',
           date: holiday.holidayDate,
@@ -247,13 +247,12 @@ const Calendar = () => {
       const result = await apiCalls('get', `commonmaster/company/${orgId}`);
       const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO || [];
 
-      const transformedWeekOffs = weekOffConfig.map(off => ({
+      const transformedWeekOffs = weekOffConfig.map((off) => ({
         weekOffDays: off.weekOffDays.toUpperCase(),
         weekNumbers: off.weekNumbers || [-1]
       }));
 
       setWeekOffs(transformedWeekOffs);
-
     } catch (error) {
       console.error('Error fetching week off:', error);
       showToast('error', 'Failed to load week-off configuration');
@@ -270,10 +269,7 @@ const Calendar = () => {
         return;
       }
 
-      const allBirthdays = result?.paramObjectsMap?.empDob ||
-        result?.data?.empDob ||
-        result?.empDob ||
-        [];
+      const allBirthdays = result?.paramObjectsMap?.empDob || result?.data?.empDob || result?.empDob || [];
 
       if (allBirthdays.length === 0) {
         console.log('No birthday data available');
@@ -287,17 +283,14 @@ const Calendar = () => {
       const todayList = [];
       const upcomingList = [];
 
-      allBirthdays.forEach(emp => {
+      allBirthdays.forEach((emp) => {
         if (!emp.dob || !emp.empName) return;
 
         try {
           const dob = dayjs(emp.dob, ['YYYY-MM-DD', 'DD-MM-YYYY', 'MM-DD-YYYY'], true);
           if (!dob.isValid()) return;
 
-          const birthdayThisYear = dayjs()
-            .year(today.year())
-            .month(dob.month())
-            .date(dob.date());
+          const birthdayThisYear = dayjs().year(today.year()).month(dob.month()).date(dob.date());
 
           if (dob.format('MM-DD') === todayFormatted) {
             todayList.push({
@@ -305,8 +298,7 @@ const Calendar = () => {
               date: birthdayThisYear.format('YYYY-MM-DD'),
               department: emp.department || 'N/A'
             });
-          }
-          else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(nextWeek)) {
+          } else if (birthdayThisYear.isAfter(today) && birthdayThisYear.isBefore(nextWeek)) {
             upcomingList.push({
               name: emp.empName,
               date: birthdayThisYear.format('YYYY-MM-DD'),
@@ -322,7 +314,7 @@ const Calendar = () => {
       setUpcomingBirthdays(upcomingList);
 
       const events = [
-        ...todayList.map(bd => ({
+        ...todayList.map((bd) => ({
           eventTitle: `${bd.name}'s Birthday 🎂`,
           eventType: 'birthday',
           date: bd.date,
@@ -334,7 +326,7 @@ const Calendar = () => {
           timestamp: dayjs(bd.date).valueOf(),
           active: 'Active' // Birthdays are always active
         })),
-        ...upcomingList.map(bd => ({
+        ...upcomingList.map((bd) => ({
           eventTitle: `${bd.name}'s Birthday (Upcoming)`,
           eventType: 'birthday',
           date: bd.date,
@@ -360,10 +352,10 @@ const Calendar = () => {
     setLoadingEvent(true);
     try {
       const result = await apiCalls('get', `/basicmaster/getCalendarById?id=${id}`);
-      
+
       if (result?.status && result?.paramObjectsMap?.calendarVO) {
         const eventData = result.paramObjectsMap.calendarVO;
-        setNewEvent(prev => ({
+        setNewEvent((prev) => ({
           ...prev,
           id: eventData.id,
           eventTitle: eventData.eventTitle || '',
@@ -413,11 +405,7 @@ const Calendar = () => {
     setNewEvent({
       eventTitle: '',
       eventType: 'meeting',
-      date: formatDateForInput(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        cell.day
-      ),
+      date: formatDateForInput(currentDate.getFullYear(), currentDate.getMonth() + 1, cell.day),
       description: '',
       id: null,
       startTime: '',
@@ -441,7 +429,7 @@ const Calendar = () => {
       active: event.active || 'Active'
     });
     setShowModal(true);
-    
+
     // Only fetch details for calendar events (not holidays or birthdays)
     if (!event.isHoliday && !event.isBirthday && event.id) {
       await getCalendarEventById(event.id);
@@ -481,7 +469,7 @@ const Calendar = () => {
       const result = await apiCalls('put', '/basicmaster/createUpdateCalendar', saveData);
 
       if (result?.status) {
-        showToast('success', 'Event saved successfully');
+        showToast('success', 'Event created successfully');
         setShowModal(false);
         await getAllCalendarByOrgId();
       } else {
@@ -498,19 +486,21 @@ const Calendar = () => {
   };
 
   // Responsive helpers
-  const getDayCellSize = () => isMobile ? 50 : 70;
-  const getDayFontSize = () => isMobile ? 10 : 11;
-  const getEventFontSize = () => isMobile ? 8 : 9;
+  const getDayCellSize = () => (isMobile ? 50 : 70);
+  const getDayFontSize = () => (isMobile ? 10 : 11);
+  const getEventFontSize = () => (isMobile ? 8 : 9);
 
   // UI components
   const EventLegend = () => (
-    <div style={{ 
-      marginTop: 8, 
-      padding: 8, 
-      backgroundColor: '#f9f9f9', 
-      borderRadius: 6,
-      fontSize: isMobile ? 11 : 12
-    }}>
+    <div
+      style={{
+        marginTop: 8,
+        padding: 8,
+        backgroundColor: '#f9f9f9',
+        borderRadius: 6,
+        fontSize: isMobile ? 11 : 12
+      }}
+    >
       <h5 style={{ fontWeight: 'bold', marginBottom: 8 }}>Calendar Legend</h5>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {Object.entries(eventTypeColors).map(([type, color]) => (
@@ -520,22 +510,26 @@ const Calendar = () => {
           </div>
         ))}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div style={{ 
-            width: 10, 
-            height: 10, 
-            borderRadius: '50%', 
-            backgroundColor: '#ccc',
-            position: 'relative'
-          }}>
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: 0,
-              right: 0,
-              height: 1,
-              backgroundColor: '#f00',
-              transform: 'rotate(-45deg)'
-            }} />
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              backgroundColor: '#ccc',
+              position: 'relative'
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: 0,
+                right: 0,
+                height: 1,
+                backgroundColor: '#f00',
+                transform: 'rotate(-45deg)'
+              }}
+            />
           </div>
           <span>Closed</span>
         </div>
@@ -549,51 +543,60 @@ const Calendar = () => {
     const eventFontSize = getEventFontSize();
 
     return (
-      <div style={{
-        marginTop: 12,
-        padding: isMobile ? 4 : 10,
-        backgroundColor: '#fff',
-        borderRadius: 6,
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        border: '1px solid #e0e0e0',
-        fontSize: 12,
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch'
-      }}>
+      <div
+        style={{
+          marginTop: 12,
+          padding: isMobile ? 4 : 10,
+          backgroundColor: '#fff',
+          borderRadius: 6,
+          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+          border: '1px solid #e0e0e0',
+          fontSize: 12,
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
         <div style={{ minWidth: '280px' }}>
           {/* Weekdays Header */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: 2,
-            borderBottom: '1px solid rgb(179, 18, 18)',
-            paddingBottom: 4,
-            marginBottom: 4,
-            minWidth: '280px'
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: 2,
+              borderBottom: '1px solid rgb(179, 18, 18)',
+              paddingBottom: 4,
+              marginBottom: 4,
+              minWidth: '280px'
+            }}
+          >
             {weekdays.map((day, index) => (
-              <div key={index} style={{
-                padding: '4px 0',
-                textAlign: 'center',
-                fontWeight: 600,
-                fontSize: isMobile ? 10 : 11,
-                color: '#333',
-                backgroundColor: 'rgb(214, 220, 226)',
-                borderRadius: 4,
-                border: '1px solid #d1d5db',
-                minWidth: cellSize
-              }}>
+              <div
+                key={index}
+                style={{
+                  padding: '4px 0',
+                  textAlign: 'center',
+                  fontWeight: 600,
+                  fontSize: isMobile ? 10 : 11,
+                  color: '#333',
+                  backgroundColor: 'rgb(214, 220, 226)',
+                  borderRadius: 4,
+                  border: '1px solid #d1d5db',
+                  minWidth: cellSize
+                }}
+              >
                 {isMobile ? day : fullWeekdays[index]}
               </div>
             ))}
           </div>
 
           {/* Calendar Days Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: isMobile ? 2 : 4
-          }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: isMobile ? 2 : 4
+            }}
+          >
             {calendarDays.map((week, wIdx) =>
               week.map((cell, cIdx) => {
                 // Build tooltip content
@@ -603,7 +606,7 @@ const Calendar = () => {
                 }
                 if (cell?.hasEvents) {
                   tooltipContent += '\n\nEvents:';
-                  cell.events.forEach(event => {
+                  cell.events.forEach((event) => {
                     tooltipContent += `\n${event.eventTitle}`;
                     if (event.startTime) {
                       tooltipContent += ` (${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''})`;
@@ -613,7 +616,7 @@ const Calendar = () => {
                     }
                   });
                 }
-                
+
                 return (
                   <div
                     key={`${wIdx}-${cIdx}`}
@@ -623,7 +626,7 @@ const Calendar = () => {
                       minWidth: cellSize,
                       padding: 4,
                       borderRadius: 5,
-                      backgroundColor: cell?.isWeekOff ? '#ffeaea' : (cell ? '#fdfdfd' : 'transparent'),
+                      backgroundColor: cell?.isWeekOff ? '#ffeaea' : cell ? '#fdfdfd' : 'transparent',
                       border: `1px solid ${cell?.isWeekOff ? '#ff6666' : '#dcdcdc'}`,
                       cursor: cell ? 'pointer' : 'default',
                       position: 'relative',
@@ -634,76 +637,81 @@ const Calendar = () => {
                     {cell && (
                       <>
                         {/* Date Number */}
-                        <div style={{
-                          color: cell.isWeekOff ? '#d32f2f' : '#1976d2',
-                          fontWeight: 'bold',
-                          fontSize: dayFontSize
-                        }}>
+                        <div
+                          style={{
+                            color: cell.isWeekOff ? '#d32f2f' : '#1976d2',
+                            fontWeight: 'bold',
+                            fontSize: dayFontSize
+                          }}
+                        >
                           {cell.day}
                         </div>
 
                         {/* Week Off Label */}
                         {cell.isWeekOff && (
-                          <div style={{
-                            position: 'absolute',
-                            top: 4,
-                            right: 4,
-                            fontSize: 8,
-                            color: '#d32f2f',
-                            fontWeight: 'bold'
-                          }}>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              fontSize: 8,
+                              color: '#d32f2f',
+                              fontWeight: 'bold'
+                            }}
+                          >
                             Off
                           </div>
                         )}
 
                         {/* Latest Event Title */}
                         {cell.latestEvent && (
-                          <div style={{
-                            position: 'absolute',
-                            bottom: 4,
-                            left: 4,
-                            right: 4,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontSize: eventFontSize,
-                            fontWeight: '500',
-                            color: isEventActive(cell.latestEvent) ? '#333' : '#999',
-                            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-                            padding: '1px 3px',
-                            borderRadius: 3
-                          }}>
-                            {isMobile ? 
-                              (cell.latestEvent.eventTitle.length > 12 ? 
-                                cell.latestEvent.eventTitle.substring(0, 10) + '...' : 
-                                cell.latestEvent.eventTitle) : 
-                              (cell.latestEvent.eventTitle.length > 20 ? 
-                                cell.latestEvent.eventTitle.substring(0, 18) + '...' : 
-                                cell.latestEvent.eventTitle)
-                            }
-                            {!isEventActive(cell.latestEvent) && (
-                              <span style={{ color: '#f00', marginLeft: 4 }}>[Closed]</span>
-                            )}
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: 4,
+                              left: 4,
+                              right: 4,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              fontSize: eventFontSize,
+                              fontWeight: '500',
+                              color: isEventActive(cell.latestEvent) ? '#333' : '#999',
+                              backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                              padding: '1px 3px',
+                              borderRadius: 3
+                            }}
+                          >
+                            {isMobile
+                              ? cell.latestEvent.eventTitle.length > 12
+                                ? cell.latestEvent.eventTitle.substring(0, 10) + '...'
+                                : cell.latestEvent.eventTitle
+                              : cell.latestEvent.eventTitle.length > 20
+                                ? cell.latestEvent.eventTitle.substring(0, 18) + '...'
+                                : cell.latestEvent.eventTitle}
+                            {!isEventActive(cell.latestEvent) && <span style={{ color: '#f00', marginLeft: 4 }}>[Closed]</span>}
                           </div>
                         )}
 
                         {/* Event Count Indicator */}
                         {cell.hasEvents && cell.events.length > 1 && (
-                          <div style={{
-                            position: 'absolute',
-                            top: 4,
-                            left: 4,
-                            backgroundColor: '#1976d2',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: 16,
-                            height: 16,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 9,
-                            fontWeight: 'bold'
-                          }}>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              top: 4,
+                              left: 4,
+                              backgroundColor: '#1976d2',
+                              color: 'white',
+                              borderRadius: '50%',
+                              width: 16,
+                              height: 16,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: 9,
+                              fontWeight: 'bold'
+                            }}
+                          >
                             {cell.events.length}
                           </div>
                         )}
@@ -728,7 +736,7 @@ const Calendar = () => {
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(250px, 1fr))', gap: 8 }}>
           {sortedEvents.map((event, index) => {
             const isActive = isEventActive(event);
-            
+
             return (
               <div
                 key={index}
@@ -746,20 +754,22 @@ const Calendar = () => {
                 }}
               >
                 {!isActive && (
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    backgroundColor: '#f44336',
-                    color: 'white',
-                    padding: '2px 6px',
-                    fontSize: 10,
-                    borderRadius: '0 6px 0 6px'
-                  }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      backgroundColor: '#f44336',
+                      color: 'white',
+                      padding: '2px 6px',
+                      fontSize: 10,
+                      borderRadius: '0 6px 0 6px'
+                    }}
+                  >
                     Closed
                   </div>
                 )}
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div
                     style={{
@@ -770,18 +780,24 @@ const Calendar = () => {
                       opacity: isActive ? 1 : 0.5
                     }}
                   />
-                  <h4 style={{ 
-                    fontSize: 13, 
-                    margin: 0,
-                    textDecoration: isActive ? 'none' : 'line-through'
-                  }}>
+                  <h4
+                    style={{
+                      fontSize: 13,
+                      margin: 0,
+                      textDecoration: isActive ? 'none' : 'line-through'
+                    }}
+                  >
                     {event.eventTitle}
                   </h4>
                 </div>
                 <div style={{ marginTop: 6, color: isActive ? '#777' : '#aaa', fontSize: 11 }}>
                   {new Date(event.date).toLocaleDateString()}
                   {(event.startTime || event.endTime) && (
-                    <span> • {event.startTime}{event.endTime ? ` - ${event.endTime}` : ''}</span>
+                    <span>
+                      {' '}
+                      • {event.startTime}
+                      {event.endTime ? ` - ${event.endTime}` : ''}
+                    </span>
                   )}
                 </div>
               </div>
@@ -802,9 +818,9 @@ const Calendar = () => {
 
   const handleEventChange = (e) => {
     const { name, value } = e.target;
-    setNewEvent(prev => ({
+    setNewEvent((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: value
     }));
   };
 
@@ -825,34 +841,33 @@ const Calendar = () => {
   };
 
   return (
-    <div style={{ 
-      margin: '0 auto', 
-      padding: isMobile ? '12px' : '10px 24px 24px 24px', 
-      fontFamily: 'Arial, sans-serif',
-      maxWidth: '100%',
-      overflowX: 'hidden'
-    }}>
-      <div style={{
-        display: 'flex',
-        gap: 8,
-        marginBottom: 10,
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'flex-start' : 'center'
-      }}>
-        <div className='d-flex gap-3' style={{ flexWrap: 'wrap' }}>
+    <div
+      style={{
+        margin: '0 auto',
+        padding: isMobile ? '12px' : '10px 24px 24px 24px',
+        fontFamily: 'Arial, sans-serif',
+        maxWidth: '100%',
+        overflowX: 'hidden'
+      }}
+    >
+      <ToastComponent />
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 10,
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center'
+        }}
+      >
+        <div className="d-flex gap-3" style={{ flexWrap: 'wrap' }}>
           <div>
-            <button
-              onClick={() => setActiveTab('calendar')}
-              style={tabStyle(activeTab === 'calendar')}
-            >
+            <button onClick={() => setActiveTab('calendar')} style={tabStyle(activeTab === 'calendar')}>
               Calendar View
             </button>
           </div>
           <div>
-            <button
-              onClick={() => setActiveTab('events')}
-              style={tabStyle(activeTab === 'events')}
-            >
+            <button onClick={() => setActiveTab('events')} style={tabStyle(activeTab === 'events')}>
               Events List
             </button>
           </div>
@@ -861,50 +876,64 @@ const Calendar = () => {
       {activeTab === 'calendar' ? (
         <>
           {/* Calendar Header */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            flexDirection: isMobile ? 'column' : 'row', 
-            alignItems: isMobile ? 'flex-start' : 'center',
-            gap: isMobile ? 12 : 0
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'flex-start' : 'center',
+              gap: isMobile ? 12 : 0
+            }}
+          >
             <div>
-              <h1 style={{ 
-                fontSize: isMobile ? '16px' : '18px', 
-                fontWeight: 'bold', 
-                color: '#4a4a4a', 
-                margin: 0,
-                marginBottom: isMobile ? 8 : 0
-              }}>
+              <h1
+                style={{
+                  fontSize: isMobile ? '16px' : '18px',
+                  fontWeight: 'bold',
+                  color: '#4a4a4a',
+                  margin: 0,
+                  marginBottom: isMobile ? 8 : 0
+                }}
+              >
                 {`${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
-                <div style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  marginTop: '4px',
-                  fontSize: isMobile ? '12px' : '14px'
-                }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginTop: '4px',
+                    fontSize: isMobile ? '12px' : '14px'
+                  }}
+                >
                   <label style={{ color: '#4a4a4a' }}>Time:</label>
                   <span style={{ marginLeft: '6px', color: '#4a4a4a' }}>{currentTime}</span>
                 </div>
               </h1>
             </div>
 
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: isMobile ? 'column' : 'row', 
-              alignItems: 'center',
-              gap: 12,
-              width: isMobile ? '100%' : 'auto'
-            }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: 'center',
+                gap: 12,
+                width: isMobile ? '100%' : 'auto'
+              }}
+            >
               {/* Navigation and Add Event */}
-              <div style={{ 
-                display: 'flex', 
-                gap: '6px', 
-                marginTop: isMobile ? '8px' : '0',
-                order: isMobile ? 2 : 1
-              }}>
-                <button onClick={handlePrevMonth} style={smallButtonStyle}>←</button>
-                <button onClick={handleNextMonth} style={smallButtonStyle}>→</button>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '6px',
+                  marginTop: isMobile ? '8px' : '0',
+                  order: isMobile ? 2 : 1
+                }}
+              >
+                <button onClick={handlePrevMonth} style={smallButtonStyle}>
+                  ←
+                </button>
+                <button onClick={handleNextMonth} style={smallButtonStyle}>
+                  →
+                </button>
                 <button
                   onClick={handleAddEvent}
                   style={{
@@ -919,13 +948,15 @@ const Calendar = () => {
                   Add Event
                 </button>
               </div>
-              
+
               {/* Legend - moved to bottom on mobile */}
-              <div style={{ 
-                order: isMobile ? 1 : 2, 
-                width: isMobile ? '100%' : 'auto',
-                marginTop: isMobile ? 0 : 'auto'
-              }}>
+              <div
+                style={{
+                  order: isMobile ? 1 : 2,
+                  width: isMobile ? '100%' : 'auto',
+                  marginTop: isMobile ? 0 : 'auto'
+                }}
+              >
                 <EventLegend />
               </div>
             </div>
@@ -938,45 +969,54 @@ const Calendar = () => {
       )}
 
       {showModal && (
-        <div style={{
-          position: 'fixed', 
-          top: 0, 
-          left: 0, 
-          right: 0, 
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', 
-          display: 'flex',
-          justifyContent: 'center', 
-          alignItems: isMobile ? 'flex-start' : 'center', 
-          zIndex: 9999,
-          padding: isMobile ? 12 : 0,
-          overflowY: 'auto'
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            padding: isMobile ? 12 : 16,
-            borderRadius: 8,
-            width: isMobile ? '100%' : 500,
-            maxWidth: isMobile ? '100%' : 500,
-            maxHeight: isMobile ? '100%' : '90vh',
-            overflowY: 'auto',
-            fontSize: 13,
-            marginTop: isMobile ? 0 : 'auto',
-            marginBottom: isMobile ? 0 : 'auto'
-          }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: isMobile ? 'flex-start' : 'center',
+            zIndex: 9999,
+            padding: isMobile ? 12 : 0,
+            overflowY: 'auto'
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: isMobile ? 12 : 16,
+              borderRadius: 8,
+              width: isMobile ? '100%' : 500,
+              maxWidth: isMobile ? '100%' : 500,
+              maxHeight: isMobile ? '100%' : '90vh',
+              overflowY: 'auto',
+              fontSize: 13,
+              marginTop: isMobile ? 0 : 'auto',
+              marginBottom: isMobile ? 0 : 'auto'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 16 }}>
-                {loadingEvent ? 'Loading Event...' : 
-                 newEvent.isHoliday ? '🎉 Holiday Details' : 
-                 newEvent.isBirthday ? '🎂 Birthday Details' :
-                 newEvent.id ? 'Edit Event' : 'New Event'}
+                {loadingEvent
+                  ? 'Loading Event...'
+                  : newEvent.isHoliday
+                    ? '🎉 Holiday Details'
+                    : newEvent.isBirthday
+                      ? '🎂 Birthday Details'
+                      : newEvent.id
+                        ? 'Edit Event'
+                        : 'New Event'}
               </h3>
-              <button 
+              <button
                 onClick={handleCloseModal}
-                style={{ 
-                  background: 'none', 
-                  border: 'none', 
-                  fontSize: 18, 
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: 18,
                   cursor: 'pointer',
                   color: '#666'
                 }}
@@ -986,13 +1026,15 @@ const Calendar = () => {
             </div>
 
             {(newEvent.isHoliday || newEvent.isBirthday) && (
-              <div style={{
-                padding: 10,
-                margin: '8px 0',
-                backgroundColor: '#fff3cd',
-                borderRadius: 6,
-                fontSize: 12
-              }}>
+              <div
+                style={{
+                  padding: 10,
+                  margin: '8px 0',
+                  backgroundColor: '#fff3cd',
+                  borderRadius: 6,
+                  fontSize: 12
+                }}
+              >
                 <strong>{newEvent.isHoliday ? 'Official Organization Holiday' : 'Employee Birthday'}</strong>
               </div>
             )}
@@ -1000,18 +1042,20 @@ const Calendar = () => {
             {selectedDayEvents.length > 0 && (
               <div style={{ margin: '12px 0' }}>
                 <h4 style={{ marginBottom: 8, fontSize: 14 }}>Events on this day (sorted by time):</h4>
-                <div style={{ 
-                  maxHeight: 150, 
-                  overflowY: 'auto',
-                  border: '1px solid #eee',
-                  borderRadius: 6,
-                  padding: 8
-                }}>
+                <div
+                  style={{
+                    maxHeight: 150,
+                    overflowY: 'auto',
+                    border: '1px solid #eee',
+                    borderRadius: 6,
+                    padding: 8
+                  }}
+                >
                   {sortEventsByTime(selectedDayEvents).map((event, idx) => {
                     const isActive = isEventActive(event);
-                    
+
                     return (
-                      <div 
+                      <div
                         key={idx}
                         onClick={() => handleEventClick(event)}
                         style={{
@@ -1028,25 +1072,23 @@ const Calendar = () => {
                         }}
                       >
                         <div>
-                          <strong style={{ textDecoration: isActive ? 'none' : 'line-through' }}>
-                            {event.eventTitle}
-                          </strong>
+                          <strong style={{ textDecoration: isActive ? 'none' : 'line-through' }}>{event.eventTitle}</strong>
                           <div style={{ fontSize: 11, color: isActive ? '#666' : '#aaa' }}>
                             {new Date(event.date).toLocaleDateString()}
                             {event.startTime && ` • ${event.startTime}${event.endTime ? ` - ${event.endTime}` : ''}`}
                           </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          {!isActive && (
-                            <span style={{ color: '#f00', fontSize: 11 }}>Closed</span>
-                          )}
-                          <div style={{ 
-                            width: 10, 
-                            height: 10, 
-                            borderRadius: '50%', 
-                            backgroundColor: eventTypeColors[event.eventType],
-                            opacity: isActive ? 1 : 0.5
-                          }} />
+                          {!isActive && <span style={{ color: '#f00', fontSize: 11 }}>Closed</span>}
+                          <div
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: '50%',
+                              backgroundColor: eventTypeColors[event.eventType],
+                              opacity: isActive ? 1 : 0.5
+                            }}
+                          />
                         </div>
                       </div>
                     );
@@ -1056,16 +1098,24 @@ const Calendar = () => {
             )}
 
             {loadingEvent ? (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                padding: 20 
-              }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  padding: 20
+                }}
+              >
                 <div>Loading event details...</div>
               </div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); handleSaveEvent(); }} style={{ marginTop: 8 }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveEvent();
+                }}
+                style={{ marginTop: 8 }}
+              >
                 <div style={{ marginBottom: 8 }}>
                   <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Title</label>
                   <input
@@ -1079,25 +1129,24 @@ const Calendar = () => {
 
                 <div style={{ marginBottom: 8 }}>
                   <label style={{ display: 'block', marginBottom: 4, fontSize: 13 }}>Date</label>
-                  {(newEvent.isHoliday || newEvent.isBirthday) ? (
-                    <div style={{
-                      padding: 8,
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: 6,
-                      fontSize: 13
-                    }}>
+                  {newEvent.isHoliday || newEvent.isBirthday ? (
+                    <div
+                      style={{
+                        padding: 8,
+                        backgroundColor: '#f8f9fa',
+                        borderRadius: 6,
+                        fontSize: 13
+                      }}
+                    >
                       {new Date(newEvent.date).toLocaleDateString('en-US', {
-                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
                       })}
                     </div>
                   ) : (
-                    <input
-                      type="date"
-                      name="date"
-                      value={newEvent.date}
-                      onChange={handleEventChange}
-                      style={inputStyleSmall}
-                    />
+                    <input type="date" name="date" value={newEvent.date} onChange={handleEventChange} style={inputStyleSmall} />
                   )}
                 </div>
 
@@ -1158,14 +1207,10 @@ const Calendar = () => {
 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      type="button"
-                      onClick={handleCloseModal}
-                      style={buttonStyleSmall}
-                    >
+                    <button type="button" onClick={handleCloseModal} style={buttonStyleSmall}>
                       Cancel
                     </button>
-                    
+
                     {!newEvent.isHoliday && !newEvent.isBirthday && (
                       <button
                         type="submit"
