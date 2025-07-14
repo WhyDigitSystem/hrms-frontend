@@ -134,19 +134,19 @@ const Index = () => {
                         <Box sx={{ minWidth: 0 }}>
                             {tabValue === 0 && (
                                 <>
-                                    {renderSectionHeader(<CakeIcon color="primary" />, 'Birthday Today')}
+                                    {/* {renderSectionHeader(<CakeIcon color="primary" />, 'Birthday Today')} */}
                                     <Birthday />
                                 </>
                             )}
                             {tabValue === 1 && (
                                 <>
-                                    {renderSectionHeader(<PeopleIcon color="primary" />, 'Work Anniversaries')}
+                                    {/* {renderSectionHeader(<PeopleIcon color="primary" />, 'Work Anniversaries')} */}
                                     <WorkAnniversaries />
                                 </>
                             )}
                             {tabValue === 2 && (
                                 <>
-                                    {renderSectionHeader(<PersonAddIcon color="primary" />, 'New Joiners')}
+                                    {/* {renderSectionHeader(<PersonAddIcon color="primary" />, 'New Joiners')} */}
                                     <NewJoiner />
                                 </>
                             )}

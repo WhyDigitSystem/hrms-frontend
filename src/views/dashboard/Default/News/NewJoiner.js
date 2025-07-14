@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import {
     Avatar, Box, Typography, Divider, Card
 } from '@mui/material';
+import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 import apiCalls from 'apicall';
 import { showToast } from 'utils/toast-component';
 import dayjs from 'dayjs';
@@ -12,7 +15,6 @@ function NewJoiner() {
     const [todayJoiners, setTodayJoiners] = useState([]);
     const [upcomingJoiners, setUpcomingJoiners] = useState([]);
     const [openProfileDialog, setOpenProfileDialog] = useState(false);
-
 
     useEffect(() => {
         if (orgId && loginUserName) {
@@ -31,11 +33,9 @@ function NewJoiner() {
                 const upcomingList = [];
 
                 allJoiners.forEach(emp => {
-                    // Assuming there's a joinDate field in the response, if not, replace with actual data
-                    const joinDate = dayjs(emp.joinDate || dayjs()); // Use today's date as a fallback if joinDate is missing
+                    const joinDate = dayjs(emp.joinDate || dayjs());
                     const diffDays = joinDate.diff(today, 'day');
 
-                    // Handling 'today' joiners
                     if (joinDate.isSame(today, 'day')) {
                         todayList.push({
                             name: emp.employee || emp.employeecode,
@@ -44,9 +44,7 @@ function NewJoiner() {
                             image: emp.profileImage || '',
                             role: emp.designation || 'Employee',
                         });
-                    }
-                    // Handling 'upcoming' joiners within the next 7 days
-                    else if (diffDays > 0 && diffDays <= 7) {
+                    } else if (diffDays > 0 && diffDays <= 7) {
                         upcomingList.push({
                             name: emp.employee || emp.employeecode,
                             employeeId: emp.employeecode,
@@ -59,13 +57,21 @@ function NewJoiner() {
 
                 setTodayJoiners(todayList);
                 setUpcomingJoiners(upcomingList);
-            } else {
-                // showToast('No new joiners found', 'info');
             }
         } catch (error) {
-            console.error('Error fetching new joiner data:', error);    
+            console.error('Error fetching new joiner data:', error);
             showToast('Failed to fetch new joiner data', 'error');
         }
+    };
+
+    const sliderSettings = {
+        dots: true,
+        infinite: true,
+        speed: 500,
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        autoplay: true,
+        autoplaySpeed: 3000,
     };
 
     return (
@@ -76,10 +82,11 @@ function NewJoiner() {
                     <Typography variant="h6" sx={{ color: '#1976d2', marginBottom: '16px', fontWeight: 'bold' }}>
                         🎉 New Joiners Today
                     </Typography>
-                    {todayJoiners.map((person, index) => (
-                        <Card key={index} sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
+
+                    {todayJoiners.length === 1 ? (
+                        <Card sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
                             <Avatar
-                                src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                                src={todayJoiners[0].image ? `data:image/png;base64,${todayJoiners[0].image}` : ''}
                                 onClick={() => setOpenProfileDialog(true)}
                                 sx={{
                                     width: 64,
@@ -90,18 +97,49 @@ function NewJoiner() {
                                     fontSize: 20,
                                 }}
                             >
-                                {!person.image && person.name[0]}
+                                {!todayJoiners[0].image && todayJoiners[0].name[0]}
                             </Avatar>
                             <Box>
                                 <Typography sx={{ fontWeight: 'bold', color: '#333' }}>
-                                    {person.name}
+                                    {todayJoiners[0].name}
                                 </Typography>
                                 <Typography variant="caption" sx={{ color: '#757575' }}>
-                                    {person.employeeId} | {person.role}
+                                    {todayJoiners[0].employeeId} | {todayJoiners[0].role}
                                 </Typography>
                             </Box>
                         </Card>
-                    ))}
+                    ) : (
+                        <Slider {...sliderSettings}>
+                            {todayJoiners.map((person, index) => (
+                                <Box key={index} sx={{ px: 1 }}>
+                                    <Card sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '12px', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)', borderRadius: '8px', padding: '12px' }}>
+                                        <Avatar
+                                            src={person.image ? `data:image/png;base64,${person.image}` : ''}
+                                            onClick={() => setOpenProfileDialog(true)}
+                                            sx={{
+                                                width: 64,
+                                                height: 64,
+                                                bgcolor: '#1976d2',
+                                                color: '#fff',
+                                                fontWeight: 'bold',
+                                                fontSize: 20,
+                                            }}
+                                        >
+                                            {!person.image && person.name[0]}
+                                        </Avatar>
+                                        <Box>
+                                            <Typography sx={{ fontWeight: 'bold', color: '#333' }}>
+                                                {person.name}
+                                            </Typography>
+                                            <Typography variant="caption" sx={{ color: '#757575' }}>
+                                                {person.employeeId} | {person.role}
+                                            </Typography>
+                                        </Box>
+                                    </Card>
+                                </Box>
+                            ))}
+                        </Slider>
+                    )}
                 </>
             ) : (
                 <Typography variant="body2" sx={{ color: '#757575' }}>
