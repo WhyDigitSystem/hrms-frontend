@@ -172,7 +172,7 @@ const Announcements = () => {
         <Box sx={announcementStyle}>
           {listViewData.length > 0 ? (
             <Box>
-              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, mb: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, mb: 2, color:'white' }}>
                 {listViewData[0].topic}
               </Typography>
               <Typography variant="body1" sx={{ lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
