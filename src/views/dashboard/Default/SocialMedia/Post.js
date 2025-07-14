@@ -393,7 +393,7 @@ const Post = ({ tabValue, circularData, setCircularData }) => {
             <AddIcon />
           </IconButton>
           <IconButton
-            color="inherit"
+            color="primary"
             onClick={() => {
               setOpenViewMoreModal(true);
             }}
