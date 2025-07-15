@@ -184,7 +184,7 @@ const EmployeeDetails = () => {
     },
     {
       accessorKey: 'employee',
-      header: 'Employee',
+      header: 'Name',
       size: 140,
       Cell: ({ row }) => (
         <span style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => getEmployeeDetailsById(row)}>

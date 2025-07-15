@@ -13,7 +13,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import { showToast } from 'utils/toast-component';
 import ActionButton from 'utils/ActionButton';
 import styled from 'styled-components';
-import LogoImage from '../../assets/images/HRMS_Logo.png';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useLocation } from 'react-router-dom';
@@ -28,8 +27,14 @@ const Payslip = () => {
   const [deductionsData, setDeductionsData] = useState([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
   const [showPayslip, setShowPayslip] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  const [selectedYear, setSelectedYear] = useState(null);
+  const now = dayjs();
+  const prevMonth = now.subtract(1, 'month');
+  const [selectedMonth, setSelectedMonth] = useState(prevMonth.month() + 1);
+  const [selectedYear, setSelectedYear] = useState(prevMonth.year());
+  // const [selectedMonth, setSelectedMonth] = useState(null);
+  // const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
+  // const [selectedYear, setSelectedYear] = useState(null);
+  // const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [errors, setErrors] = useState({ month: '', year: '' });
   const [noDataFound, setNoDataFound] = useState(false);
   const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode') || '');
@@ -48,11 +53,15 @@ const Payslip = () => {
     getPayslipCompanyDetails();
   }, [orgId]);
 
-  useEffect(() => {
-    if (passedEmployeeCode && selectedMonth && selectedYear) {
-      fetchPayslipData(passedEmployeeCode);
-    }
-  }, [passedEmployeeCode, selectedMonth, selectedYear]);
+  // Automatically fetch previous month's payslip on load
+  // useEffect(() => {
+  //   if (employeeCode && selectedMonth && selectedYear) {
+  //     if (!showPayslip || noDataFound) {
+  //       fetchPayslipData();
+  //       setShowPayslip(true);
+  //     }
+  //   }
+  // }, [employeeCode, selectedMonth, selectedYear]);
 
   const logoUrl = useMemo(() => {
     if (!companyDetails?.companylogo) return null;
@@ -82,11 +91,8 @@ const Payslip = () => {
     return logo;
   }, [companyDetails]);
 
-
-
   const getPayslipCompanyDetails = async () => {
     try {
-      // FIX: Changed 'orgid' to 'orgId' to match API parameter case
       const result = await apiCalls('get', `basicmaster/getpayslipCompanydetails?orgId=${orgId}`);
       if (result.paramObjectsMap?.Company?.length > 0) {
         setCompanyDetails(result.paramObjectsMap.Company[0]);
@@ -96,6 +102,7 @@ const Payslip = () => {
     }
   };
 
+  // Allow current month in validation
   const validateForm = () => {
     let valid = true;
     const newErrors = { month: '', year: '' };
@@ -156,7 +163,6 @@ const Payslip = () => {
       const handleApiError = (response, defaultMessage) => {
         if (!response?.status) {
           const errorMsg = response?.paramObjectsMap?.errorMessage || defaultMessage;
-          // showToast(errorMsg, 'error');
           throw new Error(errorMsg);
         }
       };
@@ -232,13 +238,18 @@ const Payslip = () => {
       return;
     }
 
-    fetchPayslipData(passedEmployeeCode); // <-- trigger data fetch manually
+    fetchPayslipData(passedEmployeeCode);
     setShowPayslip(true);
   };
 
   const handleClear = () => {
-    setSelectedMonth(null);
-    setSelectedYear(null);
+    // Reset to previous month and year
+    const now = dayjs();
+    const prevMonth = now.subtract(1, 'month');
+
+    setSelectedYear(prevMonth.year());
+    setSelectedMonth(prevMonth.month() + 1);
+
     setShowPayslip(false);
     setEmployeeDetails(null);
     setEarningsData([]);
@@ -248,6 +259,8 @@ const Payslip = () => {
     setErrors({ month: '', year: '' });
     setNoDataFound(false);
   };
+
+
 
   const handleDownload = () => {
     if (!showPayslip || !employeeDetails || noDataFound) {
@@ -272,7 +285,7 @@ const Payslip = () => {
       })
       .catch((error) => {
         console.error('PDF generation failed:', error);
-        // showToast('Failed to generate PDF', 'error');
+        showToast('Failed to generate PDF', 'error');
       });
   };
 
@@ -329,7 +342,7 @@ const Payslip = () => {
       return str.trim();
     };
 
-    // if (isNaN(amount) return 'Invalid Amount';
+    if (isNaN(amount)) return 'Invalid Amount';
     if (amount === 0) return 'Zero';
 
     // Separate rupees and paise
@@ -377,10 +390,31 @@ const Payslip = () => {
     return convertNumberToWords(netPay);
   }, [netPay, showPayslip, noDataFound, employeeDetails]);
 
+  // Update the disableFutureMonth function
+  const disableFutureMonth = (month) => {
+    const currentYear = dayjs().year();
+    const currentMonth = dayjs().month(); // 0-indexed
+    const selectedYearNum = Number(selectedYear);
+
+    if (selectedYearNum === currentYear) {
+      // Disable current month and future months
+      return month.month() >= currentMonth;
+    }
+
+    return false;
+  };
+
+
+  // Function to disable future years
+  const disableFutureYear = (date) => {
+    return date.year() > dayjs().year();
+  };
+
+
   return (
-    <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
-      <div className="row d-flex ml">
-        <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
+    <CardContainer>
+      <ControlSection>
+        <ButtonGroup>
           <ActionButton title="Search" icon={SearchIcon} onClick={handleSearch} disabled={isLoading} />
           <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} disabled={isLoading} />
           <ActionButton
@@ -390,20 +424,56 @@ const Payslip = () => {
             margin="0 10px"
             disabled={!showPayslip || isLoading || noDataFound}
           />
-        </div>
-      </div>
+        </ButtonGroup>
+      </ControlSection>
 
-      <div className="row">
+      <DateSection>
         <div className="col-md-3 mb-3">
-          <FormControl fullWidth error={!!errors.month}>
+          <FormControl error={!!errors.year}>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Year"
+                views={['year']}
+                openTo="year"
+                format="YYYY"
+                shouldDisableYear={disableFutureYear}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    error: !!errors.year,
+                    variant: 'outlined'
+                  }
+                }}
+                value={dayjs(`${selectedYear}-01-01`)}
+                onChange={(date) => {
+                  const year = date ? dayjs(date).format('YYYY') : null;
+                  setSelectedYear(year);
+                  setErrors({ ...errors, year: '' });
+                  setShowPayslip(false);
+                }}
+              />
+            </LocalizationProvider>
+            {errors.year && <ErrorText>{errors.year}</ErrorText>}
+          </FormControl>
+        </div>
+
+        <div className="col-md-3 mb-3">
+          <FormControl error={!!errors.month}>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
               <DatePicker
                 label="Month"
                 views={['month']}
                 openTo="month"
                 format="MMMM"
-                slotProps={{ textField: { size: 'small', error: !!errors.month } }}
-                value={selectedMonth ? dayjs().month(selectedMonth - 1) : null}
+                shouldDisableMonth={disableFutureMonth}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    error: !!errors.month,
+                    variant: 'outlined'
+                  }
+                }}
+                value={dayjs().year(selectedYear).month(selectedMonth - 1)}
                 onChange={(newValue) => {
                   if (newValue) {
                     setSelectedMonth(newValue.month() + 1);
@@ -418,29 +488,9 @@ const Payslip = () => {
             {errors.month && <ErrorText>{errors.month}</ErrorText>}
           </FormControl>
         </div>
+      </DateSection>
 
-        <div className="col-md-3 mb-3">
-          <FormControl fullWidth error={!!errors.year}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                label="Year"
-                views={['year']}
-                openTo="year"
-                format="YYYY"
-                slotProps={{ textField: { size: 'small', error: !!errors.year } }}
-                value={selectedYear ? dayjs(`${selectedYear}-01-01`) : null}
-                onChange={(date) => {
-                  const year = date ? dayjs(date).format('YYYY') : null;
-                  setSelectedYear(year);
-                  setErrors({ ...errors, year: '' });
-                  setShowPayslip(false);
-                }}
-              />
-            </LocalizationProvider>
-            {errors.year && <ErrorText>{errors.year}</ErrorText>}
-          </FormControl>
-        </div>
-      </div>
+
 
       {isLoading && <LoadingContainer>Loading payslip data...</LoadingContainer>}
 
@@ -453,9 +503,8 @@ const Payslip = () => {
       )}
 
       {showPayslip && !noDataFound && employeeDetails && !isLoading && (
-        <Container id="payslip-container" className="w-100">
-          <Header className="p-3">
-
+        <PayslipContainer id="payslip-container">
+          <HeaderSection>
             <LogoContainer>
               {logoUrl && !logoLoadError ? (
                 <>
@@ -464,270 +513,486 @@ const Payslip = () => {
                     alt="Company Logo"
                     onError={handleLogoError}
                   />
+                  <CompanyInfo>
+                    <CompanyName>
+                      {companyDetails?.companyname || 'Company Name'}
+                    </CompanyName>
+                    <CompanyAddress>
+                      {companyDetails?.address ? `${companyDetails.address},` : ''}
+                      {/* {companyDetails?.city ? ` ${companyDetails.city},` : ''} */}
+                      {companyDetails?.pincode ? ` ${companyDetails.pincode}` : ''}
+                    </CompanyAddress>
+                  </CompanyInfo>
+                </>
+              ) : (
+                <CompanyInfo>
                   <CompanyName>
                     {companyDetails?.companyname || 'Company Name'}
                   </CompanyName>
-                </>
-              ) : (
-                <CompanyName id="company-name-fallback">
-                  {companyDetails?.companyname || 'Company Name'}
-                </CompanyName>
+                  <CompanyAddress>
+                    {companyDetails?.address ? `${companyDetails.address},` : ''}
+                    {/* {companyDetails?.city ? ` ${companyDetails.city},` : ''} */}
+                    {companyDetails?.pincode ? ` ${companyDetails.pincode}` : ''}
+                  </CompanyAddress>
+                </CompanyInfo>
               )}
             </LogoContainer>
-
-            <CompanyAddress>
-              {/* {companyDetails?.address || 'Address Not Available'}, */}
-              {/* {companyDetails?.companyname ? ` ${companyDetails.companyname}` : ''} */}
-              {companyDetails?.address ? ` ${companyDetails.address}` : ''}
-              {companyDetails?.city ? ` ${companyDetails.city}` : ''}
-              {companyDetails?.pincode ? ` - ${companyDetails.pincode}` : ''}
-            </CompanyAddress>
 
             <PayslipTitle>
               PAY SLIP FOR THE MONTH OF {monthName.toUpperCase()} {selectedYear}
             </PayslipTitle>
-          </Header>
+          </HeaderSection>
 
-          <EmployeeInfo>
+          <EmployeeInfoSection>
             <InfoColumn>
-              <p>
-                <strong>Name:</strong> {employeeDetails.employee} [{employeeDetails.employeecode}]
-              </p>
-              <p>
-                <strong>Join Date:</strong> {dayjs(employeeDetails.joiningdate).format('DD MMM YYYY')}
-              </p>
-              <p>
-                <strong>Designation:</strong> {employeeDetails.designation}
-              </p>
-              <p>
-                <strong>Location:</strong> {employeeDetails.branch}
-              </p>
-              <p>
-                <strong>Effective Work Days:</strong> {employeeDetails.effectiveworkingdays}
-              </p>
-              <p>
-                <strong>Days In Month:</strong> {employeeDetails.totalworkingdays}
-              </p>
+              <InfoItem>
+                <InfoLabel>Name:</InfoLabel>
+                <InfoValue>{employeeDetails.employee} [{employeeDetails.employeecode}]</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Join Date:</InfoLabel>
+                <InfoValue>{dayjs(employeeDetails.joiningdate).format('DD MMM YYYY')}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Designation:</InfoLabel>
+                <InfoValue>{employeeDetails.designation}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Location:</InfoLabel>
+                <InfoValue>{employeeDetails.branch}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Effective Work Days:</InfoLabel>
+                <InfoValue>{employeeDetails.effectiveworkingdays}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Days In Month:</InfoLabel>
+                <InfoValue>{employeeDetails.totalworkingdays}</InfoValue>
+              </InfoItem>
             </InfoColumn>
-            {/* <Divider /> */}
+
+            <VerticalDivider />
+
             <InfoColumn>
-              <p>
-                <strong>Bank Name:</strong> {employeeDetails.bankName}
-              </p>
-              <p>
-                <strong>Account No:</strong> {employeeDetails.accountno}
-              </p>
-              <p>
-                <strong>UAN:</strong> {employeeDetails.uanno}
-              </p>
-              <p>
-                <strong>PAN No:</strong> {employeeDetails.panno}
-              </p>
-              <p>
-                <strong>LOP:</strong> {employeeDetails.lopDays || '0'}
-              </p>
+              <InfoItem>
+                <InfoLabel>Bank Name:</InfoLabel>
+                <InfoValue>{employeeDetails.bankName}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Account No:</InfoLabel>
+                <InfoValue>{employeeDetails.accountno}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>UAN:</InfoLabel>
+                <InfoValue>{employeeDetails.uanno}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>PAN No:</InfoLabel>
+                <InfoValue>{employeeDetails.panno}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>LOP:</InfoLabel>
+                <InfoValue>{employeeDetails.lopDays || '0'}</InfoValue>
+              </InfoItem>
             </InfoColumn>
-          </EmployeeInfo>
+          </EmployeeInfoSection>
 
           <DividerLine />
 
-          <TableSection>
+          <FinancialSection>
             <EarningsTable>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Earnings</th>
-                  <th style={thStyle}>Full</th>
-                  <th style={thStyle}>Actual</th>
-                </tr>
-              </thead>
-              <tbody>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell width="50%">Earnings</TableHeaderCell>
+                  <TableHeaderCell width="25%" align="right">Full</TableHeaderCell>
+                  <TableHeaderCell width="25%" align="right">Actual</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {earningsData.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={tdStyle}>{item.heading}</td>
-                    <td style={tdRight}>{item.amount.toFixed(2)}</td>
-                    <td style={tdRight}>{item.actuals.toFixed(2)}</td>
-                  </tr>
+                  <TableRow key={idx}>
+                    <TableCell width="50%">{item.heading}</TableCell>
+                    <TableCell width="25%" align="right">{item.amount.toFixed(2)}</TableCell>
+                    <TableCell width="25%" align="right">{item.actuals.toFixed(2)}</TableCell>
+                  </TableRow>
                 ))}
-                <tr>
-                  <td style={{ ...tdStyle, fontWeight: 'bold' }}>Total Earnings: Rs.</td>
-                  <td style={tdRight}>{totalEarningRow?.amount.toFixed(2)}</td>
-                  <td style={tdRight}>{totalEarningRow?.actuals?.toFixed(2)}</td>
-                </tr>
-              </tbody>
+                <TotalRow>
+                  <TableCell width="50%" style={{ fontWeight: 'bold' }}>Total Earnings: Rs.</TableCell>
+                  <TableCell width="25%" align="right">{totalEarningRow?.amount.toFixed(2)}</TableCell>
+                  <TableCell width="25%" align="right">{totalEarningRow?.actuals?.toFixed(2)}</TableCell>
+                </TotalRow>
+              </TableBody>
             </EarningsTable>
 
             <DeductionsTable>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Deductions</th>
-                  <th style={thRight}>Actual</th>
-                </tr>
-              </thead>
-              <tbody>
+              <TableHeader>
+                <TableRow>
+                  <TableHeaderCell width="60%">Deductions</TableHeaderCell>
+                  <TableHeaderCell width="40%" align="right">Actual</TableHeaderCell>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {deductionsData.map((item, idx) => (
-                  <tr key={idx}>
-                    <td style={tdStyle}>{item.heading}</td>
-                    <td style={tdRight}>{item.amount.toFixed(2)}</td>
-                  </tr>
+                  <TableRow key={idx}>
+                    <TableCell width="60%">{item.heading}</TableCell>
+                    <TableCell width="40%" align="right">{item.amount.toFixed(2)}</TableCell>
+                  </TableRow>
                 ))}
-                <tr>
-                  <td style={{ ...tdStyle, fontWeight: 'bold' }}>Total Deductions: Rs.</td>
-                  <td style={tdRight}>{totalDeductions.toFixed(2)}</td>
-                </tr>
-              </tbody>
+                <TotalRow>
+                  <TableCell width="60%" style={{ fontWeight: 'bold' }}>Total Deductions: Rs.</TableCell>
+                  <TableCell width="40%" align="right">{totalDeductions.toFixed(2)}</TableCell>
+                </TotalRow>
+              </TableBody>
             </DeductionsTable>
-          </TableSection>
+          </FinancialSection>
 
-          <div style={{ marginTop: '20px', padding: '10px' }}>
-            <p>
-              <strong>Net Pay for the month ( Total Earnings - Total Deductions): Rs. {netPay.toFixed(2)}</strong>
-            </p>
-            {/* <p style={{ fontStyle: 'italic' }}>(Rupees {netPay.toFixed(2)} Only)</p> */}
-            <p style={{ fontStyle: 'italic' }}>(Rupees {amountInWords} Only)</p>
-          </div>
+          <NetPaySection>
+            <NetPayLabel>
+              Net Pay for the month (Total Earnings - Total Deductions):
+            </NetPayLabel>
+            <NetPayValue>Rs. {netPay.toFixed(2)}</NetPayValue>
+            <AmountInWords>
+              (Rupees {amountInWords} Only)
+            </AmountInWords>
+          </NetPaySection>
 
-          <p style={{ fontSize: '12px', textAlign: 'center', marginTop: '20px' }}>
-            This is a system-generated payslip and does not require signature.
-          </p>
-        </Container>
+          <Footer>
+            <Disclaimer>
+              This is a system-generated payslip and does not require signature.
+            </Disclaimer>
+            <ContactInfo>
+              {companyDetails?.email ? `Email: ${companyDetails.email} | ` : ''}
+              {companyDetails?.phone ? `Phone: ${companyDetails.phone} | ` : ''}
+              {companyDetails?.website ? `Website: ${companyDetails.website}` : ''}
+            </ContactInfo>
+          </Footer>
+        </PayslipContainer>
       )}
-    </div>
+    </CardContainer>
   );
 };
 
+// ====== Styled Components ====== //
+const CardContainer = styled.div`
+  padding: 20px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+`;
+
+const ControlSection = styled.div`
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+`;
+
+const DateSection = styled.div`
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 10px;
+  }
+`;
+
+
 const ErrorText = styled.div`
-  color: red;
+  color: #e53935;
   font-size: 12px;
   margin-top: 5px;
 `;
 
 const LoadingContainer = styled.div`
   text-align: center;
-  padding: 20px;
+  padding: 30px;
   font-size: 16px;
-  color: #888;
+  color: #5c6bc0;
+  background: #e8eaf6;
+  border-radius: 8px;
+  margin-top: 20px;
 `;
 
 const NoDataMessage = styled.div`
   text-align: center;
-  padding: 20px;
+  padding: 30px;
   font-size: 16px;
-  color: #888;
-  border: 1px dashed #ccc;
+  color: #ff9800;
+  border: 1px dashed #ffb74d;
   margin-top: 20px;
-  background-color: #f9f9f9;
-`;
-
-const Container = styled.div`
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: auto;
-  max-width: 750px;
-  padding: 0px;
-  border: 2px solid #000;
-  background: #fff;
+  background-color: #fff8e1;
   border-radius: 8px;
-  box-sizing: border-box;
 `;
 
-const PayslipTitle = styled.div`
-  width: 100%;
-  margin-top: 15px;
+const PayslipContainer = styled.div`
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  margin: auto;
+  max-width: 800px;
+  padding: 30px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  position: relative;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    // background: linear-gradient(90deg, #f7f7f7ff, #f7f7f7ff);
+  }
+`;
+
+const HeaderSection = styled.div`
   text-align: center;
-  font-size: 18px;
-  font-weight: bold;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  // border-bottom: 1px solid #eaeaea;
+  padding: 0 15px;
 `;
-
-const EmployeeInfo = styled.div`
-  display: flex;
-  justify-content: space-between;
-  padding: 10px;
-`;
-
 
 const LogoContainer = styled.div`
-    display: flex;
+  display: flex;
   align-items: center;
-  height: 60px;
+  justify-content: flex-start;
+  gap: 20px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  padding-left: 20px; /* Added left padding to the logo container */
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    text-align: center;
+    padding-left: 0;
+  }
 `;
+
 const CompanyLogo = styled.img`
-   max-height: 100%;
-  max-width: 100%;
+  max-height: 100px;
+  max-width: 180px;
   object-fit: contain;
 `;
 
-const CompanyName = styled.div`
+const CompanyInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  padding-left: 140px;
+`;
+
+const CompanyName = styled.h1`
   font-size: 24px;
-  font-weight: bold;
-  text-align: center;
-  color: #333;
-  padding-left: 40px;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0;
+  letter-spacing: 0.5px;
 `;
 
 const CompanyAddress = styled.div`
-  text-align: center;
   font-size: 14px;
-  margin-bottom: 15px;
+  color: #7f8c8d;
+  margin-top: 5px;
+`;
+
+const PayslipTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 15px 0 0;
+  padding: 10px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+`;
+
+const EmployeeInfoSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background: #f9fbfd;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #eaeaea;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const InfoColumn = styled.div`
-  width: 50%;
-  padding-top: 0px;
-  padding-left:10px;
+  width: 48%;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    margin-bottom: 15px;
+  }
 `;
 
-const Divider = styled.div`
+const InfoItem = styled.div`
+  display: flex;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+`;
+
+const InfoLabel = styled.span`
+  font-weight: 600;
+  color: #34495e;
+  min-width: 160px;
+`;
+
+const InfoValue = styled.span`
+  color: #2c3e50;
+  flex: 1;
+`;
+
+const VerticalDivider = styled.div`
   width: 1px;
-  background-color: black;
-  margin: 11px 14px;
+  background: #e0e0e0;
+  margin: 0 15px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    height: 1px;
+    margin: 10px 0;
+  }
 `;
 
 const DividerLine = styled.hr`
-  border: 1.5px solid black;
-  margin-top: -20px;
+  border: 0;
+  height: 1px;
+  // background: linear-gradient(to right, #f7f7f7ff, #f7f7f7ff);
+  margin: 20px 0;
 `;
 
-const TableSection = styled.div`
+const FinancialSection = styled.div`
   display: flex;
-  padding: 0 10px;
+  gap: 20px;
+  margin-bottom: 25px;
+  padding: 0 15px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const EarningsTable = styled.table`
-  width: 50%;
+  width: 60%;
   border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  table-layout: fixed;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const DeductionsTable = styled.table`
-  width: 50%;
+  width: 40%;
   border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  table-layout: fixed;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
-const thStyle = {
-  border: '1px solid black',
-  padding: '6px',
-  textAlign: 'left'
-};
+const TableHeader = styled.thead`
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+`;
 
-const thRight = {
-  border: '1px solid black',
-  padding: '6px',
-  textAlign: 'right'
-};
+const TableRow = styled.tr`
+  &:nth-child(even) {
+    background-color: #f8f9fa;
+  }
+`;
 
-const tdStyle = {
-  border: '1px solid black',
-  padding: '6px',
-  textAlign: 'left'
-};
+const TableHeaderCell = styled.th`
+  padding: 12px 15px;
+  text-align: ${props => props.align || 'left'};
+  font-weight: 600;
+  width: ${props => props.width || 'auto'};
+`;
 
-const tdRight = {
-  border: '1px solid black',
-  padding: '6px',
-  textAlign: 'right'
-};
-const Header = styled.div`
-  text-align: center;
-  border-bottom: 2px solid #ccc;
+const TableBody = styled.tbody``;
+
+const TableCell = styled.td`
+  padding: 10px 15px;
+  border-bottom: 1px solid #eaeaea;
+  text-align: ${props => props.align || 'left'};
+  width: ${props => props.width || 'auto'};
+`;
+
+const TotalRow = styled.tr`
+  background-color: #e3f2fd !important;
+  font-weight: bold;
+  border-top: 2px solid #bbdefb;
+`;
+
+const NetPaySection = styled.div`
+  padding: 20px 15px;
+  background: #e8f5e9;
+  border-radius: 8px;
   margin-bottom: 20px;
+  border-left: 4px solid #4caf50;
 `;
 
+const NetPayLabel = styled.p`
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 5px;
+`;
+
+const NetPayValue = styled.p`
+  font-size: 22px;
+  font-weight: 700;
+  color: #1b5e20;
+  margin: 5px 0;
+`;
+
+const AmountInWords = styled.p`
+  font-style: italic;
+  color: #43a047;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #a5d6a7;
+`;
+
+const Footer = styled.div`
+  text-align: center;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  margin-top: 20px;
+`;
+
+const Disclaimer = styled.p`
+  font-size: 13px;
+  color: #757575;
+  margin-bottom: 8px;
+`;
+
+const ContactInfo = styled.div`
+  font-size: 12px;
+  color: #9e9e9e;
+`;
 export default Payslip;

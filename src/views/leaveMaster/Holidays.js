@@ -1,48 +1,29 @@
 import ClearIcon from '@mui/icons-material/Clear';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Select from '@mui/material/Select';
-import TextField from '@mui/material/TextField';
-import apiCalls from 'apicall';
-import { useState, useEffect } from 'react';
-import 'react-tabs/style/react-tabs.css';
-import { ToastContainer } from 'react-toastify';
 import UploadIcon from '@mui/icons-material/Upload';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import { getAllActiveBranches } from 'utils/CommonFunctions';
-import dayjs from 'dayjs';
+import { Autocomplete, Avatar, Box, Button, Dialog, DialogActions, DialogContent, Typography } from '@mui/material';
+import FormControl from '@mui/material/FormControl';
+import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import apiCalls from 'apicall';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import 'react-tabs/style/react-tabs.css';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
+import { getAllActiveBranches } from 'utils/CommonFunctions';
 import { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import { FormHelperText, MenuItem, Autocomplete, Box } from '@mui/material';
-import { date } from 'yup';
-import {
-  Avatar,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell
-} from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import IconButton from '@mui/material/IconButton';
-import ControlCameraIcon from '@mui/icons-material/ControlCamera';
-
+import sampleFileDownload from '../../../src/assets/sample-files/Holiday_List.xlsx';
 
 const Holidays = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,20 +40,20 @@ const Holidays = () => {
     day: '',
     festival: '',
     branchName: '',
-    holidaysImage: '',
+    holidaysImage: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
     holidayDate: '',
     day: '',
     festival: '',
-    branchName: '',
+    branchName: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'holidayDate', header: 'Holiday Date', size: 140 }, // Check correct field name
+    { accessorKey: 'holidayDate', header: 'Date', size: 140 }, // Check correct field name
     { accessorKey: 'day', header: 'Day', size: 140 },
-    { accessorKey: 'festival', header: 'Festival', size: 140 },
+    { accessorKey: 'festival', header: 'Festival', size: 140 }
     // { accessorKey: 'holidaysImage', header: 'Holidays Image', size: 140 }
   ];
 
@@ -99,7 +80,7 @@ const Holidays = () => {
       if (response.status === true) {
         const formattedData = response.paramObjectsMap.holidayVO.map((holiday) => ({
           ...holiday,
-          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : '',
+          holidayDate: holiday.holidayDate ? dayjs(holiday.holidayDate).format('YYYY-MM-DD') : ''
         }));
 
         setListViewData(formattedData);
@@ -131,7 +112,7 @@ const Holidays = () => {
           day: holidayDetails.day,
           festival: holidayDetails.festival,
           branchName: holidayDetails.branchName,
-          holidaysImage: holidayDetails.holidaysImage,
+          holidaysImage: holidayDetails.holidaysImage
         });
       } else {
         console.error('API Error:', response);
@@ -140,7 +121,6 @@ const Holidays = () => {
       console.error('Error fetching data:', error);
     }
   };
-
 
   const handleInputChange = (e) => {
     const { name, value, checked, type, selectionStart, selectionEnd } = e.target;
@@ -201,13 +181,13 @@ const Holidays = () => {
       day: '',
       festival: '',
       branchName: '',
-      holidaysImage: '',
+      holidaysImage: ''
     });
     setFieldErrors({
       holidayDate: '',
       day: '',
       festival: '',
-      branchName: '',
+      branchName: ''
     });
     setEditId('');
   };
@@ -270,7 +250,6 @@ const Holidays = () => {
         setFormData({ day: '', festival: '', branchName: '', holidaysImage: '' });
         setLogo(null);
         setEditId('');
-
       } catch (error) {
         console.error('Error:', error);
         showToast('error', 'Company creation failed');
@@ -289,7 +268,7 @@ const Holidays = () => {
   const handleLogoChange = (e) => {
     const file = e.target.files[0];
     if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
-      setFormData(prev => ({ ...prev, logo: file })); // UPDATED: Set logo in formData
+      setFormData((prev) => ({ ...prev, logo: file })); // UPDATED: Set logo in formData
     } else {
       showToast('error', 'Please upload a valid image (PNG or JPEG).');
     }
@@ -300,8 +279,8 @@ const Holidays = () => {
     setFormData((prev) => ({ ...prev, holidaysImage: '' })); // Reset the form data's image URL to empty
   };
 
-
-  const handleFileUpload = async (generatedId, logoFile) => { // ADDED: logoFile parameter
+  const handleFileUpload = async (generatedId, logoFile) => {
+    // ADDED: logoFile parameter
     if (!generatedId) {
       showToast('error', 'Generated ID is required');
       return;
@@ -345,7 +324,6 @@ const Holidays = () => {
     setListView(!listView);
   };
 
-
   // const handleView = () => {
   //   setListView(!listView);
   // };
@@ -384,9 +362,6 @@ const Holidays = () => {
     console.log(event.target.files[0]);
   };
 
-
-
-
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
@@ -397,7 +372,7 @@ const Holidays = () => {
               <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
               <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
               <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} />
-              <ActionButton title="Save" icon={UploadIcon} isLoading={isLoading} onClick={handleBulkUploadOpen} margin="0 10px 0 10px" />
+              <ActionButton title="Upload" icon={UploadIcon} onClick={handleBulkUploadOpen} margin="0 10px 0 10px" />
               {uploadOpen && (
                 <CommonBulkUpload
                   open={uploadOpen}
@@ -405,6 +380,9 @@ const Holidays = () => {
                   dialogTitle="Upload Files"
                   uploadText="Upload File"
                   onSubmit={handleSubmit}
+                  sampleFileDownload={sampleFileDownload}
+                  fileName="Sample_Holiday"
+                  downloadText="Download File"
                   handleFilesUpload={handleFilesUpload}
                   apiUrl="/basicmaster/excelUploadForHolidays"
                   screen="HolidayReport"
@@ -436,7 +414,6 @@ const Holidays = () => {
         ) : (
           <>
             <div className="row">
-
               {/* Holiday Date  */}
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
@@ -455,7 +432,6 @@ const Holidays = () => {
                 </FormControl>
               </div>
 
-
               {/* Day */}
               <div className="col-md-3 mb-3">
                 <TextField
@@ -463,6 +439,7 @@ const Holidays = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
+                  disabled
                   name="day"
                   value={formData.day}
                   onChange={handleInputChange}
@@ -488,18 +465,18 @@ const Holidays = () => {
               <div className="col-md-3 mb-3">
                 <Autocomplete
                   options={branchList}
-                  getOptionLabel={(option) => option.branch || ""}
-                  sx={{ width: "100%" }}
+                  getOptionLabel={(option) => option.branch || ''}
+                  sx={{ width: '100%' }}
                   size="small"
                   value={branchList.find((c) => c.branch === formData.branchName) || null}
                   onChange={(event, newValue) => {
                     setFormData((prev) => ({
                       ...prev,
-                      branchName: newValue ? newValue.branch : "",
+                      branchName: newValue ? newValue.branch : ''
                     }));
                     setFieldErrors((prevErrors) => ({
                       ...prevErrors,
-                      branchName: "",
+                      branchName: ''
                     }));
                   }}
                   renderInput={(params) => (
@@ -508,10 +485,10 @@ const Holidays = () => {
                       label="Branch"
                       name="branchName"
                       error={Boolean(fieldErrors.branchName)}
-                      helperText={fieldErrors.branchName || ""}
+                      helperText={fieldErrors.branchName || ''}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
@@ -527,15 +504,12 @@ const Holidays = () => {
                     sx={{ color: 'rgb(103 58 183)', borderRadius: '12px' }}
                   >
                     {/* {logo ? (typeof logo === 'object' && logo.name ? logo.name : 'Logo👉') : 'Upload Logo'} */}
-                    {formData.logo?.name || 'Upload Logo'}
+                    {formData.logo?.name || 'Upload img'}
                     <input type="file" hidden accept="image/png, image/jpeg" onChange={handleLogoChange} />
                   </Button>
 
                   {formData.logo && (
-                    <IconButton
-                      onClick={handleOpen}
-                      sx={{ color: 'rgb(103 58 183)' }}
-                    >
+                    <IconButton onClick={handleOpen} sx={{ color: 'rgb(103 58 183)' }}>
                       <ControlCameraIcon />
                     </IconButton>
                   )}
@@ -547,11 +521,7 @@ const Holidays = () => {
                     </Typography>
                     {formData.logo ? (
                       <Box mt={2}>
-                        <Avatar
-                          src={URL.createObjectURL(formData.logo)}
-                          alt="Holiday Image"
-                          sx={{ width: 200, height: 200 }}
-                        />
+                        <Avatar src={URL.createObjectURL(formData.logo)} alt="Holiday Image" sx={{ width: 200, height: 200 }} />
                       </Box>
                     ) : (
                       <Typography variant="body1" mt={2}>

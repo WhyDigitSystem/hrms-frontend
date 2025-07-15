@@ -221,12 +221,12 @@ const SalaryReport = () => {
           <div className="col-md-3 mb-3">
             <Button
               variant="contained"
-              color="primary"
               onClick={getAllSalaryReport}
               sx={{
                 borderRadius: '8px',
                 boxShadow: '0px 3px 5px rgba(0,0,0,0.2)',
-                textTransform: 'none'
+                textTransform: 'none',
+                background: 'linear-gradient(193deg, #2a4b4d 30%, #3a6b6d 90%)'
               }}
             >
               Go
