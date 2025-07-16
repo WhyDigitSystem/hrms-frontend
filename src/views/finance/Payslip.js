@@ -519,19 +519,17 @@ const Payslip = () => {
                     </CompanyName>
                     <CompanyAddress>
                       {companyDetails?.address ? `${companyDetails.address},` : ''}
-                      {/* {companyDetails?.city ? ` ${companyDetails.city},` : ''} */}
                       {companyDetails?.pincode ? ` ${companyDetails.pincode}` : ''}
                     </CompanyAddress>
                   </CompanyInfo>
                 </>
               ) : (
-                <CompanyInfo>
+                <CompanyInfo fullWidth>
                   <CompanyName>
                     {companyDetails?.companyname || 'Company Name'}
                   </CompanyName>
                   <CompanyAddress>
                     {companyDetails?.address ? `${companyDetails.address},` : ''}
-                    {/* {companyDetails?.city ? ` ${companyDetails.city},` : ''} */}
                     {companyDetails?.pincode ? ` ${companyDetails.pincode}` : ''}
                   </CompanyAddress>
                 </CompanyInfo>
@@ -753,7 +751,6 @@ const PayslipContainer = styled.div`
     left: 0;
     right: 0;
     height: 4px;
-    // background: linear-gradient(90deg, #f7f7f7ff, #f7f7f7ff);
   }
 `;
 
@@ -761,7 +758,6 @@ const HeaderSection = styled.div`
   text-align: center;
   margin-bottom: 25px;
   padding-bottom: 20px;
-  // border-bottom: 1px solid #eaeaea;
   padding: 0 15px;
 `;
 
@@ -772,7 +768,7 @@ const LogoContainer = styled.div`
   gap: 20px;
   margin-bottom: 15px;
   flex-wrap: wrap;
-  padding-left: 20px; /* Added left padding to the logo container */
+  width: 100%;
 
   @media (max-width: 576px) {
     flex-direction: column;
@@ -790,7 +786,7 @@ const CompanyLogo = styled.img`
 const CompanyInfo = styled.div`
   display: flex;
   flex-direction: column;
-  padding-left: 140px;
+${props => props.fullWidth && 'width: 100%;'}
 `;
 
 const CompanyName = styled.h1`
