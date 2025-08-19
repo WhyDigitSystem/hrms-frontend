@@ -29,6 +29,7 @@ const screenMapping = {
   'COMPENSATORY OFF': 'compoOff',
   'WORK FROM HOME': 'WorkFromHome',
   'TRAVEL REQUEST': 'TravelRequest',
+  'TASK': 'task',
 
 };
 
@@ -38,6 +39,7 @@ const allScreens = [
   { id: 'holidayReport', title: 'Holiday Report', type: 'item', url: '/me/HolidayReport', icon: icons.BeachAccessIcon },
   { id: 'swipeInSwipeOut', title: 'Check In & Out', type: 'item', url: '/me/SwipeInSwipeOut', icon: icons.AccessTimeIcon },
   { id: 'timeSheet', title: 'Time Sheet', type: 'item', url: '/me/TimeSheet', icon: icons.AccessTimeIcon },
+  { id: 'task', title: 'Task', type: 'item', url: '/me/Task', icon: icons.AccessTimeIcon },
   { id: 'WorkFromHome', title: 'WORK FROM HOME', type: 'item', url: '/me/WorkFromHome', icon: icons.AccessTimeIcon },
   { id: 'TravelRequest', title: 'WORK FROM HOME', type: 'item', url: '/me/TravelRequest', icon: icons.AccessTimeIcon },
 
@@ -115,6 +117,13 @@ const me = {
           type: 'item',
           url: '/me/TimeSheet',
           icon: icons.AccessTimeIcon
+        },
+        {
+          id: 'task',
+          title: 'Task',
+          type: 'item',
+          url: '/me/Task',
+          icon: icons.TaskIcon
         },
         {
           id: 'swipeInSwipeOut',
