@@ -4,8 +4,10 @@ import { FaPersonWalkingLuggage, FaUserClock } from 'react-icons/fa6';
 import BeachAccessIcon from '@mui/icons-material/BeachAccess';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import FlightTakeoffIcon from '@mui/icons-material/FlightTakeoff';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
 // constant
 const icons = {
+  AssignmentOutlinedIcon,
   IconUsers,
   FaPersonWalkingLuggage,
   FaUserClock,
@@ -123,7 +125,7 @@ const me = {
           title: 'Task',
           type: 'item',
           url: '/me/Task',
-          icon: icons.TaskIcon
+          icon: icons.AssignmentOutlinedIcon
         },
         {
           id: 'swipeInSwipeOut',
