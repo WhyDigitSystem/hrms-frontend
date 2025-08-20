@@ -394,7 +394,7 @@ const Task = () => {
 
       if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
         const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
-        setEditId(response.paramObjectsMap.timeSheetVO[0].id);
+        setEditId(response.paramObjectsMap.timeSheetVO[0].id || '');
         console.log("Edit id", response.paramObjectsMap.timeSheetVO[0].id);
         const mergedDetails = allTimeSheetEntries.flatMap((entry) => entry.timeSheetDetailsVO || []);
 
@@ -410,6 +410,7 @@ const Task = () => {
         }));
         setFormRows(formattedRows.length > 0 ? formattedRows : [{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
       } else {
+        setEditId('');
         setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
       }
 
@@ -480,6 +481,7 @@ const Task = () => {
         if (response.status === true) {
           showToast('success', 'TimeSheet submitted successfully');
           setModalOpen(false);
+          handleClear();
           setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
           setSelectedDate(null);
         } else {
@@ -502,6 +504,7 @@ const Task = () => {
   };
 
   const handleClear = () => {
+    setEditId('')
     setSelectedDate(null);
     setModalOpen(false);
     setFormRows([
@@ -820,13 +823,17 @@ const Task = () => {
                             />
                           </td>
                           <td>
-                            <input
-                              type="text"
+                            <textarea
                               value={row.description}
-                              onChange={(e) => handleRowChange(index, 'description', e.target.value)}
+                              onChange={(e) => {
+                                handleRowChange(index, 'description', e.target.value);
+                                e.target.style.height = "auto";
+                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
+                              }}
                               className="form-control form-control-sm"
                               placeholder="Enter description"
                               disabled={!isCurrentMonth(selectedDate)}
+                              style={{ resize: "none", overflow: "hidden" }}
                             />
                           </td>
                           <td>
@@ -874,13 +881,17 @@ const Task = () => {
                             />
                           </td>
                           <td>
-                            <input
-                              type="text"
+                            <textarea
                               value={row.remarks}
-                              onChange={(e) => handleRowChange(index, 'remarks', e.target.value)}
+                              onChange={(e) => {
+                                handleRowChange(index, 'remarks', e.target.value);
+                                e.target.style.height = "auto";
+                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
+                              }}
                               className="form-control form-control-sm"
                               placeholder="Enter remarks"
                               disabled={!isCurrentMonth(selectedDate)}
+                              style={{ resize: "none", overflow: "hidden" }}
                             />
                           </td>
                         </tr>
