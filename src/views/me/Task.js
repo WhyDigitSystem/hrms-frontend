@@ -376,53 +376,55 @@ const Task = () => {
       console.log('error', err);
     }
   };
-
   const handleDateClick = async (date) => {
     const formatted = dayjs(date).format('YYYY-MM-DD');
     if (weekOff.includes(formatted)) return;
 
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-    const dateKey = date.toDateString();
-    const timeSheetStatus = timeSheetData[dateKey];
-
-    if (timeSheetStatus?.status === 'LEAVE') return;
-
     setSelectedDate(date);
 
     try {
-      const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formatted}&empCode=${employeeCode}&orgId=${orgId}`);
+      const response = await apiCalls(
+        'get',
+        `/timesheet/getTimeSheetByOrgId?date=${formatted}&empCode=${employeeCode}&orgId=${orgId}`
+      );
 
-      if (response?.status && response?.paramObjectsMap?.timeSheetVO) {
-        const allTimeSheetEntries = response.paramObjectsMap.timeSheetVO;
-        setEditId(response.paramObjectsMap.timeSheetVO[0].id || '');
-        console.log("Edit id", response.paramObjectsMap.timeSheetVO[0].id);
-        const mergedDetails = allTimeSheetEntries.flatMap((entry) => entry.timeSheetDetailsVO || []);
+      if (response) {
+        const taskVO = response.paramObjectsMap?.timeSheetVO || [];
+        const firstEntry = taskVO.length > 0 ? taskVO[0] : null;
 
-        const formattedRows = mergedDetails.map((item) => ({
-          projectName: item.projectName || '',
-          screenTask: item.project || '',
-          description: item.description || '',
-          wip: item.wip || '',
-          status: item.status || '',
-          fromTime: item.fromTime || '',
-          toTime: item.toTime || '',
-          remarks: item.remarks || '',
-        }));
-        setFormRows(formattedRows.length > 0 ? formattedRows : [{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-      } else {
-        setEditId('');
-        setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
+        if (firstEntry) {
+          setEditId(firstEntry.id);  // ✅ store edit id
+          setFormRows(
+            firstEntry.timeSheetDetailsVO.map((row) => ({
+              id: row.id,
+              projectName: row.projectName || '',
+              screenTask: row.project || '',
+              description: row.description || '',
+              wip: row.wip || '',
+              status: row.status || '',
+              fromTime: row.fromTime || '',
+              toTime: row.toTime || '',
+              remarks: row.remarks || '',
+            }))
+          );
+        } else {
+          setEditId(''); // ✅ no data -> keep it empty
+          setFormRows([
+            { projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }
+          ]);
+        }
       }
 
       setModalOpen(true);
     } catch (error) {
       console.error('Error fetching timesheet:', error);
-      // showToast('error', 'Failed to fetch timesheet data');
-      setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
+      setEditId('');
+      setFormRows([
+        { projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }
+      ]);
       setModalOpen(true);
     }
   };
-
   const isCurrentMonth = (date) => {
     const now = new Date();
     return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
@@ -516,20 +518,20 @@ const Task = () => {
     setLoading(true);
     try {
       const today = new Date(); // Current date
-      console.log('bbhd', today);
+      // console.log('bbhd', today);
       const startOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1); // 1st of current month
-      console.log('efeef', startOfMonth);
+      // console.log('efeef', startOfMonth);
       const formattedData = {};
 
       // Loop from startOfMonth to today
       for (let d = new Date(startOfMonth); d <= today; d.setDate(d.getDate() + 1)) {
         const loopDate = new Date(d); // Create a new date instance to avoid mutation
-        console.log('loopDate', loopDate);
+        // console.log('loopDate', loopDate);
 
         // const loopDateStr = loopDate.toISOString().split('T')[0]; // yyyy-mm-dd format
         const loopDateStr = new Date(loopDate.getTime() - loopDate.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
-        console.log('loopDateStr', loopDateStr);
+        // console.log('loopDateStr', loopDateStr);
 
         const response = await apiCalls(
           'get',
@@ -708,7 +710,7 @@ const Task = () => {
     <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
       <div className="row d-flex ml">
         <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-          <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
+          {/* <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} /> */}
           <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
           <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
           <ActionButton
@@ -764,7 +766,7 @@ const Task = () => {
           <div className="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
             <div className="modal-content shadow-lg">
               <div className="modal-header">
-                {/* <h5 className="modal-title">Add Entry for {selectedDate.toDateString()}</h5> */}
+                <h5 className="modal-title">Add Entry for {selectedDate.toDateString()}</h5>
                 <button type="button" className="btn-close" onClick={() => setModalOpen(false)}></button>
               </div>
 
