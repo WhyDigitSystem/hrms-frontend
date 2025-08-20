@@ -1024,21 +1024,21 @@ const Task = () => {
                         <>
                           {/* <TableCell rowSpan={details.length}>{entry.date}</TableCell> */}
                           <TableCell rowSpan={details.length}>
-                            {entry.date ? dayjs(entry.date).format('DD-MM-YYYY') : ''}
+                            {entry.date ? dayjs(entry.date).format('DD/MM/YYYY') : ''}
                           </TableCell>
                           {/* <TableCell rowSpan={details.length}>{entry.date.format(DD-MM-YYYY)}</TableCell> */}
                           <TableCell rowSpan={details.length}>{entry.totalhours}</TableCell>
                         </>
                       )}
                       {detailIndex !== 0 && null}
-                      <TableCell>{detail.projectName}</TableCell>
-                      <TableCell>{detail.project}</TableCell>
-                      <TableCell>{detail.description}</TableCell>
-                      <TableCell>{detail.wip}</TableCell>
-                      <TableCell>{detail.status}</TableCell>
-                      <TableCell>{detail.fromTime}</TableCell>
-                      <TableCell>{detail.toTime}</TableCell>
-                      <TableCell>{detail.remarks}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.projectName}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.project}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.description}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.wip}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.status}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.fromTime}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.toTime}</TableCell>
+                      <TableCell style={{ padding: '0px' }}>{detail.remarks}</TableCell>
                     </TableRow>
                   ));
                 })
