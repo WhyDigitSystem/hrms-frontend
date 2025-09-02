@@ -32,7 +32,7 @@ const screenMapping = {
   'WORK FROM HOME': 'WorkFromHome',
   'TRAVEL REQUEST': 'TravelRequest',
   'TASK': 'task',
-
+  'All TASK': 'AllTask',
 };
 
 const allScreens = [
@@ -42,6 +42,7 @@ const allScreens = [
   { id: 'swipeInSwipeOut', title: 'Check In & Out', type: 'item', url: '/me/SwipeInSwipeOut', icon: icons.AccessTimeIcon },
   { id: 'timeSheet', title: 'Time Sheet', type: 'item', url: '/me/TimeSheet', icon: icons.AccessTimeIcon },
   { id: 'task', title: 'Task', type: 'item', url: '/me/Task', icon: icons.AccessTimeIcon },
+  { id: 'allTask', title: 'All Task', type: 'item', url: '/me/AllTask', icon: icons.AccessTimeIcon },
   { id: 'WorkFromHome', title: 'WORK FROM HOME', type: 'item', url: '/me/WorkFromHome', icon: icons.AccessTimeIcon },
   { id: 'TravelRequest', title: 'WORK FROM HOME', type: 'item', url: '/me/TravelRequest', icon: icons.AccessTimeIcon },
 
@@ -125,6 +126,13 @@ const me = {
           title: 'Task',
           type: 'item',
           url: '/me/Task',
+          icon: icons.AssignmentOutlinedIcon
+        },
+        {
+          id: 'allTask',
+          title: 'All Task',
+          type: 'item',
+          url: '/me/AllTask',
           icon: icons.AssignmentOutlinedIcon
         },
         {

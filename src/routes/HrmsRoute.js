@@ -62,6 +62,7 @@ const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')))
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
 const TimeSheet = Loadable(lazy(() => import('views/me/TimeSheet')));
 const Task = Loadable(lazy(() => import( 'views/me/Task')));
+const AllTask = Loadable(lazy(() => import( 'views/me/AllTask')));
 const WorkFromHome = Loadable(lazy(() => import('views/me/WorkFromHome')));
 const TravelRequest = Loadable(lazy(() => import('views/me/TravelRequest')));
 
@@ -274,6 +275,10 @@ const HrmsRoute = {
     {
       path: '/me/Task',
       element: <Task />
+    },
+    {
+      path: '/me/AllTask',
+      element: <AllTask />
     },
     {
       path: '/me/CompoOff',
