@@ -19,7 +19,8 @@ const screenMapping = {
   'PERMISSION APPROVAL': 'permissionApproval',
   'ATTENDANCE REPORT': 'attendanceReport',
   'TODAY ATTENDANCE': 'todayAttendance',
-  'CHECK IN AND OUT REPORT': 'checkInOutReport'
+  'CHECK IN AND OUT REPORT': 'checkInOutReport',
+  'OVER ALL TASK REPORT': 'overAllReport'
 };
 
 const allScreens = [
@@ -57,11 +58,19 @@ const allScreens = [
     type: 'item',
     url: '/team/EmployeeAttanceReport',
     icon: icons.IconUsers
+  },
+  {
+    id: 'overAllReport',
+    title: 'Over All Task Report',
+    type: 'item',
+    url: '/team/OverAllReport',
+    icon: icons.IconUsers
   }
 ];
 
 const allowedScreenIds =
-  userType === 'ADMIN' ? allScreens.map((screen) => screen.id) : allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
+  userType === 'ADMIN' ? allScreens.map((screen) => screen.id) 
+  : allowedScreens.map((screen) => screenMapping[screen]).filter(Boolean);
 
 const team = {
   id: 'team',

@@ -60,7 +60,7 @@ const getMenuItems = () => {
       };
     case 'MANAGER':
       return {
-        items: [dashboard, calendar, me, finance, team, manageTax]
+        items: [dashboard, calendar, me, team, finance, manageTax]
       };
     default:
       return defaultMenuItems;

@@ -5,6 +5,7 @@ import MainLayout from 'layout/MainLayout';
 import Loadable from 'ui-component/Loadable';
 import { element } from 'prop-types';
 import PrivateRoute from './PrivateRoute';
+// import OverAllReport from 'views/team/OverAllReport';
 // import Roles from 'views/basicMaster/roles';
 
 const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')));
@@ -62,7 +63,7 @@ const SwipeInSwipeOut = Loadable(lazy(() => import('views/me/SwipeInSwipeOut')))
 const HolidayReport = Loadable(lazy(() => import('views/me/HolidayReport')));
 const TimeSheet = Loadable(lazy(() => import('views/me/TimeSheet')));
 const Task = Loadable(lazy(() => import( 'views/me/Task')));
-const AllTask = Loadable(lazy(() => import( 'views/me/AllTask')));
+// const AllTask = Loadable(lazy(() => import( 'views/me/AllTask')));
 const WorkFromHome = Loadable(lazy(() => import('views/me/WorkFromHome')));
 const TravelRequest = Loadable(lazy(() => import('views/me/TravelRequest')));
 
@@ -80,6 +81,7 @@ const PermissionApproval = Loadable(lazy(() => import('views/team/PermissionAppr
 const AttendanceReport = Loadable(lazy(() => import('views/team/AttendanceReport')));
 const TodayAttendance = Loadable(lazy(() => import('views/team/TodayAttendance')));
 const EmployeeAttanceReport = Loadable(lazy(() => import('views/team/EmployeeAttanceReport')));
+const OverAllReport = Loadable(lazy(() => import( 'views/team/OverAllReport')));
 
 // manageTax
 const ManageTax = Loadable(lazy(() => import('views/ManageTax/manageTax')));
@@ -276,10 +278,10 @@ const HrmsRoute = {
       path: '/me/Task',
       element: <Task />
     },
-    {
-      path: '/me/AllTask',
-      element: <AllTask />
-    },
+    // {
+    //   path: '/me/AllTask',
+    //   element: <AllTask />
+    // },
     {
       path: '/me/CompoOff',
       element: <CompoOff />
@@ -332,6 +334,10 @@ const HrmsRoute = {
     {
       path: '/team/EmployeeAttanceReport',
       element: <EmployeeAttanceReport />
+    },
+    {
+      path: '/team/OverAllReport',
+      element: <OverAllReport />
     },
     // manageTax
     {

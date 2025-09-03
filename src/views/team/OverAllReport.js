@@ -42,7 +42,7 @@ function PaperComponent(props) {
   );
 }
 
-function AllTask() {
+function OverAllReport() {
   const [listViewData, setListViewData] = useState([]);
   const [orgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName] = useState(localStorage.getItem('userName'));
@@ -339,7 +339,7 @@ function AllTask() {
 
     // ===== 3) PARAMS (same as Excel) =====
     doc.setFontSize(10).setTextColor('#000000');
-    let metaY = 45;
+    let metaY = 40;
     const paramEntries = [
       ['Employee', empName || '-'],
       ['Month', filters?.currMonth || '-'],
@@ -350,7 +350,7 @@ function AllTask() {
 
     paramEntries.forEach(([label, value]) => {
       doc.text(`${label}: ${value}`, 15, metaY);
-      metaY += 12;
+      metaY += 6; // ⬅️ smaller line spacing (was 12)
     });
 
     // ===== 4) TABLE =====
@@ -380,24 +380,34 @@ function AllTask() {
 
           if (ts.status === 'TIMESHEET' && details.length > 0) {
             details.forEach((task, idx) => {
-              tableRows.push([
-                idx === 0
-                  ? {
-                      content: dayjs(ts.date).format('DD/MM/YYYY'),
-                      rowSpan: details.length,
-                      styles: { halign: 'center', fontStyle: 'bold' }
-                    }
-                  : null, // ✅ fixes misalignment
-                idx === 0 ? { content: ts.totalhours, rowSpan: details.length, styles: { halign: 'center' } } : null, // ✅ fixes misalignment
-                task.projectName || '-',
-                task.project || '-', // screens
-                task.status || '-',
-                task.fromTime || '-',
-                task.toTime || '-',
-                task.wip || '-',
-                task.description || '-',
-                task.remarks || '-'
-              ]);
+              let rowCells = [];
+              if (idx === 0) {
+                rowCells.push({
+                  content: dayjs(ts.date).format('DD/MM/YYYY'),
+                  rowSpan: details.length,
+                  styles: { halign: 'center', fontStyle: 'bold' }
+                });
+                rowCells.push({
+                  content: ts.totalhours || '-',
+                  rowSpan: details.length,
+                  styles: { halign: 'center' }
+                });
+              }
+              // else {
+              //   // 👇 FIX: force placeholder cells with colSpan
+              //   rowCells.push({ content: '', colSpan: 1 });
+              //   rowCells.push({ content: '', colSpan: 1 });
+              // }
+              rowCells.push(task.projectName || '-');
+              rowCells.push(task.project || '-');
+              rowCells.push(task.status || '-');
+              rowCells.push(task.fromTime || '-');
+              rowCells.push(task.toTime || '-');
+              rowCells.push(task.wip || '-');
+              rowCells.push(task.description || '-');
+              rowCells.push(task.remarks || '-');
+
+              tableRows.push(rowCells);
             });
           } else {
             // Leave/Holiday Row
@@ -421,6 +431,18 @@ function AllTask() {
       styles: { fontSize: 8, cellPadding: 2 },
       headStyles: { fillColor: [52, 68, 155], textColor: 255, halign: 'center' },
       bodyStyles: { valign: 'middle' },
+      columnStyles: {
+        0: { cellWidth: 20 }, // Date
+        1: { cellWidth: 15 }, // Tot Hrs
+        2: { cellWidth: 35 }, // Project Name
+        3: { cellWidth: 30 }, // Screens
+        4: { cellWidth: 20 }, // Status
+        5: { cellWidth: 20 }, // From
+        6: { cellWidth: 20 }, // To
+        7: { cellWidth: 15 }, // WIP%
+        8: { cellWidth: 60 }, // Description
+        9: { cellWidth: 40 } // Remarks
+      },
       theme: 'grid'
     });
 
@@ -824,4 +846,4 @@ function AllTask() {
     </>
   );
 }
-export default AllTask;
+export default OverAllReport;
