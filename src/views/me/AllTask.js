@@ -1,1001 +1,820 @@
-import React, { useState } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
-import ClearIcon from '@mui/icons-material/Clear';
-import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
-import SaveIcon from '@mui/icons-material/Save';
-import ActionButton from 'utils/ActionButton';
-import apiCalls from 'apicall';
-import { useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
-import { showToast } from 'utils/toast-component';
-import dayjs from 'dayjs';
-import { FaWhatsapp } from 'react-icons/fa';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  IconButton,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  Typography,
-  Box
-} from '@mui/material';
-import DescriptionTwoToneIcon from '@mui/icons-material/DescriptionTwoTone';
-import DownloadIcon from '@mui/icons-material/Download';
-import * as XLSX from 'xlsx';
+import React from 'react';
+import { TextFieldFormControl, TextField, FormControl } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Typography, Box } from '@mui/material';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import CloseIcon from '@mui/icons-material/Close';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import TableViewIcon from '@mui/icons-material/TableView';
+import ClearIcon from '@mui/icons-material/Clear';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { Button, CircularProgress } from '@mui/material';
+import { Dialog, DialogContent, DialogTitle } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs from 'dayjs';
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import apiCalls from 'apicall';
+import { useEffect, useState } from 'react';
+import { showToast } from 'utils/toast-component';
+import { getAllActiveBranches } from 'utils/CommonFunctions';
+import Draggable from 'react-draggable';
+import Autocomplete from '@mui/material/Autocomplete';
+const StatusBadge = ({ status }) => {
+  const colorMap = {
+    Done: 'success',
+    'In Progress': 'warning',
+    'Yet Start': 'default',
+    Pending: 'error',
+    Testing: 'info'
+  };
+  return <Chip label={status || ''} color={colorMap[status] || 'default'} size="small" />;
+};
+function PaperComponent(props) {
+  return (
+    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
+      <Paper {...props} />
+    </Draggable>
+  );
+}
 
-const AllTask = () => {
-  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [listView, setListView] = useState(false);
-  const [alProject, setAllProject] = useState([]);
+function AllTask() {
   const [listViewData, setListViewData] = useState([]);
-  const [timeSheetData, setTimeSheetData] = useState({});
-  const [userName, setUserName] = useState(localStorage.getItem('userName'));
-  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-  const [employeeCode, setEmployeeCode] = useState(localStorage.getItem('employeeCode'));
-  const [employeeName, setEmployeeName] = useState(localStorage.getItem('employeeName'));
-  const [branch, setBranch] = useState(localStorage.getItem('branch'));
-  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchCode'));
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportTableOpen, setReportTableOpen] = useState(false);
-  const [editId, setEditId] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [allTimeSheetData, setAllTimeSheetData] = useState([]);
-  const [errors, setErrors] = useState({ fromDate: '', toDate: '' });
+  const [orgId] = useState(localStorage.getItem('orgId'));
+  const [loginUserName] = useState(localStorage.getItem('userName'));
+  const [branchCode] = useState(localStorage.getItem('branchCode'));
+  const [isLoading, setIsLoading] = useState(false);
+  const [branchList, setBranchList] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
+  const [empCodeName, setEmpCodeName] = useState([]);
 
-  const [loading, setLoading] = useState(false);
-  const [weekOff, setWeekOff] = useState([]);
-  const [formRows, setFormRows] = useState([
-    { projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }
-  ]);
-  const handleAddRow = () => {
-    setFormRows([
-      ...formRows,
-      { projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }
-    ]);
+  const [listView, setListView] = useState(false);
+  const [rowData, setRowData] = useState([]);
+  const [formData, setFormData] = useState({
+    currMonth: dayjs().format('MMM'),
+    currMonthNum: dayjs().format('M'),
+    currYear: dayjs().format('YYYY'),
+    branch: 'All',
+    employeeCode: 'All',
+    empDepartment: 'All'
+  });
+  const [fieldErrors, setFieldErrors] = useState({
+    currMonth: '',
+    currYear: '',
+    branch: '',
+    employeeCode: '',
+    empDepartment: ''
+  });
+  const handleClear = () => {
+    setListView(false);
+    setFormData({
+      currMonth: dayjs().format('MMM'),
+      currMonthNum: dayjs().format('M'),
+      currYear: dayjs().format('YYYY'),
+      branch: 'All',
+      employeeCode: 'All',
+      empDepartment: 'All'
+    });
+    setFieldErrors({
+      currMonth: '',
+      currYear: '',
+      branch: '',
+      employeeCode: '',
+      empDepartment: ''
+    });
+    setRowData([]);
   };
-
-  const handleReportIconClick = () => {
-    setFromDate('');
-    setToDate('');
-    setErrors({ fromDate: '', toDate: '' });
-    setReportDialogOpen(true);
-  };
-
-  const handleSubmitReport = async () => {
-    const newErrors = {};
-    if (!fromDate) newErrors.fromDate = 'From Date is required';
-    if (!toDate) newErrors.toDate = 'To Date is required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
+  const handleDateChange = (field, date) => {
+    if (!date) {
+      setFormData((prev) => ({ ...prev, [field]: '' }));
       return;
     }
-
-    try {
-      // Main timesheet API
-      const result = await apiCalls(
-        'get',
-        `timesheet/getTimeSheetDescByOrgId?branchCode=${branchCode}&empCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
-      );
-      const timeSheetData = result?.paramObjectsMap?.timeSheetVO || [];
-
-      // Get employee name from the first item (if present)
-      const empNameFromData = timeSheetData[0]?.employeeName || '';
-      const empCodeFromData = timeSheetData[0]?.employeeCode || '';
-
-      // Leave report API
-      const leaveRes = await apiCalls(
-        'get',
-        `timesheet/getApprovedLeaveForTimeSheetReport?branchCode=${branchCode}&employeeCode=${employeeCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
-      );
-      const leaveData = leaveRes?.paramObjectsMap?.timeSheetVO || [];
-
-      // Holiday report API
-      const holidayRes = await apiCalls(
-        'get',
-        `timesheet/getHolidaysForTimeSheetReport?branchCode=${branchCode}&fromDate=${fromDate}&orgId=${orgId}&toDate=${toDate}`
-      );
-      const holidayData = holidayRes?.paramObjectsMap?.timeSheetVO || [];
-
-      // Format leave and holiday data like timesheet for display compatibility
-      const formattedLeaveData = leaveData.map((item) => ({
-        date: item.leaveDate,
-        employeeName: empNameFromData || 'LEAVE',
-        employeeCode: empCodeFromData || employeeCode,
-        totalhours: '',
-        timeSheetDetailsVO: [
-          {
-            projectName: item.leaveType,
-            fromTime: '',
-            toTime: '',
-            description: ''
-          }
-        ]
+    if (field === 'currMonth') {
+      setFormData((prev) => ({
+        ...prev,
+        currMonth: date.format('MMM'),
+        currMonthNum: date.format('M')
       }));
-
-      const formattedHolidayData = holidayData.map((item) => ({
-        date: item.leaveDate,
-        employeeName: empNameFromData || 'HOLIDAY',
-        employeeCode: empCodeFromData || employeeCode,
-        totalhours: '',
-        timeSheetDetailsVO: [
-          {
-            projectName: item.leaveType,
-            fromTime: '',
-            toTime: '',
-            description: ''
-          }
-        ]
-      }));
-
-      const combinedData = [...timeSheetData, ...formattedLeaveData, ...formattedHolidayData];
-
-      // Optional: sort by date if needed
-      combinedData.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      setAllTimeSheetData(combinedData);
-      setReportDialogOpen(false);
-      setReportTableOpen(true);
-    } catch (err) {
-      console.error('Error fetching report:', err);
-    }
-  };
-
-  const handleDownloadExcel = async ({ logo }) => {
-    try {
-      const workbook = new ExcelJS.Workbook();
-      workbook.created = new Date();
-      const sheet = workbook.addWorksheet('Task Report');
-      sheet.state = 'visible';
-
-      // ====== LOGO ======
-      sheet.mergeCells('A1:B5');
-      if (logo) {
-        try {
-          const base64Data = logo.split(',')[1] || logo;
-          if (base64Data.length >= 100) {
-            const extension = logo.includes('jpeg') ? 'jpeg' : 'png';
-            const imageId = workbook.addImage({ base64: base64Data, extension });
-            sheet.addImage(imageId, {
-              tl: { col: 0, row: 0 },
-              ext: { width: 120, height: 80 }
-            });
-          }
-        } catch (err) {
-          console.error('Error adding logo:', err);
-        }
-      }
-
-      // ====== TITLE ======
-      sheet.mergeCells('C1:I1');
-      const titleCell = sheet.getCell('C1');
-      titleCell.value = 'Task Report';
-      titleCell.font = { size: 18, bold: true, color: { argb: 'FF34449B' } };
-      titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
-
-      // ====== METADATA ======
-      const metadata = [];
-      // metadata.push({ label: 'From Date', value: dayjs(formData.fromDate).format('DD-MM-YYYY') });
-      // metadata.push({ label: 'To Date', value: dayjs(formData.toDate).format('DD-MM-YYYY') });
-      metadata.push({ label: 'Name', value: allTimeSheetData[0]?.employeeName || 'N/A' });
-      metadata.push({ label: 'Code', value: allTimeSheetData[0]?.employeeCode || 'N/A' });
-      metadata.push({ label: 'Tot Working Days', value: allTimeSheetData[0]?.totworkingdays });
-      metadata.push({ label: 'Leaves Taken', value: allTimeSheetData[0]?.leavestaken });
-      // metadata.push({ label: 'Generated By', value: localStorage.getItem('userName') || 'System' });
-      // metadata.push({ label: 'Generated On', value: dayjs().format('DD-MM-YYYY HH:mm') });
-
-      metadata.forEach((meta, index) => {
-        const rowIndex = (index % 4) + 2;
-        const colGroup = Math.floor(index / 4);
-        const colStart = 4 + colGroup * 2;
-        const row = sheet.getRow(rowIndex);
-        row.getCell(colStart).value = meta.label;
-        row.getCell(colStart).font = { bold: true };
-        row.getCell(colStart + 1).value = meta.value;
-      });
-
-      // ====== HEADERS ======
-      const headerRowIndex = 6;
-      const headerRow = sheet.getRow(headerRowIndex);
-      const headers = ['Date', 'Total Hrs', 'Project', 'Screen/Task', 'Description', 'Work IP%', 'Status', 'From', 'To', 'Remarks'];
-      headers.forEach((header, index) => {
-        const cell = headerRow.getCell(index + 1);
-        cell.value = header;
-        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF34449B' } };
-        cell.alignment = { horizontal: 'center', vertical: 'middle' };
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-      });
-      headerRow.height = 20;
-
-      // ====== DATA ROWS (same as table rendering) ======
-      allTimeSheetData.forEach((entry) => {
-        const details = entry.timeSheetDetailsVO || [];
-
-        const isLeaveOrHoliday = entry.employeeName === 'LEAVE' || entry.employeeName === 'HOLIDAY';
-
-        if (isLeaveOrHoliday) {
-          const row = sheet.addRow([
-            `${dayjs(entry.date).format('DD-MM-YYYY')} - ${entry.employeeName} (${details[0]?.projectName || ''})`
-          ]);
-          // Merge across all 10 columns
-          sheet.mergeCells(`A${row.number}:J${row.number}`);
-          row.getCell(1).alignment = { horizontal: 'center' };
-          row.getCell(1).font = { bold: true, color: { argb: 'FFd32f2f' } };
-          return;
-        }
-
-        details.forEach((detail, detailIndex) => {
-          const row = sheet.addRow([
-            detailIndex === 0 ? (entry.date ? dayjs(entry.date).format('DD-MM-YYYY') : '') : '',
-            detailIndex === 0 ? entry.totalhours || '-' : '',
-            detail.projectName || '',
-            detail.project || '',
-            detail.description || '',
-            detail.wip || '',
-            detail.status || '',
-            detail.fromTime || '',
-            detail.toTime || '',
-            detail.remarks || ''
-          ]);
-
-          // Apply border to every cell
-          row.eachCell({ includeEmpty: true }, (cell) => {
-            cell.border = {
-              top: { style: 'thin' },
-              left: { style: 'thin' },
-              bottom: { style: 'thin' },
-              right: { style: 'thin' }
-            };
-          });
-        });
-      });
-
-      // ====== COLUMN WIDTHS ======
-      sheet.columns = [
-        { width: 15 }, // Date
-        { width: 12 }, // Total Hrs
-        { width: 20 }, // Project
-        { width: 20 }, // Screen/Task
-        { width: 25 }, // Description
-        { width: 12 }, // Work IP%
-        { width: 15 }, // Status
-        { width: 12 }, // From
-        { width: 12 }, // To
-        { width: 20 } // Remarks
-      ];
-      // ====== EXPORT ======
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      });
-
-      saveAs(blob, `Task_Report_${dayjs().format('YYYY_MM_DD_HHmmss')}.xlsx`);
-    } catch (error) {
-      console.error('Error generating Excel:', error);
-      showToast('error', 'Failed to generate Excel file');
-    }
-  };
-
-  const handleDeleteRow = (index) => {
-    const updatedRows = formRows.filter((_, i) => i !== index);
-    setFormRows(updatedRows);
-  };
-
-  const handleRowChange = (index, field, value) => {
-    const updatedRows = [...formRows];
-    updatedRows[index][field] = value;
-    setFormRows(updatedRows);
-  };
-
-  useEffect(() => {
-    getAllProject();
-    getAllSwipeInandOut();
-    getCompanyWeekOff();
-    getCompanyDetails();
-  }, []);
-  const renderTimeInputs = (date) => {
-    const formatted = dayjs(date).format('YYYY-MM-DD');
-    if (weekOff.includes(formatted)) return null;
-
-    const dateKey = date.toDateString();
-    const data = timeSheetData[dateKey] || {};
-
-    if (data.status === 'LEAVE') {
-      return (
-        <div
-          style={{
-            marginTop: '4px',
-            fontSize: '12px',
-            fontWeight: 'bold',
-            color: '#b91c1c',
-            backgroundColor: '#fee2e2',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            textAlign: 'center'
-          }}
-        >
-          On Leave 🏖️
-        </div>
-      );
-    }
-
-    const formatTime = (timeStr) => {
-      if (!timeStr || typeof timeStr !== 'string') return '0:00';
-      const parts = timeStr.split(':');
-      if (parts.length >= 2) {
-        const [hour, minute] = parts;
-        return `${hour}:${minute}`;
-      } else {
-        return `${timeStr}:00`;
-      }
-    };
-
-    return (
-      <div className="mt-1 text-xs text-left">
-        {data.checkIn && (
-          <div>
-            {formatTime(data.checkIn)}
-            {data.checkOut && ` | ${formatTime(data.checkOut)}`}
-          </div>
-        )}
-        <div>Total: {formatTime(data.totalHours)} hrs</div>
-      </div>
-    );
-  };
-
-  const getAllProject = async () => {
-    try {
-      const result = await apiCalls('get', `master/getProjectMasterByOrgId?orgId=${orgId}`);
-      setAllProject(result.paramObjectsMap.projectMasterVO);
-      console.log('Test', result);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
-  const handleDateClick = async (date) => {
-    const formatted = dayjs(date).format('YYYY-MM-DD');
-    if (weekOff.includes(formatted)) return;
-
-    setSelectedDate(date);
-
-    try {
-      const response = await apiCalls('get', `/timesheet/getTimeSheetByOrgId?date=${formatted}&empCode=${employeeCode}&orgId=${orgId}`);
-
-      if (response) {
-        const taskVO = response.paramObjectsMap?.timeSheetVO || [];
-        const firstEntry = taskVO.length > 0 ? taskVO[0] : null;
-
-        if (firstEntry) {
-          setEditId(firstEntry.id); // ✅ store edit id
-          setFormRows(
-            firstEntry.timeSheetDetailsVO.map((row) => ({
-              id: row.id,
-              projectName: row.projectName || '',
-              screenTask: row.project || '',
-              description: row.description || '',
-              wip: row.wip || '',
-              status: row.status || '',
-              fromTime: row.fromTime || '',
-              toTime: row.toTime || '',
-              remarks: row.remarks || ''
-            }))
-          );
-        } else {
-          setEditId(''); // ✅ no data -> keep it empty
-          setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-        }
-      }
-
-      setModalOpen(true);
-    } catch (error) {
-      console.error('Error fetching timesheet:', error);
-      setEditId('');
-      setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-      setModalOpen(true);
-    }
-  };
-  // const isCurrentMonth = (date) => {
-  //   const now = new Date();
-  //   return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
-  // };
-
-  const handleSubmit = async () => {
-    console.log('Edit id submit', editId);
-
-    const errors = {};
-
-    // if (!isCurrentMonth(selectedDate)) {
-    //   showToast('error', 'Editing is only allowed for the current month.');
-    //   return;
-    // }
-
-    if (formRows.length === 0) {
-      errors.formRows = 'At least one entry is required';
+    } else if (field === 'currYear') {
+      setFormData((prev) => ({ ...prev, currYear: date.format('YYYY') }));
     } else {
-      formRows.forEach((row, index) => {
-        if (!row.projectName || !row.fromTime || !row.toTime || !row.description) {
-          errors[`row${index}`] = `All fields are required in row ${index + 1}`;
-        }
-      });
+      setFormData((prev) => ({ ...prev, [field]: date.format('YYYY-MM-DD') }));
     }
+  };
+  const handleChange = async (field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value
+    }));
 
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: ''
+    }));
+    if (field === 'empDepartment') {
+      try {
+        if (value === 'All') {
+          setEmpCodeName([{ empCode: 'All', empName: '' }]);
+          // setEmpCodeName([]);
+          getEmployeeCodeName(value);
+        } else {
+          getEmployeeCodeName(value);
+        }
+        setFormData((prev) => ({ ...prev, employeeCode: '' }));
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    }
+  };
+  useEffect(() => {
+    getBranch();
+    getAllDepartment();
+    getCompanyDetails();
+    getEmployeeCodeName('All');
+  }, []);
+  const getEmployeeCodeName = async (dept) => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/timesheet/getEmployeeDetailsForAllTaskReport?branchCode=${branchCode}&department=${dept}&orgId=${orgId}`
+      );
+      setEmpCodeName(response.paramObjectsMap.employeeVO);
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
+  const getBranch = async () => {
+    try {
+      const branchData = await getAllActiveBranches(orgId);
+      setBranchList(branchData);
+    } catch (error) {
+      console.error('Error fetching country data:', error);
+    }
+  };
+  const getAllDepartment = async () => {
+    try {
+      const response = await apiCalls('get', `commonmaster/getDepartmentByOrgId?orgid=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setDepartmentList(response.paramObjectsMap.departmentVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+  const handleSearchTasks = async () => {
+    const errors = {};
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-
-      const formattedDate = dayjs(selectedDate).isValid() ? dayjs(selectedDate).format('YYYY-MM-DD') : null;
-
-      const saveData = {
-        ...(editId && { id: editId }),
-        active: true,
-        branch,
-        branchCode,
-        createdBy: loginUserName,
-        date: formattedDate,
-        employeeCode,
-        employeeName,
-        orgId: parseInt(orgId),
-        timeSheetDetailsDTO: formRows.map((row) => ({
-          projectName: row.projectName,
-          project: row.screenTask,
-          description: row.description,
-          wip: row.wip,
-          status: row.status,
-          fromTime: row.fromTime,
-          toTime: row.toTime,
-          remarks: row.remarks
-        }))
-      };
-
+      setListView(false);
       try {
-        const response = await apiCalls('put', 'timesheet/createUpdateTimeSheet', saveData);
-
+        let response = await apiCalls(
+          'get',
+          `/timesheet/getAllEmployeeTask?branchCode=${branchCode}&department=${formData.empDepartment}&employeecode=${formData.employeeCode}&month=${formData.currMonthNum}&orgId=${orgId}&year=${formData.currYear}`
+        );
         if (response.status === true) {
-          showToast('success', 'TimeSheet submitted successfully');
-          setModalOpen(false);
-          handleClear();
-          setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-          setSelectedDate(null);
+          console.log('Response:', response);
+          setRowData(response.paramObjectsMap.timeSheetVO || []);
+          console.log('Res', response.paramObjectsMap.timeSheetVO || []);
+          setIsLoading(false);
+          setListView(true);
         } else {
-          const errorMsg = response.paramObjectsMap?.errorMessage || 'TimeSheet submission failed';
-          showToast('error', errorMsg);
+          showToast('error', response.paramObjectsMap.errorMessage || 'Report Fetch failed');
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Submission Error:', error);
-        showToast('error', 'Something went wrong while submitting');
-      } finally {
+        console.error('Error:', error);
+        showToast('error', 'Report Fetch failed');
         setIsLoading(false);
       }
     } else {
-      showToast('error', 'Please fill all required fields.');
+      setFieldErrors(errors);
     }
-  };
-
-  const handleView = () => {
-    setListView(!listView);
-  };
-
-  const handleClear = () => {
-    setEditId('');
-    setSelectedDate(null);
-    setModalOpen(false);
-    setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-  };
-
-  const getAllSwipeInandOut = async () => {
-    setLoading(true);
-    try {
-      const today = new Date(); // Current date
-      // console.log('bbhd', today);
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1); // 1st of current month
-      // console.log('efeef', startOfMonth);
-      const formattedData = {};
-
-      // Loop from startOfMonth to today
-      for (let d = new Date(startOfMonth); d <= today; d.setDate(d.getDate() + 1)) {
-        const loopDate = new Date(d); // Create a new date instance to avoid mutation
-        // console.log('loopDate', loopDate);
-
-        // const loopDateStr = loopDate.toISOString().split('T')[0]; // yyyy-mm-dd format
-        const loopDateStr = new Date(loopDate.getTime() - loopDate.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-
-        // console.log('loopDateStr', loopDateStr);
-
-        const response = await apiCalls(
-          'get',
-          `timesheet/getApprovedLeaveForTimeSheet?date=${loopDateStr}&employeeCode=${userName}&orgId=${orgId}`
-        );
-
-        const entries = response?.paramObjectsMap?.timeSheetVO || [];
-        const dateKey = loopDate.toDateString();
-
-        if (entries.length > 0) {
-          const entry = entries[0];
-          if (entry.employeeStatus === 'PRESENT') {
-            formattedData[dateKey] = {
-              checkIn: entry.checkIn,
-              checkOut: entry.checkOut,
-              totalHours: entry.totalHours?.trim() || '0:00',
-              status: 'PRESENT'
-            };
-          } else if (entry.employeeStatus === 'LEAVE') {
-            formattedData[dateKey] = {
-              leave: true,
-              status: 'LEAVE'
-            };
-          }
-        }
-      }
-
-      setTimeSheetData((prev) => ({ ...prev, ...formattedData }));
-    } catch (err) {
-      console.error('Error fetching Task entries:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const isWeekOff = (date) => {
-    return weekOff.includes(dayjs(date).format('YYYY-MM-DD'));
-  };
-
-  const getCompanyWeekOff = async () => {
-    try {
-      const result = await apiCalls('get', `commonmaster/company/${orgId}`);
-      const weekOffConfig = result.paramObjectsMap.companyVO[0].companyWeekOffVO;
-
-      const currentYear = dayjs().year();
-      const startYear = currentYear - 1;
-      const endYear = currentYear;
-
-      const offDates = [];
-
-      for (let year = startYear; year <= endYear; year++) {
-        for (let month = 0; month < 12; month++) {
-          for (const config of weekOffConfig) {
-            const dayName = config.weekOffDays.toUpperCase();
-            const weekNumbers = config.weekNumbers;
-
-            const dayIndex = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'].indexOf(dayName);
-            if (dayIndex === -1) continue;
-
-            const daysInMonth = dayjs(`${year}-${month + 1}-01`).daysInMonth();
-            const matchedDates = [];
-
-            for (let day = 1; day <= daysInMonth; day++) {
-              const date = dayjs(`${year}-${month + 1}-${day}`);
-              if (date.day() === dayIndex) {
-                matchedDates.push(date);
-              }
-            }
-
-            if (weekNumbers.includes(-1)) {
-              matchedDates.forEach((date) => {
-                offDates.push(date.format('YYYY-MM-DD'));
-              });
-            } else {
-              for (const weekNumber of weekNumbers) {
-                if (weekNumber >= 1 && weekNumber <= matchedDates.length) {
-                  const specificDate = matchedDates[weekNumber - 1];
-                  if (specificDate) offDates.push(specificDate.format('YYYY-MM-DD'));
-                }
-              }
-            }
-          }
-        }
-      }
-
-      setWeekOff(offDates);
-    } catch (error) {
-      console.error('Error fetching week off:', error);
-    }
-  };
-
-  const handleModalClear = () => {
-    setFormRows([{ projectName: '', screenTask: '', wip: '', status: '', remarks: '', fromTime: '', toTime: '', description: '' }]);
-  };
-
-  const handleShareWhatsApp = () => {
-    const message = encodeURIComponent(
-      formRows
-        .map(
-          (row) =>
-            `Project: ${row.projectName}\nTask: ${row.screenTask}\nWork IP: ${row.wip}\nStatus: ${row.status}\nFrom: ${row.fromTime}\nTo: ${row.toTime}\nDescription: ${row.description}\nRemarks: ${row.remarks}`
-        )
-        .join('\n\n')
-    );
-    window.location.href = `whatsapp://send?text=${message}`;
   };
   const getCompanyDetails = async () => {
     try {
       const response = await apiCalls('get', `commonmaster/company/${orgId}`);
       console.log('API Response:', response);
-      setListViewData(response.paramObjectsMap.companyVO);
+      setListViewData(response.paramObjectsMap.companyVO.reverse());
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
+  const exportToExcel = async ({ logo, empName, filters, rowData }) => {
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Task Report');
+
+    // ===== 1) LOGO =====
+    sheet.mergeCells('A1:B5');
+    if (logo) {
+      const base64Data = logo.split(',')[1] || logo;
+      const extension = logo.includes('jpeg') ? 'jpeg' : 'png';
+      const imageId = workbook.addImage({ base64: base64Data, extension });
+      sheet.addImage(imageId, {
+        tl: { col: 0, row: 0 },
+        ext: { width: 120, height: 80 }
+      });
+    }
+
+    // ===== 2) TITLE =====
+    sheet.mergeCells('C1:K1');
+    const titleCell = sheet.getCell('C1');
+    titleCell.value = 'Employee Task Report';
+    titleCell.font = { size: 16, bold: true, color: { argb: 'FF34449B' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+
+    // ===== 3) PARAMS =====
+    let metaRowIndex = 2;
+    const paramEntries = [
+      ['Employee', empName || '-'],
+      ['Month', filters?.currMonth || '-'],
+      ['Year', filters?.currYear || '-'],
+      ['Branch', filters?.branch || '-'],
+      ['Department', filters?.empDepartment || '-']
+    ];
+    paramEntries.forEach(([label, value]) => {
+      const row = sheet.getRow(metaRowIndex++);
+      row.getCell(3).value = label;
+      row.getCell(3).font = { bold: true };
+      row.getCell(4).value = value;
+    });
+
+    metaRowIndex += 1; // gap before headers
+
+    // ===== 4) HEADERS =====
+    const headers = ['Date', 'Tot Hrs', 'Project Name', 'Screens', 'Status', 'From', 'To', 'WIP%', 'Description', 'Remarks'];
+    const headerRow = sheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF34449B' }
+      };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    });
+
+    // ===== 5) DATA =====
+    (rowData || []).forEach((row) => {
+      const totalDays = row.timesheets.length;
+      const presentDays = row.timesheets.filter((ts) => ts.status === 'TIMESHEET').length;
+      const leaveDays = row.timesheets.filter(
+        (ts) => ts.status === 'ABSENT' || ts.status === 'COMPENSATORY OFF' || ts.status?.toUpperCase().includes('LEAVE')
+      ).length;
+
+      // 🔹 Employee Summary Row
+      const summaryRow = sheet.addRow([`${row.empcodename} | Total Days: ${totalDays} | Present: ${presentDays} | Leave: ${leaveDays}`]);
+      summaryRow.font = { bold: true };
+      summaryRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBBDEFB' } };
+      sheet.mergeCells(`A${summaryRow.number}:J${summaryRow.number}`);
+      summaryRow.alignment = { horizontal: 'start' };
+
+      // 🔹 Timesheets
+      [...row.timesheets]
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .forEach((ts) => {
+          const details = ts?.timeSheetDetailsVO || [];
+
+          if (ts.status === 'TIMESHEET' && details.length > 0) {
+            details.forEach((task) => {
+              sheet.addRow([
+                dayjs(ts.date).format('DD/MM/YYYY'),
+                ts.totalhours || '-',
+                task.projectName || '-',
+                task.project || '-',
+                task.status || '-',
+                task.fromTime || '-',
+                task.toTime || '-',
+                task.wip || '-',
+                task.description || '-',
+                task.remarks || '-'
+              ]);
+            });
+          } else {
+            // Leave/Holiday Row
+            const leaveRow = sheet.addRow([dayjs(ts.date).format('DD/MM/YYYY'), ts.totalhours || '-', ts.status]);
+            sheet.mergeCells(`C${leaveRow.number}:J${leaveRow.number}`);
+            leaveRow.eachCell((c) => {
+              c.font = { italic: true, bold: true, color: { argb: 'FFD32F2F' } };
+              c.alignment = { horizontal: 'start' };
+            });
+            leaveRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEAEA' } };
+          }
+        });
+    });
+
+    // ===== 6) AUTO WIDTH =====
+    sheet.columns.forEach((col) => {
+      let maxLen = 12;
+      col.eachCell({ includeEmpty: true }, (cell) => {
+        const len = cell.value ? cell.value.toString().length : 0;
+        if (len > maxLen) maxLen = len;
+      });
+      col.width = maxLen + 2;
+    });
+
+    // ===== 7) SAVE =====
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), `Employee_Task_Report_${dayjs().format('YYYY_MM_DD_HHmmss')}.xlsx`);
+  };
+  const exportToPDF = ({ logo, loginUserName, fileName, empName, filters, rowData }) => {
+    const doc = new jsPDF('landscape');
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+
+    // ===== 1) LOGO =====
+    if (logo) doc.addImage(logo, 'PNG', 10, 10, 30, 23);
+
+    // ===== 2) TITLE =====
+    const title = fileName || 'Employee Task Report';
+    doc.setFontSize(14).setFont(undefined, 'bold').setTextColor('#34449B');
+    doc.text(title, pageW / 2, 25, { align: 'center' });
+
+    // ===== 3) EMPLOYEE LINE =====
+    if (empName) {
+      doc.setFontSize(11).setTextColor('#000000');
+      doc.text(`Employee: ${empName}`, 15, 45);
+    }
+
+    // ===== 4) FILTER METADATA =====
+    doc.setFontSize(9).setTextColor('#000000');
+    if (filters?.fromDate && filters?.toDate) {
+      doc.text(`From: ${dayjs(filters.fromDate).format('DD-MM-YYYY')}   To: ${dayjs(filters.toDate).format('DD-MM-YYYY')}`, 15, 60);
+    }
+
+    // ===== 5) TABLE =====
+    const tableColumn = ['Date', 'Tot Hrs', 'Project Name', 'Screens', 'Status', 'From', 'To', 'WIP%', 'Description', 'Remarks'];
+    let tableRows = [];
+
+    rowData.forEach((row) => {
+      const totalDays = row.timesheets.length;
+      const presentDays = row.timesheets.filter((ts) => ts.status === 'TIMESHEET').length;
+      const leaveDays = row.timesheets.filter(
+        (ts) => ts.status === 'ABSENT' || ts.status === 'COMPENSATORY OFF' || ts.status?.toUpperCase().includes('LEAVE')
+      ).length;
+
+      // 🔹 Employee Summary Row
+      tableRows.push([
+        {
+          content: `${row.empcodename} | Total Days: ${totalDays} | Present: ${presentDays} | Leave: ${leaveDays}`,
+          colSpan: 10,
+          styles: { halign: 'center', fillColor: [187, 222, 251], fontStyle: 'bold' }
+        }
+      ]);
+
+      row.timesheets
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .forEach((ts) => {
+          const details = ts.timeSheetDetailsVO || [];
+
+          if (ts.status === 'TIMESHEET' && details.length > 0) {
+            details.forEach((task, idx) => {
+              tableRows.push([
+                idx === 0
+                  ? {
+                      content: dayjs(ts.date).format('DD/MM/YYYY'),
+                      rowSpan: details.length,
+                      styles: { halign: 'center', fontStyle: 'bold' }
+                    }
+                  : '',
+                idx === 0 ? { content: ts.totalhours, rowSpan: details.length, styles: { halign: 'center' } } : '',
+                task.projectName,
+                task.project,
+                task.status,
+                task.fromTime,
+                task.toTime,
+                task.wip,
+                task.description,
+                task.remarks
+              ]);
+            });
+          } else {
+            // Leave/Holiday Row
+            tableRows.push([
+              { content: dayjs(ts.date).format('DD/MM/YYYY'), styles: { halign: 'center', fontStyle: 'bold' } },
+              { content: ts.totalhours || '-', styles: { halign: 'center' } },
+              {
+                content: ts.status,
+                colSpan: 8,
+                styles: { halign: 'center', fontStyle: 'bold', fillColor: [255, 234, 234], textColor: [211, 47, 47] }
+              }
+            ]);
+          }
+        });
+    });
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 75,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [52, 68, 155], textColor: 255, halign: 'center' },
+      bodyStyles: { valign: 'middle' },
+      theme: 'grid'
+    });
+
+    // ===== 6) FOOTER =====
+    doc.setFontSize(8).setTextColor('#555555');
+    doc.text(`Generated On: ${dayjs().format('DD-MM-YYYY hh:mm A')}`, pageW - 15, pageH - 10, { align: 'right' });
+    doc.text(`Generated By: ${loginUserName}`, 15, pageH - 10, { align: 'left' });
+
+    doc.save(`${fileName || 'Employee_Task_Report'}_${dayjs().format('YYYY_MM_DD_HHmmss')}.pdf`);
+  };
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const open = Boolean(anchorEl);
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   return (
-    <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
-      <div className="row d-flex ml">
-        <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
-          {/* <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} /> */}
-          <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
-          <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-          <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} />
-          <ActionButton title="Report" icon={DescriptionTwoToneIcon} onClick={handleReportIconClick} />
-        </div>
-      </div>
+    <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
-        <div className="p-6 bg-white rounded-lg shadow-md w-full">
-          {/* <Calendar
-            onClickDay={(value, e) => {
-              const dayName = value.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-              if (!weekOff.includes(dayName)) {
-                handleDateClick(value);
-              }
-            }}
-            tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
-          /> */}
-          <Calendar
-            onClickDay={(date) => {
-              if (!isWeekOff(date)) {
-                handleDateClick(date);
-              }
-            }}
-            // tileDisabled={({ date, view }) => view === 'month' && isWeekOff(date)}
-            tileContent={({ date, view }) => (view === 'month' ? renderTimeInputs(date) : null)}
-            tileClassName={({ date, view }) => {
-              if (view === 'month' && isWeekOff(date)) {
-                return 'custom-disabled';
-              }
-              return null;
-            }}
-          />
-          <style>
-            {`
-                .custom-disabled {
-                color: rgba(133, 138, 142, 1);
-                  cursor: not-allowed;
-                  disabled: true;
+        <>
+          <div className="row">
+            <div className="col-md-3 mb-3">
+              <FormControl fullWidth variant="filled" size="small">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    views={['month']}
+                    label="Month"
+                    value={dayjs(formData.currMonth, 'MMM')}
+                    onChange={(date) => handleDateChange('currMonth', date)}
+                    format="MMM"
+                    maxDate={dayjs()}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        error: fieldErrors.currMonth,
+                        helperText: fieldErrors.currMonth
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </FormControl>
+            </div>
+            <div className="col-md-3 mb-3">
+              <FormControl fullWidth variant="filled" size="small">
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    views={['year']}
+                    label="Year"
+                    value={dayjs(formData.currYear, 'YYYY')}
+                    onChange={(date) => handleDateChange('currYear', date)}
+                    format="YYYY"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        error: fieldErrors.currYear,
+                        helperText: fieldErrors.currYear
+                      }
+                    }}
+                  />
+                </LocalizationProvider>
+              </FormControl>
+            </div>
+            <div className="col-md-3 mb-3">
+              <Autocomplete
+                options={['All', ...branchList.map((row) => row.branch)]}
+                value={formData.branch || null}
+                onChange={(event, newValue) => handleChange('branch', newValue || '')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={
+                      <span>
+                        Branch <span className="asterisk">*</span>
+                      </span>
+                    }
+                    size="small"
+                    error={!!fieldErrors.branch}
+                    helperText={fieldErrors.branch}
+                    fullWidth
+                  />
+                )}
+              />
+            </div>
+            <div className="col-md-3 mb-3">
+              <Autocomplete
+                options={[{ departmentName: 'All' }, ...departmentList]}
+                getOptionLabel={(option) => option?.departmentName || ''}
+                sx={{ width: '100%' }}
+                size="small"
+                value={
+                  [{ departmentName: 'All' }, ...departmentList].find((c) => c.departmentName === formData.empDepartment) || {
+                    departmentName: 'All'
+                  }
                 }
-              `}
-          </style>
-        </div>
-      </div>
-
-      {modalOpen && (
-        <div className="modal show fade d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
-            <div className="modal-content shadow-lg">
-              <div className="modal-header">
-                <h5 className="modal-title">Add Entry for {selectedDate.toDateString()}</h5>
-                <button type="button" className="btn-close" onClick={() => setModalOpen(false)}></button>
-              </div>
-
-              <div className="modal-body">
-                <div className="table-responsive">
-                  <table className="table table-bordered">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Action</th>
-                        <th>Project</th>
-                        <th>Screen/Table</th>
-                        <th>Description</th>
-                        <th>WIP%</th>
-                        <th>Status</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {formRows.map((row, index) => (
-                        <tr key={index}>
-                          <td>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDeleteRow(index)}
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                          <td>
-                            <select
-                              name="projectName"
-                              value={row.projectName}
-                              onChange={(e) => handleRowChange(index, 'projectName', e.target.value)}
-                              className="form-select form-select-sm w-100"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            >
-                              <option value="">Select Project</option>
-                              {alProject.map((project) => (
-                                <option key={project.id} value={project.projectCode}>
-                                  {project.projectCode} - {project.projectName}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={row.screenTask}
-                              onChange={(e) => handleRowChange(index, 'screenTask', e.target.value)}
-                              className="form-control form-control-sm"
-                              placeholder="Enter Screen/Task"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            />
-                          </td>
-                          <td>
-                            <textarea
-                              value={row.description}
-                              onChange={(e) => {
-                                handleRowChange(index, 'description', e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
-                              }}
-                              className="form-control form-control-sm"
-                              placeholder="Enter description"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                              style={{ resize: 'none', overflow: 'hidden' }}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="text"
-                              value={row.wip}
-                              onChange={(e) => handleRowChange(index, 'wip', e.target.value)}
-                              className="form-control form-control-sm"
-                              placeholder="Enter Work IP"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            />
-                          </td>
-                          <td>
-                            <select
-                              value={row.status}
-                              // disabled={!isCurrentMonth(selectedDate)}
-                              onChange={(e) => handleRowChange(index, 'status', e.target.value)}
-                              className="form-control form-control-sm"
-                            >
-                              <option value="">Select status</option>
-                              <option value="Yet Start">Yet Start</option>
-                              <option value="Pending">Pending</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Testing">Testing</option>
-                              <option value="Done">Done</option>
-                              <option value="PCB">PCB</option>
-                            </select>
-                          </td>
-                          <td>
-                            <input
-                              type="time"
-                              value={row.fromTime}
-                              onChange={(e) => handleRowChange(index, 'fromTime', e.target.value)}
-                              className="form-control form-control-sm"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="time"
-                              value={row.toTime}
-                              onChange={(e) => handleRowChange(index, 'toTime', e.target.value)}
-                              className="form-control form-control-sm"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            />
-                          </td>
-                          <td>
-                            <textarea
-                              value={row.remarks}
-                              onChange={(e) => {
-                                handleRowChange(index, 'remarks', e.target.value);
-                                e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
-                              }}
-                              className="form-control form-control-sm"
-                              placeholder="Enter remarks"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                              style={{ resize: 'none', overflow: 'hidden' }}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="text-end mt-2">
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={handleAddRow}
-                    // disabled={!isCurrentMonth(selectedDate)}
-                  >
-                    + Add Row
-                  </button>
-                </div>
-              </div>
-
-              <div className="modal-footer d-flex flex-wrap justify-content-between gap-2">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setModalOpen(false)}
-                  // disabled={!isCurrentMonth(selectedDate)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="btn btn-warning"
-                  onClick={handleModalClear}
-                  //  disabled={!isCurrentMonth(selectedDate)}
-                >
-                  Clear
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSubmit}
-                  // disabled={!isCurrentMonth(selectedDate)}
-                >
-                  Save Entry
-                </button>
-
-                <Button onClick={handleShareWhatsApp}>
-                  <FaWhatsapp style={{ marginRight: '5px' }} />
-                  Share on WhatsApp
-                </Button>
-              </div>
+                isOptionEqualToValue={(option, value) => option.departmentName === value.departmentName}
+                onChange={(event, newValue) => handleChange('empDepartment', newValue?.departmentName || '')}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Department"
+                    name="empDepartment"
+                    InputProps={{
+                      ...params.InputProps,
+                      style: { height: 40 }
+                    }}
+                  />
+                )}
+              />
+            </div>
+            <div className="col-md-3 mb-3">
+              <Autocomplete
+                options={[{ employeeCode: 'All', employee: 'All Employees' }, ...empCodeName]}
+                getOptionLabel={(option) => {
+                  if (!option) return '';
+                  if (option.employeeCode === 'All') return 'All'; // ✅ Show only "All"
+                  return `${option.employeeCode} - ${option.employee}`;
+                }}
+                value={
+                  [{ employeeCode: 'All', employee: 'All Employees' }, ...empCodeName].find(
+                    (item) => item.employeeCode === formData.employeeCode
+                  ) || null
+                }
+                onChange={(event, newValue) => handleChange('employeeCode', newValue?.employeeCode || '')}
+                isOptionEqualToValue={(option, value) => option.employeeCode === value.employeeCode} // ✅ Fix equality issue
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={
+                      <span>
+                        Emp Code/Name <span className="asterisk">*</span>
+                      </span>
+                    }
+                    size="small"
+                    error={!!fieldErrors.employeeCode}
+                    helperText={fieldErrors.employeeCode}
+                    fullWidth
+                  />
+                )}
+              />
+            </div>
+            <div className="col-md-2 mb-0">
+              <Button
+                variant="contained"
+                onClick={handleSearchTasks}
+                disabled={isLoading}
+                startIcon={<TaskAltIcon />}
+                sx={{
+                  borderRadius: '30px',
+                  padding: '6px 14px',
+                  fontWeight: '100',
+                  fontSize: '12px',
+                  textTransform: 'none',
+                  background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
+                  boxShadow: '0 2spx 10px rgba(25, 118, 210, 0.4)',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #1565c0, #1e88e5)',
+                    transform: 'translateY(-3px) scale(1.05)',
+                    boxShadow: '0 8px 25px rgba(25, 118, 210, 0.6)'
+                  },
+                  '&:active': {
+                    transform: 'scale(0.97)'
+                  }
+                }}
+              >
+                {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : 'Show Tasks'}
+              </Button>
+            </div>
+            <div className="col-md-1 mb-1">
+              <Button
+                variant="contained"
+                onClick={handleClear}
+                disabled={isLoading}
+                startIcon={<ClearIcon />}
+                sx={{
+                  borderRadius: '30px',
+                  padding: '6px 14px',
+                  fontWeight: '100',
+                  fontSize: '12px',
+                  textTransform: 'none',
+                  background: 'linear-gradient(90deg, #1976d2, #42a5f5)',
+                  boxShadow: '0 2spx 10px rgba(25, 118, 210, 0.4)',
+                  transition: 'all 0.3s ease-in-out',
+                  '&:hover': {
+                    background: 'linear-gradient(90deg, #1565c0, #1e88e5)',
+                    transform: 'translateY(-3px) scale(1.05)',
+                    boxShadow: '0 8px 25px rgba(25, 118, 210, 0.6)'
+                  },
+                  '&:active': {
+                    transform: 'scale(0.97)'
+                  }
+                }}
+              >
+                {isLoading ? <CircularProgress size={14} sx={{ color: 'white' }} /> : 'Clear'}
+              </Button>
             </div>
           </div>
-        </div>
-      )}
-      <Dialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)}>
-        <DialogTitle>Generate Report</DialogTitle>
-        <DialogContent>
-          <TextField
-            label="From Date"
-            type="date"
-            fullWidth
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            error={!!errors.fromDate}
-            helperText={errors.fromDate}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="To Date"
-            type="date"
-            fullWidth
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            error={!!errors.toDate}
-            helperText={errors.toDate}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setReportDialogOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSubmitReport}>
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={reportTableOpen} onClose={() => setReportTableOpen(false)} fullWidth maxWidth="xl">
-        <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#1976d2' }}>
-              Task Report
-            </Typography>
-            <IconButton onClick={() => handleDownloadExcel({ logo: listViewData[0]?.companyLogo })} color="primary">
-              <DownloadIcon />
+        </>
+        <Dialog
+          open={listView}
+          onClose={() => setListView(false)}
+          fullWidth
+          maxWidth="xl"
+          PaperComponent={PaperComponent}
+          aria-labelledby="draggable-dialog-title"
+          PaperProps={{
+            sx: { p: 0, m: 0, borderRadius: 1 }
+          }}
+        >
+          <DialogTitle style={{ cursor: 'move', backgroundColor: '#0f0f1a', color: 'white' }} id="draggable-dialog-title">
+            Task Details
+            {/* Download Icon */}
+            <Tooltip title="Download">
+              <IconButton
+                onClick={handleMenuOpen}
+                sx={{
+                  position: 'absolute',
+                  right: 40,
+                  top: 2,
+                  color: 'white'
+                }}
+              >
+                <DownloadIcon />
+              </IconButton>
+            </Tooltip>
+            <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose} PaperProps={{ sx: { minWidth: 150 } }}>
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  exportToExcel({
+                    logo: listViewData[0]?.companyLogo,
+                    empName: formData.employeeCode === 'All' ? 'All Employees' : formData.employeeCode,
+                    filters: formData,
+                    rowData: rowData
+                  });
+                }}
+              >
+                <TableViewIcon sx={{ mr: 1, color: 'green' }} /> Excel
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  handleMenuClose();
+                  exportToPDF({
+                    logo: listViewData[0]?.companyLogo,
+                    loginUserName,
+                    fileName: 'Employee Task Report',
+                    empName: formData.employeeCode === 'All' ? 'All Employees' : formData.employeeCode,
+                    filters: formData,
+                    rowData: rowData
+                  });
+                }}
+              >
+                <PictureAsPdfIcon sx={{ mr: 1, color: 'red' }} /> PDF
+              </MenuItem>
+            </Menu>
+            <IconButton
+              onClick={() => setListView(false)}
+              sx={{
+                position: 'absolute',
+                right: 2,
+                top: 2,
+                color: 'white'
+              }}
+            >
+              <CloseIcon />
             </IconButton>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          {allTimeSheetData.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6">
-                <strong>Employee Name:</strong> {allTimeSheetData[0]?.employeeName || 'N/A'}
-              </Typography>
-              <Typography variant="h6">
-                <strong>Employee Code:</strong> {allTimeSheetData[0]?.employeeCode || 'N/A'}
-              </Typography>
-            </Box>
-          )}
-
-          <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor: '#1976d2' }}>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Date</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Total Hours</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Project</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Screen/Task</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Description</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Work IP%</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>From</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>To</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Remarks</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {allTimeSheetData.length > 0 ? (
-                allTimeSheetData.map((entry, index) => {
-                  const details = entry.timeSheetDetailsVO || [];
-
-                  const isLeaveOrHoliday = entry.employeeName === 'LEAVE' || entry.employeeName === 'HOLIDAY';
-
-                  if (isLeaveOrHoliday) {
-                    return (
-                      <TableRow key={`leave-holiday-${index}`}>
-                        <TableCell colSpan={6} align="center">
-                          <strong>{entry.date}</strong> - <span style={{ color: '#d32f2f' }}>{entry.employeeName}</span> (
-                          {details[0]?.projectName || ''})
-                        </TableCell>
-                      </TableRow>
-                    );
-                  }
-
-                  return details.map((detail, detailIndex) => (
-                    <TableRow key={`${entry.id}-${detail.id}-${detailIndex}`}>
-                      {detailIndex === 0 && (
-                        <>
-                          {/* <TableCell rowSpan={details.length}>{entry.date}</TableCell> */}
-                          <TableCell rowSpan={details.length}>{entry.date ? dayjs(entry.date).format('DD/MM/YYYY') : ''}</TableCell>
-                          {/* <TableCell rowSpan={details.length}>{entry.date.format(DD-MM-YYYY)}</TableCell> */}
-                          <TableCell rowSpan={details.length}>{entry.totalhours}</TableCell>
-                        </>
-                      )}
-                      {detailIndex !== 0 && null}
-                      <TableCell style={{ padding: '0px' }}>{detail.projectName}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.project}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.description}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.wip}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.status}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.fromTime}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.toTime}</TableCell>
-                      <TableCell style={{ padding: '0px' }}>{detail.remarks}</TableCell>
+          </DialogTitle>
+          <DialogContent
+            sx={{
+              p: 0,
+              backgroundColor: '#0f0f1a'
+            }}
+          >
+            <>
+              {/* <Typography variant="subtitle1" gutterBottom>
+                Date Range: {filters.dateRange.start} to {filters.dateRange.end}
+              </Typography> */}
+              <TableContainer component={Paper} sx={{ maxHeight: 440 }}>
+                <Table stickyHeader aria-label="employee task report table" size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ minWidth: 110, fontWeight: 'bold' }}>Date</TableCell>
+                      <TableCell sx={{ minWidth: 90, fontWeight: 'bold' }}>Tot Hrs</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Project</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Screens</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>From</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>To</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>WIP%</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Remarks</TableCell>
                     </TableRow>
-                  ));
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} align="center">
-                    No data found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </DialogContent>
+                  </TableHead>
+                  <TableBody>
+                    {rowData.map((row, rowIndex) => (
+                      <React.Fragment key={rowIndex}>
+                        <TableRow sx={{ backgroundColor: '#bbdefb' }}>
+                          <TableCell colSpan={11} style={{ fontWeight: 'bold' }}>
+                            {(() => {
+                              const totalDays = row.timesheets.length;
+                              const presentDays = row.timesheets.filter((ts) => ts.status === 'TIMESHEET').length;
 
-        <DialogActions>
-          <Button onClick={() => setReportTableOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-      <ToastContainer />
-    </div>
+                              // Leave days = Absent + any status that includes "LEAVE"
+                              const leaveDays = row.timesheets.filter(
+                                (ts) =>
+                                  ts.status === 'ABSENT' || ts.status === 'COMPENSATORY OFF' || ts.status?.toUpperCase().includes('LEAVE')
+                              ).length;
+                              return (
+                                <>
+                                  {row.empcodename} &nbsp; | &nbsp;
+                                  <span style={{ color: '#1976d2' }}>Total Days: {totalDays}</span> &nbsp; | &nbsp;
+                                  <span style={{ color: 'green' }}>Present: {presentDays}</span> &nbsp; | &nbsp;
+                                  <span style={{ color: 'red' }}>Leave: {leaveDays}</span>
+                                </>
+                              );
+                            })()}
+                          </TableCell>
+                        </TableRow>
+                        {/* Timesheet Loop */}
+                        {/* {row.timesheets.map((ts, tsIndex) => {
+                          const details = ts.timeSheetDetailsVO || [];
+                          const detailCount = details.length || 1; */}
+                        {[...row.timesheets]
+                          .sort((a, b) => new Date(a.date) - new Date(b.date))
+                          .map((ts, tsIndex) => {
+                            const details = ts.timeSheetDetailsVO || [];
+                            const detailCount = details.length || 1;
+                            // ✅ Case 1: Timesheet with task details
+                            if (ts.status === 'TIMESHEET' && details.length > 0) {
+                              return details.map((task, i) => (
+                                <TableRow key={`${rowIndex}-${tsIndex}-${i}`}>
+                                  {/* Show Date/Status/Hours only once, span all rows */}
+                                  {i === 0 && (
+                                    <>
+                                      <TableCell rowSpan={detailCount} sx={{ verticalAlign: 'middle', fontWeight: 'bold' }}>
+                                        {dayjs(ts.date).format('DD/MM/YYYY')}
+                                      </TableCell>
+                                      <TableCell rowSpan={detailCount} sx={{ verticalAlign: 'middle' }}>
+                                        {ts.totalhours} h
+                                      </TableCell>
+                                    </>
+                                  )}
+
+                                  {/* Task details */}
+                                  <TableCell>{task.projectName}</TableCell>
+                                  <TableCell>{task.project}</TableCell>
+                                  <TableCell>
+                                    <StatusBadge status={task.status} />
+                                  </TableCell>
+                                  <TableCell>{task.fromTime}</TableCell>
+                                  <TableCell>{task.toTime}</TableCell>
+                                  <TableCell>{task.wip}</TableCell>
+                                  <TableCell>{task.description}</TableCell>
+                                  <TableCell>{task.remarks}</TableCell>
+                                </TableRow>
+                              ));
+                            }
+                            // ✅ Case 2: Any other status (holiday, leave, absent, weekend, etc.)
+                            return (
+                              <TableRow
+                                key={`${rowIndex}-${tsIndex}`}
+                                sx={{
+                                  backgroundColor: '#ffeaea',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                <TableCell sx={{ textAlign: 'start', fontWeight: 'bold' }}>{dayjs(ts.date).format('DD/MM/YYYY')}</TableCell>
+                                <TableCell sx={{ textAlign: 'center' }}>
+                                  {ts.totalhours}
+                                  {ts.totalhours ? 'hrs' : ''}
+                                </TableCell>
+                                <TableCell
+                                  colSpan={8}
+                                  sx={{
+                                    textAlign: 'center',
+                                    fontStyle: 'italic',
+                                    fontWeight: 'bold',
+                                    color: '#d32f2f'
+                                  }}
+                                >
+                                  {ts.status}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
-};
-
+}
 export default AllTask;

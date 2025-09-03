@@ -467,7 +467,7 @@ const Task = () => {
       };
 
       try {
-        const response = await apiCalls('put', 'timesheet/createUpdateTimeSheet', saveData);
+        const response = await apiCalls('put', '/timesheet/createUpdateTask', saveData);
 
         if (response.status === true) {
           showToast('success', 'TimeSheet submitted successfully');

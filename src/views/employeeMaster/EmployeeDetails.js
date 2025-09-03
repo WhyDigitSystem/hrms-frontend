@@ -95,6 +95,7 @@ const EmployeeDetails = () => {
     uan: '',
     // role: '',
     active: true,
+    taskEligible: true,
     branchCode: '',
     profileImage: ''
   });
@@ -125,6 +126,7 @@ const EmployeeDetails = () => {
     uan: '',
     // role: '',
     active: true,
+    taskEligible: true,
     branchCode: '',
     profileImage: ''
   });
@@ -203,7 +205,15 @@ const EmployeeDetails = () => {
       Cell: ({ row }) => (
         <span style={{ color: row.original.active ? 'green' : 'red', fontWeight: 500 }}>{row.original.active ? 'Active' : 'Inactive'}</span>
       )
-    }
+    },
+    // {
+    //   accessorKey: 'taskFlag',
+    //   header: 'Task Eligible',
+    //   size: 140,
+    //   Cell: ({ row }) => (
+    //     <span style={{ color: row.original.taskFlag ? 'green' : 'red', fontWeight: 500 }}>{row.original.taskFlag ? 'Active' : 'Inactive'}</span>
+    //   )
+    // }
   ];
 
   useEffect(() => {
@@ -687,6 +697,7 @@ const EmployeeDetails = () => {
       uan: '',
       // role: '',
       active: true,
+      taskEligible: true,
       branchCode: '',
       profileImage: ''
     });
@@ -787,6 +798,7 @@ const EmployeeDetails = () => {
         bankName: formData.bankName,
         accountNo: formData.accountNo,
         active: formData.active,
+        taskFlag: formData.taskEligible,
         alternativeMobileNo: parseInt(formData.alternativeMobile),
         bloodGroup: formData.bloodGroup,
         branch: selectedBranch.branch,
@@ -901,7 +913,8 @@ const EmployeeDetails = () => {
           accountNo: employeeDetailsVO.accountNo || '',
           bankName: employeeDetailsVO.bankName || '',
           ifscCode: employeeDetailsVO.ifscCode || '',
-          active: employeeDetailsVO.active === 'Active',
+          active: employeeDetailsVO.active === 'Active' ? true : false,
+          taskEligible: employeeDetailsVO.taskFlag === 'Active' ? true : false,
           id: employeeDetailsVO.employeeId || 0
         });
 
@@ -1051,7 +1064,8 @@ const EmployeeDetails = () => {
       employee.team,
       employee.department,
       employee.designation,
-      employee.active ? 'Active' : 'Inactive'
+      employee.active ? 'Active' : 'Inactive',
+      employee.taskFlag ? 'Active' : 'Inactive'
     ]);
 
     // Auto Table
@@ -1705,6 +1719,12 @@ const EmployeeDetails = () => {
                 <FormControlLabel
                   control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
                   label="Active"
+                />
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControlLabel
+                  control={<Checkbox checked={formData.taskEligible} onChange={handleInputChange} name="taskEligible" />}
+                  label="Task Eligible"
                 />
               </div>
             </div>
