@@ -1,5 +1,5 @@
 // assets
-import { IconUsers, IconCalendarCheck, IconClockCheck, IconChartBar, IconCalendarEvent, IconUserCheck } from '@tabler/icons-react';
+import { IconUsers,IconReportAnalytics, IconCalendarCheck, IconClockCheck, IconChartBar, IconCalendarEvent, IconUserCheck } from '@tabler/icons-react';
 
 // constant
 const icons = {
@@ -8,7 +8,8 @@ const icons = {
   IconUserCheck, // For Permission Approval
   IconChartBar, // For Attendance Report
   IconCalendarEvent, // For Today Attendance
-  IconClockCheck // Alternative for attendance
+  IconClockCheck ,// Alternative for attendance
+  IconReportAnalytics
 };
 
 const userType = localStorage.getItem('userType');
@@ -64,7 +65,7 @@ const allScreens = [
     title: 'Over All Task Report',
     type: 'item',
     url: '/team/OverAllReport',
-    icon: icons.IconUsers
+    icon: icons.IconReportAnalytics
   }
 ];
 

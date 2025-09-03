@@ -281,21 +281,41 @@ function OverAllReport() {
         .sort((a, b) => new Date(a.date) - new Date(b.date))
         .forEach((ts) => {
           const details = ts?.timeSheetDetailsVO || [];
+          const detailCount = details.length || 1;
 
           if (ts.status === 'TIMESHEET' && details.length > 0) {
-            details.forEach((task) => {
-              sheet.addRow([
-                dayjs(ts.date).format('DD/MM/YYYY'),
-                ts.totalhours || '-',
-                task.projectName || '-',
-                task.project || '-',
-                task.status || '-',
-                task.fromTime || '-',
-                task.toTime || '-',
-                task.wip || '-',
-                task.description || '-',
-                task.remarks || '-'
-              ]);
+            details.forEach((task, i) => {
+              const rowArr = [];
+
+              if (i === 0) {
+                // Add Date + TotHrs only once, then merge them vertically
+                rowArr.push(dayjs(ts.date).format('DD/MM/YYYY'));
+                rowArr.push(ts.totalhours || '-');
+              } else {
+                // Placeholder for merged cells
+                rowArr.push(null);
+                rowArr.push(null);
+              }
+
+              rowArr.push(task.projectName || '-');
+              rowArr.push(task.project || '-');
+              rowArr.push(task.status || '-');
+              rowArr.push(task.fromTime || '-');
+              rowArr.push(task.toTime || '-');
+              rowArr.push(task.wip || '-');
+              rowArr.push(task.description || '-');
+              rowArr.push(task.remarks || '-');
+
+              const addedRow = sheet.addRow(rowArr);
+
+              // merge Date + Tot Hrs vertically across tasks
+              if (i === detailCount - 1 && detailCount > 1) {
+                const startRow = addedRow.number - detailCount + 1;
+                const endRow = addedRow.number;
+
+                sheet.mergeCells(`A${startRow}:A${endRow}`); // Date column
+                sheet.mergeCells(`B${startRow}:B${endRow}`); // Tot Hrs column
+              }
             });
           } else {
             // Leave/Holiday Row
