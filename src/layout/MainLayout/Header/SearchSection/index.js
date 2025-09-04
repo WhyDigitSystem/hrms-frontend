@@ -65,7 +65,7 @@ const screens = [
   { name: 'Permission  Approval', path: '/team/PermissionApproval' },
   { name: 'Attendance Report ', path: '/team/AttendanceReport' },
   { name: 'Today Attendance ', path: '/team/TodayAttendance' },
-  { name: 'OVER ALL TASK REPORT ', path: '/team/OverAllReport' }
+  { name: 'Over All Task Report', path: '/team/OverAllReport' }
 ];
 
 
