@@ -212,7 +212,7 @@ function OverAllReport() {
     const sheet = workbook.addWorksheet('Task Report');
 
     // ===== 1) LOGO =====
-    sheet.mergeCells('A1:B5');
+    sheet.mergeCells('A1:A5');
     if (logo) {
       const base64Data = logo.split(',')[1] || logo;
       const extension = logo.includes('jpeg') ? 'jpeg' : 'png';
@@ -224,8 +224,8 @@ function OverAllReport() {
     }
 
     // ===== 2) TITLE =====
-    sheet.mergeCells('C1:J1');
-    const titleCell = sheet.getCell('C1');
+    sheet.mergeCells('B1:E1');
+    const titleCell = sheet.getCell('B1');
     titleCell.value = 'Employee Task Report';
     titleCell.font = { size: 16, bold: true, color: { argb: 'FF34449B' } };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -241,15 +241,15 @@ function OverAllReport() {
     ];
     paramEntries.forEach(([label, value]) => {
       const row = sheet.getRow(metaRowIndex++);
-      row.getCell(3).value = label;
-      row.getCell(3).font = { bold: true };
-      row.getCell(4).value = value;
+      row.getCell(2).value = label;
+      row.getCell(2).font = { bold: true };
+      row.getCell(3).value = value;
     });
 
     metaRowIndex += 1; // gap before headers
 
     // ===== 4) HEADERS =====
-    const headers = ['Date', 'Tot Hrs', 'Project Name', 'Screens', 'Status', 'From', 'To', 'WIP%', 'Description', 'Remarks'];
+    const headers = ['Employee', 'Date', 'Tot Hrs', 'Project Name', 'Screens', 'Status', 'From', 'To', 'WIP%', 'Description', 'Remarks'];
     const headerRow = sheet.addRow(headers);
     headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
@@ -272,8 +272,12 @@ function OverAllReport() {
       // 🔹 Employee Summary Row
       const summaryRow = sheet.addRow([`${row.empcodename} | Total Days: ${totalDays} | Present: ${presentDays} | Leave: ${leaveDays}`]);
       summaryRow.font = { bold: true };
-      summaryRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFBBDEFB' } };
-      sheet.mergeCells(`A${summaryRow.number}:J${summaryRow.number}`);
+      summaryRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFBBDEFB' }
+      };
+      sheet.mergeCells(`A${summaryRow.number}:K${summaryRow.number}`);
       summaryRow.alignment = { horizontal: 'start' };
 
       // 🔹 Timesheets
@@ -287,14 +291,15 @@ function OverAllReport() {
             details.forEach((task, i) => {
               const rowArr = [];
 
+              // 🔹 Always put employee name in first column
               if (i === 0) {
-                // Add Date + TotHrs only once, then merge them vertically
-                rowArr.push(dayjs(ts.date).format('DD/MM/YYYY'));
-                rowArr.push(ts.totalhours || '-');
+                rowArr.push(row.employeename || '-'); // Employee
+                rowArr.push(dayjs(ts.date).format('DD/MM/YYYY')); // Date
+                rowArr.push(ts.totalhours || '-'); // Tot Hrs
               } else {
-                // Placeholder for merged cells
-                rowArr.push(null);
-                rowArr.push(null);
+                rowArr.push(null); // Employee merged
+                rowArr.push(null); // Date merged
+                rowArr.push(null); // Tot Hrs merged
               }
 
               rowArr.push(task.projectName || '-');
@@ -308,24 +313,29 @@ function OverAllReport() {
 
               const addedRow = sheet.addRow(rowArr);
 
-              // merge Date + Tot Hrs vertically across tasks
+              // merge Employee + Date + Tot Hrs vertically across tasks
               if (i === detailCount - 1 && detailCount > 1) {
                 const startRow = addedRow.number - detailCount + 1;
                 const endRow = addedRow.number;
 
-                sheet.mergeCells(`A${startRow}:A${endRow}`); // Date column
-                sheet.mergeCells(`B${startRow}:B${endRow}`); // Tot Hrs column
+                sheet.mergeCells(`A${startRow}:A${endRow}`); // Employee column
+                sheet.mergeCells(`B${startRow}:B${endRow}`); // Date column
+                sheet.mergeCells(`C${startRow}:C${endRow}`); // Tot Hrs column
               }
             });
           } else {
             // Leave/Holiday Row
-            const leaveRow = sheet.addRow([dayjs(ts.date).format('DD/MM/YYYY'), ts.totalhours || '-', ts.status]);
-            sheet.mergeCells(`C${leaveRow.number}:J${leaveRow.number}`);
+            const leaveRow = sheet.addRow([row.employeename || '-', dayjs(ts.date).format('DD/MM/YYYY'), ts.status]);
+            sheet.mergeCells(`C${leaveRow.number}:K${leaveRow.number}`);
             leaveRow.eachCell((c) => {
               c.font = { italic: true, bold: true, color: { argb: 'FFD32F2F' } };
               c.alignment = { horizontal: 'start' };
             });
-            leaveRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFEAEA' } };
+            leaveRow.fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFEAEA' }
+            };
           }
         });
     });
@@ -337,15 +347,22 @@ function OverAllReport() {
         if (len > maxLen) maxLen = len;
       });
 
-      // Specific widths for Description & Remarks
-      if (index === 8) {
-        col.width = Math.min(maxLen + 2, 35); // Description capped at 35
-        col.alignment = { wrapText: true }; // Enable wrapping
-      } else if (index === 9) {
-        col.width = Math.min(maxLen + 2, 25); // Remarks capped at 25
-        col.alignment = { wrapText: true }; // Enable wrapping
+      // Description (col 10 → index 9)
+      if (index === 9) {
+        col.width = Math.min(maxLen + 2, 35);
+        col.alignment = { wrapText: true };
+      }
+      // Remarks (col 11 → index 10)
+      else if (index === 10) {
+        col.width = Math.min(maxLen + 2, 25);
+        col.alignment = { wrapText: true };
+      }
+      // Screens (col 5 → index 4)
+      else if (index === 4) {
+        col.width = Math.min(maxLen + 2, 18); // cap screens at 18 chars
+        col.alignment = { wrapText: true };
       } else {
-        col.width = Math.min(maxLen + 2, 20); // Other columns capped smaller
+        col.width = Math.min(maxLen + 2, 20);
       }
     });
     // ===== 7) SAVE =====
@@ -717,7 +734,6 @@ function OverAllReport() {
               >
                 <TableViewIcon sx={{ mr: 1, color: 'green' }} /> Excel
               </MenuItem>
-
               <MenuItem
                 onClick={() => {
                   handleMenuClose();
