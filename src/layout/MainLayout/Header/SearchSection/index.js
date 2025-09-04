@@ -64,8 +64,10 @@ const screens = [
   { name: 'Leave Approval', path: '/team/LeaveApproval' },
   { name: 'Permission  Approval', path: '/team/PermissionApproval' },
   { name: 'Attendance Report ', path: '/team/AttendanceReport' },
-  { name: 'Today Attendance ', path: '/team/TodayAttendance' }
+  { name: 'Today Attendance ', path: '/team/TodayAttendance' },
+  { name: 'OVER ALL TASK REPORT ', path: '/team/OverAllReport' }
 ];
+
 
 // Styled Components
 const PopperStyle = styled(Popper)(({ theme }) => ({
