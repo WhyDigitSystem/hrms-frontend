@@ -686,7 +686,7 @@ const Task = () => {
       {modalOpen && (
         <div className="modal show fade d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-dialog-centered modal-xl modal-fullscreen-sm-down">
-            <div className="modal-content shadow-lg">
+            <div className="modal-content shadow-xl">
               <div className="modal-header">
                 <h5 className="modal-title">Add Entry for {selectedDate.toDateString()}</h5>
                 <button type="button" className="btn-close" onClick={() => setModalOpen(false)}></button>
@@ -694,39 +694,35 @@ const Task = () => {
 
               <div className="modal-body">
                 <div className="table-responsive">
-                  <table className="table table-bordered">
+                  <table className="table table-bordered align-middle">
                     <thead className="table-light">
                       <tr>
-                        <th>Action</th>
-                        <th>Project</th>
-                        <th>Screen/Table</th>
-                        <th>Description</th>
-                        <th>WIP%</th>
-                        <th>Status</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Remarks</th>
+                        <th style={{ width: '6%' }}>Action</th>
+                        <th style={{ width: '12%' }}>Project</th>
+                        <th style={{ width: '12%' }}>Screen/Table</th>
+                        <th style={{ width: '22%' }}>Description</th>
+                        <th style={{ width: '8%' }}>WIP%</th>
+                        <th style={{ width: '12%' }}>Status</th>
+                        <th style={{ width: '8%' }}>From</th>
+                        <th style={{ width: '8%' }}>To</th>
+                        <th style={{ width: '22%' }}>Remarks</th>
                       </tr>
                     </thead>
                     <tbody>
                       {formRows.map((row, index) => (
                         <tr key={index}>
                           <td>
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDeleteRow(index)}
-                              // disabled={!isCurrentMonth(selectedDate)}
-                            >
+                            <button className="btn btn-danger btn-sm w-100" onClick={() => handleDeleteRow(index)}>
                               Delete
                             </button>
                           </td>
+
                           <td>
                             <select
                               name="projectName"
                               value={row.projectName}
                               onChange={(e) => handleRowChange(index, 'projectName', e.target.value)}
-                              className="form-select form-select-sm w-100"
-                              // disabled={!isCurrentMonth(selectedDate)}
+                              className="form-select form-select-sm"
                             >
                               <option value="">Select Project</option>
                               {alProject.map((project) => (
@@ -736,6 +732,7 @@ const Task = () => {
                               ))}
                             </select>
                           </td>
+
                           <td>
                             <input
                               type="text"
@@ -743,39 +740,59 @@ const Task = () => {
                               onChange={(e) => handleRowChange(index, 'screenTask', e.target.value)}
                               className="form-control form-control-sm"
                               placeholder="Enter Screen/Task"
-                              // disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
+
+                          {/* Description */}
                           <td>
                             <textarea
                               value={row.description}
                               onChange={(e) => {
                                 handleRowChange(index, 'description', e.target.value);
                                 e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
+                                e.target.style.height = `${e.target.scrollHeight}px`;
                               }}
                               className="form-control form-control-sm"
                               placeholder="Enter description"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                              style={{ resize: 'none', overflow: 'hidden' }}
+                              style={{
+                                resize: 'none',
+                                overflow: 'hidden',
+                                minHeight: '40px'
+                              }}
+                              ref={(el) => {
+                                if (el) {
+                                  el.style.height = 'auto';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
                             />
                           </td>
+
                           <td>
                             <input
-                              type="text"
+                              type="number"
                               value={row.wip}
-                              onChange={(e) => handleRowChange(index, 'wip', e.target.value)}
-                              className="form-control form-control-sm"
-                              placeholder="Enter Work IP"
-                              // disabled={!isCurrentMonth(selectedDate)}
+                              onChange={(e) => {
+                                let val = e.target.value;
+                                if (val === '') {
+                                  handleRowChange(index, 'wip', '');
+                                } else {
+                                  const num = Math.min(Math.max(Number(val), 0), 100);
+                                  handleRowChange(index, 'wip', num);
+                                }
+                              }}
+                              className="form-control form-control-sm text-center"
+                              placeholder="%"
+                              min={0}
+                              max={100}
                             />
                           </td>
+
                           <td>
                             <select
                               value={row.status}
-                              // disabled={!isCurrentMonth(selectedDate)}
                               onChange={(e) => handleRowChange(index, 'status', e.target.value)}
-                              className="form-control form-control-sm"
+                              className="form-select form-select-sm"
                             >
                               <option value="">Select status</option>
                               <option value="Yet Start">Yet Start</option>
@@ -786,36 +803,47 @@ const Task = () => {
                               <option value="PCB">PCB</option>
                             </select>
                           </td>
+
                           <td>
                             <input
                               type="time"
                               value={row.fromTime}
                               onChange={(e) => handleRowChange(index, 'fromTime', e.target.value)}
                               className="form-control form-control-sm"
-                              // disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
+
                           <td>
                             <input
                               type="time"
                               value={row.toTime}
                               onChange={(e) => handleRowChange(index, 'toTime', e.target.value)}
                               className="form-control form-control-sm"
-                              // disabled={!isCurrentMonth(selectedDate)}
                             />
                           </td>
+
+                          {/* Remarks */}
                           <td>
                             <textarea
                               value={row.remarks}
                               onChange={(e) => {
                                 handleRowChange(index, 'remarks', e.target.value);
                                 e.target.style.height = 'auto';
-                                e.target.style.height = `${e.target.scrollHeight}px`; // auto expand
+                                e.target.style.height = `${e.target.scrollHeight}px`;
                               }}
                               className="form-control form-control-sm"
                               placeholder="Enter remarks"
-                              // disabled={!isCurrentMonth(selectedDate)}
-                              style={{ resize: 'none', overflow: 'hidden' }}
+                              style={{
+                                resize: 'none',
+                                overflow: 'hidden',
+                                minHeight: '40px'
+                              }}
+                              ref={(el) => {
+                                if (el) {
+                                  el.style.height = 'auto';
+                                  el.style.height = `${el.scrollHeight}px`;
+                                }
+                              }}
                             />
                           </td>
                         </tr>
@@ -825,39 +853,22 @@ const Task = () => {
                 </div>
 
                 <div className="text-end mt-2">
-                  <button
-                    className="btn btn-sm btn-success"
-                    onClick={handleAddRow}
-                    // disabled={!isCurrentMonth(selectedDate)}
-                  >
+                  <button className="btn btn-sm btn-success" onClick={handleAddRow}>
                     + Add Row
                   </button>
                 </div>
               </div>
 
               <div className="modal-footer d-flex flex-wrap justify-content-between gap-2">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setModalOpen(false)}
-                  // disabled={!isCurrentMonth(selectedDate)}
-                >
+                <button className="btn btn-secondary" onClick={() => setModalOpen(false)}>
                   Cancel
                 </button>
-                <button
-                  className="btn btn-warning"
-                  onClick={handleModalClear}
-                  //  disabled={!isCurrentMonth(selectedDate)}
-                >
+                <button className="btn btn-warning" onClick={handleModalClear}>
                   Clear
                 </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleSubmit}
-                  // disabled={!isCurrentMonth(selectedDate)}
-                >
+                <button className="btn btn-primary" onClick={handleSubmit}>
                   Save Entry
                 </button>
-
                 <Button onClick={handleShareWhatsApp}>
                   <FaWhatsapp style={{ marginRight: '5px' }} />
                   Share on WhatsApp
